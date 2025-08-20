@@ -29,8 +29,8 @@ export const Header: React.FC = () => {
               How it Works
             </button>
             <a 
-              href="/investors_guide.txt" 
-              download="TechSubbies_Investor_Guide.txt"
+              href="/investors_guide.pdf" 
+              download="TechSubbies_Investor_Guide.pdf"
               className="px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
             >
               For Investors

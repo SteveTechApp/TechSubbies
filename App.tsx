@@ -9,36 +9,59 @@ import { EngineerDashboard } from './views/EngineerDashboard';
 import { CompanyDashboard } from './views/CompanyDashboard';
 import { LoginSelector } from './views/LoginSelector';
 import { EngineerProfileView } from './views/EngineerProfileView';
+import { AdminDashboard } from './views/AdminDashboard';
+import { DashboardSidebar } from './components/DashboardSidebar';
 
 const App: React.FC = () => {
   const { role, currentUser, viewingEngineer } = useAppContext();
 
-  const renderContent = () => {
+  const renderDashboardContent = () => {
     if (viewingEngineer) {
       return <EngineerProfileView />;
     }
-
-    if (currentUser) {
-      // @ts-ignore - 'skillProfiles' is a unique property of Engineer
-      if (currentUser.skillProfiles) {
+    
+    switch (role) {
+      case Role.ADMIN:
+        return <AdminDashboard />;
+      case Role.ENGINEER:
         return <EngineerDashboard />;
+      case Role.COMPANY:
+        return <CompanyDashboard />;
+      default:
+        // Fallback to landing page if role is somehow lost
+        return <LandingPage />;
+    }
+  };
+  
+  const renderPublicContent = () => {
+     if (role === Role.NONE) {
+        return <LandingPage />;
+      } else {
+        return <LoginSelector roleToLogin={role} />;
       }
-      return <CompanyDashboard />;
-    }
-
-    if (role === Role.NONE) {
-      return <LandingPage />;
-    }
-
-    return <LoginSelector roleToLogin={role} />;
   };
 
+  if (currentUser) {
+    // Render the main application layout with a sidebar
+    return (
+       <div className="min-h-screen flex flex-col bg-gray-100 font-sans">
+        <Header />
+        <div className="flex flex-1 overflow-hidden">
+          <DashboardSidebar role={role} />
+          <main className="flex-1 overflow-y-auto p-6 md:p-8">
+            {renderDashboardContent()}
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // Render the public-facing layout
   return (
-    // Changed bg-gray-50 to bg-gray-100 for a LinkedIn-like background
     <div className="min-h-screen flex flex-col bg-gray-100 font-sans">
       <Header />
       <main className="flex-grow">
-        {renderContent()}
+        {renderPublicContent()}
       </main>
       <Footer />
     </div>

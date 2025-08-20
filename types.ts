@@ -3,6 +3,7 @@
 export enum Role {
   ENGINEER = 'engineer',
   COMPANY = 'company',
+  ADMIN = 'admin',
   NONE = 'none',
 }
 
@@ -63,7 +64,6 @@ export interface Engineer {
   ownPPE: boolean;
   accessEquipmentTrained: boolean;
   firstAidTrained: boolean;
-  generalAvailability: string;
   customerRating: number;
   peerRating: number;
   associates: { name: string; link?: string }[];
@@ -100,4 +100,32 @@ export interface Company {
   id: string;
   name: string;
   logoUrl: string;
+}
+
+export interface Admin {
+    id: string;
+    name: string;
+    email: string;
+}
+
+export interface SupportRequest {
+    id: string;
+    userId: string;
+    userName: string;
+    userRole: Role;
+    subject: string;
+    message: string;
+    date: string; // ISO string
+    status: 'Open' | 'Resolved';
+}
+
+// For AI Skill Discovery
+export interface GeneratedSkill {
+    name: string;
+    description: string;
+}
+
+export interface SkillDiscoveryResult {
+    suggestedJobTitles: string[];
+    nicheSkills: GeneratedSkill[];
 }

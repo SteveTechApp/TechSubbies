@@ -55,8 +55,8 @@ export const LandingPage: React.FC = () => {
                             Join us in revolutionizing the freelance tech industry. Download our guide to learn about our growth and investment opportunities.
                         </p>
                         <a
-                            href="/investors_guide.txt"
-                            download="TechSubbies_Investor_Guide.txt"
+                            href="/investors_guide.pdf"
+                            download="TechSubbies_Investor_Guide.pdf"
                             className="w-full block text-center bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-colors duration-300 shadow-sm"
                         >
                             Download Investor Guide

@@ -1,29 +1,30 @@
 
-import { Engineer, Company, Job } from './types';
+import { Engineer, Company, Job, Admin, SupportRequest } from './types';
+import { generateEngineers, generateJobs, generateSupportRequests, generateCompanies } from './services/mockDataGenerator';
 
-export const MOCK_ENGINEERS: Engineer[] = [
+
+export const MOCK_ENGINEERS_BASE: Engineer[] = [
   {
-    id: 'eng1',
+    id: 'eng_steve',
     title: 'Mr',
-    firstName: 'Neil',
-    middleName: 'John',
-    surname: 'Bishop',
-    companyName: 'AV Innovations',
+    firstName: 'Steve',
+    middleName: '',
+    surname: 'Engineer',
+    companyName: 'SE Engineering Services',
     travelRadius: '< 100 miles',
-    email: 'neil.bishop@example.com',
+    email: 'steve.engineer@example.com',
     mobile: '07123456789',
-    website: 'www.neilbishop.com',
-    linkedin: 'linkedin.com/in/nelib',
+    website: 'www.steve-engineer.com',
+    linkedin: 'linkedin.com/in/steveengineer',
     professionalIndemnityInsurance: true,
     publicLiabilityInsurance: true,
     siteSafe: true,
     ownPPE: true,
     accessEquipmentTrained: true,
     firstAidTrained: true,
-    generalAvailability: 'Medium',
-    customerRating: 4,
-    peerRating: 3,
-    associates: [{ name: 'John Smith' }],
+    customerRating: 5,
+    peerRating: 4,
+    associates: [{ name: 'John Smith', link: '#' }, { name: 'Emily White' }],
     caseStudies: [{ title: 'Corporate HQ Audiovisual Integration', link: '#' }],
     certifications: [
       { id: 'cert1', name: 'CSCS Card Holder', achieved: true },
@@ -34,14 +35,14 @@ export const MOCK_ENGINEERS: Engineer[] = [
     ],
     bio: 'Experienced AV installation engineer with over 15 years in the industry, specializing in corporate and educational sector projects. Proven ability to lead teams and deliver complex integrations on time and to the highest standard.',
     yearsOfExperience: 15,
-    name: 'Neil Bishop',
+    name: 'Steve Engineer',
     tagline: 'Lead AV Installation Engineer',
     profileImageUrl: 'https://i.imgur.com/8Qtm93t.jpeg',
     location: 'London, UK',
     radius: 100,
     transport: 'Own Van',
     insurance: true,
-    reviews: { count: 25, rating: 4.0 },
+    reviews: { count: 25, rating: 4.5 },
     baseDayRate: 195,
     skillProfiles: [
       { id: 'sp1', roleTitle: 'Rack Builder', dayRate: 280, skills: [{id: 's1', name: 'Cable Lacing & Termination', rating: 5}, {id: 's2', name: 'Rack Elevation Schematics', rating: 4}, {id: 's3', name: 'Power Management Units', rating: 4}], customSkills: ['Neat Patch Certified', 'Fibre Optic Splicing'], isPremium: true},
@@ -82,10 +83,9 @@ export const MOCK_ENGINEERS: Engineer[] = [
     ownPPE: true,
     accessEquipmentTrained: false,
     firstAidTrained: true,
-    generalAvailability: 'High',
     customerRating: 5,
     peerRating: 5,
-    associates: [],
+    associates: [{ name: 'Carlos Ramirez', link: '#' }],
     caseStudies: [{title: 'Financial Firm Network Overhaul', link: '#'}],
     yearsOfExperience: 10,
     certifications: [
@@ -127,10 +127,9 @@ export const MOCK_ENGINEERS: Engineer[] = [
     ownPPE: true,
     accessEquipmentTrained: false,
     firstAidTrained: false,
-    generalAvailability: 'Medium',
     customerRating: 5,
     peerRating: 4,
-    associates: [],
+    associates: [{ name: 'Jane Smith', link: '#' }],
     caseStudies: [{title: 'University Lecture Hall Automation', link: '#'}],
     yearsOfExperience: 8,
     certifications: [
@@ -141,16 +140,20 @@ export const MOCK_ENGINEERS: Engineer[] = [
   },
 ];
 
-export const MOCK_COMPANIES: Company[] = [
-    { id: 'com1', name: 'AV Solutions Inc.', logoUrl: 'https://picsum.photos/seed/com1/100/100'},
+export const MOCK_COMPANIES_BASE: Company[] = [
+    { id: 'com_steve', name: 'SteveCompany', logoUrl: 'https://picsum.photos/seed/com_steve/100/100'},
     { id: 'com2', name: 'Global IT Integrators', logoUrl: 'https://picsum.photos/seed/com2/100/100'},
 ];
 
-export const MOCK_JOBS: Job[] = [
+export const MOCK_ADMINS: Admin[] = [
+    { id: 'admin1', name: 'Platform Admin', email: 'admin@techsubbies.com' },
+];
+
+export const MOCK_JOBS_BASE: Job[] = [
     { 
         id: 'job1',
         title: 'Lead Installation Engineer for Corporate HQ', 
-        companyId: 'com1', 
+        companyId: 'com_steve', 
         location: 'London, UK',
         startDate: '2024-09-01',
         endDate: '2024-09-30',
@@ -174,7 +177,7 @@ export const MOCK_JOBS: Job[] = [
     {
         id: 'job3',
         title: 'General AV Support',
-        companyId: 'com1',
+        companyId: 'com_steve',
         location: 'London, UK',
         startDate: '2024-09-05',
         endDate: '2024-09-07',
@@ -186,7 +189,7 @@ export const MOCK_JOBS: Job[] = [
     {
         id: 'job4',
         title: 'Crestron Programmer for University',
-        companyId: 'com1',
+        companyId: 'com_steve',
         location: 'Manchester, UK',
         startDate: '2024-10-01',
         endDate: '2024-10-31',
@@ -210,6 +213,19 @@ export const SKILL_ROLES = [
   'Web Developer',
   'Cloud Engineer'
 ];
+
+// --- GENERATE AND COMBINE DATA ---
+const generatedEngineers = generateEngineers(997);
+export const MOCK_ENGINEERS: Engineer[] = [...MOCK_ENGINEERS_BASE, ...generatedEngineers];
+
+const generatedCompanies = generateCompanies(98);
+export const MOCK_COMPANIES: Company[] = [...MOCK_COMPANIES_BASE, ...generatedCompanies];
+
+const generatedJobs = generateJobs(96, MOCK_COMPANIES.map(c => c.id), SKILL_ROLES);
+export const MOCK_JOBS: Job[] = [...MOCK_JOBS_BASE, ...generatedJobs];
+
+const allUsers = [...MOCK_ENGINEERS, ...MOCK_COMPANIES];
+export const MOCK_SUPPORT_REQUESTS: SupportRequest[] = generateSupportRequests(50, allUsers);
 
 export const SUBSCRIPTION_PLANS = [
   { name: 'Basic', price: 0, features: ['1 Basic Profile', 'Fixed Day Rate (£195 / $195)', 'Limited visibility'] },

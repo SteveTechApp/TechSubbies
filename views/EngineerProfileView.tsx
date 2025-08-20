@@ -1,8 +1,10 @@
 
+
 import React from 'react';
 import { useAppContext } from '../context/AppContext';
 import { SkillProfile } from '../types';
-import { Star, ArrowLeft, Briefcase, Award, ShieldCheck, Calendar, MapPin, CheckCircle, Mail, Phone, Globe, Linkedin } from 'lucide-react';
+import { Star, ArrowLeft, Briefcase, Award, ShieldCheck, Calendar, MapPin, CheckCircle, Mail, Phone, Globe, Linkedin, Users } from 'lucide-react';
+import { Calendar as AvailabilityCalendar } from '../components/Calendar';
 
 const RatingDisplay: React.FC<{ rating: number }> = ({ rating }) => (
     <div className="flex items-center">
@@ -113,8 +115,19 @@ export const EngineerProfileView: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Availability Calendar */}
+                <div className="mt-8">
+                    <h2 className="text-lg font-bold text-gray-800 mb-4">Availability</h2>
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <AvailabilityCalendar 
+                            highlightedDates={engineer.availability} 
+                            readOnly={true}
+                        />
+                    </div>
+                </div>
+
                  {/* Bio Section */}
-                <div className="mt-6">
+                <div className="mt-8">
                     <h2 className="text-lg font-bold text-gray-800 mb-2">About Me</h2>
                     <p className="text-gray-600 whitespace-pre-wrap">{engineer.bio}</p>
                 </div>
@@ -154,6 +167,32 @@ export const EngineerProfileView: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+             {/* Associates Section */}
+            {engineer.associates && engineer.associates.length > 0 && (
+                <div className="mt-12">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-6">Trusted Associates</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {engineer.associates.map((associate, index) => (
+                            <div key={index} className="bg-white rounded-lg shadow-md p-4 flex items-center space-x-4 border border-gray-200 transform hover:scale-105 transition-transform duration-300">
+                                <div className="bg-blue-100 p-3 rounded-full">
+                                    <Users className="h-6 w-6 text-blue-600" />
+                                </div>
+                                <div>
+                                    {associate.link ? (
+                                        <a href={associate.link} target="_blank" rel="noopener noreferrer" className="font-semibold text-gray-800 hover:text-blue-600 hover:underline">
+                                            {associate.name}
+                                        </a>
+                                    ) : (
+                                        <p className="font-semibold text-gray-800">{associate.name}</p>
+                                    )}
+                                    <p className="text-sm text-gray-500">Peer Endorsed</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
              {/* Skill Profiles Section */}
             <div className="mt-12">

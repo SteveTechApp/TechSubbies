@@ -1,7 +1,9 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { SkillProfile, Skill, Currency } from '../types';
 import { X, Star, Trash2, Plus } from 'lucide-react';
+import { SKILL_ROLES } from '../constants';
 
 interface EditSkillProfileModalProps {
   profile: SkillProfile;
@@ -23,6 +25,7 @@ const EditableRating: React.FC<{ rating: number; onRatingChange: (rating: number
 
 export const EditSkillProfileModal: React.FC<EditSkillProfileModalProps> = ({ profile, onClose, onSave, currency }) => {
     const [draftProfile, setDraftProfile] = useState<SkillProfile>({ ...profile, skills: [...profile.skills], customSkills: [...profile.customSkills] });
+    const isNewProfile = !profile.roleTitle; // New profiles are initialized with an empty title
 
     useEffect(() => {
         // Deep copy to prevent mutation of original state
@@ -61,7 +64,9 @@ export const EditSkillProfileModal: React.FC<EditSkillProfileModalProps> = ({ pr
         >
           <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl transform transition-all" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center p-5 border-b border-gray-200">
-              <h2 id="edit-profile-title" className="text-xl font-bold text-gray-800">Edit Skill Profile</h2>
+              <h2 id="edit-profile-title" className="text-xl font-bold text-gray-800">
+                  {isNewProfile ? 'Add New Skill Profile' : 'Edit Skill Profile'}
+              </h2>
               <button onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close">
                 <X size={24} />
               </button>
@@ -72,13 +77,17 @@ export const EditSkillProfileModal: React.FC<EditSkillProfileModalProps> = ({ pr
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div>
                         <label htmlFor="roleTitle" className="block text-sm font-medium text-gray-700 mb-1">Role Title</label>
-                        <input
-                            type="text"
+                        <select
                             id="roleTitle"
                             value={draftProfile.roleTitle}
                             onChange={(e) => setDraftProfile(prev => ({ ...prev, roleTitle: e.target.value }))}
-                            className="w-full p-2 border border-gray-300 rounded-md"
-                        />
+                            className="w-full p-2 border border-gray-300 rounded-md bg-white"
+                        >
+                            <option value="" disabled>Select a role...</option>
+                            {SKILL_ROLES.map(role => (
+                                <option key={role} value={role}>{role}</option>
+                            ))}
+                        </select>
                     </div>
                     <div>
                         <label htmlFor="dayRate" className="block text-sm font-medium text-gray-700 mb-1">Day Rate ({currency})</label>

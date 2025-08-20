@@ -1,7 +1,7 @@
 
 import React, { createContext, useState, useContext, ReactNode } from 'react';
-import { Role, Engineer, Job, Company, Currency } from '../types';
-import { MOCK_ENGINEERS, MOCK_JOBS, MOCK_COMPANIES } from '../constants';
+import { Role, Engineer, Job, Company, Currency, Admin, SupportRequest } from '../types';
+import { MOCK_ENGINEERS, MOCK_JOBS, MOCK_COMPANIES, MOCK_ADMINS, MOCK_SUPPORT_REQUESTS } from '../constants';
 
 interface AppContextType {
   role: Role;
@@ -13,8 +13,11 @@ interface AppContextType {
   engineers: Engineer[];
   jobs: Job[];
   companies: Company[];
+  admins: Admin[];
+  supportRequests: SupportRequest[];
+  updateSupportRequest: (id: string, status: 'Open' | 'Resolved') => void;
   getCompanyById: (id: string) => Company | undefined;
-  currentUser: Engineer | Company | null;
+  currentUser: Engineer | Company | Admin | null;
   login: (role: Role, id: string) => void;
   logout: () => void;
   updateEngineer: (updatedEngineer: Engineer) => void;
@@ -28,28 +31,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [role, setRole] = useState<Role>(Role.NONE);
   const [language, setLanguage] = useState<string>('EN');
   const [currency, setCurrency] = useState<Currency>(Currency.GBP);
-  const [currentUser, setCurrentUser] = useState<Engineer | Company | null>(null);
+  const [currentUser, setCurrentUser] = useState<Engineer | Company | Admin | null>(null);
   const [viewingEngineer, setViewingEngineer] = useState<Engineer | null>(null);
   
   const [engineers, setEngineers] = useState<Engineer[]>(MOCK_ENGINEERS);
   const [jobs] = useState<Job[]>(MOCK_JOBS);
   const [companies] = useState<Company[]>(MOCK_COMPANIES);
+  const [admins] = useState<Admin[]>(MOCK_ADMINS);
+  const [supportRequests, setSupportRequests] = useState<SupportRequest[]>(MOCK_SUPPORT_REQUESTS);
 
   const getCompanyById = (id: string) => companies.find(c => c.id === id);
 
   const login = (role: Role, id: string) => {
+    let user: Engineer | Company | Admin | undefined;
     if (role === Role.ENGINEER) {
-      const user = engineers.find(e => e.id === id);
-      if (user) {
-        setCurrentUser(user);
-        setRole(Role.ENGINEER);
-      }
+      user = engineers.find(e => e.id === id);
     } else if (role === Role.COMPANY) {
-      const user = companies.find(c => c.id === id);
-      if (user) {
+      user = companies.find(c => c.id === id);
+    } else if (role === Role.ADMIN) {
+      user = admins.find(a => a.id === id);
+    }
+    
+    if (user) {
         setCurrentUser(user);
-        setRole(Role.COMPANY);
-      }
+        setRole(role);
     }
   };
 
@@ -63,13 +68,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setEngineers(prevEngineers => 
       prevEngineers.map(eng => eng.id === updatedEngineer.id ? updatedEngineer : eng)
     );
-    setCurrentUser(updatedEngineer); // also update the currentUser state
+    if(currentUser && currentUser.id === updatedEngineer.id) {
+        setCurrentUser(updatedEngineer);
+    }
+  };
+
+  const updateSupportRequest = (id: string, status: 'Open' | 'Resolved') => {
+    setSupportRequests(prev => 
+        prev.map(req => req.id === id ? { ...req, status } : req)
+    );
   };
 
   const enhancedSetRole = (newRole: Role) => {
     setRole(newRole);
-    // When navigating back to the main landing/selection pages,
-    // ensure we don't have a lingering engineer profile view.
     if (newRole === Role.NONE) {
       setViewingEngineer(null);
     }
@@ -81,7 +92,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       role, setRole: enhancedSetRole, 
       language, setLanguage, 
       currency, setCurrency, 
-      engineers, jobs, companies, 
+      engineers, jobs, companies, admins,
+      supportRequests, updateSupportRequest,
       getCompanyById,
       currentUser, login, logout, updateEngineer,
       viewingEngineer, setViewingEngineer

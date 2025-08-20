@@ -1,10 +1,10 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { SkillProfile, Engineer, Certification } from '../types';
 import { Star, PlusCircle, MapPin, Edit, X, Save, UploadCloud, Paperclip } from 'lucide-react';
 import { EditSkillProfileModal } from '../components/EditSkillProfileModal';
+import { Calendar } from '../components/Calendar';
 
 
 // A generic component for rendering a detail row, handling edit mode.
@@ -146,27 +146,35 @@ export const EngineerDashboard: React.FC = () => {
     }
 
     const handleSaveSkillProfile = (updatedProfile: SkillProfile) => {
-        const profileExists = draftEngineer.skillProfiles.some(p => p.id === updatedProfile.id);
+        // Check if it's a new profile by checking its existence in the original currentEngineer object
+        const isNewProfile = !currentEngineer.skillProfiles.some(p => p.id === updatedProfile.id);
 
         let updatedProfiles;
-        if (profileExists) {
-            // Update existing profile
-            updatedProfiles = draftEngineer.skillProfiles.map(p => 
+        if (isNewProfile) {
+            // Add new profile to the existing list
+            updatedProfiles = [...currentEngineer.skillProfiles, updatedProfile];
+        } else {
+            // Update existing profile in the list
+            updatedProfiles = currentEngineer.skillProfiles.map(p => 
                 p.id === updatedProfile.id ? updatedProfile : p
             );
-        } else {
-            // Add new profile
-            updatedProfiles = [...draftEngineer.skillProfiles, updatedProfile];
         }
+        
+        // Create the fully updated engineer object
+        const updatedEngineer = {
+            ...currentEngineer,
+            skillProfiles: updatedProfiles
+        };
 
-        handleProfileChange('skillProfiles', updatedProfiles);
+        // Persist the changes to the global state, which will trigger a re-render
+        updateEngineer(updatedEngineer);
         setEditingProfile(null); // Close modal
     };
 
     const handleAddNewProfile = () => {
         const newProfile: SkillProfile = {
             id: `sp_${Date.now()}`,
-            roleTitle: '',
+            roleTitle: '', // Empty so the dropdown shows the placeholder
             dayRate: 250,
             skills: [],
             customSkills: [],
@@ -175,6 +183,15 @@ export const EngineerDashboard: React.FC = () => {
         setEditingProfile(newProfile);
     };
 
+    const handleDateClick = (date: string) => {
+        if (!isEditing) return;
+        const currentAvailability = draftEngineer.availability || [];
+        const newAvailability = currentAvailability.includes(date)
+            ? currentAvailability.filter(d => d !== date)
+            : [...currentAvailability, date].sort();
+        
+        handleProfileChange('availability', newAvailability);
+    };
 
     if (!currentEngineer) {
         return <div>Loading engineer profile...</div>;
@@ -185,7 +202,7 @@ export const EngineerDashboard: React.FC = () => {
     const matchedJobs = jobs.filter(job => engineerRoles.has(job.roleTitle));
 
     return (
-        <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        <>
              {editingProfile && (
                 <EditSkillProfileModal
                     profile={editingProfile}
@@ -261,7 +278,6 @@ export const EngineerDashboard: React.FC = () => {
                              <UploadItem key={cert.id} label={cert.name} value={cert.achieved} isEditing={isEditing} onChange={v => handleCertificationChange(cert.id, v)} />
                         ))}
                         <hr className="my-3 border-gray-200"/>
-                        <DetailItem label="General Availability" value={draftEngineer.generalAvailability} isEditing={isEditing} onChange={v => handleProfileChange('generalAvailability', v)} />
                         <div className="grid grid-cols-3 gap-4 text-sm items-center">
                             <span className="font-semibold text-gray-600 col-span-1">Customer Rating</span>
                             <div className="text-gray-800 col-span-2"><RatingDisplay rating={draftEngineer.customerRating} /></div>
@@ -273,6 +289,23 @@ export const EngineerDashboard: React.FC = () => {
                     </div>
                 </div>
              </div>
+
+            {/* Availability Calendar */}
+            <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">My Availability</h2>
+                <p className="text-sm text-gray-600 mb-4">
+                    {isEditing 
+                        ? "Click on dates to toggle your availability. Changes will be saved when you click the 'Save' button." 
+                        : "This is your current availability calendar. Click 'Edit Profile' to make changes."}
+                </p>
+                <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
+                    <Calendar 
+                        highlightedDates={draftEngineer.availability} 
+                        onDateClick={handleDateClick}
+                        readOnly={!isEditing}
+                    />
+                </div>
+            </div>
 
             {/* Existing Sections */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -289,13 +322,13 @@ export const EngineerDashboard: React.FC = () => {
                              <div className="flex justify-between items-start">
                                 <h3 className="text-xl font-bold text-gray-800">Basic Engineer Profile</h3>
                                 <span className="text-lg font-semibold text-gray-500">
-                                    {currency}{draftEngineer.baseDayRate}/day
+                                    {currency}{currentEngineer.baseDayRate}/day
                                 </span>
                             </div>
                             <p className="text-sm text-gray-600 mt-2">Your default profile for general tech support tasks. This profile uses your core certifications and is visible to all companies.</p>
                         </div>
 
-                        {draftEngineer.skillProfiles.map(profile => (
+                        {currentEngineer.skillProfiles.map(profile => (
                             <SkillProfileCard 
                                 key={profile.id} 
                                 profile={profile} 
@@ -318,6 +351,7 @@ export const EngineerDashboard: React.FC = () => {
                                         <p className="text-sm text-gray-600">{company?.name} - {job.location}</p>
                                         <div className="flex justify-end mt-2 space-x-2">
                                             <button className="text-xs font-semibold border border-gray-300 text-gray-700 px-3 py-1 rounded-md hover:bg-gray-100">Decline</button>
+
                                             <button className="text-xs font-semibold bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">Accept</button>
                                         </div>
                                     </div>
@@ -331,6 +365,6 @@ export const EngineerDashboard: React.FC = () => {
                      </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 };
