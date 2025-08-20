@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAppContext } from './context/AppContext';
 import { Role } from './types';
@@ -6,20 +7,25 @@ import { Footer } from './components/Footer';
 import { LandingPage } from './views/LandingPage';
 import { EngineerDashboard } from './views/EngineerDashboard';
 import { CompanyDashboard } from './views/CompanyDashboard';
+import { LoginSelector } from './views/LoginSelector';
 
 const App: React.FC = () => {
-  const { role } = useAppContext();
+  const { role, currentUser } = useAppContext();
 
   const renderContent = () => {
-    switch (role) {
-      case Role.ENGINEER:
+    if (currentUser) {
+      // @ts-ignore - 'skillProfiles' is a unique property of Engineer
+      if (currentUser.skillProfiles) {
         return <EngineerDashboard />;
-      case Role.COMPANY:
-        return <CompanyDashboard />;
-      case Role.NONE:
-      default:
-        return <LandingPage />;
+      }
+      return <CompanyDashboard />;
     }
+
+    if (role === Role.NONE) {
+      return <LandingPage />;
+    }
+
+    return <LoginSelector roleToLogin={role} />;
   };
 
   return (

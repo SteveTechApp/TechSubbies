@@ -2,27 +2,27 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Role, Currency } from '../types';
-import { DollarSign, PoundSterling } from 'lucide-react';
+import { DollarSign, PoundSterling, LogOut } from 'lucide-react';
 import { Logo } from './Logo';
 import { HowItWorksModal } from './HowItWorksModal';
 
 export const Header: React.FC = () => {
-  const { role, setRole, setCurrency, currency } = useAppContext();
+  const { role, setRole, setCurrency, currency, currentUser, logout } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const handleRoleChange = (newRole: Role) => {
-    setRole(newRole);
-  };
   
   const toggleCurrency = () => {
     setCurrency(currency === Currency.GBP ? Currency.USD : Currency.GBP);
+  };
+
+  const handleLogoClick = () => {
+    setRole(Role.NONE);
   };
 
   return (
     <>
       <header className="bg-white text-gray-700 shadow-sm sticky top-0 z-40">
         <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
-          <a href="#" onClick={() => handleRoleChange(Role.NONE)} className="flex items-center space-x-2">
+          <a href="#" onClick={handleLogoClick} className="flex items-center space-x-2">
             <Logo />
           </a>
           <div className="flex items-center space-x-4">
@@ -34,11 +34,15 @@ export const Header: React.FC = () => {
               <span className="ml-1 text-sm font-medium">{currency === Currency.GBP ? 'GBP' : 'USD'}</span>
             </button>
             
-            {role !== Role.NONE && (
-              <button onClick={() => handleRoleChange(Role.NONE)} className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
-                Switch View
-              </button>
-            )}
+            {currentUser ? (
+               <div className="flex items-center space-x-4">
+                 <span className="text-sm text-gray-600 hidden sm:block">Welcome, {currentUser.name.split(' ')[0]}</span>
+                 <button onClick={logout} className="flex items-center px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors" title="Logout">
+                    <LogOut size={16} className="mr-0 sm:mr-2"/>
+                    <span className="hidden sm:inline">Logout</span>
+                 </button>
+               </div>
+            ) : null}
           </div>
         </nav>
       </header>

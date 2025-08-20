@@ -1,4 +1,5 @@
 
+
 export enum Role {
   ENGINEER = 'engineer',
   COMPANY = 'company',
@@ -25,16 +26,58 @@ export interface SkillProfile {
   isPremium: boolean;
 }
 
-export interface Engineer {
+export interface Certification {
   id: string;
   name: string;
+  achieved: boolean;
+  proofUrl?: string;
+}
+
+export interface Engineer {
+  id:string;
+  // Personal Details from image
+  title: string;
+  firstName: string;
+  middleName: string;
+  surname: string;
+  companyName: string;
+  travelRadius: string;
+  bio: string;
+  tagline: string; // Job title e.g. "AV Technician"
+  yearsOfExperience: number;
+
+  // Contact Details from image
+  email: string;
+  telephone?: string;
+  mobile: string;
+  website: string;
+  linkedin: string;
+  social1?: string;
+  social2?: string;
+  social3?: string;
+  
+  // Compliance & Ratings from image
+  professionalIndemnityInsurance: boolean;
+  publicLiabilityInsurance: boolean;
+  siteSafe: boolean;
+  ownPPE: boolean;
+  accessEquipmentTrained: boolean;
+  firstAidTrained: boolean;
+  generalAvailability: string;
+  customerRating: number;
+  peerRating: number;
+  associates: { name: string; link?: string }[];
+  caseStudies: { title: string; link: string }[];
+  certifications: Certification[];
+  
+  // Original fields for app logic
+  name: string; // Full name, will be constructed
   location: string;
-  radius: number; // in miles/km
+  radius: number; // in miles/km (for filtering)
   transport: string;
-  insurance: boolean;
+  insurance: boolean; // General flag, can be derived
   profileImageUrl: string;
-  tagline: string;
-  reviews: { count: number; rating: number };
+  reviews: { count: number; rating: number }; // Kept for potential other uses, but UI will prefer new ratings
   baseDayRate: number;
   skillProfiles: SkillProfile[];
   availability: string[]; // array of ISO date strings

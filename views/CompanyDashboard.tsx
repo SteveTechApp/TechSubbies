@@ -1,46 +1,75 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Engineer } from '../types';
 import { generateJobDescription } from '../services/geminiService';
-import { Search, Star, MapPin, PlusCircle, Sparkles, XCircle } from 'lucide-react';
+import { Search, Star, MapPin, PlusCircle, Sparkles, XCircle, Briefcase, Award, ShieldCheck, Calendar } from 'lucide-react';
 import { SKILL_ROLES } from '../constants';
 
-const EngineerCard: React.FC<{ engineer: Engineer; currency: string }> = ({ engineer, currency }) => (
-  // Updated card styles
-  <div className="bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 border border-gray-200">
-    <div className="p-6">
-      <div className="flex items-center space-x-4">
-        <img className="h-16 w-16 rounded-full object-cover" src={engineer.profileImageUrl} alt={engineer.name} />
+const Stat: React.FC<{ icon: React.ElementType, label: string, value: string | React.ReactNode, isRating?: boolean }> = ({ icon: Icon, label, value }) => (
+    <div className={`flex items-start space-x-3 p-2 rounded-lg`}>
+        <Icon className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
         <div>
-          <h3 className="text-xl font-bold text-gray-800">{engineer.name}</h3>
-          {/* Updated tagline text color */}
-          <p className="text-sm text-gray-600 font-medium">{engineer.tagline}</p>
+            <p className="text-xs text-gray-500 font-medium">{label}</p>
+            <p className="text-base font-bold text-gray-800">{value}</p>
         </div>
-      </div>
-      <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
-        <div className="flex items-center"><MapPin size={14} className="mr-1" /> {engineer.location}</div>
-        <div className="flex items-center">
-          <Star size={14} className="text-yellow-400 mr-1" fill="currentColor"/> 
-          {engineer.reviews.rating} ({engineer.reviews.count} reviews)
-        </div>
-      </div>
-      <div className="mt-4">
-          <h4 className="font-semibold text-xs text-gray-500 uppercase tracking-wider">Specialized Roles</h4>
-          <div className="flex flex-wrap gap-2 mt-2">
-              {engineer.skillProfiles.map(p => (
-                  // Updated tag style
-                  <span key={p.id} className="bg-gray-200 text-gray-800 text-xs font-medium px-2.5 py-1 rounded-full">{p.roleTitle}</span>
-              ))}
-              {engineer.skillProfiles.length === 0 && <p className="text-xs text-gray-500">Basic Profile Only</p>}
-          </div>
-      </div>
-      {/* Updated button color */}
-      <button className="w-full mt-6 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-300">
-        View Profile & Availability
-      </button>
     </div>
-  </div>
 );
+
+const Rating: React.FC<{ rating: number }> = ({ rating }) => (
+    <div className="flex items-center">
+        {[...Array(5)].map((_, i) => (
+            <Star key={i} className={`h-4 w-4 ${i < rating ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" />
+        ))}
+    </div>
+);
+
+
+const EngineerCard: React.FC<{ engineer: Engineer; currency: string }> = ({ engineer, currency }) => {
+    const keyCerts = engineer.certifications.filter(c => c.achieved).slice(0, 2).map(c => c.name.replace('Card Holder', '').replace('AVIXA ', '')).join(' / ');
+
+    return (
+        <div className="bg-slate-50 rounded-2xl shadow-lg overflow-hidden border-4 border-white ring-2 ring-gray-200 transform hover:scale-105 transition-transform duration-300 flex flex-col">
+            {/* Card Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-4 text-white text-center">
+                <img className="h-24 w-24 rounded-full object-cover mx-auto border-4 border-white shadow-md" src={engineer.profileImageUrl} alt={engineer.name} />
+                <h3 className="text-2xl font-bold mt-3 tracking-tight">{engineer.name}</h3>
+                <p className="text-sm font-medium text-blue-100">{engineer.tagline}</p>
+            </div>
+
+            {/* Stats Section */}
+            <div className="p-5 flex-grow">
+                <h4 className="text-center font-bold text-gray-500 text-sm uppercase tracking-wider mb-4">Top Stats</h4>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                    <Stat icon={Calendar} label="Experience" value={`${engineer.yearsOfExperience} years`} />
+                    <Stat icon={Award} label="Customer Rating" value={<Rating rating={engineer.customerRating} />} />
+                    <Stat icon={ShieldCheck} label="Peer Rating" value={<Rating rating={engineer.peerRating} />} />
+                    <Stat icon={Briefcase} label="Day Rate" value={`${currency}${engineer.baseDayRate}`} />
+                    <Stat icon={MapPin} label="Travel Radius" value={engineer.travelRadius} />
+                    <Stat icon={Award} label="Key Certs" value={keyCerts || 'N/A'} />
+                </div>
+                
+                <div className="mt-6">
+                    <h4 className="text-center font-semibold text-xs text-gray-500 uppercase tracking-wider mb-2">Specialized Roles</h4>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                        {engineer.skillProfiles.map(p => (
+                            <span key={p.id} className="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">{p.roleTitle}</span>
+                        ))}
+                        {engineer.skillProfiles.length === 0 && <p className="text-xs text-gray-500">Basic Profile Only</p>}
+                    </div>
+                </div>
+            </div>
+
+            {/* Footer Button */}
+            <div className="p-4 bg-gray-100">
+                <button className="w-full bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-300 shadow-sm">
+                    View Full Profile
+                </button>
+            </div>
+        </div>
+    );
+};
+
 
 const JobPostForm: React.FC = () => {
     const [jobTitle, setJobTitle] = useState('');
