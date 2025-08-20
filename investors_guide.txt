@@ -2,27 +2,19 @@ TechSubbies.com - Investment Prospectus
 
 ### Executive Summary
 
-In today's fast-paced digital economy, project managers and technical leads waste countless hours searching for specialized tech talent—like a certified network engineer for a critical upgrade or an AV technician for an urgent event—and then vetting skills and chasing availability. This inefficiency creates significant project delays and budget overruns. TechSubbies.com solves this problem by providing instant access to a curated network of qualified freelance tech engineers with real-time availability, dramatically reducing hiring time from weeks to days.
+In today's fast-paced digital economy, project managers and technical leads waste countless hours searching for specialized tech talent and vetting availability. This inefficiency creates significant project delays and budget overruns. TechSubbies.com solves this problem by providing instant access to a curated network of qualified freelance tech engineers with real-time availability, dramatically reducing hiring time from weeks to days.
 
-TechSubbies.com is a scalable, technology-driven platform connecting freelance engineers across the entire tech spectrum—from IT infrastructure and networking to software development and AV integration—with companies that require their specialized expertise. By streamlining talent discovery, skill validation, and scheduling, we are building the essential infrastructure for the future of freelance technical work.
+TechSubbies.com is a scalable, technology-driven platform connecting freelance engineers with companies that require their specialized expertise. By making it free for companies to find talent, we are building the largest possible ecosystem of opportunities, poised to become the industry standard for technical resourcing.
 
 ---
 
 ### Investment Highlights
 
-*   **Scalable Business Model:** A tiered, dual-sided subscription structure for both engineers and companies creates multiple, recurring revenue streams.
+*   **Disruptive Business Model:** Free access for companies to post jobs and find talent drives massive adoption and network effects, creating a deep pool of opportunities for our paying engineer user base.
+*   **Multiple Revenue Streams:** Revenue is generated through a high-volume, low-cost subscription model for talent, supplemented by high-margin, value-added services like "Profile Boost" credits and targeted advertising.
 *   **High-Demand Market:** The global gig economy and the increasing reliance on a flexible, specialized tech workforce are fueling massive market growth.
-*   **Technology Differentiation:** Advanced search filters, AI-powered job matching, detailed skill profiles, and live availability tracking set our platform apart.
+*   **Technology Differentiation:** Advanced search filters, AI-powered team building, and real-time availability tracking set our platform apart.
 *   **First-Mover Advantage:** We are targeting a high-value vertical with a purpose-built solution designed for the unique needs of the technical contracting industry.
-*   **Clear Expansion Potential:** The model is built to scale globally and expand into adjacent technical verticals, offering significant long-term growth upside.
-
----
-
-### Market Opportunity
-
-The global gig economy is valued at over $455 billion, with the market for specialized tech freelancers experiencing explosive growth. Digital transformation, the shift to hybrid work, and rapid technological advancements have created an unprecedented demand for on-demand technical experts—from network security specialists securing remote workforces to cloud architects managing digital infrastructure. Companies can no longer rely solely on traditional hiring to fill critical skill gaps.
-
-TechSubbies.com is positioned to capture a significant share of this market by providing a centralized, trusted, and efficient platform that solves the core challenges for both sides of the marketplace.
 
 ---
 
@@ -30,49 +22,35 @@ TechSubbies.com is positioned to capture a significant share of this market by p
 
 Our platform directly addresses market pain points with a suite of powerful features:
 
-*   **Detailed Skill Profiles:** Engineers create rich profiles showcasing specific skills (e.g., "Cisco Routing," "Python," "Crestron Programming"), self-assessed ratings, verified certifications like CCNA or AWS, and project experience, moving beyond a standard CV.
-*   **AI-Powered Matching:** Our intelligent algorithms connect companies with the most suitable engineers based on project requirements, reducing hiring time and ensuring a better fit.
-*   **Real-Time Availability:** An integrated calendar system ensures companies only connect with engineers who are actually available, eliminating wasted communication.
-*   **Tiered Subscription Value:** A freemium model encourages engineer adoption, while premium tiers unlock advanced features like custom day rates, multiple skill profiles, and top search placement.
+*   **Detailed Skill Profiles:** Engineers create rich profiles showcasing specific skills (e.g., "Cisco Routing," "Crestron Programming"), ratings, and verified certifications.
+*   **AI-Powered Matching:** Our intelligent algorithms connect companies with the most suitable engineers based on project requirements.
+*   **Real-Time Availability:** An integrated calendar system ensures companies only connect with engineers who are actually available.
 *   **Direct Engagement:** We facilitate direct communication and negotiation, empowering both parties to form professional relationships without unnecessary intermediaries.
 
 ---
 
-### Revenue Model & Growth Strategy
+### Our Modern Revenue Model
 
-TechSubbies.com generates revenue through a robust, dual-sided subscription model.
+We are disrupting the traditional recruitment model. By making it free for companies to post jobs and find talent, we attract a massive pool of opportunities. Our revenue is generated from the talent side through a high-volume, low-cost strategy and value-added services.
 
-#### **Engineer Subscriptions (Freemium Model)**
+*   **1. Engineer & Resourcing Subscriptions:** A low-cost monthly subscription for engineers and resourcing companies unlocks premium features like multiple skill profiles, custom day rates, and enhanced visibility. This encourages a large, active user base of skilled professionals.
 
-*   **Basic (Free):** Allows engineers to create a single profile with a fixed day rate, providing a low-friction entry point to our ecosystem.
-*   **Pro (£10/month):** Unlocks up to 3 specialized skill profiles, custom day rates, and increased search visibility.
-*   **Expert (£20/month):** Offers unlimited skill profiles, top search placement, advanced analytics, and priority support.
+*   **2. "Boost Profile" Credits:** A pay-per-use feature allowing engineers to purchase credits that temporarily place their profile at the top of relevant search results. This provides a direct, performance-based revenue stream and offers engineers a way to stand out during critical periods.
 
-#### **Company Subscriptions**
-
-For firms needing to find and manage freelance talent:
-
-*   **Small Team (£49/month):** Access for up to 10 engineers.
-*   **Growing Business (£99/month):** Access for up to 25 engineers.
-*   **Enterprise (Custom Pricing):** Custom solutions, API access, and dedicated support for large-scale integrators and corporations.
-
-#### **Additional Monetisation Opportunities**
-
-*   **Premium "Featured" Job Listings** for priority placement.
-*   **Verified Engineer Badges** as a paid service to enhance trust.
-*   **Affiliate Partnerships** with training providers and equipment vendors.
+*   **3. Targeted Advertising:** With a highly specialized user base, we offer premium advertising slots for industry-specific manufacturers, training companies, and service providers to reach their ideal audience through targeted banners and pop-ups.
 
 ---
 
 ### Financial Projections
 
-Our financial model is based on conservative user adoption rates and a strategic conversion of free users to paid tiers.
+Our financial model is based on rapidly growing our user base due to the free company access, and converting a percentage of our talent pool to paid tiers and services.
 
-| Year | Free Users | Pro Users (@£10/mo) | Expert Users (@£20/mo) | Business Accounts (Avg £99/mo) | Annual Revenue |
-| ---- | ---------- | ------------------- | -------------------- | -------------------------------- | -------------- |
-| 1    | 5,000      | 500                 | 250                  | 100                              | £189,800       |
-| 2    | 9,000      | 1,200               | 600                  | 250                              | £514,800       |
-| 3    | 15,000     | 2,500               | 1,200                | 500                              | £1,120,800     |
+| Year | Pro/Expert Users | Resourcing Accounts | Ancillary Revenue (Boosts/Ads) | Total Annual Revenue |
+| ---- | ---------------- | ------------------- | ------------------------------ | -------------------- |
+| 1    | 750              | 50                  | £30,000                        | £215,500             |
+| 2    | 1,800            | 150                 | £95,000                        | £598,000             |
+| 3    | 3,700            | 300                 | £250,000                       | £1,350,000           |
+
 
 This forecast demonstrates a powerful growth trajectory as network effects take hold and the platform becomes the industry standard for sourcing freelance tech talent.
 
@@ -80,7 +58,7 @@ This forecast demonstrates a powerful growth trajectory as network effects take 
 
 ### Conclusion
 
-TechSubbies.com presents a high-growth investment opportunity in a rapidly expanding global market. With a scalable business model, robust technology, multiple recurring revenue streams, and a clear solution to a pressing market need, the platform is poised for substantial success. We invite you to join us in building the essential infrastructure for the future of freelance technical work across the IT, networking, and AV sectors.
+TechSubbies.com presents a high-growth investment opportunity in a rapidly expanding global market. With a scalable and disruptive business model, robust technology, and multiple recurring revenue streams, the platform is poised for substantial success. We invite you to join us in building the essential infrastructure for the future of freelance technical work.
 
 For Investment Enquiries, Please Contact:
 invest@techsubbies.com
