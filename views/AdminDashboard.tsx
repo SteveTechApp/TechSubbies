@@ -1,10 +1,10 @@
 
+
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { SupportRequest, Role } from '../types';
 import { Users, AlertTriangle, CheckCircle, Ticket, Inbox } from 'lucide-react';
 import { AISkillDiscovery } from '../components/AISkillDiscovery';
-import { AIEngineerCostAnalysis } from '../components/AIEngineerCostAnalysis';
 
 const StatCard: React.FC<{ icon: React.ElementType; title: string; value: number | string; color: string }> = ({ icon: Icon, title, value, color }) => (
     <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 flex items-center space-x-4">
@@ -51,7 +51,6 @@ export const AdminDashboard: React.FC = () => {
             {/* AI Tools Section */}
             <div className="space-y-8 mb-8">
                  <AISkillDiscovery />
-                 <AIEngineerCostAnalysis />
             </div>
 
 

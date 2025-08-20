@@ -124,6 +124,7 @@ export const generateCompanies = (count: number): Company[] => {
             id,
             name,
             logoUrl: `https://picsum.photos/seed/${id}/100/100`,
+            location: getRandom(LOCATIONS),
         });
     }
     return companies;

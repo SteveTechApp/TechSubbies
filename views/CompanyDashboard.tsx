@@ -1,9 +1,11 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Engineer } from '../types';
 import { Search, Star, MapPin, PlusCircle, XCircle, Briefcase, Award, ShieldCheck } from 'lucide-react';
 import { JobPostModal } from '../components/JobPostModal';
+import { AIEngineerCostAnalysis } from '../components/AIEngineerCostAnalysis';
 
 const Stat: React.FC<{ icon: React.ElementType, value: string | React.ReactNode, className?: string }> = ({ icon: Icon, value, className = '' }) => (
     <div className={`flex items-center space-x-1.5 ${className}`}>
@@ -139,6 +141,10 @@ export const CompanyDashboard: React.FC = () => {
                     <PlusCircle size={20} className="mr-2" />
                     Post a New Job
                 </button>
+            </div>
+            
+            <div className="mb-6">
+                <AIEngineerCostAnalysis />
             </div>
             
             {/* Skill Filter Bar */}

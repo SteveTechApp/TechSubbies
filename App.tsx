@@ -11,9 +11,10 @@ import { LoginSelector } from './views/LoginSelector';
 import { EngineerProfileView } from './views/EngineerProfileView';
 import { AdminDashboard } from './views/AdminDashboard';
 import { DashboardSidebar } from './components/DashboardSidebar';
+import { InvestorPage } from './views/InvestorPage';
 
 const App: React.FC = () => {
-  const { role, currentUser, viewingEngineer } = useAppContext();
+  const { role, currentUser, viewingEngineer, publicView } = useAppContext();
 
   const renderDashboardContent = () => {
     if (viewingEngineer) {
@@ -34,6 +35,9 @@ const App: React.FC = () => {
   };
   
   const renderPublicContent = () => {
+     if (publicView === 'investors') {
+        return <InvestorPage />;
+     }
      if (role === Role.NONE) {
         return <LandingPage />;
       } else {

@@ -141,8 +141,8 @@ export const MOCK_ENGINEERS_BASE: Engineer[] = [
 ];
 
 export const MOCK_COMPANIES_BASE: Company[] = [
-    { id: 'com_steve', name: 'SteveCompany', logoUrl: 'https://picsum.photos/seed/com_steve/100/100'},
-    { id: 'com2', name: 'Global IT Integrators', logoUrl: 'https://picsum.photos/seed/com2/100/100'},
+    { id: 'com_steve', name: 'SteveCompany', logoUrl: 'https://picsum.photos/seed/com_steve/100/100', location: 'London, UK' },
+    { id: 'com2', name: 'Global IT Integrators', logoUrl: 'https://picsum.photos/seed/com2/100/100', location: 'New York, USA' },
 ];
 
 export const MOCK_ADMINS: Admin[] = [

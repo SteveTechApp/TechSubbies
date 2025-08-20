@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { SkillDiscoveryResult, Currency } from '../types';
 
@@ -109,28 +110,33 @@ export const generateSkillsForRole = async (jobCategory: string): Promise<SkillD
     }
 };
 
-export const analyzeEngineerRates = async (roleTitle: string, avgDayRate: number, engineerCount: number, currency: Currency): Promise<string> => {
+export const analyzeEngineerRates = async (roleTitle: string, avgDayRate: number, engineerCount: number, currency: Currency, scope: 'local' | 'global', location?: string): Promise<string> => {
     if (!API_KEY) {
         return "API Key not configured. Please check the environment setup.";
     }
 
+    const marketDescription = scope === 'local' && location ? `the local market in ${location}` : 'the global market';
+
     const prompt = `
         You are an expert financial analyst for a tech recruitment platform.
-        Your task is to provide a concise summary of the market rates for a specific freelance role based on internal data.
+        Your task is to provide a concise summary of the market rates for a specific freelance role based on internal data for ${marketDescription}.
 
         Role Title: "${roleTitle}"
         Average Day Rate: ${currency}${avgDayRate}
         Number of Data Points (Engineers): ${engineerCount}
+        Market Scope: ${scope === 'local' ? `Local (${location})` : 'Global'}
 
         Based on this data, provide a brief analysis. The tone should be professional and informative, suitable for advising clients or platform users.
         
         The analysis must include:
-        1. A statement confirming the average day rate based on the provided data points.
-        2. A concluding sentence about the market position of this role (e.g., "This suggests a strong market demand for skilled ${roleTitle}s.").
+        1. A statement confirming the average day rate for ${marketDescription} based on the provided data points.
+        2. A concluding sentence about the market position of this role in this specific market.
 
         Format the output as a single paragraph of plain text. Do not use markdown or bullet points.
-        Example output structure:
-        "Based on data from ${engineerCount} engineers, the average day rate for a ${roleTitle} is approximately ${currency}${avgDayRate}. This rate indicates a competitive market for professionals with these specialized skills."
+        Example output structure for a local search:
+        "Based on data from ${engineerCount} engineers in ${location}, the average day rate for a ${roleTitle} is approximately ${currency}${avgDayRate}. This rate indicates a competitive local market for professionals with these specialized skills."
+        Example output structure for a global search:
+        "Based on data from ${engineerCount} engineers globally, the average day rate for a ${roleTitle} is approximately ${currency}${avgDayRate}. This indicates a competitive global market for professionals with these specialized skills."
     `;
 
     try {

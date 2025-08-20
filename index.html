@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -6,36 +7,2821 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TechSubbies.com - Investment Prospectus Demo</title>
     <script src="https://cdn.tailwindcss.com"></script>
-  <script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.15.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
-    "react/": "https://esm.sh/react@^19.1.1/",
-    "react": "https://esm.sh/react@^19.1.1",
-    "lucide-react": "https://esm.sh/lucide-react@^0.540.0"
-  }
-}
-</script>
-<style>
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(15px);
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://esm.sh/@google/genai@^1.15.0",
+        "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
+        "react/": "https://esm.sh/react@^19.1.1/",
+        "react": "https://esm.sh/react@^19.1.1",
+        "lucide-react": "https://esm.sh/lucide-react@^0.540.0"
+      }
     }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  .fade-in-up {
-    animation: fadeInUp 0.5s ease-out forwards;
-    opacity: 0; /* Start hidden */
-  }
-</style>
-</head>
+    </script>
+    <style>
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(15px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .fade-in-up {
+        animation: fadeInUp 0.5s ease-out forwards;
+        opacity: 0; /* Start hidden */
+      }
+    </style>
+  </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    
+    <!-- 
+      IMPORTANT SETUP STEP:
+      To enable the AI features, you must provide your Google Gemini API key below.
+      1. Get your key from Google AI Studio.
+      2. Replace 'PASTE_YOUR_GEMINI_API_KEY_HERE' with your actual key.
+    -->
+    <script>
+      window.process = {
+        env: {
+          API_KEY: 'PASTE_YOUR_GEMINI_API_KEY_HERE'
+        }
+      };
+    </script>
+
+    <script type="text/babel" data-type="module">
+      // All application code is bundled here.
+      // Importing external libraries defined in the importmap.
+      import React, { createContext, useState, useContext, ReactNode, useEffect, useRef } from 'react';
+      import ReactDOM from 'react-dom/client';
+      import { GoogleGenAI, Type } from "@google/genai";
+      import { 
+        DollarSign, PoundSterling, LogOut, Briefcase, UserCheck, TrendingUp, Star, PlusCircle, MapPin, 
+        Edit, X, Save, UploadCloud, Paperclip, Search, XCircle, Award, ShieldCheck, ArrowLeft, Calendar,
+        CheckCircle, Mail, Phone, Globe, Linkedin, Users, LayoutDashboard, Settings, Ticket, BarChart,
+        Building, User, Handshake, ClipboardList, CalendarDays, PenSquare, LogIn, UserCog, AlertCircle,
+        Zap, Trash2, Plus, BrainCircuit, Loader, RefreshCw, Check, Sparkles, BarChart2,
+        AlertTriangle, Inbox, ChevronLeft, ChevronRight
+      } from 'lucide-react';
+
+      // =============================================
+      // ===== BUNDLED APPLICATION CODE STARTING =====
+      // =============================================
+      
+      // ===== START: types.ts =====
+      var Role;
+      (function (Role) {
+          Role["ENGINEER"] = "engineer";
+          Role["COMPANY"] = "company";
+          Role["ADMIN"] = "admin";
+          Role["NONE"] = "none";
+      })(Role || (Role = {}));
+      var Currency;
+      (function (Currency) {
+          Currency["GBP"] = "\u00A3";
+          Currency["USD"] = "$";
+      })(Currency || (Currency = {}));
+      // ===== END: types.ts =====
+      
+      // ===== START: services/mockDataGenerator.ts =====
+      const FIRST_NAMES = ['John', 'Jane', 'Alex', 'Emily', 'Chris', 'Katie', 'Michael', 'Sarah', 'David', 'Laura'];
+      const SURNAMES = ['Smith', 'Jones', 'Williams', 'Brown', 'Taylor', 'Davies', 'Wilson', 'Evans', 'Thomas', 'Roberts'];
+      const LOCATIONS = ['London, UK', 'Manchester, UK', 'New York, USA', 'San Francisco, USA', 'Berlin, DE', 'Paris, FR', 'Sydney, AU', 'Toronto, CA'];
+      const TAGLINES = ['Senior Network Engineer', 'AV Commissioning Specialist', 'Full-Stack Developer', 'Cloud Solutions Architect', 'IT Support Technician', 'Lead Installation Engineer', 'Control System Programmer', 'AV Commissioning Engineer'];
+      const SKILLS_BY_ROLE = {
+          'Network Engineer': [
+              { name: 'Cisco IOS/NX-OS', rating: 5 }, { name: 'Palo Alto Firewalls', rating: 4 }, { name: 'BGP/OSPF Routing', rating: 4 }, { name: 'VPN Configuration', rating: 5 }
+          ],
+          'Cloud Engineer': [
+              { name: 'AWS VPC & Direct Connect', rating: 5 }, { name: 'Azure Networking', rating: 4 }, { name: 'Terraform IaC', rating: 4 }, { name: 'Kubernetes', rating: 3 }
+          ],
+          'Installation Engineer': [
+              { name: 'Crestron/AMX Hardware Install', rating: 5 }, { name: 'Video Wall Calibration', rating: 4 }, { name: 'Site Safety Protocols', rating: 5 }, { name: 'Cable Termination', rating: 5 }
+          ],
+          'Rack Builder': [
+              { name: 'Cable Lacing & Termination', rating: 5 }, { name: 'Rack Elevation Schematics', rating: 4 }, { name: 'Power Management Units', rating: 4 }, { name: 'Fibre Optic Splicing', rating: 3 }
+          ],
+          'Control System Programmer': [
+              { name: 'Crestron SIMPL', rating: 5 }, { name: 'C# (for SIMPL#)', rating: 4 }, { name: 'DM-NVX Configuration', rating: 5 }, { name: 'Q-SYS Control', rating: 3 }
+          ],
+          'AV Commissioning Engineer': [
+              { name: 'Crestron Toolbox', rating: 5 }, { name: 'Biamp Tesira Configuration', rating: 4 }, { name: 'Q-SYS Designer', rating: 4 }, { name: 'Dante Certification Level 2', rating: 5 }, { name: 'System Fault-Finding', rating: 5 },
+          ],
+          'Web Developer': [
+              { name: 'React.js & TypeScript', rating: 5 }, { name: 'Node.js (Express)', rating: 4 }, { name: 'GraphQL APIs', rating: 4 }, { name: 'PostgreSQL', rating: 3 }
+          ],
+          'IT Support Specialist': [
+              { name: 'Active Directory', rating: 5 }, { name: 'Office 365 Admin', rating: 4 }, { name: 'Hardware Troubleshooting', rating: 5 }, { name: 'Helpdesk Ticketing', rating: 4 }
+          ],
+      };
+      const JOB_ADJECTIVES = ['Senior', 'Lead', 'Expert', 'Junior', 'Mid-Level', 'Principal'];
+      const JOB_NOUNS = ['Project', 'Deployment', 'Upgrade', 'Installation', 'Migration', 'Fit-Out'];
+      const COMPANY_ADJECTIVES = ['Global', 'Innovative', 'Dynamic', 'Apex', 'Summit', 'Stellar', 'Quantum', 'Nexus', 'Synergy', 'Visionary'];
+      const COMPANY_NOUNS = ['Solutions', 'Integrators', 'Systems', 'Technologies', 'Group', 'Ventures', 'Dynamics', 'Partners', 'Labs', 'Consulting'];
+      const COMPANY_SUFFIXES = ['Inc.', 'Ltd.', 'Corp.', 'LLC'];
+      const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+      const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+      const generateEngineers = (count) => {
+          const engineers = [];
+          for (let i = 0; i < count; i++) {
+              const id = `gen_eng_${i + 4}`;
+              const firstName = getRandom(FIRST_NAMES);
+              const surname = getRandom(SURNAMES);
+              const name = `${firstName} ${surname}`;
+              const location = getRandom(LOCATIONS);
+              const tagline = getRandom(TAGLINES);
+              const yearsOfExperience = getRandomInt(3, 20);
+              const numSkillProfiles = getRandomInt(1, 3);
+              const skillProfiles = [];
+              const usedRoles = new Set();
+              for (let j = 0; j < numSkillProfiles; j++) {
+                  let roleTitle = getRandom(Object.keys(SKILLS_BY_ROLE));
+                  while (usedRoles.has(roleTitle)) {
+                      roleTitle = getRandom(Object.keys(SKILLS_BY_ROLE));
+                  }
+                  usedRoles.add(roleTitle);
+                  skillProfiles.push({
+                      id: `gen_sp_${i}_${j}`,
+                      roleTitle: roleTitle,
+                      dayRate: getRandomInt(300, 800),
+                      skills: SKILLS_BY_ROLE[roleTitle].map(s => ({ ...s, id: `gen_skill_${i}_${j}_${s.name}` })),
+                      customSkills: ['Team Leadership', 'Client Facing'],
+                      isPremium: true,
+                  });
+              }
+              engineers.push({
+                  id,
+                  name,
+                  firstName,
+                  surname,
+                  location,
+                  tagline,
+                  yearsOfExperience,
+                  profileImageUrl: `https://i.pravatar.cc/200?u=${id}`,
+                  baseDayRate: 195,
+                  radius: getRandomInt(50, 150),
+                  transport: 'Own Vehicle',
+                  insurance: Math.random() > 0.3,
+                  reviews: { count: getRandomInt(5, 50), rating: getRandomInt(35, 50) / 10 },
+                  skillProfiles,
+                  availability: Array.from({ length: getRandomInt(2, 10) }, () => `2024-09-${getRandomInt(1, 30).toString().padStart(2, '0')}`),
+                  title: 'Mr',
+                  middleName: '',
+                  companyName: 'Self-Employed',
+                  travelRadius: `< ${getRandomInt(50, 150)} miles`,
+                  bio: `Dedicated ${tagline} with ${yearsOfExperience} years of experience in the tech industry.`,
+                  email: `${firstName.toLowerCase()}.${surname.toLowerCase()}@example.com`,
+                  mobile: '07123456789',
+                  website: 'www.example.com',
+                  linkedin: `linkedin.com/in/${firstName.toLowerCase()}${surname.toLowerCase()}`,
+                  professionalIndemnityInsurance: true,
+                  publicLiabilityInsurance: true,
+                  siteSafe: true,
+                  ownPPE: true,
+                  accessEquipmentTrained: Math.random() > 0.5,
+                  firstAidTrained: Math.random() > 0.5,
+                  customerRating: getRandomInt(3, 5),
+                  peerRating: getRandomInt(3, 5),
+                  associates: [],
+                  caseStudies: [],
+                  certifications: [{ id: 'cert_cscs', name: 'CSCS Card Holder', achieved: true }],
+              });
+          }
+          return engineers;
+      };
+      const generateCompanies = (count) => {
+          const companies = [];
+          for (let i = 0; i < count; i++) {
+              const id = `gen_com_${i + 3}`;
+              const name = `${getRandom(COMPANY_ADJECTIVES)} ${getRandom(COMPANY_NOUNS)} ${getRandom(COMPANY_SUFFIXES)}`;
+              companies.push({
+                  id,
+                  name,
+                  logoUrl: `https://picsum.photos/seed/${id}/100/100`,
+                  location: getRandom(LOCATIONS),
+              });
+          }
+          return companies;
+      };
+      const generateJobs = (count, companyIds, skillRoles) => {
+          const jobs = [];
+          for (let i = 0; i < count; i++) {
+              const roleTitle = getRandom(skillRoles.filter(r => r !== 'Basic Engineer'));
+              const requiredSkills = SKILLS_BY_ROLE[roleTitle]?.map(s => s.name).slice(0, 2) || [];
+              jobs.push({
+                  id: `gen_job_${i + 5}`,
+                  title: `${getRandom(JOB_ADJECTIVES)} ${roleTitle} for ${getRandom(JOB_NOUNS)}`,
+                  companyId: getRandom(companyIds),
+                  location: getRandom(LOCATIONS),
+                  startDate: `2024-10-${getRandomInt(1, 28).toString().padStart(2, '0')}`,
+                  endDate: `2024-11-${getRandomInt(1, 28).toString().padStart(2, '0')}`,
+                  description: `Seeking an experienced ${roleTitle} for an upcoming project. Key skills required include ${requiredSkills.join(', ')}.`,
+                  requiredSkills,
+                  dayRate: getRandomInt(350, 700),
+                  roleTitle,
+              });
+          }
+          return jobs;
+      };
+      const SUPPORT_SUBJECTS = ['Login Issue', 'Profile Update Failed', 'Billing Query', 'Cannot find engineer', 'Feature Request'];
+      const SUPPORT_MESSAGES = [
+          "Hi, I'm having trouble logging into my account. Can you please reset my password?",
+          "I updated my profile but the changes are not showing. Please help.",
+          "I have a question about my last invoice. Can someone from billing contact me?",
+          "I'm trying to find an engineer with specific skills but the search isn't working.",
+          "It would be great if the platform had a direct messaging feature."
+      ];
+      const generateSupportRequests = (count, users) => {
+          const requests = [];
+          for (let i = 0; i < count; i++) {
+              const user = getRandom(users);
+              const userRole = 'logoUrl' in user ? Role.COMPANY : Role.ENGINEER;
+              requests.push({
+                  id: `sr_${i}`,
+                  userId: user.id,
+                  userName: user.name,
+                  userRole,
+                  subject: getRandom(SUPPORT_SUBJECTS),
+                  message: getRandom(SUPPORT_MESSAGES),
+                  date: new Date(Date.now() - getRandomInt(1, 30) * 24 * 60 * 60 * 1000).toISOString(),
+                  status: Math.random() > 0.4 ? 'Open' : 'Resolved',
+              });
+          }
+          return requests;
+      };
+      // ===== END: services/mockDataGenerator.ts =====
+      
+      // ===== START: constants.ts =====
+      const MOCK_ENGINEERS_BASE = [
+          {
+              id: 'eng_steve',
+              title: 'Mr',
+              firstName: 'Steve',
+              middleName: '',
+              surname: 'Engineer',
+              companyName: 'SE Engineering Services',
+              travelRadius: '< 100 miles',
+              email: 'steve.engineer@example.com',
+              mobile: '07123456789',
+              website: 'www.steve-engineer.com',
+              linkedin: 'linkedin.com/in/steveengineer',
+              professionalIndemnityInsurance: true,
+              publicLiabilityInsurance: true,
+              siteSafe: true,
+              ownPPE: true,
+              accessEquipmentTrained: true,
+              firstAidTrained: true,
+              customerRating: 5,
+              peerRating: 4,
+              associates: [{ name: 'John Smith', link: '#' }, { name: 'Emily White' }],
+              caseStudies: [{ title: 'Corporate HQ Audiovisual Integration', link: '#' }],
+              certifications: [
+                { id: 'cert1', name: 'CSCS Card Holder', achieved: true },
+                { id: 'cert2', name: 'AVIXA CTS', achieved: true },
+                { id: 'cert_crestron_dm', name: 'Crestron DMC-E-4K', achieved: true },
+                { id: 'cert_biamp', name: 'Biamp TesiraFORTE', achieved: false },
+                { id: 'cert4', name: 'First Aid At Work', achieved: true },
+              ],
+              bio: 'Experienced AV installation engineer with over 15 years in the industry, specializing in corporate and educational sector projects. Proven ability to lead teams and deliver complex integrations on time and to the highest standard.',
+              yearsOfExperience: 15,
+              name: 'Steve Engineer',
+              tagline: 'Lead AV Installation Engineer',
+              profileImageUrl: 'https://i.imgur.com/8Qtm93t.jpeg',
+              location: 'London, UK',
+              radius: 100,
+              transport: 'Own Van',
+              insurance: true,
+              reviews: { count: 25, rating: 4.5 },
+              baseDayRate: 195,
+              skillProfiles: [
+                { id: 'sp1', roleTitle: 'Rack Builder', dayRate: 280, skills: [{id: 's1', name: 'Cable Lacing & Termination', rating: 5}, {id: 's2', name: 'Rack Elevation Schematics', rating: 4}, {id: 's3', name: 'Power Management Units', rating: 4}], customSkills: ['Neat Patch Certified', 'Fibre Optic Splicing'], isPremium: true},
+                { id: 'sp_install', roleTitle: 'Installation Engineer', dayRate: 375, skills: [{id: 's12', name: 'Crestron/AMX Hardware Install', rating: 5}, {id: 's13', name: 'Video Wall Calibration', rating: 4}, {id: 's14', name: 'Site Safety Protocols', rating: 5}], customSkills: ['CSCS Certified', 'IPAF Licensed'], isPremium: true},
+              ],
+              availability: ['2024-08-15', '2024-08-16', '2024-08-22', '2024-08-23', '2024-09-02'],
+          },
+          {
+              id: 'eng2',
+              name: 'Jane Smith',
+              location: 'New York, USA',
+              radius: 75,
+              transport: 'Company Vehicle',
+              insurance: true,
+              profileImageUrl: 'https://picsum.photos/seed/eng2/200/200',
+              tagline: 'Senior Network & Cloud Engineer',
+              reviews: { count: 31, rating: 4.8 },
+              baseDayRate: 195,
+              skillProfiles: [
+                { id: 'sp3', roleTitle: 'Network Engineer', dayRate: 650, skills: [{id: 's6', name: 'Cisco IOS/NX-OS', rating: 5}, {id: 's7', name: 'Palo Alto Firewalls', rating: 5}, {id: 's8', name: 'BGP/OSPF Routing', rating: 4}, {id: 's9', name: 'Wireshark Analysis', rating: 4}], customSkills: ['CCNP Enterprise'], isPremium: true},
+                { id: 'sp4', roleTitle: 'Cloud Engineer', dayRate: 700, skills: [{id: 's10', name: 'AWS VPC & Direct Connect', rating: 5}, {id: 's11', name: 'Azure Networking', rating: 4}, {id: 's15', name: 'Terraform IaC', rating: 4}], customSkills: ['AWS Advanced Networking'], isPremium: true},
+              ],
+              availability: ['2024-08-12', '2024-08-13', '2024-08-14', '2024-08-28', '2024-08-29'],
+              title: 'Ms',
+              firstName: 'Jane',
+              middleName: 'Marie',
+              surname: 'Smith',
+              companyName: 'Self-Employed',
+              travelRadius: '< 75 miles',
+              bio: 'Senior Network Engineer with a focus on enterprise solutions and hybrid-cloud infrastructure. Expertise in designing, implementing, and securing complex network environments.',
+              email: 'jane.smith@example.com',
+              mobile: '07987654321',
+              website: 'www.janesmith.net',
+              linkedin: 'linkedin.com/in/janesmith',
+              professionalIndemnityInsurance: true,
+              publicLiabilityInsurance: true,
+              siteSafe: true,
+              ownPPE: true,
+              accessEquipmentTrained: false,
+              firstAidTrained: true,
+              customerRating: 5,
+              peerRating: 5,
+              associates: [{ name: 'Carlos Ramirez', link: '#' }],
+              caseStudies: [{title: 'Financial Firm Network Overhaul', link: '#'}],
+              yearsOfExperience: 10,
+              certifications: [
+                  { id: 'cert5', name: 'CCNP Enterprise', achieved: true },
+                  { id: 'cert_aws_net', name: 'AWS Advanced Networking', achieved: true },
+                  { id: 'cert6', name: 'CompTIA Security+', achieved: true },
+              ],
+          },
+          {
+              id: 'eng3',
+              name: 'Carlos Ramirez',
+              location: 'Manchester, UK',
+              radius: 150,
+              transport: 'Own Car',
+              insurance: true,
+              profileImageUrl: 'https://picsum.photos/seed/eng3/200/200',
+              tagline: 'Control Systems & Web Developer',
+              reviews: { count: 18, rating: 4.9 },
+              baseDayRate: 195,
+              skillProfiles: [
+                { id: 'sp5', roleTitle: 'Control System Programmer', dayRate: 600, skills: [{id: 's16', name: 'Crestron SIMPL', rating: 5}, {id: 's17', name: 'C# (for SIMPL#)', rating: 4}, {id: 's18', name: 'DM-NVX Configuration', rating: 5}, {id: 's19', name: 'AV over IP Protocols', rating: 4}], customSkills: ['Crestron Certified Programmer'], isPremium: true },
+                { id: 'sp6', roleTitle: 'Web Developer', dayRate: 550, skills: [{id: 's20', name: 'React.js & TypeScript', rating: 5}, {id: 's21', name: 'Node.js (Express)', rating: 4}, {id: 's22', name: 'WebSocket APIs', rating: 4}, {id: 's23', name: 'PostgreSQL', rating: 3}], customSkills: ['Full-Stack Integration'], isPremium: true},
+              ],
+              availability: ['2024-09-10', '2024-09-11', '2024-09-17', '2024-09-18', '2024-09-24'],
+              title: 'Mr',
+              firstName: 'Carlos',
+              middleName: '',
+              surname: 'Ramirez',
+              companyName: 'Code & Control Ltd.',
+              travelRadius: '< 150 miles',
+              bio: 'A hybrid developer specializing in both high-level AV control systems and modern web technologies. Passionate about creating seamless user experiences by integrating physical hardware with custom software interfaces.',
+              email: 'carlos.ramirez@example.com',
+              mobile: '07111222333',
+              website: 'www.carlosramirez.dev',
+              linkedin: 'linkedin.com/in/carlosramirezdev',
+              professionalIndemnityInsurance: true,
+              publicLiabilityInsurance: true,
+              siteSafe: true,
+              ownPPE: true,
+              accessEquipmentTrained: false,
+              firstAidTrained: false,
+              customerRating: 5,
+              peerRating: 4,
+              associates: [{ name: 'Jane Smith', link: '#' }],
+              caseStudies: [{title: 'University Lecture Hall Automation', link: '#'}],
+              yearsOfExperience: 8,
+              certifications: [
+                  { id: 'cert7', name: 'Crestron Certified Programmer', achieved: true },
+                  { id: 'cert8', name: 'AWS Certified Developer', achieved: true },
+                  { id: 'cert9', name: 'AMX Certified Programmer', achieved: false },
+              ],
+          },
+      ];
+      const MOCK_COMPANIES_BASE = [
+          { id: 'com_steve', name: 'SteveCompany', logoUrl: 'https://picsum.photos/seed/com_steve/100/100', location: 'London, UK' },
+          { id: 'com2', name: 'Global IT Integrators', logoUrl: 'https://picsum.photos/seed/com2/100/100', location: 'New York, USA' },
+      ];
+      const MOCK_ADMINS = [
+          { id: 'admin1', name: 'Platform Admin', email: 'admin@techsubbies.com' },
+      ];
+      const MOCK_JOBS_BASE = [
+          { 
+              id: 'job1',
+              title: 'Lead Installation Engineer for Corporate HQ', 
+              companyId: 'com_steve', 
+              location: 'London, UK',
+              startDate: '2024-09-01',
+              endDate: '2024-09-30',
+              description: 'We require a lead installation engineer for a major corporate headquarters AV fit-out. Must have experience with Crestron hardware, Biamp DSP, and large-scale video walls.',
+              requiredSkills: ['Crestron/AMX Hardware Install', 'Video Wall Calibration', 'Biamp Tesira'],
+              dayRate: 450,
+              roleTitle: 'Installation Engineer',
+          },
+          { 
+              id: 'job2',
+              title: 'Network Infrastructure Upgrade', 
+              companyId: 'com2', 
+              location: 'New York, USA',
+              startDate: '2024-08-26',
+              endDate: '2024-09-06',
+              description: 'Seeking a senior network specialist to lead an office-wide infrastructure upgrade. Deep knowledge of Cisco hardware and Palo Alto firewall policy is essential.',
+              requiredSkills: ['Cisco IOS/NX-OS', 'Palo Alto Firewalls'],
+              dayRate: 650,
+              roleTitle: 'Network Engineer',
+          },
+          {
+              id: 'job3',
+              title: 'General AV Support',
+              companyId: 'com_steve',
+              location: 'London, UK',
+              startDate: '2024-09-05',
+              endDate: '2024-09-07',
+              description: 'General assistance required for an event setup. Includes cable running, screen setup, and basic troubleshooting.',
+              requiredSkills: ['Basic Troubleshooting', 'Cable Management'],
+              dayRate: 200,
+              roleTitle: 'Basic Engineer',
+          },
+          {
+              id: 'job4',
+              title: 'Crestron Programmer for University',
+              companyId: 'com_steve',
+              location: 'Manchester, UK',
+              startDate: '2024-10-01',
+              endDate: '2024-10-31',
+              description: 'Experienced Crestron programmer needed for a campus-wide control system upgrade. Must be proficient with SIMPL, SIMPL# and DM-NVX endpoints.',
+              requiredSkills: ['Crestron SIMPL', 'DM-NVX Configuration', 'C# (for SIMPL#)'],
+              dayRate: 625,
+              roleTitle: 'Control System Programmer',
+          }
+      ];
+      const SKILL_ROLES = [
+        'Basic Engineer',
+        'Rack Builder', 
+        'Installation Engineer', 
+        'AV Commissioning Engineer', 
+        'Control System Programmer',
+        'Audio DSP Specialist', 
+        'Video Wall Specialist', 
+        'Network Engineer', 
+        'IT Support Specialist',
+        'Web Developer',
+        'Cloud Engineer'
+      ];
+      const generatedEngineers = generateEngineers(997);
+      const MOCK_ENGINEERS = [...MOCK_ENGINEERS_BASE, ...generatedEngineers];
+      const generatedCompanies = generateCompanies(98);
+      const MOCK_COMPANIES = [...MOCK_COMPANIES_BASE, ...generatedCompanies];
+      const generatedJobs = generateJobs(96, MOCK_COMPANIES.map(c => c.id), SKILL_ROLES);
+      const MOCK_JOBS = [...MOCK_JOBS_BASE, ...generatedJobs];
+      const allUsers = [...MOCK_ENGINEERS, ...MOCK_COMPANIES];
+      const MOCK_SUPPORT_REQUESTS = generateSupportRequests(50, allUsers);
+      const SUBSCRIPTION_PLANS = [
+        { name: 'Basic', price: 0, features: ['1 Basic Profile', 'Fixed Day Rate (£195 / $195)', 'Limited visibility'] },
+        { name: 'Pro', price: 10, features: ['Up to 3 Skill Profiles', 'Custom Day Rates', 'Increased Visibility', 'Peer Endorsements'] },
+        { name: 'Expert', price: 20, features: ['Unlimited Skill Profiles', 'Top Search Placement', 'Advanced Analytics', 'Direct Support'] },
+      ];
+      const COMPANY_SUBSCRIPTION_PLANS = [
+          { name: 'Small Team', price: 49, engineers: 10, description: 'Perfect for small to medium businesses managing a team of freelancers.'},
+          { name: 'Growing Business', price: 99, engineers: 25, description: 'Ideal for growing companies with increasing project demands.'},
+          { name: 'Enterprise', price: 0, engineers: 0, description: 'Custom solutions for large integrators. Contact us for a quote.'},
+      ];
+      // ===== END: constants.ts =====
+      
+      // ===== START: services/geminiService.ts =====
+      const API_KEY = process.env.API_KEY;
+      if (!API_KEY || API_KEY === 'PASTE_YOUR_GEMINI_API_KEY_HERE') {
+          console.warn("Gemini API key not found. Please set the API_KEY in the script tag in index.html.");
+      }
+      const ai = new GoogleGenAI({ apiKey: API_KEY });
+
+      const generateJobDescription = async (title, keywords) => {
+        if (!API_KEY || API_KEY === 'PASTE_YOUR_GEMINI_API_KEY_HERE') {
+          return "API Key not configured. Please set it in the index.html file to enable AI features.";
+        }
+        
+        const prompt = `
+          You are an expert recruitment consultant for the tech industry.
+          Your task is to write a professional, clear, and appealing job description.
+
+          Job Title: ${title}
+
+          Keywords and Key Responsibilities/Skills to include: ${keywords}
+
+          Based on the information above, generate a job description that is approximately 100-150 words long. 
+          Structure it with the following sections:
+          1.  **Role Overview:** A brief summary of the position.
+          2.  **Key Responsibilities:** A bulleted list of main duties.
+          3.  **Required Skills:** A bulleted list of essential qualifications and skills.
+
+          Do not include any information about salary, company details, or how to apply. Focus only on the role itself.
+          `;
+
+        try {
+          const response = await ai.models.generateContent({
+              model: 'gemini-2.5-flash',
+              contents: prompt,
+              config: {
+                temperature: 0.7,
+              }
+          });
+          return response.text;
+        } catch (error) {
+          console.error("Error generating job description with Gemini:", error);
+          return "There was an error generating the job description. Please try again.";
+        }
+      };
+
+      const generateSkillsForRole = async (jobCategory) => {
+          if (!API_KEY || API_KEY === 'PASTE_YOUR_GEMINI_API_KEY_HERE') {
+              console.error("API Key not configured.");
+              return null;
+          }
+
+          const prompt = `
+              Acting as an expert recruitment consultant and tech industry analyst for a platform connecting freelance engineers with jobs, your task is to analyze the following high-level job category and break it down into more specific, niche job titles and skills.
+
+              Job Category: "${jobCategory}"
+
+              Based on this category, provide:
+              1. A list of 3-5 specific, modern, and hireable job titles that fall under this category.
+              2. A list of 8-10 niche, in-demand technical skills associated with this category. For each skill, provide a brief, one-sentence description of what it is.
+
+              Return the result in a structured JSON format.
+          `;
+
+          try {
+              const response = await ai.models.generateContent({
+                  model: 'gemini-2.5-flash',
+                  contents: prompt,
+                  config: {
+                      temperature: 0.5,
+                      responseMimeType: "application/json",
+                      responseSchema: {
+                          type: Type.OBJECT,
+                          properties: {
+                              suggestedJobTitles: {
+                                  type: Type.ARRAY,
+                                  items: { type: Type.STRING },
+                                  description: "A list of specific job titles related to the category."
+                              },
+                              nicheSkills: {
+                                  type: Type.ARRAY,
+                                  items: {
+                                      type: Type.OBJECT,
+                                      properties: {
+                                          name: { type: Type.STRING, description: "The name of the niche skill." },
+                                          description: { type: Type.STRING, description: "A brief, one-sentence description of the skill." }
+                                      },
+                                      required: ["name", "description"]
+                                  },
+                                  description: "A list of niche skills with their descriptions."
+                              }
+                          },
+                          required: ["suggestedJobTitles", "nicheSkills"]
+                      },
+                  }
+              });
+
+              const jsonString = response.text.trim();
+              return JSON.parse(jsonString);
+
+          } catch (error) {
+              console.error("Error generating skills with Gemini:", error);
+              return null;
+          }
+      };
+
+      const analyzeEngineerRates = async (roleTitle, avgDayRate, engineerCount, currency, scope, location) => {
+          if (!API_KEY || API_KEY === 'PASTE_YOUR_GEMINI_API_KEY_HERE') {
+              return "API Key not configured. Please set it in the index.html file to enable AI features.";
+          }
+
+          const marketDescription = scope === 'local' && location ? `the local market in ${location}` : 'the global market';
+
+          const prompt = `
+              You are an expert financial analyst for a tech recruitment platform.
+              Your task is to provide a concise summary of the market rates for a specific freelance role based on internal data for ${marketDescription}.
+
+              Role Title: "${roleTitle}"
+              Average Day Rate: ${currency}${avgDayRate}
+              Number of Data Points (Engineers): ${engineerCount}
+              Market Scope: ${scope === 'local' ? `Local (${location})` : 'Global'}
+
+              Based on this data, provide a brief analysis. The tone should be professional and informative, suitable for advising clients or platform users.
+              
+              The analysis must include:
+              1. A statement confirming the average day rate for ${marketDescription} based on the provided data points.
+              2. A concluding sentence about the market position of this role in this specific market.
+
+              Format the output as a single paragraph of plain text. Do not use markdown or bullet points.
+              Example output structure for a local search:
+              "Based on data from ${engineerCount} engineers in ${location}, the average day rate for a ${roleTitle} is approximately ${currency}${avgDayRate}. This rate indicates a competitive local market for professionals with these specialized skills."
+              Example output structure for a global search:
+              "Based on data from ${engineerCount} engineers globally, the average day rate for a ${roleTitle} is approximately ${currency}${avgDayRate}. This indicates a competitive global market for professionals with these specialized skills."
+          `;
+
+          try {
+              const response = await ai.models.generateContent({
+                  model: 'gemini-2.5-flash',
+                  contents: prompt,
+                  config: {
+                      temperature: 0.3,
+                  }
+              });
+              return response.text;
+          } catch (error) {
+              console.error("Error generating engineer rate analysis with Gemini:", error);
+              return "There was an error generating the rate analysis. Please try again.";
+          }
+      };
+      // ===== END: services/geminiService.ts =====
+      
+      // ===== START: context/AppContext.tsx =====
+      const AppContext = createContext(undefined);
+
+      const AppProvider = ({ children }) => {
+        const [role, setRole] = useState(Role.NONE);
+        const [language, setLanguage] = useState('EN');
+        const [currency, setCurrency] = useState(Currency.GBP);
+        const [currentUser, setCurrentUser] = useState(null);
+        const [viewingEngineer, setViewingEngineer] = useState(null);
+        const [publicView, setPublicView] = useState('landing');
+        
+        const [engineers, setEngineers] = useState(MOCK_ENGINEERS);
+        const [jobs] = useState(MOCK_JOBS);
+        const [companies] = useState(MOCK_COMPANIES);
+        const [admins] = useState(MOCK_ADMINS);
+        const [supportRequests, setSupportRequests] = useState(MOCK_SUPPORT_REQUESTS);
+
+        const getCompanyById = (id) => companies.find(c => c.id === id);
+
+        const login = (role, id) => {
+          let user;
+          if (role === Role.ENGINEER) {
+            user = engineers.find(e => e.id === id);
+          } else if (role === Role.COMPANY) {
+            user = companies.find(c => c.id === id);
+          } else if (role === Role.ADMIN) {
+            user = admins.find(a => a.id === id);
+          }
+          
+          if (user) {
+              setCurrentUser(user);
+              setRole(role);
+          }
+        };
+
+        const logout = () => {
+          setCurrentUser(null);
+          setRole(Role.NONE);
+          setViewingEngineer(null);
+          setPublicView('landing');
+        };
+        
+        const updateEngineer = (updatedEngineer) => {
+          setEngineers(prevEngineers => 
+            prevEngineers.map(eng => eng.id === updatedEngineer.id ? updatedEngineer : eng)
+          );
+          if(currentUser && currentUser.id === updatedEngineer.id) {
+              setCurrentUser(updatedEngineer);
+          }
+        };
+
+        const updateSupportRequest = (id, status) => {
+          setSupportRequests(prev => 
+              prev.map(req => req.id === id ? { ...req, status } : req)
+          );
+        };
+
+        const enhancedSetRole = (newRole) => {
+          setRole(newRole);
+          if (newRole === Role.NONE) {
+            setViewingEngineer(null);
+            setPublicView('landing');
+          }
+        };
+
+        return (
+          <AppContext.Provider value={{ 
+            role, setRole: enhancedSetRole, 
+            language, setLanguage, 
+            currency, setCurrency, 
+            engineers, jobs, companies, admins,
+            supportRequests, updateSupportRequest,
+            getCompanyById,
+            currentUser, login, logout, updateEngineer,
+            viewingEngineer, setViewingEngineer,
+            publicView, setPublicView
+          }}>
+            {children}
+          </AppContext.Provider>
+        );
+      };
+
+      const useAppContext = () => {
+        const context = useContext(AppContext);
+        if (context === undefined) {
+          throw new Error('useAppContext must be used within an AppProvider');
+        }
+        return context;
+      };
+      // ===== END: context/AppContext.tsx =====
+      
+      // ===== START: components/Logo.tsx =====
+      const Logo = () => (
+          <svg width="170" height="40" viewBox="0 0 170 40" xmlns="http://www.w3.org/2000/svg">
+              {/* Icon part */}
+              <g className="text-blue-600" transform="translate(0,0)">
+                  {/* Head */}
+                  <circle cx="20" cy="13" r="6" fill="currentColor"/>
+                  {/* Body */}
+                  <path d="M10 34 C10 24, 30 24, 30 34 Z" fill="currentColor"/>
+                  {/* Tech frame/element */}
+                  <path d="M2,20 C2,10 10,2 20,2" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+                  <path d="M38,20 C38,30 30,38 20,38" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+              </g>
+              {/* Text part */}
+              <text x="45" y="27" fontFamily="system-ui, sans-serif" fontSize="20" fontWeight="bold" className="fill-current text-gray-800">
+                  TechSubbies
+              </text>
+          </svg>
+      );
+      // ===== END: components/Logo.tsx =====
+      
+      // ===== START: components/HowItWorksModal.tsx =====
+      const companySteps = [
+        { icon: PenSquare, title: 'Post a Job', description: 'Quickly post your project requirements for free. Use our AI assistant to help write the perfect job description.' },
+        { icon: Search, title: 'Find Talent', description: 'Search our network and use powerful filters to find engineers with the exact skills and proficiency you need.' },
+        { icon: ClipboardList, title: 'Review & Select', description: 'Review detailed profiles, verified skills, and peer ratings to confidently choose the best candidate.' },
+        { icon: Handshake, title: 'Hire Directly', description: 'Connect with your chosen engineer, agree on terms, and start your project. All commercial agreements are handled directly between you.' },
+      ];
+      const engineerSteps = [
+        { icon: User, title: 'Create Your Profile', description: 'Sign up for free and build your basic profile. Showcase your core skills, location, and transport details.' },
+        { icon: ClipboardList, title: 'Add Skill Profiles', description: 'Upgrade to create specialized profiles for roles like "Crestron Programmer" or "Network Specialist" to highlight your expertise.' },
+        { icon: DollarSign, title: 'Set Your Rate', description: 'Define custom day rates for each of your specialized skill profiles, maximizing your earning potential.' },
+        { icon: CalendarDays, title: 'Manage Availability', description: 'Keep your calendar up-to-date to receive relevant job offers that match your schedule and skill set.' },
+      ];
+      const HowItWorksModal = ({ isOpen, onClose }) => {
+        const [activeTab, setActiveTab] = useState('company');
+        const steps = activeTab === 'company' ? companySteps : engineerSteps;
+        if (!isOpen) return null;
+        return (
+          <div 
+            className={`fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+            aria-labelledby="how-it-works-title" 
+            role="dialog" 
+            aria-modal="true"
+            onClick={onClose}
+          >
+            <div 
+              className={`bg-white rounded-lg shadow-xl w-full max-w-3xl transform transition-all duration-300 ${isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center p-6 border-b border-gray-200">
+                <h2 id="how-it-works-title" className="text-2xl font-bold text-gray-800">How It Works</h2>
+                <button onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close">
+                  <X size={24} />
+                </button>
+              </div>
+              <div className="p-6">
+                <div className="border-b border-gray-200 mb-6">
+                  <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+                    <button
+                      onClick={() => setActiveTab('company')}
+                      className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'company' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                      aria-current={activeTab === 'company' ? 'page' : undefined}
+                    >
+                      For Companies
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('engineer')}
+                      className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'engineer' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                      aria-current={activeTab === 'engineer' ? 'page' : undefined}
+                    >
+                      For Engineers
+                    </button>
+                  </nav>
+                </div>
+                <div key={activeTab} className="space-y-6">
+                  {steps.map((step, index) => (
+                    <div 
+                      key={index} 
+                      className="flex items-start space-x-4 fade-in-up" 
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <div className="flex-shrink-0 h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                        <step.icon className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-800">{step.title}</h3>
+                        <p className="mt-1 text-gray-600">{step.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      };
+      // ===== END: components/HowItWorksModal.tsx =====
+      
+      // ===== START: components/Header.tsx =====
+      const Header = () => {
+        const { setRole, setCurrency, currency, currentUser, logout, setPublicView } = useAppContext();
+        const [isModalOpen, setIsModalOpen] = useState(false);
+        const toggleCurrency = () => {
+          setCurrency(currency === Currency.GBP ? Currency.USD : Currency.GBP);
+        };
+        const handleLogoClick = () => {
+          setRole(Role.NONE);
+        };
+        return (
+          React.createElement(React.Fragment, null,
+            React.createElement("header", { className: "bg-white text-gray-700 shadow-sm sticky top-0 z-40" },
+              React.createElement("nav", { className: "container mx-auto px-6 py-3 flex justify-between items-center" },
+                React.createElement("button", { onClick: handleLogoClick, className: "flex items-center space-x-2" },
+                  React.createElement(Logo, null)
+                ),
+                React.createElement("div", { className: "flex items-center space-x-4" },
+                  React.createElement("button", { onClick: () => setIsModalOpen(true), className: "px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-md transition-colors" }, "How it Works"),
+                  React.createElement("button", { onClick: () => setPublicView('investors'), className: "px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-md transition-colors" }, "For Investors"),
+                  React.createElement("button", { onClick: toggleCurrency, className: "flex items-center p-2 rounded-md hover:bg-gray-100 transition-colors" },
+                    currency === Currency.GBP ? React.createElement(PoundSterling, { size: 20 }) : React.createElement(DollarSign, { size: 20 }),
+                    React.createElement("span", { className: "ml-1 text-sm font-medium" }, currency === Currency.GBP ? 'GBP' : 'USD')
+                  ),
+                  currentUser ? (
+                     React.createElement("div", { className: "flex items-center space-x-4" },
+                       React.createElement("span", { className: "text-sm text-gray-600 hidden sm:block" }, "Welcome, ", currentUser.name.split(' ')[0]),
+                       React.createElement("button", { onClick: logout, className: "flex items-center px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors", title: "Logout" },
+                          React.createElement(LogOut, { size: 16, className: "mr-0 sm:mr-2" }),
+                          React.createElement("span", { className: "hidden sm:inline" }, "Logout")
+                       )
+                     )
+                  ) : null
+                )
+              )
+            ),
+            React.createElement(HowItWorksModal, { isOpen: isModalOpen, onClose: () => setIsModalOpen(false) })
+          )
+        );
+      };
+      // ===== END: components/Header.tsx =====
+      
+      // ===== START: components/Footer.tsx =====
+      const Footer = () => {
+        const { setRole } = useAppContext();
+        return (
+          React.createElement("footer", { className: "bg-white text-gray-600" },
+            React.createElement("div", { className: "container mx-auto px-6 py-4 text-center text-sm border-t border-gray-200" },
+              React.createElement("p", null, "\xA9 ", new Date().getFullYear(), " TechSubbies.com. All rights reserved."),
+              React.createElement("div", { className: "mt-2" },
+                  React.createElement("button", { onClick: () => setRole(Role.ADMIN), className: "text-xs text-gray-400 hover:text-gray-600 underline" }, "Admin Login")
+              ),
+              React.createElement("p", { className: "text-xs text-gray-400 mt-1" }, "Investment Prospectus Demo")
+            )
+          )
+        );
+      };
+      // ===== END: components/Footer.tsx =====
+      
+      // ===== START: components/Calendar.tsx =====
+      const Calendar = ({ highlightedDates = [], onDateClick, readOnly = false }) => {
+        const [currentDate, setCurrentDate] = useState(new Date());
+        const toISODateString = (date) => {
+            return date.toISOString().split('T')[0];
+        };
+        const today = new Date();
+        const todayString = toISODateString(today);
+        const changeMonth = (offset) => {
+          setCurrentDate(prevDate => {
+            const newDate = new Date(prevDate);
+            newDate.setMonth(newDate.getMonth() + offset);
+            return newDate;
+          });
+        };
+        const renderHeader = () => {
+          const monthYearFormat = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' });
+          return (
+            React.createElement("div", { className: "flex justify-between items-center mb-4" },
+              React.createElement("button", { onClick: () => changeMonth(-1), className: "p-2 rounded-full hover:bg-gray-100", "aria-label": "Previous month" },
+                React.createElement(ChevronLeft, { size: 20 })
+              ),
+              React.createElement("h2", { className: "text-lg font-semibold text-gray-800" },
+                monthYearFormat.format(currentDate)
+              ),
+              React.createElement("button", { onClick: () => changeMonth(1), className: "p-2 rounded-full hover:bg-gray-100", "aria-label": "Next month" },
+                React.createElement(ChevronRight, { size: 20 })
+              )
+            )
+          );
+        };
+        const renderDaysOfWeek = () => {
+          const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+          return (
+            React.createElement("div", { className: "grid grid-cols-7 gap-1 text-center text-sm text-gray-500 font-medium" },
+              days.map(day => React.createElement("div", { key: day }, day))
+            )
+          );
+        };
+        const renderCells = () => {
+          const month = currentDate.getMonth();
+          const year = currentDate.getFullYear();
+          const firstDayOfMonth = new Date(year, month, 1).getDay();
+          const daysInMonth = new Date(year, month + 1, 0).getDate();
+          const cells = [];
+          for (let i = 0; i < firstDayOfMonth; i++) {
+            cells.push(React.createElement("div", { key: `empty-start-${i}`, className: "p-1" }));
+          }
+          for (let day = 1; day <= daysInMonth; day++) {
+            const cellDate = new Date(year, month, day);
+            const cellDateString = toISODateString(cellDate);
+            const isToday = cellDateString === todayString;
+            const isHighlighted = highlightedDates.includes(cellDateString);
+            const isClickable = !readOnly;
+            let cellClasses = 'p-1 h-12 flex items-center justify-center text-sm rounded-full transition-colors duration-200';
+            if (isClickable) {
+                cellClasses += ' cursor-pointer';
+                if (isHighlighted) {
+                    cellClasses += ' bg-green-500 text-white hover:bg-green-600';
+                } else {
+                    cellClasses += ' hover:bg-gray-200';
+                }
+            } else {
+                if (isHighlighted) {
+                    cellClasses += ' bg-green-200 text-green-800';
+                }
+            }
+            if(isToday) {
+                cellClasses += ' ring-2 ring-blue-500';
+            }
+            cells.push(
+              React.createElement("div", {
+                key: day,
+                className: cellClasses,
+                onClick: () => isClickable && onDateClick?.(cellDateString),
+                role: isClickable ? 'button' : undefined,
+                "aria-pressed": isClickable ? isHighlighted : undefined,
+                "aria-label": isClickable ? `Toggle availability for ${cellDate.toLocaleDateString()}` : undefined
+              }, day)
+            );
+          }
+          return React.createElement("div", { className: "grid grid-cols-7 gap-1 mt-2" }, cells);
+        };
+        return (
+          React.createElement("div", { className: "w-full" },
+            renderHeader(),
+            renderDaysOfWeek(),
+            renderCells(),
+            React.createElement("div", { className: "flex items-center space-x-4 mt-4 text-xs text-gray-600" },
+              React.createElement("div", { className: "flex items-center" }, React.createElement("span", { className: "h-3 w-3 rounded-full bg-green-500 mr-2" }), "Available"),
+              React.createElement("div", { className: "flex items-center" }, React.createElement("span", { className: "h-3 w-3 rounded-full ring-2 ring-blue-500 mr-2" }), "Today")
+            )
+          )
+        );
+      };
+      // ===== END: components/Calendar.tsx =====
+      
+      // ===== START: components/EditSkillProfileModal.tsx =====
+      const EditableRating = ({ rating, onRatingChange }) => (
+          React.createElement("div", { className: "flex items-center" },
+              [...Array(5)].map((_, i) => (
+                   React.createElement("button", { type: "button", key: i, onClick: () => onRatingChange(i + 1), "aria-label": `Set rating to ${i + 1}` },
+                      React.createElement(Star, { className: `h-5 w-5 cursor-pointer ${i < rating ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-300'}`, fill: "currentColor" })
+                   )
+              ))
+          )
+      );
+      const EditSkillProfileModal = ({ profile, onClose, onSave, currency }) => {
+          const [draftProfile, setDraftProfile] = useState({ ...profile, skills: [...profile.skills], customSkills: [...profile.customSkills] });
+          const isNewProfile = !profile.roleTitle;
+          useEffect(() => {
+              const deepCopiedProfile = JSON.parse(JSON.stringify(profile));
+              setDraftProfile(deepCopiedProfile);
+          }, [profile]);
+          const handleSkillChange = (index, field, value) => {
+              const newSkills = [...draftProfile.skills];
+              newSkills[index][field] = value;
+              setDraftProfile(prev => ({ ...prev, skills: newSkills }));
+          };
+          const addSkill = () => {
+              const newSkill = { id: `new_${Date.now()}`, name: '', rating: 1 };
+              setDraftProfile(prev => ({ ...prev, skills: [...prev.skills, newSkill] }));
+          };
+          const removeSkill = (index) => {
+              const newSkills = draftProfile.skills.filter((_, i) => i !== index);
+              setDraftProfile(prev => ({ ...prev, skills: newSkills }));
+          };
+          const handleSave = () => {
+              onSave(draftProfile);
+          };
+          return (
+              React.createElement("div", {
+                className: "fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4",
+                "aria-labelledby": "edit-profile-title",
+                role: "dialog",
+                "aria-modal": "true",
+                onClick: onClose
+              },
+                React.createElement("div", { className: "bg-white rounded-lg shadow-xl w-full max-w-2xl transform transition-all", onClick: (e) => e.stopPropagation() },
+                  React.createElement("div", { className: "flex justify-between items-center p-5 border-b border-gray-200" },
+                    React.createElement("h2", { id: "edit-profile-title", className: "text-xl font-bold text-gray-800" },
+                        isNewProfile ? 'Add New Skill Profile' : 'Edit Skill Profile'
+                    ),
+                    React.createElement("button", { onClick: onClose, className: "text-gray-400 hover:text-gray-600", "aria-label": "Close" },
+                      React.createElement(X, { size: 24 })
+                    )
+                  ),
+                  React.createElement("div", { className: "p-6 space-y-6 max-h-[70vh] overflow-y-auto" },
+                      React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-4" },
+                           React.createElement("div", null,
+                              React.createElement("label", { htmlFor: "roleTitle", className: "block text-sm font-medium text-gray-700 mb-1" }, "Role Title"),
+                              React.createElement("select", {
+                                  id: "roleTitle",
+                                  value: draftProfile.roleTitle,
+                                  onChange: (e) => setDraftProfile(prev => ({ ...prev, roleTitle: e.target.value })),
+                                  className: "w-full p-2 border border-gray-300 rounded-md bg-white"
+                              },
+                                  React.createElement("option", { value: "", disabled: true }, "Select a role..."),
+                                  SKILL_ROLES.map(role => (
+                                      React.createElement("option", { key: role, value: role }, role)
+                                  ))
+                              )
+                          ),
+                          React.createElement("div", null,
+                              React.createElement("label", { htmlFor: "dayRate", className: "block text-sm font-medium text-gray-700 mb-1" }, "Day Rate (", currency, ")"),
+                               React.createElement("div", { className: "relative" },
+                                  React.createElement("span", { className: "absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500" }, currency),
+                                  React.createElement("input", {
+                                      type: "number",
+                                      id: "dayRate",
+                                      value: draftProfile.dayRate,
+                                      onChange: (e) => setDraftProfile(prev => ({ ...prev, dayRate: parseInt(e.target.value, 10) || 0 })),
+                                      className: "w-full p-2 pl-7 border border-gray-300 rounded-md"
+                                  })
+                              )
+                          )
+                      ),
+                      React.createElement("div", null,
+                          React.createElement("h3", { className: "text-lg font-semibold text-gray-800 mb-2" }, "Self-Assessed Skills"),
+                          React.createElement("div", { className: "space-y-3 p-3 bg-gray-50 rounded-md border" },
+                              draftProfile.skills.map((skill, index) => (
+                                  React.createElement("div", { key: index, className: "grid grid-cols-12 gap-2 items-center" },
+                                      React.createElement("input", {
+                                          type: "text",
+                                          value: skill.name,
+                                          onChange: (e) => handleSkillChange(index, 'name', e.target.value),
+                                          placeholder: "Skill Name (e.g., Cable Lacing)",
+                                          className: "col-span-6 p-2 border border-gray-300 rounded-md"
+                                      }),
+                                      React.createElement("div", { className: "col-span-5" },
+                                          React.createElement(EditableRating, { rating: skill.rating, onRatingChange: (r) => handleSkillChange(index, 'rating', r) })
+                                      ),
+                                      React.createElement("button", { onClick: () => removeSkill(index), className: "col-span-1 text-red-500 hover:text-red-700 flex justify-center items-center" },
+                                          React.createElement(Trash2, { size: 20 })
+                                      )
+                                  )
+                              )),
+                               React.createElement("button", { onClick: addSkill, className: "flex items-center text-sm text-blue-600 font-semibold hover:text-blue-800 mt-2" },
+                                  React.createElement(Plus, { size: 16, className: "mr-1" }), " Add Skill"
+                               )
+                          )
+                      )
+                  ),
+                  React.createElement("div", { className: "flex justify-end items-center p-5 border-t border-gray-200 bg-gray-50 rounded-b-lg" },
+                      React.createElement("button", { onClick: onClose, className: "px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 mr-3" },
+                          "Cancel"
+                      ),
+                      React.createElement("button", { onClick: handleSave, className: "px-6 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700" },
+                          "Save Changes"
+                      )
+                  )
+                )
+              )
+            );
+      };
+      // ===== END: components/EditSkillProfileModal.tsx =====
+      
+      // ===== START: components/JobPostModal.tsx =====
+      const JobPostForm = ({onClose}) => {
+          const [jobTitle, setJobTitle] = useState('');
+          const [keywords, setKeywords] = useState('');
+          const [roleTitle, setRoleTitle] = useState('');
+          const [description, setDescription] = useState('');
+          const [isLoading, setIsLoading] = useState(false);
+
+          const handleGenerateDescription = async () => {
+              if (!jobTitle || !keywords) {
+                  alert("Please provide a Job Title and some Keywords first.");
+                  return;
+              }
+              setIsLoading(true);
+              try {
+                  const generatedDesc = await generateJobDescription(jobTitle, keywords);
+                  setDescription(generatedDesc);
+              } catch (error) {
+                  console.error(error);
+                  setDescription("Failed to generate description.");
+              } finally {
+                  setIsLoading(false);
+              }
+          };
+          
+          const handlePostJob = () => {
+              alert("Job posted successfully! (Demo)");
+              onClose();
+          }
+
+          return (
+              React.createElement("div", { className: "space-y-6" },
+                   React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-6" },
+                      React.createElement("input", { type: "text", placeholder: "Job Title (e.g., Senior AV Technician)", className: "w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500", value: jobTitle, onChange: e => setJobTitle(e.target.value) }),
+                      React.createElement("select", { className: "w-full p-3 border border-gray-300 rounded-md bg-white focus:ring-2 focus:ring-blue-500", value: roleTitle, onChange: e => setRoleTitle(e.target.value) },
+                          React.createElement("option", { value: "", disabled: true }, "Select Required Role..."),
+                          SKILL_ROLES.map(role => React.createElement("option", { key: role, value: role }, role))
+                      ),
+                      React.createElement("input", { type: "text", placeholder: "Location", className: "w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" }),
+                      React.createElement("input", { type: "text", placeholder: "Keywords (e.g., Crestron, Dante, Networking)", className: "w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500", value: keywords, onChange: e => setKeywords(e.target.value) })
+                  ),
+                  React.createElement("div", null,
+                       React.createElement("button", { onClick: handleGenerateDescription, disabled: isLoading, className: "flex items-center justify-center bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-300" },
+                           React.createElement(Sparkles, { size: 16, className: "mr-2" }),
+                           isLoading ? 'Generating...' : 'Generate Description with AI'
+                       )
+                  ),
+                  React.createElement("textarea", { placeholder: "Job Description", className: "w-full p-3 border border-gray-300 rounded-md h-40 focus:ring-2 focus:ring-blue-500", value: description, onChange: e => setDescription(e.target.value) }),
+                  React.createElement("div", { className: "flex justify-end pt-6 mt-6 border-t border-gray-200" },
+                      React.createElement("button", { onClick: onClose, className: "px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 mr-3" },
+                          "Cancel"
+                      ),
+                      React.createElement("button", { onClick: handlePostJob, className: "bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors" },
+                          "Post Job"
+                      )
+                  )
+              )
+          );
+      };
+      const JobPostModal = ({ isOpen, onClose }) => {
+          if (!isOpen) return null;
+          return (
+              React.createElement("div", {
+                  className: "fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4",
+                  "aria-labelledby": "job-post-title",
+                  role: "dialog",
+                  "aria-modal": "true",
+                  onClick: onClose
+              },
+                  React.createElement("div", { className: "bg-white rounded-lg shadow-xl w-full max-w-3xl transform transition-all", onClick: (e) => e.stopPropagation() },
+                      React.createElement("div", { className: "flex justify-between items-center p-5 border-b border-gray-200" },
+                          React.createElement("h2", { id: "job-post-title", className: "text-xl font-bold text-gray-800 flex items-center" },
+                              React.createElement(PlusCircle, { className: "mr-2 text-blue-600" }), " Post a New Job"
+                          ),
+                          React.createElement("button", { onClick: onClose, className: "text-gray-400 hover:text-gray-600", "aria-label": "Close" },
+                              React.createElement(X, { size: 24 })
+                          )
+                      ),
+                      React.createElement("div", { className: "p-6 max-h-[70vh] overflow-y-auto" },
+                          React.createElement(JobPostForm, { onClose: onClose })
+                      )
+                  )
+              )
+          );
+      };
+      // ===== END: components/JobPostModal.tsx =====
+      
+      // ===== START: components/AISkillDiscovery.tsx =====
+      const AISkillDiscovery = () => {
+          const [query, setQuery] = useState('');
+          const [isLoading, setIsLoading] = useState(false);
+          const [error, setError] = useState(null);
+          const [result, setResult] = useState(null);
+          const [addedItems, setAddedItems] = useState(new Set());
+          const handleGenerate = async () => {
+              if (!query.trim()) {
+                  setError('Please enter a job category.');
+                  return;
+              }
+              setIsLoading(true);
+              setError(null);
+              setAddedItems(new Set());
+              try {
+                  const response = await generateSkillsForRole(query);
+                  if (response) {
+                      setResult(response);
+                  } else {
+                      setError('Failed to get a valid response from the AI. Please try again.');
+                      setResult(null);
+                  }
+              } catch (e) {
+                  setError('An unexpected error occurred.');
+                  setResult(null);
+                  console.error(e);
+              } finally {
+                  setIsLoading(false);
+              }
+          };
+          const handleAddItem = (item) => {
+              setAddedItems(prev => new Set(prev).add(item));
+          };
+          const handleAddAllTitles = () => {
+              if (!result) return;
+              const newAddedItems = new Set(addedItems);
+              result.suggestedJobTitles.forEach(title => newAddedItems.add(title));
+              setAddedItems(newAddedItems);
+          };
+          const handleAddAllSkills = () => {
+              if (!result) return;
+              const newAddedItems = new Set(addedItems);
+              result.nicheSkills.forEach(skill => newAddedItems.add(skill.name));
+              setAddedItems(newAddedItems);
+          };
+          const allTitlesAdded = result && result.suggestedJobTitles.every(title => addedItems.has(title));
+          const allSkillsAdded = result && result.nicheSkills.every(skill => addedItems.has(skill.name));
+          return (
+              React.createElement("div", { className: "bg-white rounded-lg shadow-md border border-gray-200" },
+                  React.createElement("div", { className: "p-6 border-b" },
+                      React.createElement("h2", { className: "text-xl font-bold text-gray-800 flex items-center" },
+                          React.createElement(BrainCircuit, { className: "mr-3 text-blue-600" }), " AI-Powered Skill Discovery"
+                      ),
+                      React.createElement("p", { className: "text-sm text-gray-600 mt-1" },
+                          "Enter a broad job category to discover related niche roles and skills to add to the platform."
+                      )
+                  ),
+                  React.createElement("div", { className: "p-6" },
+                      React.createElement("div", { className: "flex flex-col sm:flex-row gap-4" },
+                          React.createElement("input", {
+                              type: "text",
+                              value: query,
+                              onChange: (e) => setQuery(e.target.value),
+                              placeholder: "e.g., Live Events Technician, Broadcast Engineer...",
+                              className: "flex-grow p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500",
+                              disabled: isLoading
+                          }),
+                          React.createElement("button", {
+                              onClick: handleGenerate,
+                              disabled: isLoading,
+                              className: "flex items-center justify-center bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-300"
+                          },
+                              isLoading ? (
+                                  React.createElement(React.Fragment, null,
+                                      React.createElement(Loader, { className: "animate-spin mr-2", size: 20 }), " Generating..."
+                                  )
+                              ) : result ? (
+                                  React.createElement(React.Fragment, null,
+                                      React.createElement(RefreshCw, { className: "mr-2", size: 20 }), " Refresh"
+                                  )
+                              ) : (
+                                   'Generate'
+                              )
+                          )
+                      ),
+                      error && React.createElement("p", { className: "text-red-500 text-sm mt-2" }, error)
+                  ),
+                  result && (
+                      React.createElement("div", { className: "p-6 border-t grid grid-cols-1 md:grid-cols-2 gap-8" },
+                          React.createElement("div", null,
+                              React.createElement("div", { className: "flex justify-between items-center mb-4" },
+                                  React.createElement("h3", { className: "text-lg font-semibold text-gray-800" }, "Suggested Job Titles"),
+                                   React.createElement("button", {
+                                      onClick: handleAddAllTitles,
+                                      disabled: allTitlesAdded,
+                                      className: "flex items-center text-sm font-semibold py-1 px-3 rounded-md transition-colors disabled:bg-green-500 disabled:text-white bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                  },
+                                      allTitlesAdded ? React.createElement(Check, { size: 16, className: "mr-1" }) : React.createElement(PlusCircle, { size: 16, className: "mr-1" }),
+                                      allTitlesAdded ? 'All Added' : 'Add All'
+                                  )
+                              ),
+                              React.createElement("ul", { className: "space-y-3" },
+                                  result.suggestedJobTitles.map((title) => (
+                                      React.createElement("li", { key: title, className: "flex items-center justify-between bg-gray-50 p-3 rounded-md border" },
+                                          React.createElement("span", { className: "font-medium text-gray-700" }, title),
+                                          React.createElement("button", {
+                                              onClick: () => handleAddItem(title),
+                                              disabled: addedItems.has(title),
+                                              className: "flex items-center text-sm font-semibold py-1 px-3 rounded-md transition-colors disabled:bg-green-500 disabled:text-white bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                          },
+                                              addedItems.has(title) ? React.createElement(Check, { size: 16, className: "mr-1" }) : React.createElement(PlusCircle, { size: 16, className: "mr-1" }),
+                                              addedItems.has(title) ? 'Added' : 'Add'
+                                          )
+                                      )
+                                  ))
+                              )
+                          ),
+                          React.createElement("div", null,
+                              React.createElement("div", { className: "flex justify-between items-center mb-4" },
+                                  React.createElement("h3", { className: "text-lg font-semibold text-gray-800" }, "Niche Skills"),
+                                  React.createElement("button", {
+                                      onClick: handleAddAllSkills,
+                                      disabled: allSkillsAdded,
+                                      className: "flex items-center text-sm font-semibold py-1 px-3 rounded-md transition-colors disabled:bg-green-500 disabled:text-white bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                  },
+                                      allSkillsAdded ? React.createElement(Check, { size: 16, className: "mr-1" }) : React.createElement(PlusCircle, { size: 16, className: "mr-1" }),
+                                      allSkillsAdded ? 'All Added' : 'Add All'
+                                  )
+                              ),
+                              React.createElement("div", { className: "space-y-3" },
+                                  result.nicheSkills.map((skill) => (
+                                      React.createElement("div", { key: skill.name, className: "bg-gray-50 p-3 rounded-md border" },
+                                          React.createElement("div", { className: "flex items-center justify-between" },
+                                              React.createElement("h4", { className: "font-medium text-gray-700" }, skill.name),
+                                              React.createElement("button", {
+                                                 onClick: () => handleAddItem(skill.name),
+                                                 disabled: addedItems.has(skill.name),
+                                                 className: "flex items-center text-sm font-semibold py-1 px-3 rounded-md transition-colors disabled:bg-green-500 disabled:text-white bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                              },
+                                                 addedItems.has(skill.name) ? React.createElement(Check, { size: 16, className: "mr-1" }) : React.createElement(PlusCircle, { size: 16, className: "mr-1" }),
+                                                 addedItems.has(skill.name) ? 'Added' : 'Add'
+                                              )
+                                          ),
+                                          React.createElement("p", { className: "text-sm text-gray-600 mt-1" }, skill.description)
+                                      )
+                                  ))
+                              )
+                          )
+                      )
+                  )
+              )
+          );
+      };
+      // ===== END: components/AISkillDiscovery.tsx =====
+      
+      // ===== START: components/AIEngineerCostAnalysis.tsx =====
+      const AIEngineerCostAnalysis = () => {
+          const { engineers, currency, currentUser, role } = useAppContext();
+          const [selectedRole, setSelectedRole] = useState('');
+          const [scope, setScope] = useState('local');
+          const [isLoading, setIsLoading] = useState(false);
+          const [error, setError] = useState(null);
+          const [result, setResult] = useState(null);
+          const isLocalScopeAvailable = role === Role.ENGINEER || role === Role.COMPANY;
+          React.useEffect(() => {
+              if (!isLocalScopeAvailable) {
+                  setScope('global');
+              }
+          }, [isLocalScopeAvailable]);
+          const handleAnalyze = async () => {
+              if (!selectedRole) {
+                  setError('Please select a role to analyze.');
+                  return;
+              }
+              setIsLoading(true);
+              setError(null);
+              setResult(null);
+              const analysisScope = isLocalScopeAvailable ? scope : 'global';
+              let relevantEngineers = engineers;
+              let locationName;
+              if (analysisScope === 'local' && currentUser && 'location' in currentUser && typeof currentUser.location === 'string') {
+                  const userCountry = currentUser.location.split(', ')[1];
+                  if (userCountry) {
+                      locationName = userCountry;
+                      relevantEngineers = engineers.filter(eng => eng.location.endsWith(userCountry));
+                  }
+              }
+              const relevantProfiles = relevantEngineers
+                  .flatMap(eng => eng.skillProfiles)
+                  .filter(profile => profile.roleTitle === selectedRole);
+              if (relevantProfiles.length === 0) {
+                  const scopeMessage = analysisScope === 'local' ? `in your local market (${locationName})` : 'globally';
+                  setError(`No engineers found with the role "${selectedRole}" ${scopeMessage} to analyze.`);
+                  setIsLoading(false);
+                  return;
+              }
+              const totalRate = relevantProfiles.reduce((sum, profile) => sum + profile.dayRate, 0);
+              const averageDayRate = Math.round(totalRate / relevantProfiles.length);
+              const engineerCount = relevantProfiles.length;
+              const isSmallSample = engineerCount < 5;
+              try {
+                  const aiSummary = await analyzeEngineerRates(selectedRole, averageDayRate, engineerCount, currency, analysisScope, locationName);
+                  if (aiSummary) {
+                      setResult({
+                          roleTitle: selectedRole,
+                          engineerCount,
+                          averageDayRate,
+                          aiSummary,
+                          scope: analysisScope,
+                          location: locationName,
+                          isSmallSample,
+                      });
+                  } else {
+                      setError('Failed to get a valid response from the AI. Please try again.');
+                  }
+              } catch (e) {
+                  setError('An unexpected error occurred while generating the analysis.');
+                  console.error(e);
+              } finally {
+                  setIsLoading(false);
+              }
+          };
+          return (
+              React.createElement("div", { className: "bg-white rounded-lg shadow-md border border-gray-200" },
+                  React.createElement("div", { className: "p-6 border-b" },
+                      React.createElement("h2", { className: "text-xl font-bold text-gray-800 flex items-center" },
+                          React.createElement(DollarSign, { className: "mr-3 text-green-600" }),
+                          "AI Market Rate Analysis"
+                      ),
+                      React.createElement("p", { className: "text-sm text-gray-600 mt-1" },
+                          "Analyze average day rates for any role to stay competitive."
+                      )
+                  ),
+                  isLocalScopeAvailable && (
+                       React.createElement("div", { className: "p-6 border-b" },
+                           React.createElement("div", { className: "flex border border-gray-200 rounded-md p-1 bg-gray-100 max-w-xs" },
+                               React.createElement("button", {
+                                   onClick: () => setScope('local'),
+                                   className: `w-1/2 py-2 text-sm font-semibold rounded-md transition-colors ${scope === 'local' ? 'bg-white text-blue-600 shadow' : 'text-gray-600 hover:bg-white/50'}`
+                               },
+                                   "Local Market"
+                               ),
+                               React.createElement("button", {
+                                   onClick: () => setScope('global'),
+                                   className: `w-1/2 py-2 text-sm font-semibold rounded-md transition-colors ${scope === 'global' ? 'bg-white text-blue-600 shadow' : 'text-gray-600 hover:bg-white/50'}`
+                               },
+                                   "Global Market"
+                               )
+                           )
+                       )
+                  ),
+                  React.createElement("div", { className: "p-6" },
+                      React.createElement("div", { className: "flex flex-col sm:flex-row gap-4" },
+                          React.createElement("select", {
+                              value: selectedRole,
+                              onChange: (e) => setSelectedRole(e.target.value),
+                              className: "flex-grow p-3 border border-gray-300 rounded-md bg-white focus:ring-2 focus:ring-blue-500",
+                              disabled: isLoading
+                          },
+                              React.createElement("option", { value: "", disabled: true }, "Select a role to analyze..."),
+                              SKILL_ROLES.map(role => (
+                                  React.createElement("option", { key: role, value: role }, role)
+                              ))
+                          ),
+                          React.createElement("button", {
+                              onClick: handleAnalyze,
+                              disabled: isLoading || !selectedRole,
+                              className: "flex items-center justify-center bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-colors disabled:bg-green-300"
+                          },
+                              isLoading ? (
+                                  React.createElement(React.Fragment, null,
+                                      React.createElement(Loader, { className: "animate-spin mr-2", size: 20 }),
+                                      "Analyzing..."
+                                  )
+                              ) : (
+                                  React.createElement(React.Fragment, null,
+                                      React.createElement(BarChart2, { className: "mr-2", size: 20 }),
+                                      "Analyze Rates"
+                                  )
+                              )
+                          )
+                      ),
+                      error && React.createElement("p", { className: "text-red-500 text-sm mt-2" }, error)
+                  ),
+                  result && (
+                      React.createElement("div", { className: "p-6 border-t" },
+                          React.createElement("h3", { className: "text-lg font-semibold text-gray-800 mb-4" },
+                              "Analysis for ", React.createElement("span", { className: "text-blue-600" }, result.roleTitle), " (", result.scope === 'local' ? `Local - ${result.location}` : 'Global', ")"
+                          ),
+                           result.isSmallSample && (
+                              React.createElement("div", { className: "p-3 mb-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-sm rounded-r-md" },
+                                  React.createElement("strong", null, "Note:"), " The sample size is small (", result.engineerCount, " engineers), so this analysis may not be fully representative."
+                              )
+                          ),
+                          React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-4 mb-4" },
+                               React.createElement("div", { className: "bg-gray-50 p-4 rounded-lg border" },
+                                  React.createElement("p", { className: "text-sm text-gray-600" }, "Average Day Rate"),
+                                  React.createElement("p", { className: "text-3xl font-bold text-gray-900" }, currency, result.averageDayRate)
+                              ),
+                              React.createElement("div", { className: "bg-gray-50 p-4 rounded-lg border" },
+                                  React.createElement("p", { className: "text-sm text-gray-600" }, "Engineers Analyzed"),
+                                  React.createElement("p", { className: "text-3xl font-bold text-gray-900" }, result.engineerCount)
+                              )
+                          ),
+                          React.createElement("div", null,
+                              React.createElement("h4", { className: "font-semibold text-gray-700 mb-2" }, "AI Summary"),
+                              React.createElement("div", { className: "p-4 bg-blue-50 border-l-4 border-blue-400 text-gray-700 rounded-r-lg" },
+                                  React.createElement("p", { className: "whitespace-pre-wrap" }, result.aiSummary)
+                              )
+                          )
+                      )
+                  )
+              )
+          );
+      };
+      // ===== END: components/AIEngineerCostAnalysis.tsx =====
+      
+      // ===== START: components/DashboardSidebar.tsx =====
+      const NavItem = ({ icon: Icon, label, isActive }) => {
+          const activeClasses = 'bg-blue-100 text-blue-600';
+          const inactiveClasses = 'text-gray-600 hover:bg-gray-100 hover:text-gray-900';
+          return (
+              React.createElement("a", { href: "#", className: `flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${isActive ? activeClasses : inactiveClasses}` },
+                  React.createElement(Icon, { className: "h-5 w-5 mr-3" }),
+                  React.createElement("span", null, label)
+              )
+          );
+      };
+      const DashboardSidebar = ({ role }) => {
+          let navItems = [];
+          switch (role) {
+              case Role.COMPANY:
+                  navItems = [
+                      { icon: Search, label: 'Find Engineers', active: true },
+                      { icon: Briefcase, label: 'My Jobs', active: false },
+                      { icon: Users, label: 'Team Members', active: false },
+                      { icon: DollarSign, label: 'Billing', active: false },
+                      { icon: Settings, label: 'Settings', active: false },
+                  ];
+                  break;
+              case Role.ENGINEER:
+                  navItems = [
+                      { icon: LayoutDashboard, label: 'Dashboard', active: true },
+                      { icon: Briefcase, label: 'Job Offers', active: false },
+                      { icon: Calendar, label: 'Availability', active: false },
+                      { icon: User, label: 'My Profile', active: false },
+                      { icon: Settings, label: 'Settings', active: false },
+                  ];
+                  break;
+              case Role.ADMIN:
+                  navItems = [
+                      { icon: LayoutDashboard, label: 'Overview', active: true },
+                      { icon: Users, label: 'Users', active: false },
+                      { icon: Briefcase, label: 'Jobs', active: false },
+                      { icon: Ticket, label: 'Support', active: false },
+                      { icon: BarChart, label: 'Platform Stats', active: false },
+                  ];
+                  break;
+              default:
+                  break;
+          }
+          return (
+              React.createElement("aside", { className: "w-64 bg-white flex-shrink-0 border-r border-gray-200 hidden md:block" },
+                  React.createElement("div", { className: "sticky top-[58px] h-[calc(100vh-58px)] overflow-y-auto p-4" },
+                      React.createElement("nav", { className: "flex flex-col space-y-1" },
+                          navItems.map((item, index) => (
+                              React.createElement(NavItem, { key: index, icon: item.icon, label: item.label, isActive: item.active })
+                          ))
+                      )
+                  )
+              )
+          );
+      };
+      // ===== END: components/DashboardSidebar.tsx =====
+      
+      // ===== START: views/LandingPage.tsx =====
+      const LandingPage = () => {
+          const { setRole } = useAppContext();
+          return (
+              React.createElement("div", { className: "flex flex-col items-center justify-center min-h-[calc(100vh-128px)] text-center bg-gray-100" },
+                  React.createElement("div", { className: "container mx-auto px-6 py-16" },
+                      React.createElement("h1", { className: "text-5xl font-extrabold text-gray-900 mb-4 leading-tight" },
+                          "Connecting Tech Talent with Opportunity."
+                      ),
+                      React.createElement("p", { className: "text-xl text-gray-700 mb-12 max-w-3xl mx-auto" },
+                          "TechSubbies.com provides instant access to skilled, certified engineers with real-time availability, streamlining the hiring process for short-term projects."
+                      ),
+                      React.createElement("div", { className: "flex flex-col md:flex-row justify-center items-stretch gap-8" },
+                          React.createElement("div", { className: "bg-white p-8 rounded-lg shadow-md w-full md:w-1/3 transform hover:scale-105 transition-transform duration-300 border border-gray-200 flex flex-col" },
+                              React.createElement(Briefcase, { className: "w-16 h-16 mx-auto mb-4 text-blue-600" }),
+                              React.createElement("h2", { className: "text-2xl font-bold text-gray-800 mb-3" }, "For Companies"),
+                              React.createElement("p", { className: "text-gray-600 mb-6 flex-grow" },
+                                  "Find the right expertise, right now. Search, match, and hire verified freelance engineers for your next project."
+                              ),
+                              React.createElement("button", {
+                                  onClick: () => setRole(Role.COMPANY),
+                                  className: "w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300 shadow-sm"
+                              },
+                                  "Find an Engineer"
+                              )
+                          ),
+                          React.createElement("div", { className: "bg-white p-8 rounded-lg shadow-md w-full md:w-1/3 transform hover:scale-105 transition-transform duration-300 border border-gray-200 flex flex-col" },
+                              React.createElement(UserCheck, { className: "w-16 h-16 mx-auto mb-4 text-blue-600" }),
+                              React.createElement("h2", { className: "text-2xl font-bold text-gray-800 mb-3" }, "For Engineers"),
+                              React.createElement("p", { className: "text-gray-600 mb-6 flex-grow" },
+                                  "Showcase your skills, set your availability, and get matched with projects that fit your expertise and schedule."
+                              ),
+                              React.createElement("button", {
+                                  onClick: () => setRole(Role.ENGINEER),
+                                  className: "w-full bg-white text-blue-600 border border-blue-600 font-bold py-3 px-6 rounded-lg hover:bg-blue-50 transition-colors duration-300 shadow-sm"
+                              },
+                                  "Manage Your Profile"
+                              )
+                          ),
+                          React.createElement("div", { className: "bg-white p-8 rounded-lg shadow-md w-full md:w-1/3 transform hover:scale-105 transition-transform duration-300 border border-gray-200 flex flex-col" },
+                              React.createElement(Users, { className: "w-16 h-16 mx-auto mb-4 text-green-600" }),
+                              React.createElement("h2", { className: "text-2xl font-bold text-gray-800 mb-3" }, "For Resourcing Companies"),
+                              React.createElement("p", { className: "text-gray-600 mb-6 flex-grow" },
+                                  "Manage your entire team of freelance engineers, streamline project assignments, and handle billing from a single, powerful dashboard."
+                              ),
+                              React.createElement("button", {
+                                  onClick: () => setRole(Role.COMPANY),
+                                  className: "w-full bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-colors duration-300 shadow-sm"
+                              },
+                                  "Manage Your Team"
+                              )
+                          )
+                      )
+                  )
+              )
+          );
+      };
+      // ===== END: views/LandingPage.tsx =====
+      
+      // ===== START: views/InvestorPage.tsx =====
+      const InfoCard = ({ icon: Icon, title, children }) => (
+          React.createElement("div", { className: "bg-white p-6 rounded-lg shadow-md border border-gray-200" },
+              React.createElement("div", { className: "flex items-center mb-3" },
+                  React.createElement(Icon, { className: "w-8 h-8 mr-4 text-blue-600" }),
+                  React.createElement("h3", { className: "text-xl font-bold text-gray-800" }, title)
+              ),
+              React.createElement("div", { className: "text-gray-600 space-y-2" },
+                  children
+              )
+          )
+      );
+      const FinancialCard = ({ year, revenue, users }) => (
+          React.createElement("div", { className: "bg-white p-6 rounded-lg shadow-lg border-2 border-blue-500 transform hover:scale-105 transition-transform duration-300" },
+              React.createElement("p", { className: "text-lg font-semibold text-gray-500" }, year),
+              React.createElement("p", { className: "text-4xl font-extrabold text-gray-900 my-2" }, revenue),
+              React.createElement("div", { className: "space-y-1 text-sm text-gray-600" },
+                  users.map(user => (
+                      React.createElement("div", { key: user.label, className: "flex justify-between" },
+                          React.createElement("span", null, user.label),
+                          React.createElement("span", { className: "font-medium" }, user.value)
+                      )
+                  ))
+              )
+          )
+      );
+      const InvestorPage = () => {
+          const { setPublicView } = useAppContext();
+          return (
+              React.createElement("div", { className: "bg-gray-50 min-h-[calc(100vh-128px)]" },
+                  React.createElement("div", { className: "container mx-auto px-4 sm:px-6 lg:px-8 py-12" },
+                      React.createElement("div", { className: "max-w-4xl mx-auto" },
+                          React.createElement("button", {
+                              onClick: () => setPublicView('landing'),
+                              className: "flex items-center text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors mb-6"
+                          },
+                              React.createElement(ArrowLeft, { size: 16, className: "mr-2" }), "Back to Home"
+                          ),
+                          React.createElement("header", { className: "text-center mb-12" },
+                              React.createElement("h1", { className: "text-4xl sm:text-5xl font-extrabold text-gray-900 mb-3" }, "Investment Prospectus"),
+                              React.createElement("p", { className: "text-lg text-gray-600" }, "Building the essential infrastructure for the future of freelance technical work.")
+                          ),
+                          React.createElement("section", { className: "space-y-8" },
+                              React.createElement("div", { className: "p-6 bg-white rounded-lg shadow-md border border-gray-200" },
+                                  React.createElement("h2", { className: "text-2xl font-bold text-gray-800 mb-3" }, "Executive Summary"),
+                                  React.createElement("p", { className: "text-gray-600" }, "In today's fast-paced digital economy, project managers waste countless hours searching for specialized tech talent and vetting availability, creating significant project delays. TechSubbies.com solves this by providing instant access to a curated network of qualified freelance tech engineers with real-time availability, dramatically reducing hiring time from weeks to mere days. We are a scalable, technology-driven platform connecting freelance engineers with companies that require their specialized expertise, poised to become the industry standard.")
+                              ),
+                              React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-6" },
+                                  React.createElement(InfoCard, { icon: TrendingUp, title: "Market Opportunity" },
+                                      React.createElement("p", null, "The global gig economy is valued at over $455 billion, with explosive growth in the specialized tech freelance sector. We are positioned to capture a significant share by solving core challenges for both sides of the marketplace.")
+                                  ),
+                                  React.createElement(InfoCard, { icon: Zap, title: "Our Solution" },
+                                      React.createElement("p", null, "Our platform features detailed skill profiles, AI-powered job matching, real-time availability calendars, and a tiered subscription model to provide unmatched value and efficiency in the hiring process.")
+                                  )
+                              ),
+                              React.createElement("div", null,
+                                  React.createElement("h2", { className: "text-2xl font-bold text-gray-800 mb-4 text-center" }, "Revenue Model"),
+                                  React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-6" },
+                                      React.createElement("div", { className: "bg-white p-6 rounded-lg shadow-sm border" },
+                                          React.createElement("h3", { className: "font-bold text-lg mb-2" }, "Engineer Subscriptions"),
+                                          React.createElement("ul", { className: "space-y-2 text-sm" },
+                                              SUBSCRIPTION_PLANS.map(plan => (
+                                                  React.createElement("li", { key: plan.name, className: "flex items-start" },
+                                                      React.createElement(CheckCircle, { className: "h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" }),
+                                                      React.createElement("span", null, React.createElement("strong", null, plan.name, " (", plan.price > 0 ? `£${plan.price}/mo` : 'Free', "):"), " ", plan.features.join(', '), ".")
+                                                  )
+                                              ))
+                                          )
+                                      ),
+                                      React.createElement("div", { className: "bg-white p-6 rounded-lg shadow-sm border" },
+                                          React.createElement("h3", { className: "font-bold text-lg mb-2" }, "Company Subscriptions"),
+                                          React.createElement("ul", { className: "space-y-2 text-sm" },
+                                              COMPANY_SUBSCRIPTION_PLANS.map(plan => (
+                                                  React.createElement("li", { key: plan.name, className: "flex items-start" },
+                                                      React.createElement(CheckCircle, { className: "h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" }),
+                                                      React.createElement("span", null, React.createElement("strong", null, plan.name, " (", plan.price > 0 ? `£${plan.price}/mo` : 'Custom', "):"), " ", plan.description)
+                                                  )
+                                              ))
+                                          )
+                                      )
+                                  )
+                              ),
+                              React.createElement("div", null,
+                                  React.createElement("h2", { className: "text-3xl font-bold text-gray-800 mb-6 text-center" }, "Financial Projections"),
+                                  React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-3 gap-8" },
+                                      React.createElement(FinancialCard, {
+                                          year: "Year 1",
+                                          revenue: "£189,800",
+                                          users: [
+                                              { label: 'Pro Users', value: '500' },
+                                              { label: 'Expert Users', value: '250' },
+                                              { label: 'Business Accounts', value: '100' },
+                                          ]
+                                      }),
+                                      React.createElement(FinancialCard, {
+                                          year: "Year 2",
+                                          revenue: "£514,800",
+                                          users: [
+                                              { label: 'Pro Users', value: '1,200' },
+                                              { label: 'Expert Users', value: '600' },
+                                              { label: 'Business Accounts', value: '250' },
+                                          ]
+                                      }),
+                                      React.createElement(FinancialCard, {
+                                          year: "Year 3",
+                                          revenue: "£1,120,800",
+                                          users: [
+                                              { label: 'Pro Users', value: '2,500' },
+                                              { label: 'Expert Users', value: '1,200' },
+                                              { label: 'Business Accounts', value: '500' },
+                                          ]
+                                      })
+                                  )
+                              ),
+                              React.createElement("div", { className: "text-center pt-8" },
+                                  React.createElement("h2", { className: "text-2xl font-bold text-gray-800 mb-3" }, "Join Us"),
+                                  React.createElement("p", { className: "text-gray-600 max-w-2xl mx-auto mb-6" }, "TechSubbies.com presents a high-growth investment opportunity in a rapidly expanding global market. We invite you to join us in building the essential platform for the future of freelance technical work."),
+                                  React.createElement("a", { href: "mailto:invest@techsubbies.com", className: "inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors shadow-md" }, "Contact for Investment Enquiries")
+                              )
+                          )
+                      )
+                  )
+              )
+          );
+      };
+      // ===== END: views/InvestorPage.tsx =====
+      
+      // ===== START: views/EngineerDashboard.tsx =====
+      const DetailItem = ({ label, value, isEditing, onChange, href, placeholder }) => (
+          React.createElement("div", { className: "grid grid-cols-3 gap-4 text-sm" },
+              React.createElement("span", { className: "font-semibold text-gray-600 col-span-1" }, label),
+              React.createElement("div", { className: "text-gray-800 col-span-2" },
+                  isEditing ? (
+                      React.createElement("input", {
+                          type: "text",
+                          value: value || '',
+                          onChange: (e) => onChange(e.target.value),
+                          placeholder: placeholder || label,
+                          className: "w-full p-1 border border-gray-300 rounded-md"
+                      })
+                  ) : (
+                      href && value ? React.createElement("a", { href: href, target: "_blank", rel: "noopener noreferrer", className: "text-blue-600 hover:underline" }, value) : (value || '—')
+                  )
+              )
+          )
+      );
+      const UploadItem = ({ label, value, isEditing, onChange }) => {
+          const fileInputRef = useRef(null);
+          const handleUploadClick = (e) => {
+              e.preventDefault();
+              if (isEditing) {
+                  fileInputRef.current?.click();
+              } else {
+                  alert(`Viewing proof for ${label}.`);
+              }
+          };
+          const handleFileChange = (e) => {
+              if (e.target.files && e.target.files[0]) {
+                  alert(`File "${e.target.files[0].name}" selected for ${label}. In a real app, this would be uploaded and linked.`);
+              }
+          };
+          return (
+              React.createElement("div", { className: "grid grid-cols-3 gap-4 text-sm items-center" },
+                  React.createElement("span", { className: "font-semibold text-gray-600 col-span-2" }, label),
+                  React.createElement("div", { className: "flex items-center justify-between col-span-1" },
+                       isEditing ? (
+                          React.createElement("input", {
+                              type: "checkbox",
+                              checked: value,
+                              onChange: (e) => onChange(e.target.checked),
+                              className: "h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          })
+                      ) : (
+                          React.createElement("span", { className: value ? 'text-green-600 font-semibold' : 'text-gray-500' }, value ? 'Yes' : 'No')
+                      ),
+                       value && (
+                          React.createElement(React.Fragment, null,
+                              React.createElement("a", { href: "#", className: "text-xs text-blue-600 hover:underline flex items-center", onClick: handleUploadClick },
+                                  React.createElement(Paperclip, { size: 12, className: "mr-1" }),
+                                  isEditing ? 'Upload' : 'View'
+                              ),
+                              React.createElement("input", { type: "file", ref: fileInputRef, onChange: handleFileChange, className: "hidden" })
+                          )
+                       )
+                  )
+              )
+          );
+      };
+      const RatingDisplay = ({ rating }) => (
+          React.createElement("div", { className: "flex items-center" },
+              [...Array(5)].map((_, i) => (
+                  React.createElement(Star, { key: i, className: `h-5 w-5 ${i < rating ? 'text-yellow-400' : 'text-gray-300'}`, fill: "currentColor" })
+              ))
+          )
+      );
+      const SkillProfileCard = ({ profile, currency, onEdit }) => (
+          React.createElement("div", { className: "bg-white rounded-lg shadow-md p-6 border border-gray-200" },
+              React.createElement("div", { className: "flex justify-between items-start" },
+                  React.createElement("div", null,
+                      React.createElement("h3", { className: "text-xl font-bold text-gray-800" }, profile.roleTitle),
+                      React.createElement("span", { className: profile.isPremium ? 'text-blue-600 text-lg font-semibold' : 'text-gray-500 text-lg font-semibold' },
+                          currency, profile.dayRate, "/day"
+                      )
+                  ),
+                  React.createElement("button", { onClick: onEdit, className: "flex items-center text-sm bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded-lg hover:bg-gray-300 transition-colors" },
+                      React.createElement(Edit, { size: 14, className: "mr-2" }), " Edit"
+                  )
+              ),
+              React.createElement("div", { className: "mt-4" },
+                  React.createElement("h4", { className: "font-semibold text-gray-600 mb-2" }, "Self-Assessed Skills:"),
+                  React.createElement("ul", { className: "space-y-2" },
+                      profile.skills.map(skill => (
+                          React.createElement("li", { key: skill.id, className: "flex justify-between items-center text-sm" },
+                              React.createElement("span", null, skill.name),
+                              React.createElement(RatingDisplay, { rating: skill.rating })
+                          )
+                      ))
+                  )
+              ),
+              profile.customSkills.length > 0 && (
+                  React.createElement("div", { className: "mt-4" },
+                      React.createElement("h4", { className: "font-semibold text-gray-600 mb-2" }, "Specialties:"),
+                      React.createElement("div", { className: "flex flex-wrap gap-2" },
+                          profile.customSkills.map(skill => (
+                              React.createElement("span", { key: skill, className: "bg-gray-200 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full" }, skill)
+                          ))
+                      )
+                  )
+              )
+          )
+      );
+      const EngineerDashboard = () => {
+          const { currentUser, currency, jobs, getCompanyById, updateEngineer } = useAppContext();
+          const currentEngineer = currentUser;
+          const [isEditing, setIsEditing] = useState(false);
+          const [draftEngineer, setDraftEngineer] = useState(currentEngineer);
+          const [editingProfile, setEditingProfile] = useState(null);
+          const fileInputRef = useRef(null);
+          useEffect(() => {
+              setDraftEngineer(currentEngineer);
+          }, [currentEngineer]);
+          const handleProfileChange = (key, value) => {
+              setDraftEngineer(prev => ({ ...prev, [key]: value }));
+          }
+          const handleCertificationChange = (id, achieved) => {
+              const updatedCerts = draftEngineer.certifications.map(cert => 
+                  cert.id === id ? { ...cert, achieved } : cert
+              );
+              handleProfileChange('certifications', updatedCerts);
+          };
+          const handleSaveChanges = () => {
+              const updatedEngineer = {...draftEngineer, name: `${draftEngineer.firstName} ${draftEngineer.surname}`}
+              updateEngineer(updatedEngineer);
+              setIsEditing(false);
+          }
+          const handleCancelChanges = () => {
+              setDraftEngineer(currentEngineer);
+              setIsEditing(false);
+          }
+          const handleSaveSkillProfile = (updatedProfile) => {
+              const isNewProfile = !currentEngineer.skillProfiles.some(p => p.id === updatedProfile.id);
+              let updatedProfiles;
+              if (isNewProfile) {
+                  updatedProfiles = [...currentEngineer.skillProfiles, updatedProfile];
+              } else {
+                  updatedProfiles = currentEngineer.skillProfiles.map(p => 
+                      p.id === updatedProfile.id ? updatedProfile : p
+                  );
+              }
+              const updatedEngineer = {
+                  ...currentEngineer,
+                  skillProfiles: updatedProfiles
+              };
+              updateEngineer(updatedEngineer);
+              setEditingProfile(null);
+          };
+          const handleAddNewProfile = () => {
+              const newProfile = {
+                  id: `sp_${Date.now()}`,
+                  roleTitle: '',
+                  dayRate: 250,
+                  skills: [],
+                  customSkills: [],
+                  isPremium: true,
+              };
+              setEditingProfile(newProfile);
+          };
+          const handleDateClick = (date) => {
+              if (!isEditing) return;
+              const currentAvailability = draftEngineer.availability || [];
+              const newAvailability = currentAvailability.includes(date)
+                  ? currentAvailability.filter(d => d !== date)
+                  : [...currentAvailability, date].sort();
+              handleProfileChange('availability', newAvailability);
+          };
+          const handleProfileImageChange = (event) => {
+              if (event.target.files && event.target.files[0]) {
+                  const file = event.target.files[0];
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                      handleProfileChange('profileImageUrl', reader.result);
+                  };
+                  reader.readAsDataURL(file);
+              }
+          };
+          const triggerFileInput = () => fileInputRef.current?.click();
+          if (!currentEngineer) {
+              return React.createElement("div", null, "Loading engineer profile...");
+          }
+          const engineerRoles = new Set(currentEngineer.skillProfiles.map(p => p.roleTitle));
+          engineerRoles.add('Basic Engineer');
+          const matchedJobs = jobs.filter(job => engineerRoles.has(job.roleTitle));
+          return (
+              React.createElement(React.Fragment, null,
+                   editingProfile && (
+                      React.createElement(EditSkillProfileModal, {
+                          profile: editingProfile,
+                          onClose: () => setEditingProfile(null),
+                          onSave: handleSaveSkillProfile,
+                          currency: currency
+                      })
+                  ),
+                   React.createElement("div", { className: "bg-white rounded-lg shadow-md p-6 sm:p-8 mb-8 border border-gray-200" },
+                      React.createElement("div", { className: "flex flex-col sm:flex-row justify-between items-start" },
+                          React.createElement("div", { className: "flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6" },
+                              React.createElement("div", { className: "relative" },
+                                  React.createElement("img", { src: draftEngineer.profileImageUrl, alt: draftEngineer.name, className: "h-28 w-28 rounded-full object-cover" }),
+                                   isEditing && (
+                                      React.createElement(React.Fragment, null,
+                                          React.createElement("button", {
+                                              type: "button",
+                                              onClick: triggerFileInput,
+                                              className: "absolute inset-0 bg-black bg-opacity-60 rounded-full flex items-center justify-center text-white opacity-0 hover:opacity-100 transition-opacity focus:opacity-100 cursor-pointer",
+                                              "aria-label": "Change profile picture"
+                                          },
+                                              React.createElement(UploadCloud, { size: 32 })
+                                          ),
+                                          React.createElement("input", {
+                                              type: "file",
+                                              ref: fileInputRef,
+                                              onChange: handleProfileImageChange,
+                                              className: "hidden",
+                                              accept: "image/png, image/jpeg, image/webp"
+                                          })
+                                      )
+                                  )
+                              ),
+                              React.createElement("div", { className: "text-center sm:text-left" },
+                                  React.createElement("h1", { className: "text-3xl sm:text-4xl font-extrabold text-gray-900" }, draftEngineer.firstName, " ", draftEngineer.surname),
+                                  isEditing ? (
+                                       React.createElement("input", { type: "text", value: draftEngineer.tagline, onChange: (e) => handleProfileChange('tagline', e.target.value), className: "text-lg text-gray-700 mt-1 border-b-2 p-1 w-full" })
+                                  ) : (
+                                      React.createElement("p", { className: "text-lg text-gray-700 mt-1" }, draftEngineer.tagline)
+                                  )
+                              )
+                          ),
+                           React.createElement("div", null,
+                              isEditing ? (
+                                  React.createElement("div", { className: "flex space-x-2 mt-4 sm:mt-0" },
+                                      React.createElement("button", { onClick: handleCancelChanges, className: "flex items-center bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors" },
+                                          React.createElement(X, { size: 20, className: "mr-2" }), " Cancel"
+                                      ),
+                                      React.createElement("button", { onClick: handleSaveChanges, className: "flex items-center bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors" },
+                                          React.createElement(Save, { size: 20, className: "mr-2" }), " Save"
+                                      )
+                                  )
+                              ) : (
+                                  React.createElement("button", { onClick: () => setIsEditing(true), className: "flex items-center bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors mt-4 sm:mt-0" },
+                                      React.createElement(Edit, { size: 20, className: "mr-2" }), " Edit Profile"
+                                  )
+                              )
+                          )
+                      ),
+                      React.createElement("div", { className: "mt-6" },
+                          isEditing ? (
+                               React.createElement("textarea", { value: draftEngineer.bio, onChange: (e) => handleProfileChange('bio', e.target.value), className: "w-full text-gray-600 border-2 p-2 rounded-md" })
+                          ) : (
+                              React.createElement("p", { className: "text-gray-600" }, draftEngineer.bio)
+                          )
+                      ),
+                      React.createElement("hr", { className: "my-6 border-gray-200" }),
+                      React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4" },
+                          React.createElement("div", { className: "space-y-3" },
+                              React.createElement(DetailItem, { label: "Title", value: draftEngineer.title, isEditing: isEditing, onChange: v => handleProfileChange('title', v) }),
+                              React.createElement(DetailItem, { label: "First Name", value: draftEngineer.firstName, isEditing: isEditing, onChange: v => handleProfileChange('firstName', v) }),
+                              React.createElement(DetailItem, { label: "Middle Name", value: draftEngineer.middleName, isEditing: isEditing, onChange: v => handleProfileChange('middleName', v) }),
+                              React.createElement(DetailItem, { label: "Surname", value: draftEngineer.surname, isEditing: isEditing, onChange: v => handleProfileChange('surname', v) }),
+                              React.createElement(DetailItem, { label: "Company Name", value: draftEngineer.companyName, isEditing: isEditing, onChange: v => handleProfileChange('companyName', v) }),
+                              React.createElement(DetailItem, { label: "Travel Radius", value: draftEngineer.travelRadius, isEditing: isEditing, onChange: v => handleProfileChange('travelRadius', v) }),
+                              React.createElement("hr", { className: "my-3 border-gray-200" }),
+                              React.createElement(DetailItem, { label: "Email Address", value: draftEngineer.email, isEditing: isEditing, onChange: v => handleProfileChange('email', v), href: `mailto:${draftEngineer.email}` }),
+                              React.createElement(DetailItem, { label: "Mobile", value: draftEngineer.mobile, isEditing: isEditing, onChange: v => handleProfileChange('mobile', v), href: `tel:${draftEngineer.mobile}` }),
+                              React.createElement(DetailItem, { label: "Website", value: draftEngineer.website, isEditing: isEditing, onChange: v => handleProfileChange('website', v), href: `https://${draftEngineer.website}` }),
+                              React.createElement(DetailItem, { label: "LinkedIn", value: draftEngineer.linkedin, isEditing: isEditing, onChange: v => handleProfileChange('linkedin', v), href: `https://${draftEngineer.linkedin}`})
+                          ),
+                          React.createElement("div", { className: "space-y-3" },
+                              React.createElement(UploadItem, { label: "Professional Indemnity Insurance", value: draftEngineer.professionalIndemnityInsurance, isEditing: isEditing, onChange: v => handleProfileChange('professionalIndemnityInsurance', v) }),
+                              React.createElement(UploadItem, { label: "Public Liability Insurance", value: draftEngineer.publicLiabilityInsurance, isEditing: isEditing, onChange: v => handleProfileChange('publicLiabilityInsurance', v) }),
+                              React.createElement("hr", { className: "my-3 border-gray-200" }),
+                              React.createElement("h4", { className: "font-semibold text-gray-600 text-sm" }, "Certifications & Training"),
+                              draftEngineer.certifications.map(cert => (
+                                   React.createElement(UploadItem, { key: cert.id, label: cert.name, value: cert.achieved, isEditing: isEditing, onChange: v => handleCertificationChange(cert.id, v) })
+                              )),
+                              React.createElement("hr", { className: "my-3 border-gray-200" }),
+                              React.createElement("div", { className: "grid grid-cols-3 gap-4 text-sm items-center" },
+                                  React.createElement("span", { className: "font-semibold text-gray-600 col-span-1" }, "Customer Rating"),
+                                  React.createElement("div", { className: "text-gray-800 col-span-2" }, React.createElement(RatingDisplay, { rating: draftEngineer.customerRating }))
+                              ),
+                              React.createElement("div", { className: "grid grid-cols-3 gap-4 text-sm items-center" },
+                                  React.createElement("span", { className: "font-semibold text-gray-600 col-span-1" }, "Peer Rating"),
+                                  React.createElement("div", { className: "text-gray-800 col-span-2" }, React.createElement(RatingDisplay, { rating: draftEngineer.peerRating }))
+                              )
+                          )
+                      )
+                   ),
+                  React.createElement("div", { className: "mb-8" },
+                      React.createElement("h2", { className: "text-2xl font-bold text-gray-800 mb-4" }, "My Availability"),
+                      React.createElement("p", { className: "text-sm text-gray-600 mb-4" },
+                          isEditing 
+                              ? "Click on dates to toggle your availability. Changes will be saved when you click the 'Save' button." 
+                              : "This is your current availability calendar. Click 'Edit Profile' to make changes."
+                      ),
+                      React.createElement("div", { className: "bg-white rounded-lg shadow-md p-4 border border-gray-200" },
+                          React.createElement(Calendar, { 
+                              highlightedDates: draftEngineer.availability, 
+                              onDateClick: handleDateClick,
+                              readOnly: !isEditing
+                          })
+                      )
+                  ),
+                  React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-3 gap-8" },
+                      React.createElement("div", { className: "md:col-span-2" },
+                          React.createElement("div", { className: "flex justify-between items-center mb-6" },
+                              React.createElement("h2", { className: "text-2xl font-bold text-gray-800" }, "My Skill Profiles"),
+                              React.createElement("button", { onClick: handleAddNewProfile, className: "flex items-center bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors" },
+                                  React.createElement(PlusCircle, { size: 20, className: "mr-2" }), "Add New Profile"
+                              )
+                          ),
+                          React.createElement("div", { className: "space-y-6" },
+                              React.createElement("div", { className: "bg-white rounded-lg shadow-sm p-6 border border-gray-200" },
+                                   React.createElement("div", { className: "flex justify-between items-start" },
+                                      React.createElement("h3", { className: "text-xl font-bold text-gray-800" }, "Basic Engineer Profile"),
+                                      React.createElement("span", { className: "text-lg font-semibold text-gray-500" },
+                                          currency, currentEngineer.baseDayRate, "/day"
+                                      )
+                                  ),
+                                  React.createElement("p", { className: "text-sm text-gray-600 mt-2" }, "Your default profile for general tech support tasks. This profile uses your core certifications and is visible to all companies.")
+                              ),
+                              currentEngineer.skillProfiles.map(profile => (
+                                  React.createElement(SkillProfileCard, { 
+                                      key: profile.id, 
+                                      profile: profile, 
+                                      currency: currency,
+                                      onEdit: () => setEditingProfile(profile)
+                                  })
+                              ))
+                          )
+                      ),
+                      React.createElement("div", { className: "md:col-span-1" },
+                           React.createElement("h2", { className: "text-2xl font-bold text-gray-800 mb-6" }, "Incoming Job Offers"),
+                           React.createElement("div", { className: "space-y-4" },
+                              matchedJobs.length > 0 ? (
+                                  matchedJobs.map(job => {
+                                      const company = getCompanyById(job.companyId);
+                                      return (
+                                          React.createElement("div", { key: job.id, className: "bg-white p-4 rounded-lg shadow-md border border-gray-200" },
+                                              React.createElement("h4", { className: "font-bold text-gray-800" }, job.title),
+                                              React.createElement("p", { className: "text-sm text-gray-600" }, company?.name, " - ", job.location),
+                                              React.createElement("div", { className: "flex justify-end mt-2 space-x-2" },
+                                                  React.createElement("button", {
+                                                      onClick: () => alert(`Job "${job.title}" declined. In a real app, this would notify the company.`),
+                                                      className: "text-xs font-semibold border border-gray-300 text-gray-700 px-3 py-1 rounded-md hover:bg-gray-100"
+                                                  }, "Decline"),
+                                                  React.createElement("button", {
+                                                      onClick: () => alert(`Job "${job.title}" accepted! In a real app, this would confirm the booking.`),
+                                                      className: "text-xs font-semibold bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700"
+                                                  }, "Accept")
+                                              )
+                                          )
+                                      );
+                                  })
+                              ) : (
+                                  React.createElement("div", { className: "bg-white p-4 rounded-lg shadow-md border border-gray-200 text-center" },
+                                      React.createElement("p", { className: "text-gray-500" }, "No job offers matching your profiles at the moment.")
+                                  )
+                              )
+                           ),
+                           React.createElement("div", { className: "mt-8" },
+                              React.createElement(AIEngineerCostAnalysis, null)
+                           )
+                      )
+                  )
+              )
+          );
+      };
+      // ===== END: views/EngineerDashboard.tsx =====
+      
+      // ===== START: views/CompanyDashboard.tsx =====
+      const Stat = ({ icon: Icon, value, className = '' }) => (
+          React.createElement("div", { className: `flex items-center space-x-1.5 ${className}` },
+              React.createElement(Icon, { className: "h-3.5 w-3.5 text-gray-500 flex-shrink-0" }),
+              React.createElement("span", { className: "text-gray-600" }, value)
+          )
+      );
+      const Rating = ({ rating }) => (
+          React.createElement("div", { className: "flex items-center" },
+              [...Array(5)].map((_, i) => (
+                  React.createElement(Star, { key: i, className: `h-3.5 w-3.5 ${i < rating ? 'text-yellow-400' : 'text-gray-300'}`, fill: "currentColor" })
+              )),
+              React.createElement("span", { className: "text-xs text-gray-500 ml-1" }, "(", rating.toFixed(1), ")")
+          )
+      );
+      const EngineerCard = ({ engineer, currency, onViewProfile }) => {
+          return (
+              React.createElement("div", { className: "bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg hover:border-blue-500 transition-all duration-300 flex flex-col p-4 h-full" },
+                  React.createElement("div", { className: "flex items-center mb-3" },
+                      React.createElement("img", { className: "h-12 w-12 rounded-full object-cover mr-4", src: engineer.profileImageUrl, alt: engineer.name }),
+                      React.createElement("div", { className: "flex-1" },
+                          React.createElement("h3", { className: "font-bold text-gray-800 leading-tight truncate" }, engineer.name),
+                          React.createElement("p", { className: "text-xs text-gray-500 truncate" }, engineer.tagline)
+                      )
+                  ),
+                  React.createElement("div", { className: "grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs mb-3" },
+                      React.createElement(Stat, { icon: Briefcase, value: `${engineer.yearsOfExperience} yrs exp.` }),
+                      React.createElement(Stat, { icon: MapPin, value: engineer.location }),
+                      React.createElement(Stat, { icon: Award, value: React.createElement(Rating, { rating: engineer.customerRating }) }),
+                      React.createElement(Stat, { icon: ShieldCheck, value: React.createElement(Rating, { rating: engineer.peerRating }) })
+                  ),
+                  React.createElement("div", { className: "mt-auto pt-3 border-t border-gray-100 flex justify-between items-center" },
+                      React.createElement("div", null,
+                          React.createElement("span", { className: "text-lg font-bold text-blue-600" }, currency, engineer.baseDayRate),
+                          React.createElement("span", { className: "text-xs text-gray-500" }, "/day")
+                      ),
+                      React.createElement("button", {
+                        onClick: () => onViewProfile(engineer),
+                        className: "bg-blue-600 text-white font-semibold py-1.5 px-4 rounded-md hover:bg-blue-700 transition-colors text-sm"
+                      },
+                          "View"
+                      )
+                  )
+              )
+          );
+      };
+      const CompanyDashboard = () => {
+          const { engineers, currency, setViewingEngineer } = useAppContext();
+          const [searchTerm, setSearchTerm] = useState('');
+          const [filteredEngineers, setFilteredEngineers] = useState(engineers);
+          const [isJobModalOpen, setIsJobModalOpen] = useState(false);
+          const [skillFilters, setSkillFilters] = useState([]);
+          const [allSkills, setAllSkills] = useState([]);
+          useEffect(() => {
+              const skills = new Set();
+              engineers.forEach(eng => {
+                  eng.skillProfiles.forEach(prof => {
+                      prof.skills.forEach(skill => {
+                          skills.add(skill.name);
+                      });
+                  });
+              });
+              setAllSkills(Array.from(skills).sort());
+          }, [engineers]);
+          const toggleSkillFilter = (skillName) => {
+              setSkillFilters(currentFilters =>
+                  currentFilters.includes(skillName)
+                      ? currentFilters.filter(s => s !== skillName)
+                      : [...currentFilters, skillName]
+              );
+          };
+          useEffect(() => {
+              const lowercasedTerm = searchTerm.toLowerCase();
+              const results = engineers.filter(eng => {
+                  const matchesSearch = searchTerm === '' ||
+                      eng.name.toLowerCase().includes(lowercasedTerm) ||
+                      eng.tagline.toLowerCase().includes(lowercasedTerm) ||
+                      eng.location.toLowerCase().includes(lowercasedTerm) ||
+                      eng.skillProfiles.some(p => p.roleTitle.toLowerCase().includes(lowercasedTerm));
+                  const matchesSkills = skillFilters.every(filter => {
+                      if (!filter) return true;
+                      return eng.skillProfiles.some(profile =>
+                          profile.skills.some(skill => skill.name === filter)
+                      );
+                  });
+                  return matchesSearch && matchesSkills;
+              });
+              setFilteredEngineers(results);
+          }, [searchTerm, engineers, skillFilters]);
+          return (
+              React.createElement(React.Fragment, null,
+                  React.createElement(JobPostModal, { isOpen: isJobModalOpen, onClose: () => setIsJobModalOpen(false) }),
+                  React.createElement("div", { className: "flex flex-col sm:flex-row justify-between items-center gap-4 mb-4" },
+                      React.createElement("div", null,
+                          React.createElement("h1", { className: "text-3xl font-bold text-gray-800" }, "Find Engineers"),
+                          React.createElement("p", { className: "text-gray-600 mt-1 text-sm" }, "Search our network of ", engineers.length, " verified professionals.")
+                      ),
+                       React.createElement("div", { className: "relative w-full sm:w-auto sm:max-w-xs" },
+                          React.createElement(Search, { className: "absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" }),
+                          React.createElement("input", {
+                              type: "text",
+                              placeholder: "Search name, role, location...",
+                              className: "w-full p-2 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-600 focus:outline-none",
+                              value: searchTerm,
+                              onChange: (e) => setSearchTerm(e.target.value)
+                          })
+                      ),
+                       React.createElement("button", {
+                          onClick: () => setIsJobModalOpen(true),
+                          className: "flex-shrink-0 w-full sm:w-auto flex items-center justify-center bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                      },
+                          React.createElement(PlusCircle, { size: 20, className: "mr-2" }), "Post a New Job"
+                      )
+                  ),
+                  React.createElement("div", { className: "mb-6" },
+                      React.createElement(AIEngineerCostAnalysis, null)
+                  ),
+                  React.createElement("div", { className: "mb-6 flex flex-wrap gap-2 items-center" },
+                       React.createElement("h3", { className: "text-sm font-semibold text-gray-700 mr-2" }, "Popular Skills:"),
+                      allSkills.slice(0, 10).map(skill => (
+                           React.createElement("button", {
+                              key: skill,
+                              onClick: () => toggleSkillFilter(skill),
+                              className: `px-3 py-1 text-sm font-medium rounded-full border transition-colors ${
+                                  skillFilters.includes(skill)
+                                  ? 'bg-blue-600 text-white border-blue-600'
+                                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                              }`
+                          },
+                              skill
+                          )
+                      )),
+                       skillFilters.length > 0 && (
+                          React.createElement("button", {
+                              onClick: () => setSkillFilters([]),
+                              className: "flex items-center text-sm text-red-500 font-semibold hover:text-red-700"
+                          },
+                              React.createElement(XCircle, { size: 16, className: "mr-1" }), " Clear"
+                          )
+                       )
+                  ),
+                  React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" },
+                      filteredEngineers.map(engineer => (
+                          React.createElement(EngineerCard, { key: engineer.id, engineer: engineer, currency: currency, onViewProfile: setViewingEngineer })
+                      ))
+                  ),
+                  filteredEngineers.length === 0 && (
+                      React.createElement("div", { className: "text-center py-16 col-span-full flex flex-col justify-center items-center bg-white rounded-lg shadow-md border" },
+                          React.createElement("p", { className: "text-gray-600 text-lg font-semibold" }, "No Engineers Found"),
+                          React.createElement("p", { className: "text-gray-500 mt-2" }, "Try adjusting your search or skill filters.")
+                      )
+                  )
+              )
+          );
+      };
+      // ===== END: views/CompanyDashboard.tsx =====
+      
+      // ===== START: views/LoginSelector.tsx =====
+      const LoginSelector = ({ roleToLogin }) => {
+          const { login, setRole } = useAppContext();
+          const [username, setUsername] = useState('');
+          const [password, setPassword] = useState('');
+          const [rememberMe, setRememberMe] = useState(false);
+          const [error, setError] = useState('');
+          const handleBack = () => {
+              setError('');
+              setRole(Role.NONE);
+          };
+          const handleSubmit = (e) => {
+              e.preventDefault();
+              setError('');
+              const correctPassword = 'G00dw1n!';
+              let loginSuccessful = false;
+              switch (roleToLogin) {
+                  case Role.ENGINEER:
+                      if (username === 'SteveEngineer' && password === correctPassword) {
+                          login(Role.ENGINEER, 'eng_steve');
+                          loginSuccessful = true;
+                      }
+                      break;
+                  case Role.COMPANY:
+                      if (username === 'SteveCompany' && password === correctPassword) {
+                          login(Role.COMPANY, 'com_steve');
+                          loginSuccessful = true;
+                      }
+                      break;
+                  case Role.ADMIN:
+                      if (username === 'admin' && password === correctPassword) {
+                          login(Role.ADMIN, 'admin1');
+                          loginSuccessful = true;
+                      }
+                      break;
+              }
+              if (!loginSuccessful) {
+                  setError('Invalid username or password. Please try again.');
+              }
+          };
+          const getLoginDetails = () => {
+              switch(roleToLogin) {
+                  case Role.ENGINEER:
+                      return {
+                          title: 'Engineer Login',
+                          icon: React.createElement(User, { className: "h-8 w-8 text-white" }),
+                          demoUser: 'SteveEngineer'
+                      };
+                  case Role.COMPANY:
+                      return {
+                          title: 'Company Login',
+                          icon: React.createElement(Building, { className: "h-8 w-8 text-white" }),
+                          demoUser: 'SteveCompany'
+                      };
+                  case Role.ADMIN:
+                      return {
+                          title: 'Administrator Login',
+                          icon: React.createElement(UserCog, { className: "h-8 w-8 text-white" }),
+                          demoUser: 'admin'
+                      };
+                  default:
+                      return {
+                          title: 'Login',
+                          icon: React.createElement(LogIn, { className: "h-8 w-8 text-white" }),
+                          demoUser: ''
+                      };
+              }
+          }
+          const { title, icon, demoUser } = getLoginDetails();
+          const handlePopulateDemo = (e) => {
+              e.preventDefault();
+              setUsername(demoUser);
+              setPassword('G00dw1n!');
+          };
+          return (
+              React.createElement("div", { className: "flex flex-col items-center justify-center min-h-[calc(100vh-128px)] bg-gray-100 p-4" },
+                   React.createElement("div", { className: "w-full max-w-md" },
+                      React.createElement("button", { onClick: handleBack, className: "flex items-center text-sm font-semibold text-gray-600 hover:text-gray-800 mb-4" },
+                          React.createElement(ArrowLeft, { size: 16, className: "mr-2" }), "Back to Home"
+                      ),
+                      React.createElement("div", { className: "bg-white rounded-xl shadow-2xl overflow-hidden" },
+                          React.createElement("div", { className: "bg-blue-600 p-6 flex flex-col items-center text-center" },
+                              React.createElement("div", { className: "h-16 w-16 rounded-full bg-blue-700 flex items-center justify-center mb-4 border-4 border-blue-500" },
+                                  icon
+                              ),
+                              React.createElement("h1", { className: "text-2xl font-bold text-white" }, title)
+                          ),
+                          React.createElement("div", { className: "p-8" },
+                              React.createElement("form", { onSubmit: handleSubmit, className: "space-y-6" },
+                                  React.createElement("div", null,
+                                      React.createElement("label", { className: "block text-sm font-medium text-gray-700 mb-1", htmlFor: "username" },
+                                          "Username"
+                                      ),
+                                      React.createElement("input", {
+                                          id: "username",
+                                          type: "text",
+                                          value: username,
+                                          onChange: (e) => setUsername(e.target.value),
+                                          className: "w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none",
+                                          required: true,
+                                          autoComplete: "username"
+                                      })
+                                  ),
+                                  React.createElement("div", null,
+                                      React.createElement("label", { className: "block text-sm font-medium text-gray-700 mb-1", htmlFor: "password" },
+                                          "Password"
+                                      ),
+                                      React.createElement("input", {
+                                          id: "password",
+                                          type: "password",
+                                          value: password,
+                                          onChange: (e) => setPassword(e.target.value),
+                                          className: "w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none",
+                                          required: true,
+                                          autoComplete: "current-password"
+                                      })
+                                  ),
+                                  React.createElement("div", { className: "flex items-center justify-between" },
+                                      React.createElement("div", { className: "flex items-center" },
+                                          React.createElement("input", {
+                                              id: "remember-me",
+                                              name: "remember-me",
+                                              type: "checkbox",
+                                              checked: rememberMe,
+                                              onChange: (e) => setRememberMe(e.target.checked),
+                                              className: "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                          }),
+                                          React.createElement("label", { htmlFor: "remember-me", className: "ml-2 block text-sm text-gray-700" },
+                                              "Remember me"
+                                          )
+                                      )
+                                  ),
+                                  error && (
+                                      React.createElement("div", { className: "bg-red-50 border-l-4 border-red-400 p-4 flex items-start" },
+                                          React.createElement("div", { className: "flex-shrink-0" },
+                                              React.createElement(AlertCircle, { className: "h-5 w-5 text-red-400" })
+                                          ),
+                                          React.createElement("div", { className: "ml-3" },
+                                              React.createElement("p", { className: "text-sm text-red-700" }, error)
+                                          )
+                                      )
+                                  ),
+                                   React.createElement("div", { className: "space-y-3" },
+                                      React.createElement("button", {
+                                          type: "button",
+                                          onClick: handlePopulateDemo,
+                                          className: "w-full bg-gray-100 text-gray-800 font-semibold py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors duration-300 flex items-center justify-center shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                      },
+                                          React.createElement(Zap, { size: 20, className: "mr-2 text-yellow-500" }),
+                                          "Use Demo Credentials"
+                                      ),
+                                      React.createElement("button", {
+                                          type: "submit",
+                                          className: "w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-300 flex items-center justify-center shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                      },
+                                          React.createElement(LogIn, { size: 20, className: "mr-2" }),
+                                          "Sign In"
+                                      )
+                                  )
+                              ),
+                              React.createElement("div", { className: "mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm" },
+                                  React.createElement("h3", { className: "font-semibold text-gray-800" }, "Demo Credentials:"),
+                                  React.createElement("p", { className: "text-gray-600 mt-1" }, "Username: ", React.createElement("code", { className: "bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded" }, demoUser)),
+                                  React.createElement("p", { className: "text-gray-600 mt-1" }, "Password: ", React.createElement("code", { className: "bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded" }, "G00dw1n!"))
+                              )
+                          )
+                      )
+                  )
+              )
+          );
+      };
+      // ===== END: views/LoginSelector.tsx =====
+      
+      // ===== START: views/EngineerProfileView.tsx =====
+      const formatUrl = (url) => {
+          if (!url) return '#';
+          if (url.startsWith('mailto:') || url.startsWith('tel:')) return url;
+          if (url.startsWith('http://') || url.startsWith('https://')) return url;
+          return `https://${url}`;
+      };
+      const DetailItemView = ({ icon: Icon, label, value, href }) => {
+          const isExternal = href && (href.startsWith('http') || href.startsWith('//'));
+          const content = (
+              React.createElement("div", { className: "flex items-center space-x-3" },
+                  React.createElement(Icon, { className: "h-6 w-6 text-blue-600 flex-shrink-0" }),
+                  React.createElement("div", null,
+                      React.createElement("p", { className: "text-sm font-semibold text-gray-800 break-words" }, value || '—'),
+                      React.createElement("p", { className: "text-xs text-gray-500" }, label)
+                  )
+              )
+          );
+          if (href && href !== '#') {
+              return React.createElement("a", { href: href, target: isExternal ? '_blank' : undefined, rel: isExternal ? 'noopener noreferrer' : undefined, className: "hover:opacity-75 transition-opacity" }, content);
+          }
+          return content;
+      };
+      const ComplianceItem = ({ label, value }) => (
+          React.createElement("div", { className: "flex items-center text-sm" },
+              React.createElement(CheckCircle, { className: `h-5 w-5 mr-2 ${value ? 'text-green-500' : 'text-gray-300'}` }),
+              React.createElement("span", { className: value ? 'text-gray-700' : 'text-gray-500' }, label)
+          )
+      );
+      const SkillProfileCardView = ({ profile, currency }) => (
+          React.createElement("div", { className: "bg-white rounded-lg shadow-md p-6 border border-gray-200 h-full" },
+              React.createElement("div", null,
+                  React.createElement("h3", { className: "text-xl font-bold text-gray-800" }, profile.roleTitle),
+                  React.createElement("span", { className: 'text-blue-600 text-lg font-semibold' },
+                      currency, profile.dayRate, "/day"
+                  )
+              ),
+              React.createElement("div", { className: "mt-4" },
+                  React.createElement("h4", { className: "font-semibold text-gray-600 mb-2" }, "Self-Assessed Skills:"),
+                  React.createElement("ul", { className: "space-y-2" },
+                      profile.skills.map(skill => (
+                          React.createElement("li", { key: skill.id, className: "flex justify-between items-center text-sm" },
+                              React.createElement("span", null, skill.name),
+                              React.createElement(RatingDisplay, { rating: skill.rating })
+                          )
+                      ))
+                  )
+              ),
+              profile.customSkills.length > 0 && (
+                  React.createElement("div", { className: "mt-4" },
+                      React.createElement("h4", { className: "font-semibold text-gray-600 mb-2" }, "Specialties:"),
+                      React.createElement("div", { className: "flex flex-wrap gap-2" },
+                          profile.customSkills.map(skill => (
+                              React.createElement("span", { key: skill, className: "bg-gray-200 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full" }, skill)
+                          ))
+                      )
+                  )
+              )
+          )
+      );
+      const EngineerProfileView = () => {
+          const { viewingEngineer: engineer, setViewingEngineer, currency } = useAppContext();
+          if (!engineer) {
+              return (
+                  React.createElement("div", { className: "flex items-center justify-center h-full" },
+                      React.createElement("p", null, "Engineer profile not found.")
+                  )
+              );
+          }
+          return (
+              React.createElement("div", { className: "container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8" },
+                  React.createElement("div", { className: "mb-6" },
+                       React.createElement("button", { 
+                          onClick: () => setViewingEngineer(null), 
+                          className: "flex items-center text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                      },
+                          React.createElement(ArrowLeft, { size: 16, className: "mr-2" }),
+                          "Back to Search Results"
+                      )
+                  ),
+                  React.createElement("div", { className: "bg-white rounded-lg shadow-xl p-6 sm:p-8 border border-gray-200" },
+                      React.createElement("div", { className: "flex flex-col sm:flex-row justify-between items-start" },
+                          React.createElement("div", { className: "flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6" },
+                              React.createElement("img", { src: engineer.profileImageUrl, alt: engineer.name, className: "h-32 w-32 rounded-full object-cover border-4 border-gray-100" }),
+                              React.createElement("div", { className: "text-center sm:text-left" },
+                                  React.createElement("h1", { className: "text-3xl sm:text-4xl font-extrabold text-gray-900" }, engineer.name),
+                                  React.createElement("p", { className: "text-lg text-gray-700 mt-1" }, engineer.tagline),
+                                  React.createElement("div", { className: "flex items-center justify-center sm:justify-start space-x-2 mt-2 text-gray-500" },
+                                      React.createElement(MapPin, { size: 16 }),
+                                      React.createElement("span", null, engineer.location)
+                                  )
+                              )
+                          ),
+                           React.createElement("div", { className: "mt-4 sm:mt-0 self-center sm:self-start" },
+                              React.createElement("a", { href: `mailto:${engineer.email}`, className: "block text-center bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors shadow-sm w-full sm:w-auto" },
+                                  "Contact Engineer"
+                              )
+                          )
+                      ),
+                      React.createElement("div", { className: "mt-8" },
+                          React.createElement("h2", { className: "text-lg font-bold text-gray-800 mb-4" }, "Availability"),
+                          React.createElement("div", { className: "bg-gray-50 rounded-lg p-4 border border-gray-200" },
+                              React.createElement(Calendar, { 
+                                  highlightedDates: engineer.availability, 
+                                  readOnly: true
+                              })
+                          )
+                      ),
+                      React.createElement("div", { className: "mt-8" },
+                          React.createElement("h2", { className: "text-lg font-bold text-gray-800 mb-2" }, "About Me"),
+                          React.createElement("p", { className: "text-gray-600 whitespace-pre-wrap" }, engineer.bio)
+                      ),
+                      React.createElement("hr", { className: "my-8 border-gray-200" }),
+                      React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8" },
+                          React.createElement("div", { className: "space-y-6" },
+                              React.createElement("h3", { className: "text-lg font-bold text-gray-800 border-b pb-2" }, "Professional Details"),
+                              React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-6" },
+                                  React.createElement(DetailItemView, { icon: Calendar, label: "Years of Experience", value: `${engineer.yearsOfExperience} years` }),
+                                  React.createElement(DetailItemView, { icon: Briefcase, label: "Company Name", value: engineer.companyName }),
+                                  React.createElement(DetailItemView, { icon: MapPin, label: "Travel Radius", value: engineer.travelRadius }),
+                                  React.createElement(DetailItemView, { icon: Award, label: "Customer Rating", value: React.createElement(RatingDisplay, { rating: engineer.customerRating }) }),
+                                  React.createElement(DetailItemView, { icon: ShieldCheck, label: "Peer Rating", value: React.createElement(RatingDisplay, { rating: engineer.peerRating }) })
+                              ),
+                               React.createElement("h3", { className: "text-lg font-bold text-gray-800 border-b pb-2 mt-8" }, "Contact"),
+                               React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-6" },
+                                   React.createElement(DetailItemView, { icon: Mail, label: "Email", value: engineer.email, href: formatUrl(`mailto:${engineer.email}`) }),
+                                   React.createElement(DetailItemView, { icon: Phone, label: "Mobile", value: engineer.mobile, href: formatUrl(`tel:${engineer.mobile}`) }),
+                                   React.createElement(DetailItemView, { icon: Globe, label: "Website", value: engineer.website, href: formatUrl(engineer.website) }),
+                                   React.createElement(DetailItemView, { icon: Linkedin, label: "LinkedIn", value: engineer.linkedin, href: formatUrl(engineer.linkedin) })
+                               )
+                          ),
+                          React.createElement("div", { className: "space-y-6" },
+                              React.createElement("h3", { className: "text-lg font-bold text-gray-800 border-b pb-2" }, "Compliance & Certifications"),
+                              React.createElement("div", { className: "space-y-3" },
+                                   React.createElement(ComplianceItem, { label: "Professional Indemnity Insurance", value: engineer.professionalIndemnityInsurance }),
+                                   React.createElement(ComplianceItem, { label: "Public Liability Insurance", value: engineer.publicLiabilityInsurance }),
+                                   React.createElement("hr", { className: "my-3 border-gray-200" }),
+                                   engineer.certifications.map(cert => (
+                                      React.createElement(ComplianceItem, { key: cert.id, label: cert.name, value: cert.achieved })
+                                   ))
+                              )
+                          )
+                      )
+                  ),
+                  engineer.associates && engineer.associates.length > 0 && (
+                      React.createElement("div", { className: "mt-12" },
+                          React.createElement("h2", { className: "text-2xl font-bold text-gray-800 mb-6" }, "Trusted Associates"),
+                          React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" },
+                              engineer.associates.map((associate, index) => (
+                                  React.createElement("div", { key: index, className: "bg-white rounded-lg shadow-md p-4 flex items-center space-x-4 border border-gray-200 transform hover:scale-105 transition-transform duration-300" },
+                                      React.createElement("div", { className: "bg-blue-100 p-3 rounded-full" },
+                                          React.createElement(Users, { className: "h-6 w-6 text-blue-600" })
+                                      ),
+                                      React.createElement("div", null,
+                                          associate.link && associate.link !== '#' ? (
+                                              React.createElement("a", { href: associate.link, target: "_blank", rel: "noopener noreferrer", className: "font-semibold text-gray-800 hover:text-blue-600 hover:underline" },
+                                                  associate.name
+                                              )
+                                          ) : (
+                                              React.createElement("p", { className: "font-semibold text-gray-800" }, associate.name)
+                                          ),
+                                          React.createElement("p", { className: "text-sm text-gray-500" }, "Peer Endorsed")
+                                      )
+                                  )
+                              ))
+                          )
+                      )
+                  ),
+                  React.createElement("div", { className: "mt-12" },
+                      React.createElement("h2", { className: "text-2xl font-bold text-gray-800 mb-6" }, "Skill Profiles & Day Rates"),
+                       React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" },
+                           React.createElement("div", { className: "bg-gray-100 rounded-lg shadow-md p-6 border border-gray-200" },
+                               React.createElement("h3", { className: "text-xl font-bold text-gray-800" }, "Basic Engineer Profile"),
+                               React.createElement("span", { className: "text-lg font-semibold text-gray-600" },
+                                   currency, engineer.baseDayRate, "/day"
+                               ),
+                               React.createElement("p", { className: "text-sm text-gray-600 mt-2" }, "Default profile for general tech support tasks, visible to all companies.")
+                           ),
+                           engineer.skillProfiles.map(profile => (
+                               React.createElement(SkillProfileCardView, { 
+                                   key: profile.id, 
+                                   profile: profile, 
+                                   currency: currency
+                               })
+                           ))
+                       )
+                  )
+              )
+          );
+      };
+      // ===== END: views/EngineerProfileView.tsx =====
+      
+      // ===== START: views/AdminDashboard.tsx =====
+      const StatCard = ({ icon: Icon, title, value, color }) => (
+          React.createElement("div", { className: "bg-white rounded-lg shadow-md p-6 border border-gray-200 flex items-center space-x-4" },
+              React.createElement("div", { className: `p-3 rounded-full ${color}` },
+                  React.createElement(Icon, { className: "h-6 w-6 text-white" })
+              ),
+              React.createElement("div", null,
+                  React.createElement("p", { className: "text-sm text-gray-600 font-medium" }, title),
+                  React.createElement("p", { className: "text-2xl font-bold text-gray-900" }, value)
+              )
+          )
+      );
+      const AdminDashboard = () => {
+          const { engineers, companies, supportRequests, updateSupportRequest } = useAppContext();
+          const [showOnlyOpen, setShowOnlyOpen] = useState(true);
+          const totalUsers = React.useMemo(() => engineers.length + companies.length, [engineers, companies]);
+          const openTickets = React.useMemo(() => supportRequests.filter(r => r.status === 'Open').length, [supportRequests]);
+          const filteredRequests = React.useMemo(() => {
+              const sorted = [...supportRequests].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+              if (showOnlyOpen) {
+                  return sorted.filter(r => r.status === 'Open');
+              }
+              return sorted;
+          }, [supportRequests, showOnlyOpen]);
+          const handleResolveTicket = (id) => {
+              updateSupportRequest(id, 'Resolved');
+          };
+          return (
+              React.createElement(React.Fragment, null,
+                  React.createElement("h1", { className: "text-3xl font-bold text-gray-800 mb-6" }, "Admin Dashboard"),
+                  React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8" },
+                      React.createElement(StatCard, { icon: Users, title: "Total Users", value: totalUsers, color: "bg-blue-500" }),
+                      React.createElement(StatCard, { icon: Ticket, title: "Total Support Tickets", value: supportRequests.length, color: "bg-green-500" }),
+                      React.createElement(StatCard, { icon: AlertTriangle, title: "Open Tickets", value: openTickets, color: "bg-yellow-500" })
+                  ),
+                  React.createElement("div", { className: "space-y-8 mb-8" },
+                       React.createElement(AISkillDiscovery, null)
+                  ),
+                  React.createElement("div", { className: "bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden" },
+                      React.createElement("div", { className: "p-6 flex justify-between items-center border-b" },
+                          React.createElement("h2", { className: "text-xl font-bold text-gray-800" }, "Support Requests"),
+                          React.createElement("div", { className: "flex items-center" },
+                              React.createElement("input", {
+                                  type: "checkbox",
+                                  id: "showOpen",
+                                  checked: showOnlyOpen,
+                                  onChange: () => setShowOnlyOpen(!showOnlyOpen),
+                                  className: "h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              }),
+                              React.createElement("label", { htmlFor: "showOpen", className: "ml-2 text-sm font-medium text-gray-700" },
+                                  "Show only open tickets"
+                              )
+                          )
+                      ),
+                      React.createElement("div", { className: "overflow-x-auto" },
+                          React.createElement("table", { className: "min-w-full divide-y divide-gray-200" },
+                              React.createElement("thead", { className: "bg-gray-50" },
+                                  React.createElement("tr", null,
+                                      React.createElement("th", { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "User"),
+                                      React.createElement("th", { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "Subject"),
+                                      React.createElement("th", { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "Date"),
+                                      React.createElement("th", { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "Status"),
+                                      React.createElement("th", { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "Action")
+                                  )
+                              ),
+                              React.createElement("tbody", { className: "bg-white divide-y divide-gray-200" },
+                                  filteredRequests.map((req) => (
+                                      React.createElement("tr", { key: req.id },
+                                          React.createElement("td", { className: "px-6 py-4 whitespace-nowrap" },
+                                              React.createElement("div", { className: "text-sm font-medium text-gray-900" }, req.userName),
+                                              React.createElement("div", { className: "text-sm text-gray-500 capitalize" }, req.userRole)
+                                          ),
+                                          React.createElement("td", { className: "px-6 py-4 whitespace-nowrap" },
+                                              React.createElement("div", { className: "text-sm text-gray-900" }, req.subject),
+                                              React.createElement("div", { className: "text-sm text-gray-500 truncate max-w-xs" }, req.message)
+                                          ),
+                                          React.createElement("td", { className: "px-6 py-4 whitespace-nowrap text-sm text-gray-500" },
+                                              new Date(req.date).toLocaleDateString()
+                                          ),
+                                          React.createElement("td", { className: "px-6 py-4 whitespace-nowrap" },
+                                              React.createElement("span", { className: `px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                                  req.status === 'Open' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
+                                              }` },
+                                                  req.status
+                                              )
+                                          ),
+                                          React.createElement("td", { className: "px-6 py-4 whitespace-nowrap text-sm font-medium" },
+                                              req.status === 'Open' && (
+                                                  React.createElement("button", {
+                                                      onClick: () => handleResolveTicket(req.id),
+                                                      className: "flex items-center text-indigo-600 hover:text-indigo-900"
+                                                  },
+                                                      React.createElement(CheckCircle, { size: 16, className: "mr-1" }),
+                                                      "Mark as Resolved"
+                                                  )
+                                              )
+                                          )
+                                      )
+                                  ))
+                              )
+                          ),
+                           filteredRequests.length === 0 && (
+                              React.createElement("div", { className: "text-center py-12" },
+                                  React.createElement(Inbox, { className: "mx-auto h-12 w-12 text-gray-400" }),
+                                  React.createElement("h3", { className: "mt-2 text-sm font-medium text-gray-900" }, "No support requests"),
+                                  React.createElement("p", { className: "mt-1 text-sm text-gray-500" },
+                                      showOnlyOpen ? "There are no open tickets." : "There are no support tickets yet."
+                                  )
+                              )
+                          )
+                      )
+                  )
+              )
+          );
+      };
+      // ===== END: views/AdminDashboard.tsx =====
+      
+      // ===== START: App.tsx =====
+      const App = () => {
+        const { role, currentUser, viewingEngineer, publicView } = useAppContext();
+        const renderDashboardContent = () => {
+          if (viewingEngineer) {
+            return React.createElement(EngineerProfileView, null);
+          }
+          switch (role) {
+            case Role.ADMIN:
+              return React.createElement(AdminDashboard, null);
+            case Role.ENGINEER:
+              return React.createElement(EngineerDashboard, null);
+            case Role.COMPANY:
+              return React.createElement(CompanyDashboard, null);
+            default:
+              return React.createElement(LandingPage, null);
+          }
+        };
+        const renderPublicContent = () => {
+           if (publicView === 'investors') {
+              return React.createElement(InvestorPage, null);
+           }
+           if (role === Role.NONE) {
+              return React.createElement(LandingPage, null);
+            } else {
+              return React.createElement(LoginSelector, { roleToLogin: role });
+            }
+        };
+        if (currentUser) {
+          return (
+             React.createElement("div", { className: "min-h-screen flex flex-col bg-gray-100 font-sans" },
+              React.createElement(Header, null),
+              React.createElement("div", { className: "flex flex-1 overflow-hidden" },
+                React.createElement(DashboardSidebar, { role: role }),
+                React.createElement("main", { className: "flex-1 overflow-y-auto p-6 md:p-8" },
+                  renderDashboardContent()
+                )
+              )
+            )
+          );
+        }
+        return (
+          React.createElement("div", { className: "min-h-screen flex flex-col bg-gray-100 font-sans" },
+            React.createElement(Header, null),
+            React.createElement("main", { className: "flex-grow" },
+              renderPublicContent()
+            ),
+            React.createElement(Footer, null)
+          )
+        );
+      };
+      // ===== END: App.tsx =====
+      
+      // ===== START: index.tsx (entry point) =====
+      const rootElement = document.getElementById('root');
+      if (!rootElement) {
+          throw new Error("Could not find root element to mount to");
+      }
+      const root = ReactDOM.createRoot(rootElement);
+      root.render(
+        React.createElement(React.StrictMode, null,
+          React.createElement(AppProvider, null,
+            React.createElement(App, null)
+          )
+        )
+      );
+      // ===== END: index.tsx (entry point) =====
+    </script>
   </body>
 </html>

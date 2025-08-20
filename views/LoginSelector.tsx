@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Role } from '../types';
-import { ArrowLeft, LogIn, User, Building, UserCog, AlertCircle } from 'lucide-react';
+import { ArrowLeft, LogIn, User, Building, UserCog, AlertCircle, Zap } from 'lucide-react';
 
 export const LoginSelector: React.FC<{ roleToLogin: Role }> = ({ roleToLogin }) => {
     const { login, setRole } = useAppContext();
@@ -81,6 +81,12 @@ export const LoginSelector: React.FC<{ roleToLogin: Role }> = ({ roleToLogin }) 
     
     const { title, icon, demoUser } = getLoginDetails();
 
+    const handlePopulateDemo = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        setUsername(demoUser);
+        setPassword('G00dw1n!');
+    };
+
     return (
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-128px)] bg-gray-100 p-4">
              <div className="w-full max-w-md">
@@ -126,18 +132,20 @@ export const LoginSelector: React.FC<{ roleToLogin: Role }> = ({ roleToLogin }) 
                                 />
                             </div>
 
-                            <div className="flex items-center">
-                                <input
-                                    id="remember-me"
-                                    name="remember-me"
-                                    type="checkbox"
-                                    checked={rememberMe}
-                                    onChange={(e) => setRememberMe(e.target.checked)}
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                />
-                                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                                    Remember me
-                                </label>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                    <input
+                                        id="remember-me"
+                                        name="remember-me"
+                                        type="checkbox"
+                                        checked={rememberMe}
+                                        onChange={(e) => setRememberMe(e.target.checked)}
+                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                    />
+                                    <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                                        Remember me
+                                    </label>
+                                </div>
                             </div>
                             
                             {error && (
@@ -151,7 +159,15 @@ export const LoginSelector: React.FC<{ roleToLogin: Role }> = ({ roleToLogin }) 
                                 </div>
                             )}
 
-                            <div>
+                             <div className="space-y-3">
+                                <button
+                                    type="button"
+                                    onClick={handlePopulateDemo}
+                                    className="w-full bg-gray-100 text-gray-800 font-semibold py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors duration-300 flex items-center justify-center shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                >
+                                    <Zap size={20} className="mr-2 text-yellow-500"/>
+                                    Use Demo Credentials
+                                </button>
                                 <button
                                     type="submit"
                                     className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-300 flex items-center justify-center shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"

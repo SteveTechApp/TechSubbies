@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Role, Currency } from '../types';
@@ -6,7 +7,7 @@ import { Logo } from './Logo';
 import { HowItWorksModal } from './HowItWorksModal';
 
 export const Header: React.FC = () => {
-  const { role, setRole, setCurrency, currency, currentUser, logout } = useAppContext();
+  const { role, setRole, setCurrency, currency, currentUser, logout, setPublicView } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   const toggleCurrency = () => {
@@ -28,13 +29,12 @@ export const Header: React.FC = () => {
             <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
               How it Works
             </button>
-            <a 
-              href="/investors_guide.pdf" 
-              download="TechSubbies_Investor_Guide.pdf"
+            <button
+              onClick={() => setPublicView('investors')}
               className="px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
             >
               For Investors
-            </a>
+            </button>
             <button onClick={toggleCurrency} className="flex items-center p-2 rounded-md hover:bg-gray-100 transition-colors">
               {currency === Currency.GBP ? <PoundSterling size={20} /> : <DollarSign size={20} />}
               <span className="ml-1 text-sm font-medium">{currency === Currency.GBP ? 'GBP' : 'USD'}</span>

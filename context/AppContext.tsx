@@ -3,6 +3,8 @@ import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { Role, Engineer, Job, Company, Currency, Admin, SupportRequest } from '../types';
 import { MOCK_ENGINEERS, MOCK_JOBS, MOCK_COMPANIES, MOCK_ADMINS, MOCK_SUPPORT_REQUESTS } from '../constants';
 
+type PublicView = 'landing' | 'investors';
+
 interface AppContextType {
   role: Role;
   setRole: (role: Role) => void;
@@ -23,6 +25,8 @@ interface AppContextType {
   updateEngineer: (updatedEngineer: Engineer) => void;
   viewingEngineer: Engineer | null;
   setViewingEngineer: (engineer: Engineer | null) => void;
+  publicView: PublicView;
+  setPublicView: (view: PublicView) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -33,6 +37,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [currency, setCurrency] = useState<Currency>(Currency.GBP);
   const [currentUser, setCurrentUser] = useState<Engineer | Company | Admin | null>(null);
   const [viewingEngineer, setViewingEngineer] = useState<Engineer | null>(null);
+  const [publicView, setPublicView] = useState<PublicView>('landing');
   
   const [engineers, setEngineers] = useState<Engineer[]>(MOCK_ENGINEERS);
   const [jobs] = useState<Job[]>(MOCK_JOBS);
@@ -62,6 +67,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setCurrentUser(null);
     setRole(Role.NONE);
     setViewingEngineer(null);
+    setPublicView('landing');
   };
   
   const updateEngineer = (updatedEngineer: Engineer) => {
@@ -83,6 +89,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setRole(newRole);
     if (newRole === Role.NONE) {
       setViewingEngineer(null);
+      setPublicView('landing');
     }
   };
 
@@ -96,7 +103,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       supportRequests, updateSupportRequest,
       getCompanyById,
       currentUser, login, logout, updateEngineer,
-      viewingEngineer, setViewingEngineer
+      viewingEngineer, setViewingEngineer,
+      publicView, setPublicView
     }}>
       {children}
     </AppContext.Provider>

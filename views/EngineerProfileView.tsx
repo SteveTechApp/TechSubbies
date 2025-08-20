@@ -6,6 +6,14 @@ import { SkillProfile } from '../types';
 import { Star, ArrowLeft, Briefcase, Award, ShieldCheck, Calendar, MapPin, CheckCircle, Mail, Phone, Globe, Linkedin, Users } from 'lucide-react';
 import { Calendar as AvailabilityCalendar } from '../components/Calendar';
 
+// Helper to ensure URLs are correctly formatted for links
+const formatUrl = (url: string | undefined): string => {
+    if (!url) return '#';
+    if (url.startsWith('mailto:') || url.startsWith('tel:')) return url;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return `https://${url}`;
+};
+
 const RatingDisplay: React.FC<{ rating: number }> = ({ rating }) => (
     <div className="flex items-center">
         {[...Array(5)].map((_, i) => (
@@ -15,16 +23,19 @@ const RatingDisplay: React.FC<{ rating: number }> = ({ rating }) => (
 );
 
 const DetailItem: React.FC<{ icon: React.ElementType, label: string; value?: string | React.ReactNode, href?: string }> = ({ icon: Icon, label, value, href }) => {
-    const content = <div className="flex items-center space-x-3">
-        <Icon className="h-6 w-6 text-blue-600 flex-shrink-0" />
-        <div>
-            <p className="text-sm font-semibold text-gray-800">{value || '—'}</p>
-            <p className="text-xs text-gray-500">{label}</p>
+    const isExternal = href && (href.startsWith('http') || href.startsWith('//'));
+    const content = (
+        <div className="flex items-center space-x-3">
+            <Icon className="h-6 w-6 text-blue-600 flex-shrink-0" />
+            <div>
+                <p className="text-sm font-semibold text-gray-800 break-words">{value || '—'}</p>
+                <p className="text-xs text-gray-500">{label}</p>
+            </div>
         </div>
-    </div>;
+    );
 
-    if (href && value) {
-        return <a href={href} target="_blank" rel="noopener noreferrer" className="hover:opacity-75 transition-opacity">{content}</a>;
+    if (href && href !== '#') {
+        return <a href={href} target={isExternal ? '_blank' : undefined} rel={isExternal ? 'noopener noreferrer' : undefined} className="hover:opacity-75 transition-opacity">{content}</a>;
     }
     return content;
 };
@@ -109,9 +120,9 @@ export const EngineerProfileView: React.FC = () => {
                         </div>
                     </div>
                      <div className="mt-4 sm:mt-0 self-center sm:self-start">
-                        <button className="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors shadow-sm w-full sm:w-auto">
+                        <a href={`mailto:${engineer.email}`} className="block text-center bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors shadow-sm w-full sm:w-auto">
                             Contact Engineer
-                        </button>
+                        </a>
                     </div>
                 </div>
 
@@ -147,10 +158,10 @@ export const EngineerProfileView: React.FC = () => {
                         </div>
                          <h3 className="text-lg font-bold text-gray-800 border-b pb-2 mt-8">Contact</h3>
                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                             <DetailItem icon={Mail} label="Email" value={engineer.email} href={`mailto:${engineer.email}`} />
-                             <DetailItem icon={Phone} label="Mobile" value={engineer.mobile} href={`tel:${engineer.mobile}`} />
-                             <DetailItem icon={Globe} label="Website" value={engineer.website} href={`https://${engineer.website}`} />
-                             <DetailItem icon={Linkedin} label="LinkedIn" value={engineer.linkedin} href={`https://${engineer.linkedin}`} />
+                             <DetailItem icon={Mail} label="Email" value={engineer.email} href={formatUrl(`mailto:${engineer.email}`)} />
+                             <DetailItem icon={Phone} label="Mobile" value={engineer.mobile} href={formatUrl(`tel:${engineer.mobile}`)} />
+                             <DetailItem icon={Globe} label="Website" value={engineer.website} href={formatUrl(engineer.website)} />
+                             <DetailItem icon={Linkedin} label="LinkedIn" value={engineer.linkedin} href={formatUrl(engineer.linkedin)} />
                          </div>
                     </div>
                     {/* Right Column */}
@@ -179,7 +190,7 @@ export const EngineerProfileView: React.FC = () => {
                                     <Users className="h-6 w-6 text-blue-600" />
                                 </div>
                                 <div>
-                                    {associate.link ? (
+                                    {associate.link && associate.link !== '#' ? (
                                         <a href={associate.link} target="_blank" rel="noopener noreferrer" className="font-semibold text-gray-800 hover:text-blue-600 hover:underline">
                                             {associate.name}
                                         </a>

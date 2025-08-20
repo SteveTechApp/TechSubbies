@@ -1,23 +1,38 @@
+
 import React, { useState } from 'react';
 import { DollarSign, Loader, BarChart2 } from 'lucide-react';
 import { analyzeEngineerRates } from '../services/geminiService';
 import { useAppContext } from '../context/AppContext';
 import { SKILL_ROLES } from '../constants';
-import { Currency } from '../types';
+import { Role } from '../types';
 
 interface AnalysisResult {
     roleTitle: string;
     engineerCount: number;
     averageDayRate: number;
     aiSummary: string;
+    scope: 'local' | 'global';
+    location?: string;
+    isSmallSample: boolean;
 }
 
 export const AIEngineerCostAnalysis: React.FC = () => {
-    const { engineers, currency } = useAppContext();
+    const { engineers, currency, currentUser, role } = useAppContext();
     const [selectedRole, setSelectedRole] = useState('');
+    const [scope, setScope] = useState<'local' | 'global'>('local');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [result, setResult] = useState<AnalysisResult | null>(null);
+
+    const isLocalScopeAvailable = role === Role.ENGINEER || role === Role.COMPANY;
+
+    // Default to global if local is not available
+    React.useEffect(() => {
+        if (!isLocalScopeAvailable) {
+            setScope('global');
+        }
+    }, [isLocalScopeAvailable]);
+
 
     const handleAnalyze = async () => {
         if (!selectedRole) {
@@ -29,13 +44,25 @@ export const AIEngineerCostAnalysis: React.FC = () => {
         setError(null);
         setResult(null);
 
-        // 1. Filter engineers and calculate stats
-        const relevantProfiles = engineers
+        const analysisScope = isLocalScopeAvailable ? scope : 'global';
+        let relevantEngineers = engineers;
+        let locationName: string | undefined;
+
+        if (analysisScope === 'local' && currentUser && 'location' in currentUser && typeof currentUser.location === 'string') {
+            const userCountry = currentUser.location.split(', ')[1];
+            if (userCountry) {
+                locationName = userCountry;
+                relevantEngineers = engineers.filter(eng => eng.location.endsWith(userCountry));
+            }
+        }
+        
+        const relevantProfiles = relevantEngineers
             .flatMap(eng => eng.skillProfiles)
             .filter(profile => profile.roleTitle === selectedRole);
         
         if (relevantProfiles.length === 0) {
-            setError(`No engineers found with the role "${selectedRole}" to analyze.`);
+            const scopeMessage = analysisScope === 'local' ? `in your local market (${locationName})` : 'globally';
+            setError(`No engineers found with the role "${selectedRole}" ${scopeMessage} to analyze.`);
             setIsLoading(false);
             return;
         }
@@ -43,16 +70,19 @@ export const AIEngineerCostAnalysis: React.FC = () => {
         const totalRate = relevantProfiles.reduce((sum, profile) => sum + profile.dayRate, 0);
         const averageDayRate = Math.round(totalRate / relevantProfiles.length);
         const engineerCount = relevantProfiles.length;
+        const isSmallSample = engineerCount < 5;
 
-        // 2. Call Gemini for insights
         try {
-            const aiSummary = await analyzeEngineerRates(selectedRole, averageDayRate, engineerCount, currency);
+            const aiSummary = await analyzeEngineerRates(selectedRole, averageDayRate, engineerCount, currency, analysisScope, locationName);
             if (aiSummary) {
                 setResult({
                     roleTitle: selectedRole,
                     engineerCount,
                     averageDayRate,
-                    aiSummary
+                    aiSummary,
+                    scope: analysisScope,
+                    location: locationName,
+                    isSmallSample,
                 });
             } else {
                 setError('Failed to get a valid response from the AI. Please try again.');
@@ -70,12 +100,32 @@ export const AIEngineerCostAnalysis: React.FC = () => {
             <div className="p-6 border-b">
                 <h2 className="text-xl font-bold text-gray-800 flex items-center">
                     <DollarSign className="mr-3 text-green-600" />
-                    AI Engineer Cost Analysis
+                    AI Market Rate Analysis
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                    Analyze the average day rates for different roles based on platform data to advise on industry standards.
+                    Analyze average day rates for any role to stay competitive.
                 </p>
             </div>
+
+            {isLocalScopeAvailable && (
+                 <div className="p-6 border-b">
+                     <div className="flex border border-gray-200 rounded-md p-1 bg-gray-100 max-w-xs">
+                         <button
+                             onClick={() => setScope('local')}
+                             className={`w-1/2 py-2 text-sm font-semibold rounded-md transition-colors ${scope === 'local' ? 'bg-white text-blue-600 shadow' : 'text-gray-600 hover:bg-white/50'}`}
+                         >
+                             Local Market
+                         </button>
+                         <button
+                             onClick={() => setScope('global')}
+                             className={`w-1/2 py-2 text-sm font-semibold rounded-md transition-colors ${scope === 'global' ? 'bg-white text-blue-600 shadow' : 'text-gray-600 hover:bg-white/50'}`}
+                         >
+                             Global Market
+                         </button>
+                     </div>
+                 </div>
+            )}
+            
             <div className="p-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                     <select
@@ -113,8 +163,13 @@ export const AIEngineerCostAnalysis: React.FC = () => {
             {result && (
                 <div className="p-6 border-t">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                        Analysis for <span className="text-blue-600">{result.roleTitle}</span>
+                        Analysis for <span className="text-blue-600">{result.roleTitle}</span> ({result.scope === 'local' ? `Local - ${result.location}` : 'Global'})
                     </h3>
+                     {result.isSmallSample && (
+                        <div className="p-3 mb-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-sm rounded-r-md">
+                            <strong>Note:</strong> The sample size is small ({result.engineerCount} engineers), so this analysis may not be fully representative.
+                        </div>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                          <div className="bg-gray-50 p-4 rounded-lg border">
                             <p className="text-sm text-gray-600">Average Day Rate</p>

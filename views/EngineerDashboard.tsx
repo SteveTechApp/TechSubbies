@@ -1,10 +1,12 @@
 
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { SkillProfile, Engineer, Certification } from '../types';
 import { Star, PlusCircle, MapPin, Edit, X, Save, UploadCloud, Paperclip } from 'lucide-react';
 import { EditSkillProfileModal } from '../components/EditSkillProfileModal';
 import { Calendar } from '../components/Calendar';
+import { AIEngineerCostAnalysis } from '../components/AIEngineerCostAnalysis';
 
 
 // A generic component for rendering a detail row, handling edit mode.
@@ -34,35 +36,60 @@ const DetailItem: React.FC<{
     </div>
 );
 
-// A specific component for boolean "Yes/No" compliance items with an upload link.
+// A specific component for boolean "Yes/No" compliance items with a functional upload link.
 const UploadItem: React.FC<{
     label: string;
     value: boolean;
     isEditing: boolean;
     onChange: (value: boolean) => void;
-}> = ({ label, value, isEditing, onChange }) => (
-    <div className="grid grid-cols-3 gap-4 text-sm items-center">
-        <span className="font-semibold text-gray-600 col-span-2">{label}</span>
-        <div className="flex items-center justify-between col-span-1">
-             {isEditing ? (
-                <input
-                    type="checkbox"
-                    checked={value}
-                    onChange={(e) => onChange(e.target.checked)}
-                    className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-            ) : (
-                <span className={value ? 'text-green-600 font-semibold' : 'text-gray-500'}>{value ? 'Yes' : 'No'}</span>
-            )}
-             {value && (
-                <a href="#" className="text-xs text-blue-600 hover:underline flex items-center" onClick={(e) => e.preventDefault()}>
-                    <Paperclip size={12} className="mr-1" />
-                    Upload
-                </a>
-             )}
+}> = ({ label, value, isEditing, onChange }) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleUploadClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (isEditing) {
+            fileInputRef.current?.click();
+        } else {
+            // In a real app, this would open the stored document.
+            alert(`Viewing proof for ${label}.`);
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            // In a real app, this would trigger an upload process.
+            alert(`File "${e.target.files[0].name}" selected for ${label}. In a real app, this would be uploaded and linked.`);
+        }
+    };
+
+    return (
+        <div className="grid grid-cols-3 gap-4 text-sm items-center">
+            <span className="font-semibold text-gray-600 col-span-2">{label}</span>
+            <div className="flex items-center justify-between col-span-1">
+                 {isEditing ? (
+                    <input
+                        type="checkbox"
+                        checked={value}
+                        onChange={(e) => onChange(e.target.checked)}
+                        className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                ) : (
+                    <span className={value ? 'text-green-600 font-semibold' : 'text-gray-500'}>{value ? 'Yes' : 'No'}</span>
+                )}
+                 {value && (
+                    <>
+                        <a href="#" className="text-xs text-blue-600 hover:underline flex items-center" onClick={handleUploadClick}>
+                            <Paperclip size={12} className="mr-1" />
+                            {isEditing ? 'Upload' : 'View'}
+                        </a>
+                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                    </>
+                 )}
+            </div>
         </div>
-    </div>
-);
+    );
+};
+
 
 const RatingDisplay: React.FC<{ rating: number }> = ({ rating }) => (
     <div className="flex items-center">
@@ -118,6 +145,8 @@ export const EngineerDashboard: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [draftEngineer, setDraftEngineer] = useState<Engineer>(currentEngineer);
     const [editingProfile, setEditingProfile] = useState<SkillProfile | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
 
     useEffect(() => {
         setDraftEngineer(currentEngineer);
@@ -146,27 +175,22 @@ export const EngineerDashboard: React.FC = () => {
     }
 
     const handleSaveSkillProfile = (updatedProfile: SkillProfile) => {
-        // Check if it's a new profile by checking its existence in the original currentEngineer object
         const isNewProfile = !currentEngineer.skillProfiles.some(p => p.id === updatedProfile.id);
 
         let updatedProfiles;
         if (isNewProfile) {
-            // Add new profile to the existing list
             updatedProfiles = [...currentEngineer.skillProfiles, updatedProfile];
         } else {
-            // Update existing profile in the list
             updatedProfiles = currentEngineer.skillProfiles.map(p => 
                 p.id === updatedProfile.id ? updatedProfile : p
             );
         }
         
-        // Create the fully updated engineer object
         const updatedEngineer = {
             ...currentEngineer,
             skillProfiles: updatedProfiles
         };
 
-        // Persist the changes to the global state, which will trigger a re-render
         updateEngineer(updatedEngineer);
         setEditingProfile(null); // Close modal
     };
@@ -174,7 +198,7 @@ export const EngineerDashboard: React.FC = () => {
     const handleAddNewProfile = () => {
         const newProfile: SkillProfile = {
             id: `sp_${Date.now()}`,
-            roleTitle: '', // Empty so the dropdown shows the placeholder
+            roleTitle: '',
             dayRate: 250,
             skills: [],
             customSkills: [],
@@ -192,6 +216,19 @@ export const EngineerDashboard: React.FC = () => {
         
         handleProfileChange('availability', newAvailability);
     };
+
+    const handleProfileImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files[0]) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                handleProfileChange('profileImageUrl', reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const triggerFileInput = () => fileInputRef.current?.click();
 
     if (!currentEngineer) {
         return <div>Loading engineer profile...</div>;
@@ -216,7 +253,28 @@ export const EngineerDashboard: React.FC = () => {
                 {/* Profile Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start">
                     <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
-                        <img src={draftEngineer.profileImageUrl} alt={draftEngineer.name} className="h-28 w-28 rounded-full object-cover" />
+                        <div className="relative">
+                            <img src={draftEngineer.profileImageUrl} alt={draftEngineer.name} className="h-28 w-28 rounded-full object-cover" />
+                             {isEditing && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={triggerFileInput}
+                                        className="absolute inset-0 bg-black bg-opacity-60 rounded-full flex items-center justify-center text-white opacity-0 hover:opacity-100 transition-opacity focus:opacity-100 cursor-pointer"
+                                        aria-label="Change profile picture"
+                                    >
+                                        <UploadCloud size={32} />
+                                    </button>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleProfileImageChange}
+                                        className="hidden"
+                                        accept="image/png, image/jpeg, image/webp"
+                                    />
+                                </>
+                            )}
+                        </div>
                         <div className="text-center sm:text-left">
                             <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900">{draftEngineer.firstName} {draftEngineer.surname}</h1>
                             {isEditing ? (
@@ -350,9 +408,18 @@ export const EngineerDashboard: React.FC = () => {
                                         <h4 className="font-bold text-gray-800">{job.title}</h4>
                                         <p className="text-sm text-gray-600">{company?.name} - {job.location}</p>
                                         <div className="flex justify-end mt-2 space-x-2">
-                                            <button className="text-xs font-semibold border border-gray-300 text-gray-700 px-3 py-1 rounded-md hover:bg-gray-100">Decline</button>
-
-                                            <button className="text-xs font-semibold bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">Accept</button>
+                                            <button 
+                                                onClick={() => alert(`Job "${job.title}" declined. In a real app, this would notify the company.`)}
+                                                className="text-xs font-semibold border border-gray-300 text-gray-700 px-3 py-1 rounded-md hover:bg-gray-100"
+                                            >
+                                                Decline
+                                            </button>
+                                            <button 
+                                                onClick={() => alert(`Job "${job.title}" accepted! In a real app, this would confirm the booking.`)}
+                                                className="text-xs font-semibold bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700"
+                                            >
+                                                Accept
+                                            </button>
                                         </div>
                                     </div>
                                 );
@@ -362,6 +429,9 @@ export const EngineerDashboard: React.FC = () => {
                                 <p className="text-gray-500">No job offers matching your profiles at the moment.</p>
                             </div>
                         )}
+                     </div>
+                     <div className="mt-8">
+                        <AIEngineerCostAnalysis />
                      </div>
                 </div>
             </div>
