@@ -25,7 +25,7 @@ const Rating: React.FC<{ rating: number }> = ({ rating }) => (
 );
 
 
-const EngineerCard: React.FC<{ engineer: Engineer; currency: string }> = ({ engineer, currency }) => {
+const EngineerCard: React.FC<{ engineer: Engineer; currency: string; onViewProfile: (engineer: Engineer) => void }> = ({ engineer, currency, onViewProfile }) => {
     const keyCerts = engineer.certifications.filter(c => c.achieved).slice(0, 2).map(c => c.name.replace('Card Holder', '').replace('AVIXA ', '')).join(' / ');
 
     return (
@@ -62,7 +62,10 @@ const EngineerCard: React.FC<{ engineer: Engineer; currency: string }> = ({ engi
 
             {/* Footer Button */}
             <div className="p-4 bg-gray-100">
-                <button className="w-full bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-300 shadow-sm">
+                <button 
+                  onClick={() => onViewProfile(engineer)}
+                  className="w-full bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-300 shadow-sm"
+                >
                     View Full Profile
                 </button>
             </div>
@@ -126,7 +129,7 @@ const JobPostForm: React.FC = () => {
 
 
 export const CompanyDashboard: React.FC = () => {
-    const { engineers, currency } = useAppContext();
+    const { engineers, currency, setViewingEngineer } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredEngineers, setFilteredEngineers] = useState(engineers);
     
@@ -254,7 +257,7 @@ export const CompanyDashboard: React.FC = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredEngineers.map(engineer => (
-                        <EngineerCard key={engineer.id} engineer={engineer} currency={currency} />
+                        <EngineerCard key={engineer.id} engineer={engineer} currency={currency} onViewProfile={setViewingEngineer} />
                     ))}
                 </div>
                  {filteredEngineers.length === 0 && (

@@ -8,11 +8,16 @@ import { LandingPage } from './views/LandingPage';
 import { EngineerDashboard } from './views/EngineerDashboard';
 import { CompanyDashboard } from './views/CompanyDashboard';
 import { LoginSelector } from './views/LoginSelector';
+import { EngineerProfileView } from './views/EngineerProfileView';
 
 const App: React.FC = () => {
-  const { role, currentUser } = useAppContext();
+  const { role, currentUser, viewingEngineer } = useAppContext();
 
   const renderContent = () => {
+    if (viewingEngineer) {
+      return <EngineerProfileView />;
+    }
+
     if (currentUser) {
       // @ts-ignore - 'skillProfiles' is a unique property of Engineer
       if (currentUser.skillProfiles) {

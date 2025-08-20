@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { SkillProfile, Engineer, Certification } from '../types';
@@ -145,12 +146,35 @@ export const EngineerDashboard: React.FC = () => {
     }
 
     const handleSaveSkillProfile = (updatedProfile: SkillProfile) => {
-        const updatedProfiles = draftEngineer.skillProfiles.map(p => 
-            p.id === updatedProfile.id ? updatedProfile : p
-        );
+        const profileExists = draftEngineer.skillProfiles.some(p => p.id === updatedProfile.id);
+
+        let updatedProfiles;
+        if (profileExists) {
+            // Update existing profile
+            updatedProfiles = draftEngineer.skillProfiles.map(p => 
+                p.id === updatedProfile.id ? updatedProfile : p
+            );
+        } else {
+            // Add new profile
+            updatedProfiles = [...draftEngineer.skillProfiles, updatedProfile];
+        }
+
         handleProfileChange('skillProfiles', updatedProfiles);
         setEditingProfile(null); // Close modal
     };
+
+    const handleAddNewProfile = () => {
+        const newProfile: SkillProfile = {
+            id: `sp_${Date.now()}`,
+            roleTitle: '',
+            dayRate: 250,
+            skills: [],
+            customSkills: [],
+            isPremium: true,
+        };
+        setEditingProfile(newProfile);
+    };
+
 
     if (!currentEngineer) {
         return <div>Loading engineer profile...</div>;
@@ -255,7 +279,7 @@ export const EngineerDashboard: React.FC = () => {
                 <div className="md:col-span-2">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-2xl font-bold text-gray-800">My Skill Profiles</h2>
-                        <button className="flex items-center bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                        <button onClick={handleAddNewProfile} className="flex items-center bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
                             <PlusCircle size={20} className="mr-2" />
                             Add New Profile
                         </button>

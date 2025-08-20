@@ -18,6 +18,8 @@ interface AppContextType {
   login: (role: Role, id: string) => void;
   logout: () => void;
   updateEngineer: (updatedEngineer: Engineer) => void;
+  viewingEngineer: Engineer | null;
+  setViewingEngineer: (engineer: Engineer | null) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -27,6 +29,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [language, setLanguage] = useState<string>('EN');
   const [currency, setCurrency] = useState<Currency>(Currency.GBP);
   const [currentUser, setCurrentUser] = useState<Engineer | Company | null>(null);
+  const [viewingEngineer, setViewingEngineer] = useState<Engineer | null>(null);
   
   const [engineers, setEngineers] = useState<Engineer[]>(MOCK_ENGINEERS);
   const [jobs] = useState<Job[]>(MOCK_JOBS);
@@ -53,6 +56,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const logout = () => {
     setCurrentUser(null);
     setRole(Role.NONE);
+    setViewingEngineer(null);
   };
   
   const updateEngineer = (updatedEngineer: Engineer) => {
@@ -62,15 +66,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setCurrentUser(updatedEngineer); // also update the currentUser state
   };
 
+  const enhancedSetRole = (newRole: Role) => {
+    setRole(newRole);
+    // When navigating back to the main landing/selection pages,
+    // ensure we don't have a lingering engineer profile view.
+    if (newRole === Role.NONE) {
+      setViewingEngineer(null);
+    }
+  };
+
 
   return (
     <AppContext.Provider value={{ 
-      role, setRole, 
+      role, setRole: enhancedSetRole, 
       language, setLanguage, 
       currency, setCurrency, 
       engineers, jobs, companies, 
       getCompanyById,
-      currentUser, login, logout, updateEngineer
+      currentUser, login, logout, updateEngineer,
+      viewingEngineer, setViewingEngineer
     }}>
       {children}
     </AppContext.Provider>
