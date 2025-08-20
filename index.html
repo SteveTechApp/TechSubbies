@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF--8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TechSubbies.com | Investment Demo</title>
@@ -83,7 +83,7 @@
         CheckCircle, Mail, Phone, Globe, Linkedin, Users, LayoutDashboard, Settings, Ticket, BarChart,
         Building, User, Handshake, ClipboardList, CalendarDays, PenSquare, LogIn, UserCog, AlertCircle,
         Zap, Trash2, Plus, BrainCircuit, Loader, RefreshCw, Check, Sparkles, BarChart2,
-        AlertTriangle, Inbox, ChevronLeft, ChevronRight, SlidersHorizontal, Lightbulb
+        AlertTriangle, Inbox, ChevronLeft, ChevronRight, SlidersHorizontal, Lightbulb, Layers, Rocket
       } from 'lucide-react';
 
       // =============================================
@@ -1070,7 +1070,9 @@
               React.createElement(AISkillDiscovery, { onSkillsAdded: onSkillsAdded }),
               React.createElement('div', { className: 'bg-white p-6 rounded-lg shadow' },
                   React.createElement('h2', { className: 'text-xl font-bold' }, 'Profile Summary'),
-                  React.createElement('p', { className: 'my-4 text-gray-700' }, profileDescription || ''),
+                  React.createElement('p', { className: 'my-4 text-gray-700' }, 
+                      String(profileDescription || '')
+                  ),
                   React.createElement('button', {
                       onClick: onGenerateDescription,
                       disabled: isGeneratingDesc,
@@ -1083,18 +1085,119 @@
           )
       );
       
-      const EngineerDashboard_ActiveView = ({ activeView, user, profileDescription, handleGenerateDescription, isGeneratingDesc, addSkillsFromAI, setIsEditModalOpen }) => {
+      const EngineerDashboard_AvailabilityView = ({ profile, onUpdateAvailability }) => {
+          const [newDate, setNewDate] = useState(profile.availability.toISOString().split('T')[0]);
+      
+          const handleDateChange = (e) => {
+              setNewDate(e.target.value);
+          };
+      
+          const handleUpdate = () => {
+              onUpdateAvailability(new Date(newDate));
+          };
+      
+          const today = new Date();
+          const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+          const [currentYear, setCurrentYear] = useState(today.getFullYear());
+      
+          const monthDate = new Date(currentYear, currentMonth, 1);
+          const monthName = monthDate.toLocaleString('default', { month: 'long' });
+          const year = monthDate.getFullYear();
+      
+          const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+          const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay();
+      
+          const blanks = Array(firstDayOfWeek).fill(null);
+          const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+      
+          const prevMonth = () => {
+              if (currentMonth === 0) {
+                  setCurrentMonth(11);
+                  setCurrentYear(y => y - 1);
+              } else {
+                  setCurrentMonth(m => m - 1);
+              }
+          };
+      
+          const nextMonth = () => {
+              if (currentMonth === 11) {
+                  setCurrentMonth(0);
+                  setCurrentYear(y => y + 1);
+              } else {
+                  setCurrentMonth(m => m + 1);
+              }
+          };
+      
+          const isSameDay = (d1, d2) =>
+              d1.getFullYear() === d2.getFullYear() &&
+              d1.getMonth() === d2.getMonth() &&
+              d1.getDate() === d2.getDate();
+      
+          return React.createElement('div', null,
+              React.createElement('h1', { className: 'text-3xl font-bold mb-6' }, 'My Availability'),
+              React.createElement('div', { className: 'grid grid-cols-1 lg:grid-cols-3 gap-8' },
+                  React.createElement('div', { className: 'lg:col-span-1' },
+                      React.createElement('div', { className: 'bg-white p-6 rounded-lg shadow' },
+                          React.createElement('h2', { className: 'text-xl font-bold mb-4' }, 'Update Your Status'),
+                          React.createElement('p', { className: 'text-gray-600 mb-4' }, 'Companies will see you as available from this date onwards.'),
+                          React.createElement('label', { className: 'block font-medium mb-1' }, 'Available from date:'),
+                          React.createElement('input', {
+                              type: 'date',
+                              value: newDate,
+                              onChange: handleDateChange,
+                              className: 'w-full border p-2 rounded mb-4'
+                          }),
+                          React.createElement('button', {
+                              onClick: handleUpdate,
+                              className: 'w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700'
+                          }, 'Update Availability')
+                      )
+                  ),
+                  React.createElement('div', { className: 'lg:col-span-2' },
+                      React.createElement('div', { className: 'bg-white p-6 rounded-lg shadow' },
+                          React.createElement('div', { className: 'flex justify-between items-center mb-4' },
+                              React.createElement('button', { onClick: prevMonth, className: 'p-2 rounded-full hover:bg-gray-100' }, React.createElement(ChevronLeft, null)),
+                              React.createElement('h2', { className: 'text-xl font-bold' }, `${monthName} ${year}`),
+                              React.createElement('button', { onClick: nextMonth, className: 'p-2 rounded-full hover:bg-gray-100' }, React.createElement(ChevronRight, null))
+                          ),
+                          React.createElement('div', { className: 'grid grid-cols-7 gap-2 text-center font-semibold text-gray-500' },
+                              ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => React.createElement('div', { key: day }, day))
+                          ),
+                          React.createElement('div', { className: 'grid grid-cols-7 gap-2 mt-2' },
+                              [...blanks, ...days].map((day, index) => {
+                                  const dayDate = day ? new Date(currentYear, currentMonth, day) : null;
+                                  const isToday = dayDate && isSameDay(dayDate, today);
+                                  const availabilityDate = profile.availability ? new Date(profile.availability) : null;
+                                  const isAvailableDate = dayDate && availabilityDate && isSameDay(dayDate, availabilityDate);
+      
+                                  let cellClass = 'w-10 h-10 flex items-center justify-center rounded-full';
+                                  if (isToday) cellClass += ' bg-blue-500 text-white';
+                                  else if (isAvailableDate) cellClass += ' ring-2 ring-green-500';
+                                  else if (day) cellClass += ' hover:bg-gray-100';
+      
+                                  return React.createElement('div', { key: index, className: cellClass }, day);
+                              })
+                          )
+                      )
+                  )
+              )
+          );
+      };
+      
+      const EngineerDashboard_ActiveView = ({ activeView, user, profileDescription, handleGenerateDescription, isGeneratingDesc, addSkillsFromAI, setIsEditModalOpen, handleUpdateAvailability }) => {
           switch(activeView) {
               case 'Dashboard':
-                  return React.createElement(EngineerDashboard_DashboardView, { 
-                      user, 
-                      profileDescription, 
-                      onGenerateDescription: handleGenerateDescription, 
-                      isGeneratingDesc, 
-                      onSkillsAdded: addSkillsFromAI 
+                  return React.createElement(EngineerDashboard_DashboardView, {
+                      user,
+                      profileDescription,
+                      onGenerateDescription: handleGenerateDescription,
+                      isGeneratingDesc,
+                      onSkillsAdded: addSkillsFromAI
                   });
               case 'My Profile':
                   return React.createElement(EngineerProfileView, { profile: user.profile, isEditable: true, onEdit: () => setIsEditModalOpen(true) });
+              case 'Availability':
+                   return React.createElement(EngineerDashboard_AvailabilityView, { profile: user.profile, onUpdateAvailability: handleUpdateAvailability });
               default:
                   return React.createElement('div', null,
                     React.createElement('h1', {className: 'text-2xl font-bold'}, `${activeView} - Coming Soon`),
@@ -1130,6 +1233,10 @@
               };
               updateUserProfile(updatedProfile);
           };
+
+          const handleUpdateAvailability = (newDate) => {
+              updateUserProfile({ availability: newDate });
+          };
       
           return React.createElement('div', { className: 'flex' },
               React.createElement(DashboardSidebar, { activeView, setActiveView }),
@@ -1141,7 +1248,8 @@
                       handleGenerateDescription,
                       isGeneratingDesc,
                       addSkillsFromAI,
-                      setIsEditModalOpen
+                      setIsEditModalOpen,
+                      handleUpdateAvailability
                   })
               ),
               React.createElement(EditSkillProfileModal, {
@@ -1348,10 +1456,264 @@
       
       const CompanyDashboard_MyJobsView = ({ myJobs }) => (
         React.createElement('div', null,
-            React.createElement('h1', { className: 'text-2xl font-bold' }, 'My Jobs - Coming Soon')
+          React.createElement('h1', { className: 'text-3xl font-bold mb-6' }, 'My Posted Jobs'),
+          React.createElement('div', { className: 'bg-white p-6 rounded-lg shadow' },
+              myJobs.length > 0 ?
+              React.createElement('div', { className: 'space-y-4' },
+                myJobs.map(job => 
+                  React.createElement('div', { key: job.id, className: 'p-4 border rounded-md flex justify-between items-center' },
+                    React.createElement('div', null,
+                      React.createElement('h3', { className: 'font-bold text-lg text-blue-700' }, job.title),
+                      React.createElement('p', { className: 'text-gray-600 flex items-center mt-1' }, 
+                        React.createElement(MapPin, { className: 'w-4 h-4 mr-2 text-gray-400' }),
+                        job.location
+                      )
+                    ),
+                    React.createElement('div', { className: 'text-right text-gray-500 text-sm' },
+                      React.createElement('p', null, `Posted: ${job.postedDate.toLocaleDateString()}`),
+                      React.createElement('p', null, `Starts: ${job.startDate ? job.startDate.toLocaleDateString() : 'TBD'}`)
+                    )
+                  )
+                )
+              ) :
+              React.createElement('p', { className: 'text-center text-gray-500 py-4' }, 'You have not posted any jobs yet.')
+          )
         )
       );
 
+      const CompanyDashboard = () => {
+          const { user, postJob, jobs, engineers } = useAppContext();
+          const [activeView, setActiveView] = useState('Dashboard');
+          const [isJobModalOpen, setIsJobModalOpen] = useState(false);
+
+          const myJobs = useMemo(() => jobs.filter(j => j.companyId === user?.profile?.id), [jobs, user]);
+
+          useEffect(() => {
+              if (activeView === 'Post a Job') {
+                  setIsJobModalOpen(true);
+              }
+          }, [activeView]);
+
+          const handlePostJob = (jobData) => {
+              postJob(jobData);
+              setIsJobModalOpen(false);
+              setActiveView('My Jobs');
+          };
+
+          const ActiveView = () => {
+              switch(activeView) {
+                  case 'Dashboard':
+                      return React.createElement(CompanyDashboard_DashboardView, { user, myJobs, engineers });
+                  case 'Post a Job': // Intentionally fall through, modal handles it
+                  case 'My Jobs':
+                      return React.createElement(CompanyDashboard_MyJobsView, { myJobs });
+                  default:
+                      return React.createElement('div', null, 
+                        React.createElement('h1', { className: 'text-2xl font-bold' }, `${activeView} - Coming Soon`),
+                        React.createElement('p', { className: 'mt-4' }, `The functionality for "${activeView}" is under development. Please check back later!`)
+                      );
+              }
+          };
+
+          return React.createElement('div', { className: 'flex' },
+              React.createElement(DashboardSidebar, { activeView, setActiveView }),
+              React.createElement('main', { className: 'flex-grow p-8 bg-gray-50' },
+                  React.createElement(ActiveView, null)
+              ),
+              React.createElement(JobPostModal, {
+                  isOpen: isJobModalOpen,
+                  onClose: () => {
+                      setIsJobModalOpen(false);
+                      if (activeView === 'Post a Job') setActiveView('Dashboard'); // return to dash after closing
+                  },
+                  onPostJob: handlePostJob
+              })
+          );
+      };
+      // ===== END: views/CompanyDashboard.tsx =====
+      
+      // ===== START: views/ResourcingDashboard.tsx =====
+      const ResourcingDashboard = () => {
+          const [activeView, setActiveView] = useState('Dashboard');
+          return React.createElement('div', { className: 'flex' },
+              React.createElement(DashboardSidebar, { activeView, setActiveView }),
+              React.createElement('main', { className: 'flex-grow p-8 bg-gray-50' },
+                  React.createElement('h1', { className: 'text-3xl font-bold mb-6' }, `Resourcing Dashboard`),
+                  React.createElement('div', { className: 'bg-white p-6 rounded-lg shadow' },
+                      React.createElement('h2', { className: 'text-xl font-bold' }, activeView),
+                      React.createElement('p', { className: 'mt-4' }, 'This feature is currently under development. Please check back later!')
+                  )
+              )
+          );
+      };
+      // ===== END: views/ResourcingDashboard.tsx =====
+
+      // ===== START: views/AdminDashboard.tsx =====
+      const AdminDashboard = () => {
+          const [activeView, setActiveView] = useState('Dashboard');
+          return React.createElement('div', { className: 'flex' },
+              React.createElement(DashboardSidebar, { activeView, setActiveView }),
+              React.createElement('main', { className: 'flex-grow p-8 bg-gray-50' },
+                  React.createElement('h1', { className: 'text-3xl font-bold mb-6' }, `Admin Dashboard`),
+                  React.createElement('div', { className: 'bg-white p-6 rounded-lg shadow' },
+                      React.createElement('h2', { className: 'text-xl font-bold' }, activeView),
+                      React.createElement('p', { className: 'mt-4' }, 'This feature is currently under development. Please check back later!')
+                  )
+              )
+          );
+      };
+      // ===== END: views/AdminDashboard.tsx =====
+
+      // ===== START: views/InvestorPage.tsx =====
+      const InvestorPage = () => {
+
+          const HighlightCard = ({ icon: Icon, title, children }) => (
+              React.createElement('div', { className: 'bg-white p-6 rounded-lg shadow-md' },
+                  React.createElement('div', { className: 'flex items-center mb-4' },
+                      React.createElement(Icon, { className: 'w-10 h-10 text-blue-500 mr-4' }),
+                      React.createElement('h3', { className: 'text-xl font-bold text-gray-800' }, title)
+                  ),
+                  React.createElement('p', { className: 'text-gray-600' }, children)
+              )
+          );
+
+          const RevenueCard = ({ number, title, children }) => (
+              React.createElement('div', { className: 'bg-white p-6 rounded-lg border border-gray-200' },
+                  React.createElement('div', { className: 'flex items-center mb-3' },
+                      React.createElement('div', { className: 'text-3xl font-bold text-blue-500 mr-4' }, number),
+                      React.createElement('h3', { className: 'text-xl font-bold' }, title)
+                  ),
+                  React.createElement('p', { className: 'text-gray-600' }, children)
+              )
+          );
+
+          return React.createElement('section', { id: 'investors', className: 'py-20 bg-gray-100' },
+              React.createElement('div', { className: 'container mx-auto px-4' },
+                  React.createElement('div', { className: 'text-center mb-16' },
+                      React.createElement('h2', { className: 'text-4xl font-extrabold text-gray-800' }, 'An Investment in the Future of Work'),
+                      React.createElement('p', { className: 'mt-4 text-lg text-gray-600 max-w-3xl mx-auto' }, 'TechSubbies.com is poised to become the essential infrastructure for the freelance technical economy. Discover why we\'re a high-growth opportunity.')
+                  ),
+
+                  React.createElement('div', { className: 'max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg mb-16' },
+                      React.createElement('h3', { className: 'text-2xl font-bold mb-4 text-center' }, 'Executive Summary'),
+                      React.createElement('p', { className: 'text-gray-700 text-center' }, 'In today\'s fast-paced digital economy, project managers waste countless hours searching for specialized tech talent and vetting availability. TechSubbies.com solves this by providing instant access to a curated network of qualified freelance tech engineers with real-time availability, dramatically reducing hiring time from weeks to days.')
+                  ),
+
+                  React.createElement('div', { className: 'mb-16' },
+                      React.createElement('h3', { className: 'text-3xl font-bold text-center mb-10' }, 'Investment Highlights'),
+                      React.createElement('div', { className: 'grid md:grid-cols-2 lg:grid-cols-3 gap-8' },
+                          React.createElement(HighlightCard, { icon: Zap, title: 'Disruptive Business Model' }, 'Free access for companies drives massive adoption and network effects, creating a deep pool of opportunities for our paying engineer user base.'),
+                          React.createElement(HighlightCard, { icon: Layers, title: 'Multiple Revenue Streams' }, 'Revenue is generated through a high-volume, low-cost subscription model for talent, supplemented by high-margin, value-added services.'),
+                          React.createElement(HighlightCard, { icon: TrendingUp, title: 'High-Demand Market' }, 'The global gig economy and the increasing reliance on a flexible, specialized tech workforce are fueling massive market growth.'),
+                          React.createElement(HighlightCard, { icon: BrainCircuit, title: 'Technology Differentiation' }, 'Advanced search filters, AI-powered team building, and real-time availability tracking set our platform apart.'),
+                          React.createElement(HighlightCard, { icon: Rocket, title: 'First-Mover Advantage' }, 'We are targeting a high-value vertical with a purpose-built solution designed for the unique needs of the technical contracting industry.')
+                      )
+                  ),
+                  
+                  React.createElement('div', { className: 'mb-16 bg-blue-50 py-12 rounded-lg' },
+                      React.createElement('h3', { className: 'text-3xl font-bold text-center mb-10' }, 'Our Modern Revenue Model'),
+                      React.createElement('div', { className: 'max-w-5xl mx-auto grid md:grid-cols-3 gap-8 px-4' },
+                           React.createElement(RevenueCard, { number: '1', title: 'Subscriptions' }, 'A low-cost monthly subscription for engineers and resourcing companies unlocks premium features, encouraging a large, active user base.'),
+                           React.createElement(RevenueCard, { number: '2', title: '"Boost Profile" Credits' }, 'A pay-per-use feature allowing engineers to purchase credits that temporarily place their profile at the top of relevant search results.'),
+                           React.createElement(RevenueCard, { number: '3', title: 'Targeted Advertising' }, 'Premium advertising slots for industry-specific manufacturers and training companies to reach their ideal audience.')
+                      )
+                  ),
+
+                  React.createElement('div', { className: 'mb-16' },
+                      React.createElement('h3', { className: 'text-3xl font-bold text-center mb-10' }, 'Financial Projections'),
+                      React.createElement('div', { className: 'max-w-4xl mx-auto overflow-x-auto' },
+                          React.createElement('table', { className: 'w-full text-left bg-white shadow-md rounded-lg' },
+                              React.createElement('thead', null,
+                                  React.createElement('tr', { className: 'bg-gray-200' },
+                                      React.createElement('th', { className: 'p-4 font-bold' }, 'Year'),
+                                      React.createElement('th', { className: 'p-4 font-bold' }, 'Pro/Expert Users'),
+                                      React.createElement('th', { className: 'p-4 font-bold' }, 'Resourcing Accounts'),
+                                      React.createElement('th', { className: 'p-4 font-bold' }, 'Ancillary Revenue'),
+                                      React.createElement('th', { className: 'p-4 font-bold text-blue-600' }, 'Total Annual Revenue')
+                                  )
+                              ),
+                              React.createElement('tbody', null,
+                                  React.createElement('tr', { className: 'border-b' },
+                                      React.createElement('td', { className: 'p-4 font-bold' }, '1'),
+                                      React.createElement('td', { className: 'p-4' }, '750'),
+                                      React.createElement('td', { className: 'p-4' }, '50'),
+                                      React.createElement('td', { className: 'p-4' }, '£30,000'),
+                                      React.createElement('td', { className: 'p-4 font-bold text-gray-800' }, '£215,500')
+                                  ),
+                                  React.createElement('tr', { className: 'border-b bg-gray-50' },
+                                      React.createElement('td', { className: 'p-4 font-bold' }, '2'),
+                                      React.createElement('td', { className: 'p-4' }, '1,800'),
+                                      React.createElement('td', { className: 'p-4' }, '150'),
+                                      React.createElement('td', { className: 'p-4' }, '£95,000'),
+                                      React.createElement('td', { className: 'p-4 font-bold text-gray-800' }, '£598,000')
+                                  ),
+                                  React.createElement('tr', null,
+                                      React.createElement('td', { className: 'p-4 font-bold' }, '3'),
+                                      React.createElement('td', { className: 'p-4' }, '3,700'),
+                                      React.createElement('td', { className: 'p-4' }, '300'),
+                                      React.createElement('td', { className: 'p-4' }, '£250,000'),
+                                      React.createElement('td', { className: 'p-4 font-bold text-gray-800' }, '£1,350,000')
+                                  )
+                              )
+                          )
+                      )
+                  ),
+                  
+                  React.createElement('div', { className: 'text-center bg-blue-600 text-white p-12 rounded-lg' },
+                      React.createElement('h3', { className: 'text-3xl font-bold' }, 'Join Us in Building the Future'),
+                      React.createElement('p', { className: 'mt-4 mb-6 max-w-2xl mx-auto' }, 'TechSubbies.com presents a high-growth investment opportunity in a rapidly expanding global market. With a scalable business model, robust technology, and multiple revenue streams, the platform is poised for substantial success.'),
+                      React.createElement('a', { href: 'mailto:invest@techsubbies.com', className: 'inline-block bg-white text-blue-600 font-bold py-3 px-8 rounded-lg hover:bg-gray-200 transition-transform transform hover:scale-105' }, 'Contact Us for Investment Enquiries')
+                  )
+              )
+          );
+      };
+      // ===== END: views/InvestorPage.tsx =====
+
+      // ===== START: App.tsx =====
+      const App = () => {
+          const { user } = useAppContext();
+
+          if (!user) {
+              return React.createElement('div', { className: 'flex flex-col min-h-screen' },
+                  React.createElement(Header, null),
+                  React.createElement('div', { className: 'flex-grow' },
+                      React.createElement(LandingPage, null)
+                  ),
+                  React.createElement(Footer, null)
+              );
+          }
+          
+          const AppLayout = ({ children }) => (
+              React.createElement('div', { className: 'flex flex-col min-h-screen bg-gray-50' },
+                React.createElement(Header, null),
+                React.createElement('div', { className: 'flex-grow' }, children)
+              )
+          );
+
+          switch (user.role) {
+              case Role.ENGINEER:
+                  return React.createElement(AppLayout, null, React.createElement(EngineerDashboard, null));
+              case Role.COMPANY:
+                  return React.createElement(AppLayout, null, React.createElement(CompanyDashboard, null));
+              case Role.RESOURCING_COMPANY:
+                  return React.createElement(AppLayout, null, React.createElement(ResourcingDashboard, null));
+              case Role.ADMIN:
+                  return React.createElement(AppLayout, null, React.createElement(AdminDashboard, null));
+              default:
+                  return React.createElement('div', { className: 'flex flex-col min-h-screen' },
+                      React.createElement(Header, null),
+                      React.createElement('div', { className: 'flex-grow' },
+                          React.createElement(LandingPage, null)
+                      ),
+                      React.createElement(Footer, null)
+                  );
+          }
+      };
+      // ===== END: App.tsx =====
+
+      // Main application entry point
+      const Main = () => React.createElement(AppProvider, null, React.createElement(App, null));
+      ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(Main, null));
     </script>
   </body>
 </html>
