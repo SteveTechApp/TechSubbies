@@ -2,15 +2,18 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { AppProvider } from './context/AppContext.tsx';
 import App from './App.tsx';
+import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 
 const rootElement = document.getElementById('root');
 if (rootElement) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <React.StrictMode>
-      <AppProvider>
-        <App />
-      </AppProvider>
+      <ErrorBoundary>
+        <AppProvider>
+          <App />
+        </AppProvider>
+      </ErrorBoundary>
     </React.StrictMode>
   );
 }

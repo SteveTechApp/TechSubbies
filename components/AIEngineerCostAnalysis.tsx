@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useAppContext, Job, EngineerProfile } from '../context/AppContext.tsx';
-import { BrainCircuit, Loader } from 'lucide-react';
+import { ResultDisplay } from './ResultDisplay.tsx';
+import { BrainCircuit, Loader } from './Icons.tsx';
 
 interface AIEngineerCostAnalysisProps {
     job: Job;
     engineer: EngineerProfile;
 }
 
-interface AnalysisResult {
+export interface AnalysisResult {
     skill_match_assessment: string;
     rate_justification: string;
     overall_recommendation: string;
@@ -32,59 +33,39 @@ export const AIEngineerCostAnalysis = ({ job, engineer }: AIEngineerCostAnalysis
     }
     setIsLoading(false);
   };
-
-  const ResultDisplay = () => {
-    if (!analysisResult) return null;
-    return (
-        <div className='space-y-3'>
-            <div> 
-                <strong>Skill Match: </strong> 
-                {analysisResult.skill_match_assessment}
-            </div>
-            <div> 
-                <strong>Rate Justification: </strong> 
-                {analysisResult.rate_justification}
-            </div>
-            <div className='p-3 bg-green-50 border border-green-200 rounded-md'> 
-                <strong>Overall Recommendation: </strong> 
-                {analysisResult.overall_recommendation}
-            </div>
-            <div className='flex items-center'>
-                <strong className='mr-2'>Confidence:</strong>
-                <div className='w-full bg-gray-200 rounded-full h-4'>
-                    <div 
-                        className='bg-blue-600 h-4 rounded-full text-xs font-medium text-blue-100 text-center p-0.5 leading-none' 
-                        style={{ width: `${analysisResult.confidence_score}%` }}
-                    >
-                        {analysisResult.confidence_score}%
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-  };
+  
+  const buttonContent = isLoading ? (
+    <>
+      <Loader className="animate-spin w-5 h-5 mr-2" />
+      Analyzing...
+    </>
+  ) : (
+    "Analyze Now"
+  );
 
   return (
-    <div className='p-4 border-2 border-dashed rounded-md bg-gray-50'>
-      <h4 className='font-bold text-lg mb-2 flex items-center'> 
-        <BrainCircuit className='w-6 h-6 mr-2 text-purple-600' /> 
+    <div className="p-4 border-2 border-dashed rounded-md bg-gray-50">
+      <h4 className="font-bold text-lg mb-2 flex items-center"> 
+        <BrainCircuit className="w-6 h-6 mr-2 text-purple-600" /> 
         AI Cost-Effectiveness Analysis
       </h4>
-      <p className='text-sm text-gray-600 mb-4'> 
+      <p className="text-sm text-gray-600 mb-4"> 
         Is {engineer.name}'s day rate of {engineer.currency}{engineer.dayRate} a good value for this job? Let our AI analyze the match.
       </p>
+      
       {!analysisResult && (
         <button
             onClick={handleAnalyze}
             disabled={isLoading}
-            className='px-4 py-2 bg-purple-600 text-white font-semibold rounded-md hover:bg-purple-700 disabled:bg-purple-300'
+            className="flex items-center px-4 py-2 bg-purple-600 text-white font-semibold rounded-md hover:bg-purple-700 disabled:bg-purple-300"
         >
-            {isLoading ? 'Analyzing...' : 'Analyze Now'}
+            {buttonContent}
         </button>
       )}
-      {isLoading && <Loader className='animate-spin mt-4' />}
-      {error && <p className='text-red-500 mt-2'>{error}</p>}
-      {analysisResult && <ResultDisplay />}
+
+      {error && <p className="text-red-500 mt-2">{error}</p>}
+      
+      {analysisResult && <ResultDisplay analysisResult={analysisResult} />}
     </div>
   );
 };

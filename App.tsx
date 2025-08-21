@@ -8,18 +8,22 @@ import { CompanyDashboard } from './views/CompanyDashboard.tsx';
 import { ResourcingDashboard } from './views/ResourcingDashboard.tsx';
 import { AdminDashboard } from './views/AdminDashboard.tsx';
 
+const AppLayout = ({ children }: { children: React.ReactNode }) => (
+    <div className="flex flex-col min-h-screen bg-gray-50">
+        <Header />
+        <main className="flex-grow">{children}</main>
+        <Footer />
+    </div>
+);
+
 const App = () => {
     const { user } = useAppContext();
 
-    const AppLayout = ({ children }: { children: React.ReactNode }) => (
-        <div className="flex flex-col min-h-screen bg-gray-50">
-          <Header />
-          <div className="flex-grow">{children}</div>
-        </div>
-    );
-
-    const renderDashboard = () => {
-        if (!user) return null;
+    const renderContent = () => {
+        if (!user) {
+            return <LandingPage />;
+        }
+        
         switch (user.role) {
             case Role.ENGINEER:
                 return <EngineerDashboard />;
@@ -30,25 +34,13 @@ const App = () => {
             case Role.ADMIN:
                 return <AdminDashboard />;
             default:
-                return null;
+                return <LandingPage />;
         }
     };
 
-    if (!user) {
-        return (
-            <div className="flex flex-col min-h-screen">
-                <Header />
-                <div className="flex-grow">
-                    <LandingPage />
-                </div>
-                <Footer />
-            </div>
-        );
-    }
-    
     return (
         <AppLayout>
-            {renderDashboard()}
+            {renderContent()}
         </AppLayout>
     );
 };

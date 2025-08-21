@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
-import { PoundSterling, DollarSign, type LucideIcon } from 'lucide-react';
+import { PoundSterling, DollarSign } from '../components/Icons.tsx';
 
 // --- Inlined from types.ts ---
 export enum Role {
@@ -78,7 +78,7 @@ export interface Job {
 
 // --- Inlined from constants.ts ---
 export const APP_NAME = "TechSubbies.com";
-export const CURRENCY_ICONS: { [key in Currency]: LucideIcon } = {
+export const CURRENCY_ICONS: { [key in Currency]: React.ComponentType<any> } = {
     [Currency.GBP]: PoundSterling,
     [Currency.USD]: DollarSign,
 };
@@ -155,7 +155,7 @@ const geminiService = {
         const prompt = `Generate a compelling but brief professional bio (around 50-70 words) for a freelance tech engineer. Here are their details:\n- Name: ${profile.name}\n- Role/Tagline: ${profile.tagline}\n- Experience: ${profile.experience} years\n- Key Skills: ${profile.skills.slice(0, 5).map(s => s.name).join(', ')}\n\nWrite a professional, first-person summary.`;
         try {
             const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-            return response.text.trim();
+            return String(response.text).trim();
         } catch (error) {
             console.error("Error generating description:", error);
             return profile.description;
@@ -174,7 +174,7 @@ const geminiService = {
                     },
                 },
             });
-            return JSON.parse(response.text);
+            return JSON.parse(String(response.text));
         } catch (error) {
             console.error("Error generating skills:", error);
             return null;
@@ -193,7 +193,7 @@ const geminiService = {
                     },
                 },
             });
-            return JSON.parse(response.text);
+            return JSON.parse(String(response.text));
         } catch (error) {
             console.error("Error suggesting team:", error);
             return null;
@@ -228,7 +228,7 @@ const geminiService = {
                     },
                 },
             });
-            return JSON.parse(response.text);
+            return JSON.parse(String(response.text));
         } catch (error) {
             console.error("Error analyzing cost:", error);
             return null;
