@@ -49,6 +49,7 @@ export interface EngineerProfile extends BaseProfile {
     skills: Skill[];
     certifications: Certification[];
     contact: Contact;
+    profileTier: 'free' | 'paid';
 }
 
 export interface CompanyProfile extends BaseProfile {
@@ -101,7 +102,8 @@ const MOCK_ENGINEER_1: EngineerProfile = {
     certifications: [
         { name: 'Crestron Certified Programmer', verified: true }, { name: 'Cisco CCNA', verified: true }, { name: 'Dante Certification Level 3', verified: true }
     ],
-    contact: { email: 'alex.wolfe@example.com', phone: '01234 567890', website: 'https://alexwolfe.dev', linkedin: 'https://linkedin.com/in/alexwolfe' }
+    contact: { email: 'alex.wolfe@example.com', phone: '01234 567890', website: 'https://alexwolfe.dev', linkedin: 'https://linkedin.com/in/alexwolfe' },
+    profileTier: 'free',
 };
 
 const MOCK_ENGINEER_2: EngineerProfile = {
@@ -121,7 +123,8 @@ const MOCK_ENGINEER_2: EngineerProfile = {
     certifications: [
         { name: 'Microsoft 365 Certified: Teams Administrator Associate', verified: true }, { name: 'Zoom Certified Integrator', verified: true }
     ],
-    contact: { email: 'sam.greene@example.com', phone: '01234 567891', website: 'https://sgreene.com', linkedin: 'https://linkedin.com/in/samanthagreene' }
+    contact: { email: 'sam.greene@example.com', phone: '01234 567891', website: 'https://sgreene.com', linkedin: 'https://linkedin.com/in/samanthagreene' },
+    profileTier: 'paid',
 };
 
 export const MOCK_ENGINEERS = [MOCK_ENGINEER_1, MOCK_ENGINEER_2];
@@ -244,6 +247,7 @@ interface AppContextType {
     logout: () => void;
     updateUserProfile: (updatedProfile: Partial<EngineerProfile>) => void;
     postJob: (jobData: any) => void;
+    upgradeUserTier: () => void;
     geminiService: typeof geminiService;
 }
 
@@ -284,6 +288,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const upgradeUserTier = () => {
+        if (user && 'skills' in user.profile) {
+            updateUserProfile({ profileTier: 'paid' });
+        }
+    };
+
     const postJob = (jobData: any) => {
         if (user) {
             const newJob: Job = {
@@ -297,7 +307,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const value = { user, jobs, engineers, login, logout, updateUserProfile, postJob, geminiService };
+    const value = { user, jobs, engineers, login, logout, updateUserProfile, postJob, upgradeUserTier, geminiService };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

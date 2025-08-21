@@ -7,7 +7,7 @@ import { DashboardView } from './EngineerDashboard/DashboardView.tsx';
 import { AvailabilityView } from './EngineerDashboard/AvailabilityView.tsx';
 
 export const EngineerDashboard = () => {
-    const { user, updateUserProfile, geminiService } = useAppContext();
+    const { user, updateUserProfile, geminiService, upgradeUserTier } = useAppContext();
     const [activeView, setActiveView] = useState('Dashboard');
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
@@ -51,6 +51,8 @@ export const EngineerDashboard = () => {
                         onGenerateDescription={handleGenerateDescription}
                         isGeneratingDesc={isGeneratingDesc}
                         onSkillsAdded={addSkillsFromAI}
+                        profileTier={engineerProfile.profileTier}
+                        onUpgradeTier={upgradeUserTier}
                     />
                 );
             case 'My Profile':

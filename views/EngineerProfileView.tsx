@@ -20,7 +20,7 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerPro
 
     return (
         <div className="bg-white p-8 rounded-lg shadow-lg relative">
-            <ProfileHeader name={name} tagline={tagline} location={location} avatar={avatar} isEditable={isEditable} onEdit={onEdit} />
+            <ProfileHeader name={name} tagline={tagline} location={location} avatar={avatar} isEditable={isEditable} onEdit={onEdit} profileTier={profile.profileTier} />
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-8">
                 <StatCard icon={CurrencyIcon} label="Day Rate" value={`${currency}${dayRate}`} />

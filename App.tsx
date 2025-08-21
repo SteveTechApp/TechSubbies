@@ -19,11 +19,11 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => (
 const App = () => {
     const { user } = useAppContext();
 
-    const renderContent = () => {
-        if (!user) {
-            return <LandingPage />;
-        }
-        
+    if (!user) {
+        return <LandingPage />;
+    }
+
+    const renderDashboard = () => {
         switch (user.role) {
             case Role.ENGINEER:
                 return <EngineerDashboard />;
@@ -34,13 +34,14 @@ const App = () => {
             case Role.ADMIN:
                 return <AdminDashboard />;
             default:
-                return <LandingPage />;
+                // This case should ideally not be reached if a user exists
+                return <p>Loading dashboard...</p>;
         }
     };
 
     return (
         <AppLayout>
-            {renderContent()}
+            {renderDashboard()}
         </AppLayout>
     );
 };

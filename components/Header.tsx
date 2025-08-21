@@ -1,41 +1,38 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
 import { Logo } from './Logo.tsx';
-import { HowItWorksModal } from './HowItWorksModal.tsx';
-import { LoginSelector } from '../views/LoginSelector.tsx';
 import { UserMenu } from './UserMenu.tsx';
 import { GuestMenu } from './GuestMenu.tsx';
 
-export const Header = () => {
+interface HeaderProps {
+    isLanding?: boolean;
+    onHowItWorksClick?: () => void;
+    onLoginClick?: () => void;
+}
+
+export const Header = ({ isLanding = false, onHowItWorksClick, onLoginClick }: HeaderProps) => {
     const { user, logout } = useAppContext();
-    const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
-    const [isLoginSelectorOpen, setIsLoginSelectorOpen] = useState(false);
+
+    const headerClasses = isLanding
+        ? "absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-50 bg-transparent"
+        : "bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-50";
+    
+    const logoColorClass = isLanding ? "text-white" : "text-gray-800";
 
     return (
-        <>
-            <header className="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-50">
-                <Logo className="text-gray-800" />
-                <nav>
-                    {user ? (
-                        <UserMenu user={user} logout={logout} />
-                    ) : (
-                        <GuestMenu 
-                            onHowItWorksClick={() => setIsHowItWorksOpen(true)} 
-                            onLoginClick={() => setIsLoginSelectorOpen(true)} 
-                        />
-                    )}
-                </nav>
-            </header>
-            <HowItWorksModal 
-                isOpen={isHowItWorksOpen} 
-                onClose={() => setIsHowItWorksOpen(false)} 
-            />
-            {!user && (
-                <LoginSelector 
-                    isOpen={isLoginSelectorOpen} 
-                    onClose={() => setIsLoginSelectorOpen(false)} 
-                />
-            )}
-        </>
+        <header className={headerClasses}>
+            <Logo className={logoColorClass} />
+            <nav>
+                {user ? (
+                    <UserMenu user={user} logout={logout} />
+                ) : (
+                    <GuestMenu 
+                        isLanding={isLanding}
+                        onHowItWorksClick={onHowItWorksClick!} 
+                        onLoginClick={onLoginClick!} 
+                    />
+                )}
+            </nav>
+        </header>
     );
 };

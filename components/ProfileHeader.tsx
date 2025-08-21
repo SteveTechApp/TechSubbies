@@ -8,13 +8,19 @@ interface ProfileHeaderProps {
     avatar: string;
     isEditable: boolean;
     onEdit: () => void;
+    profileTier: 'free' | 'paid';
 }
 
-export const ProfileHeader = ({ name, tagline, location, avatar, isEditable, onEdit }: ProfileHeaderProps) => (
+export const ProfileHeader = ({ name, tagline, location, avatar, isEditable, onEdit, profileTier }: ProfileHeaderProps) => (
     <div className="md:flex items-center">
         <img src={avatar} alt={name} className="w-32 h-32 rounded-full mx-auto md:mx-0 md:mr-8 border-4 border-blue-500" />
         <div className="text-center md:text-left mt-4 md:mt-0">
-            <h1 className="text-4xl font-bold">{name}</h1>
+            <div className="flex items-center justify-center md:justify-start gap-x-3">
+                <h1 className="text-4xl font-bold">{name}</h1>
+                {profileTier === 'paid' && (
+                    <span className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-1 rounded-full">JOB PROFILE</span>
+                )}
+            </div>
             <h2 className="text-xl text-blue-600 font-semibold">{tagline}</h2>
             <div className="flex items-center justify-center md:justify-start text-gray-500 mt-2">
                 <MapPin size={16} className="mr-2" /> {location}
