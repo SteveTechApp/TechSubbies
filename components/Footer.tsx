@@ -1,6 +1,6 @@
 import React from 'react';
 import { Logo } from './Logo.tsx';
-import { APP_NAME } from '../constants.ts';
+import { APP_NAME } from '../context/AppContext.tsx';
 
 export const Footer = () => (
     <footer className='bg-gray-800 text-white p-8 mt-12'>

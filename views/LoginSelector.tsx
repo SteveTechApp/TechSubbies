@@ -1,6 +1,5 @@
 import React from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Role } from '../types.ts';
+import { useAppContext, Role } from '../context/AppContext.tsx';
 import { Logo } from '../components/Logo.tsx';
 import { User, Building, Users, UserCog, type LucideIcon } from 'lucide-react';
 

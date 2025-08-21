@@ -1,6 +1,5 @@
 import React from 'react';
-import { EngineerProfile } from '../types.ts';
-import { CURRENCY_ICONS } from '../constants.ts';
+import { EngineerProfile, CURRENCY_ICONS } from '../context/AppContext.tsx';
 import { 
     MapPin, Edit, BarChart, CheckCircle, Award, ShieldCheck, Mail, Phone, Globe, Linkedin, LucideIcon
 } from 'lucide-react';

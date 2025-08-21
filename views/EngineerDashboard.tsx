@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
+import { useAppContext, EngineerProfile, Skill, User } from '../context/AppContext.tsx';
 import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
 import { EngineerProfileView } from './EngineerProfileView.tsx';
 import { EditSkillProfileModal } from '../components/EditSkillProfileModal.tsx';
 import { AISkillDiscovery } from '../components/AISkillDiscovery.tsx';
-import { geminiService } from '../services/geminiService.ts';
 import { Loader, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
-import { EngineerProfile, Skill, User } from '../types.ts';
 
 const EngineerDashboard_DashboardView = ({ user, profileDescription, onGenerateDescription, isGeneratingDesc, onSkillsAdded }: {user: User, profileDescription: string, onGenerateDescription: () => void, isGeneratingDesc: boolean, onSkillsAdded: (skills: Skill[]) => void}) => (
     <div>
@@ -131,7 +129,7 @@ const EngineerDashboard_AvailabilityView = ({ profile, onUpdateAvailability }: {
 
 
 export const EngineerDashboard = () => {
-    const { user, updateUserProfile } = useAppContext();
+    const { user, updateUserProfile, geminiService } = useAppContext();
     const [activeView, setActiveView] = useState('Dashboard');
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
@@ -141,7 +139,7 @@ export const EngineerDashboard = () => {
     };
 
     const handleGenerateDescription = async () => {
-        if (!user) return;
+        if (!user || !('skills' in user.profile)) return;
         setIsGeneratingDesc(true);
         const desc = await geminiService.generateDescriptionForProfile(user.profile);
         updateUserProfile({ description: desc });
@@ -149,7 +147,7 @@ export const EngineerDashboard = () => {
     };
 
     const addSkillsFromAI = (newSkills: Skill[]) => {
-        if (!user) return;
+        if (!user || !('skills' in user.profile)) return;
         const currentSkillNames = user.profile.skills.map((s: Skill) => s.name.toLowerCase());
         const uniqueNewSkills = newSkills.filter(ns => !currentSkillNames.includes(ns.name.toLowerCase()));
         
@@ -163,7 +161,7 @@ export const EngineerDashboard = () => {
     };
 
     const renderActiveView = () => {
-        if (!user) return null;
+        if (!user || !('skills' in user.profile)) return null;
         switch(activeView) {
             case 'Dashboard':
                 return <EngineerDashboard_DashboardView
@@ -187,7 +185,7 @@ export const EngineerDashboard = () => {
         }
     };
 
-    if (!user) return <div>Loading...</div>
+    if (!user || !('skills' in user.profile)) return <div>Loading...</div>
 
     return (
         <div className='flex'>

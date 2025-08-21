@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Currency } from '../types.ts';
-import { geminiService } from '../services/geminiService.ts';
+import { useAppContext, Currency } from '../context/AppContext.tsx';
 import { X, Lightbulb } from 'lucide-react';
 
 interface JobPostModalProps {
@@ -20,6 +19,7 @@ export const JobPostModal = ({ isOpen, onClose, onPostJob }: JobPostModalProps) 
   });
   const [suggestedTeam, setSuggestedTeam] = useState<SuggestedTeamMember[] | null>(null);
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const { geminiService } = useAppContext();
 
   if (!isOpen) return null;
 

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { geminiService } from '../services/geminiService.ts';
+import { useAppContext, Job, EngineerProfile } from '../context/AppContext.tsx';
 import { BrainCircuit, Loader } from 'lucide-react';
-import { Job, EngineerProfile } from '../types.ts';
 
 interface AIEngineerCostAnalysisProps {
     job: Job;
@@ -19,6 +18,7 @@ export const AIEngineerCostAnalysis = ({ job, engineer }: AIEngineerCostAnalysis
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState('');
+  const { geminiService } = useAppContext();
 
   const handleAnalyze = async () => {
     setIsLoading(true);

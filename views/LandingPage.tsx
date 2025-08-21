@@ -1,7 +1,6 @@
 import React from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
+import { useAppContext, MOCK_COMPANIES } from '../context/AppContext.tsx';
 import { InvestorPage } from './InvestorPage.tsx';
-import { MOCK_COMPANIES } from '../services/mockDataGenerator.ts';
 import { Users, Building, ClipboardList, DollarSign, Calendar, Handshake, LucideIcon } from 'lucide-react';
 
 interface StatCardProps {

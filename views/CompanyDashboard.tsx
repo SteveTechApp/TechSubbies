@@ -1,10 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
+import { useAppContext, Job, User, EngineerProfile } from '../context/AppContext.tsx';
 import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
 import { JobPostModal } from '../components/JobPostModal.tsx';
 import { AIEngineerCostAnalysis } from '../components/AIEngineerCostAnalysis.tsx';
 import { MapPin } from 'lucide-react';
-import { Job, User, EngineerProfile } from '../types.ts';
 
 const formatDate = (date: any): string => {
     if (!date) return 'TBD';

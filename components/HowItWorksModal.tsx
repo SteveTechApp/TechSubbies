@@ -51,7 +51,7 @@ export const HowItWorksModal = ({ isOpen, onClose }: HowItWorksModalProps) => {
                         <h3 className='text-2xl font-semibold text-center text-green-600 mb-6'>For Engineers</h3>
                         <div className='space-y-6'>
                             <Step icon={UserCog} title='1. Create Your Profile' description='Showcase your skills, experience, and certifications to stand out.' />
-                            <Step icon={CalendarDays} title='2. Set Your Availability' description='Keep your calendar up-to-date so companies know when you\'re ready for new projects.' />
+                            <Step icon={CalendarDays} title='2. Set Your Availability' description="Keep your calendar up-to-date so companies know when you're ready for new projects." />
                             <Step icon={Briefcase} title='3. Get Hired' description='Companies apply to you. Receive offers directly and manage your contracts.' />
                         </div>
                     </div>

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { geminiService } from '../services/geminiService.ts';
+import { useAppContext, Skill } from '../context/AppContext.tsx';
 import { BrainCircuit, Loader, Plus } from 'lucide-react';
-import { Skill } from '../types.ts';
 
 interface AISkillDiscoveryProps {
     onSkillsAdded: (skills: Skill[]) => void;
@@ -12,6 +11,7 @@ export const AISkillDiscovery = ({ onSkillsAdded }: AISkillDiscoveryProps) => {
     const [isLoading, setIsLoading] = useState(false);
     const [discoveredSkills, setDiscoveredSkills] = useState<Skill[] | null>(null);
     const [error, setError] = useState('');
+    const { geminiService } = useAppContext();
 
     const handleDiscover = async () => {
         if (!role.trim()) {

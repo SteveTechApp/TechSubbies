@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Trash2, Plus } from 'lucide-react';
-import { EngineerProfile } from '../types.ts';
+import { EngineerProfile } from '../context/AppContext.tsx';
 
 interface EditSkillProfileModalProps {
     isOpen: boolean;
