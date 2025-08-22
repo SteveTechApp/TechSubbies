@@ -27,10 +27,37 @@ export interface Certification {
 
 export interface Contact {
     email: string;
-    phone: string;
+    telephone?: string;
+    phone: string; // Mobile
     website: string;
     linkedin: string;
 }
+
+export interface SocialLink {
+    name: string;
+    url: string;
+}
+
+export interface Associate {
+    name: string;
+    value: string;
+    url?: string;
+}
+
+export interface CaseStudy {
+    name: string;
+    url: string;
+}
+
+export interface Compliance {
+    professionalIndemnity: boolean;
+    publicLiability: boolean;
+    siteSafe: boolean;
+    ownPPE: boolean;
+    accessEquipmentTrained: boolean;
+    firstAidTrained: boolean;
+}
+
 
 interface BaseProfile {
     id: string;
@@ -50,7 +77,31 @@ export interface EngineerProfile extends BaseProfile {
     certifications: Certification[];
     contact: Contact;
     profileTier: 'free' | 'paid';
+
+    // New fields from image
+    title?: string;
+    firstName: string;
+    middleName?: string;
+    surname: string;
+    companyName?: string;
+    travelRadius?: string;
+    
+    socials?: SocialLink[];
+    associates?: Associate[];
+
+    compliance?: Compliance;
+
+    generalAvailability?: string; // e.g. 'Medium'
+    customerRating?: number; // 1-5
+    peerRating?: number; // 1-5
+    googleCalendarLink?: string;
+
+    caseStudies?: CaseStudy[];
+    
+    otherLinks?: SocialLink[];
+    rightColumnLinks?: { label: string, value: string, url: string }[];
 }
+
 
 export interface CompanyProfile extends BaseProfile {
     website?: string;
@@ -87,28 +138,81 @@ export const CURRENCY_ICONS: { [key in Currency]: React.ComponentType<any> } = {
 // --- Inlined from mockDataGenerator.ts ---
 const MOCK_ENGINEER_1: EngineerProfile = {
     id: 'eng-1',
-    name: 'Alex Wolfe',
-    tagline: 'Senior AV & Network Engineer',
-    avatar: 'https://i.pravatar.cc/150?u=alexwolfe',
+    name: 'Neil Bishop',
+    firstName: 'Neil',
+    middleName: 'John',
+    surname: 'Bishop',
+    title: 'Mr',
+    tagline: 'AV Technician',
+    avatar: 'https://i.imgur.com/8Qtm93t.jpeg',
     location: 'London, UK',
     currency: Currency.GBP,
     dayRate: 550,
-    experience: 12,
+    experience: 15,
     availability: new Date('2024-08-01'),
-    description: "A highly experienced AV and network engineer with over a decade of experience in designing, implementing, and supporting complex AV systems for corporate and live event environments. Proven ability to lead projects and deliver exceptional results.",
+    description: "Experienced AV techhnician with over 15 years in the industry, specializing in installation, maintenance, and troubleshootingof audio-visual systems:",
+    companyName: 'AV Innovations',
+    travelRadius: '< 500 miles',
+    
+    contact: {
+        email: 'neil.bishop@example.com',
+        phone: '07123456789',
+        telephone: '—',
+        website: 'www.neilbishop.com',
+        linkedin: 'linkedin.com/in/nelib',
+    },
+    
+    socials: [
+        { name: 'Social 1', url: 'social 1' },
+        { name: 'Social 2', url: 'social 2' },
+        { name: 'Social 3', url: 'social 3' },
+    ],
+
+    associates: [
+        { name: 'Associate', value: 'John Smith', url: '#' },
+        { name: 'Associate 2', value: '—' },
+        { name: 'Associate 3', value: '—' },
+    ],
+
+    otherLinks: [
+        { name: 'Gmail', url: 'www.nelibishop.com' },
+        { name: 'Web', url: 'social' },
+    ],
+
+    compliance: {
+        professionalIndemnity: true,
+        publicLiability: true,
+        siteSafe: true,
+        ownPPE: true,
+        accessEquipmentTrained: true,
+        firstAidTrained: true,
+    },
+
+    generalAvailability: 'Medium',
+    customerRating: 4,
+    peerRating: 4,
+    googleCalendarLink: 'Google Calender',
+
+    rightColumnLinks: [
+        { label: 'Associate 1', value: 'John Smith', url: '#' },
+        { label: 'Case Study', value: 'Case study 1', url: '#' },
+        { label: 'Case Study 1', value: 'Isite link', url: '#' },
+    ],
+
     skills: [
         { name: 'Crestron', rating: 5 }, { name: 'Cisco CCNA', rating: 4 }, { name: 'Dante Level 3', rating: 5 }, { name: 'AutoCAD', rating: 3 }, { name: 'Project Management', rating: 4 }
     ],
     certifications: [
         { name: 'Crestron Certified Programmer', verified: true }, { name: 'Cisco CCNA', verified: true }, { name: 'Dante Certification Level 3', verified: true }
     ],
-    contact: { email: 'alex.wolfe@example.com', phone: '01234 567890', website: 'https://alexwolfe.dev', linkedin: 'https://linkedin.com/in/alexwolfe' },
-    profileTier: 'free',
+    profileTier: 'paid',
 };
 
 const MOCK_ENGINEER_2: EngineerProfile = {
     id: 'eng-2',
     name: 'Samantha Greene',
+    firstName: 'Samantha',
+    surname: 'Greene',
     tagline: 'Unified Communications Specialist',
     avatar: 'https://i.pravatar.cc/150?u=samanthagreene',
     location: 'Manchester, UK',
