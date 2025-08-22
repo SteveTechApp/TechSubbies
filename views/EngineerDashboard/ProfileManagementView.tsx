@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { EngineerProfile, JobRoleSkills, CaseStudy } from '../../context/AppContext.tsx';
+import React, { useState, useMemo } from 'react';
+import { EngineerProfile, SelectedJobRole, CaseStudy, JOB_ROLE_DEFINITIONS } from '../../context/AppContext.tsx';
 import { Plus, Trash2 } from '../../components/Icons.tsx';
 
 const generateUniqueId = () => `id-${Math.random().toString(36).substring(2, 10)}`;
@@ -19,30 +19,37 @@ const UpgradeCta = () => (
 
 
 export const ProfileManagementView = ({ profile, onSave }: ProfileManagementViewProps) => {
-    const [roles, setRoles] = useState<JobRoleSkills[]>(profile.specialistJobRoles || []);
+    const [roles, setRoles] = useState<SelectedJobRole[]>(profile.selectedJobRoles || []);
     const [caseStudies, setCaseStudies] = useState<CaseStudy[]>(profile.caseStudies || []);
 
     // --- Specialist Roles Logic ---
-    const addRole = () => setRoles([...roles, { roleName: 'New Role', skills: [{ name: '', rating: 80 }] }]);
+    const availableRoles = useMemo(() => {
+        const selectedRoleNames = new Set(roles.map(r => r.roleName));
+        return JOB_ROLE_DEFINITIONS.filter(def => !selectedRoleNames.has(def.name));
+    }, [roles]);
+
+    const addRole = (roleName: string) => {
+        const roleDef = JOB_ROLE_DEFINITIONS.find(def => def.name === roleName);
+        if (!roleDef) return;
+
+        const newRole: SelectedJobRole = {
+            roleName: roleDef.name,
+            skills: roleDef.skills.map(skillName => ({ name: skillName, rating: 50 })),
+            overallScore: 50
+        };
+        setRoles([...roles, newRole]);
+    };
+
     const removeRole = (index: number) => setRoles(roles.filter((_, i) => i !== index));
-    const handleRoleChange = (index: number, value: string) => {
+    
+    const handleSkillChange = (roleIndex: number, skillIndex: number, value: string) => {
         const newRoles = [...roles];
-        newRoles[index].roleName = value;
-        setRoles(newRoles);
-    };
-    const addSkillToRole = (roleIndex: number) => {
-        const newRoles = [...roles];
-        newRoles[roleIndex].skills.push({ name: '', rating: 80 });
-        setRoles(newRoles);
-    };
-    const removeSkillFromRole = (roleIndex: number, skillIndex: number) => {
-        const newRoles = [...roles];
-        newRoles[roleIndex].skills = newRoles[roleIndex].skills.filter((_, i) => i !== skillIndex);
-        setRoles(newRoles);
-    };
-    const handleSkillChange = (roleIndex: number, skillIndex: number, field: 'name' | 'rating', value: string | number) => {
-        const newRoles = [...roles];
-        (newRoles[roleIndex].skills[skillIndex] as any)[field] = value;
+        const rating = parseInt(value, 10);
+        newRoles[roleIndex].skills[skillIndex].rating = rating;
+        
+        const totalScore = newRoles[roleIndex].skills.reduce((acc, skill) => acc + skill.rating, 0);
+        newRoles[roleIndex].overallScore = Math.round(totalScore / newRoles[roleIndex].skills.length);
+        
         setRoles(newRoles);
     };
     
@@ -55,7 +62,7 @@ export const ProfileManagementView = ({ profile, onSave }: ProfileManagementView
 
     // --- Save Logic ---
     const handleSaveChanges = () => {
-        onSave({ specialistJobRoles: roles, caseStudies });
+        onSave({ selectedJobRoles: roles, caseStudies });
     };
 
     return (
@@ -67,29 +74,40 @@ export const ProfileManagementView = ({ profile, onSave }: ProfileManagementView
                 {profile.profileTier === 'free' ? <UpgradeCta /> : (
                     <div className="space-y-6">
                         {roles.map((role, rIndex) => (
-                            <div key={rIndex} className="p-4 border rounded-md">
+                            <div key={rIndex} className="p-4 border rounded-lg bg-gray-50/50">
                                 <div className="flex justify-between items-center mb-4">
-                                    <input type="text" value={role.roleName} onChange={e => handleRoleChange(rIndex, e.target.value)} className="text-lg font-bold w-1/2 border-b-2 p-1" />
-                                    <button onClick={() => removeRole(rIndex)} className="text-red-500 hover:text-red-700"><Trash2 size={18} /></button>
+                                    <h3 className="text-xl font-bold text-gray-800">{role.roleName}</h3>
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-right">
+                                            <span className="text-2xl font-bold text-blue-600">{role.overallScore}</span>
+                                            <span className="text-sm text-gray-500 block">Overall Score</span>
+                                        </div>
+                                        <button onClick={() => removeRole(rIndex)} className="text-red-500 hover:text-red-700 p-2 bg-red-100 rounded-full"><Trash2 size={18} /></button>
+                                    </div>
                                 </div>
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                     {role.skills.map((skill, sIndex) => (
-                                        <div key={sIndex} className="flex items-center gap-2">
-                                            <input type="text" placeholder="Skill Name" value={skill.name} onChange={e => handleSkillChange(rIndex, sIndex, 'name', e.target.value)} className="w-full border p-2 rounded" />
-                                            <input type="range" min="0" max="100" value={skill.rating} onChange={e => handleSkillChange(rIndex, sIndex, 'rating', parseInt(e.target.value))} className="w-48" />
-                                            <span className="w-12 text-center font-semibold">{skill.rating}</span>
-                                            <button onClick={() => removeSkillFromRole(rIndex, sIndex)} className="text-red-500 hover:text-red-700"><Trash2 size={18} /></button>
+                                        <div key={sIndex} className="grid grid-cols-12 items-center gap-4">
+                                            <label className="col-span-4 font-medium text-gray-700">{skill.name}</label>
+                                            <input type="range" min="1" max="100" value={skill.rating} onChange={e => handleSkillChange(rIndex, sIndex, e.target.value)} className="col-span-7 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+                                            <span className="col-span-1 text-center font-semibold text-blue-600 w-12">{skill.rating}</span>
                                         </div>
                                     ))}
-                                    <button onClick={() => addSkillToRole(rIndex)} className="flex items-center text-blue-600 font-semibold hover:text-blue-800 pt-2">
-                                        <Plus size={18} className="mr-1" /> Add Skill
-                                    </button>
                                 </div>
                             </div>
                         ))}
-                         <button onClick={addRole} className="flex items-center text-white font-semibold bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md">
-                            <Plus size={18} className="mr-1" /> Add Job Role
-                        </button>
+                        {availableRoles.length > 0 && (
+                            <div className="flex items-center gap-2 pt-4 border-t">
+                                <select 
+                                    onChange={(e) => addRole(e.target.value)} 
+                                    value=""
+                                    className="block w-full max-w-xs border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 bg-white"
+                                >
+                                    <option value="" disabled>-- Select a role to add --</option>
+                                    {availableRoles.map(def => <option key={def.name} value={def.name}>{def.name}</option>)}
+                                </select>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

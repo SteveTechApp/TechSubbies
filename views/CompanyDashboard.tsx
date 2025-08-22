@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useAppContext, EngineerProfile } from '../context/AppContext.tsx';
+import { useAppContext, EngineerProfile, JOB_ROLE_DEFINITIONS } from '../context/AppContext.tsx';
 import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
 import { JobPostModal } from '../components/JobPostModal.tsx';
 import { DashboardView } from './CompanyDashboard/DashboardView.tsx';
@@ -17,14 +17,8 @@ const FindTalentView = ({ engineers, onSelectEngineer }: { engineers: EngineerPr
     });
     
     const specialistRoles = useMemo(() => {
-        const roles = new Set<string>();
-        engineers.forEach(e => {
-            if(e.profileTier === 'paid' && e.specialistJobRoles) {
-                e.specialistJobRoles.forEach(r => roles.add(r.roleName));
-            }
-        });
-        return Array.from(roles).sort();
-    }, [engineers]);
+        return JOB_ROLE_DEFINITIONS.map(r => r.name).sort();
+    }, []);
     
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -34,14 +28,16 @@ const FindTalentView = ({ engineers, onSelectEngineer }: { engineers: EngineerPr
     const filteredEngineers = useMemo(() => {
         return engineers
             .filter(eng => {
+                // Keyword match (including new selectedJobRoles skills)
                 const keywordMatch = filters.keyword.toLowerCase() === '' || 
                     eng.name.toLowerCase().includes(filters.keyword.toLowerCase()) ||
                     eng.tagline.toLowerCase().includes(filters.keyword.toLowerCase()) ||
                     eng.skills.some(s => s.name.toLowerCase().includes(filters.keyword.toLowerCase())) ||
-                    (eng.specialistJobRoles && eng.specialistJobRoles.some(r => r.skills.some(s => s.name.toLowerCase().includes(filters.keyword.toLowerCase()))));
+                    (eng.selectedJobRoles && eng.selectedJobRoles.some(r => r.skills.some(s => s.name.toLowerCase().includes(filters.keyword.toLowerCase()))));
                 
+                // Role match (based on new selectedJobRoles)
                 const roleMatch = filters.role === 'any' || 
-                    (eng.specialistJobRoles && eng.specialistJobRoles.some(r => r.roleName === filters.role));
+                    (eng.selectedJobRoles && eng.selectedJobRoles.some(r => r.roleName === filters.role));
                     
                 const rateMatch = eng.dayRate <= filters.maxRate;
 

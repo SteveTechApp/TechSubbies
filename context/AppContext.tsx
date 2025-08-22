@@ -20,14 +20,17 @@ export interface Skill {
     rating: number; // 0-100 (represents general proficiency for basic skills)
 }
 
-export interface DetailedSkill {
+// --- NEW: Detailed, rated skills for job roles ---
+export interface RatedSkill {
     name: string;
-    rating: number; // 0-100 (represents specific knowledge for specialist skills)
+    rating: number; // 1-100
 }
 
-export interface JobRoleSkills {
+// --- NEW: Structure for a selected job role with ratings ---
+export interface SelectedJobRole {
     roleName: string;
-    skills: DetailedSkill[];
+    skills: RatedSkill[];
+    overallScore: number;
 }
 
 export interface Certification {
@@ -85,7 +88,7 @@ export interface EngineerProfile extends BaseProfile {
     availability: Date;
     description: string;
     skills: Skill[]; // Basic skills for free tier
-    specialistJobRoles?: JobRoleSkills[]; // Detailed skills for paid tier
+    selectedJobRoles?: SelectedJobRole[]; // Replaces specialistJobRoles
     certifications: Certification[];
     contact: Contact;
     profileTier: 'free' | 'paid';
@@ -128,7 +131,7 @@ export interface User {
 }
 
 export interface Job {
-    id: string;
+    id:string;
     companyId: string;
     title: string;
     description: string;
@@ -154,6 +157,44 @@ export const CURRENCY_ICONS: { [key in Currency]: React.ComponentType<any> } = {
     [Currency.USD]: DollarSign,
 };
 
+
+// --- NEW: Comprehensive Job Role Database ---
+export interface JobRoleDefinition {
+  name: string;
+  category: 'AV' | 'IT' | 'Management';
+  skills: string[];
+}
+
+export const JOB_ROLE_DEFINITIONS: JobRoleDefinition[] = [
+    // --- AV Roles ---
+    { name: 'AV Commissioning Engineer', category: 'AV', skills: ['System Commissioning', 'Crestron Toolbox', 'Biamp Tesira', 'Q-SYS Designer', 'Dante Level 3', 'Network Troubleshooting', 'Final Handover'] },
+    { name: 'Lead AV Installer', category: 'AV', skills: ['Rack Building & Wiring', 'Reading Schematics', 'Cable Termination', 'Team Leadership', 'Health & Safety (H&S)', 'On-site Problem Solving'] },
+    { name: 'AV Service Engineer', category: 'AV', skills: ['Fault Finding', 'Preventative Maintenance', 'Client Communication', 'RMAs & Ticketing', 'Remote Diagnostics', 'Firmware Management'] },
+    { name: 'Rack Builder / Wirer', category: 'AV', skills: ['Wiring to Schematic', 'Cable Looming', 'Soldering', 'Neat Patching', 'Metalwork Fabrication', 'Rack Elevation Accuracy'] },
+    { name: 'Crestron Programmer', category: 'AV', skills: ['SIMPL Windows', 'C# (for SIMPL#)', 'Crestron HTML5 UI', 'DM NVX Configuration', 'System Architecture', 'API Integration'] },
+    { name: 'Q-SYS Programmer', category: 'AV', skills: ['Q-SYS Designer Software', 'Lua Scripting', 'UCI Design', 'Core Manager', 'AES67/Dante Integration', 'Telephony/VoIP'] },
+    { name: 'Live Events Technician', category: 'AV', skills: ['Live Sound Mixing', 'Vision Mixing (vMix/Blackmagic)', 'LED Wall Configuration', 'Power Distribution', 'Projection Mapping', 'Client Facing Skills'] },
+    { name: 'Video Conference Specialist', category: 'AV', skills: ['MS Teams Rooms', 'Zoom Rooms', 'Cisco Webex Devices', 'Poly Studio Series', 'Device Provisioning', 'End-User Training'] },
+    { name: 'AV System Designer', category: 'AV', skills: ['AutoCAD/Visio', 'System Flow Diagrams', 'Acoustic Modelling', 'Bill of Materials (BoM)', 'Product Knowledge', 'Tender Response'] },
+    { name: 'Digital Signage Specialist', category: 'AV', skills: ['CMS Platforms (e.g., BrightSign)', 'Content Scheduling', 'Player Hardware', 'Network Configuration', 'Video Wall Setup', 'API Integration'] },
+    
+    // --- IT Roles ---
+    { name: 'Network Engineer', category: 'IT', skills: ['Cisco iOS/NX-OS', 'Routing (BGP/OSPF)', 'Switching (VLANs/STP)', 'Firewall Management', 'Network Monitoring', 'Wi-Fi Surveys'] },
+    { name: 'IT Support Engineer', category: 'IT', skills: ['Active Directory', 'Microsoft 365 Admin', 'Hardware Troubleshooting', 'Windows/macOS Support', 'Basic Networking', 'Ticketing Systems'] },
+    { name: 'Cloud Engineer (AWS/Azure)', category: 'IT', skills: ['AWS EC2/Azure VMs', 'VPC/VNet Networking', 'IAM/Azure AD', 'CloudFormation/Terraform', 'Serverless Functions', 'Cloud Monitoring'] },
+    { name: 'Cybersecurity Analyst', category: 'IT', skills: ['SIEM Tools (e.g., Splunk)', 'Vulnerability Scanning', 'Firewall Policy Analysis', 'Incident Response', 'Phishing Analysis', 'Penetration Testing Concepts'] },
+    { name: 'Unified Comms (UC) Engineer', category: 'IT', skills: ['MS Teams Telephony', 'Cisco CUCM', 'SBC Configuration (e.g., Ribbon/AudioCodes)', 'PowerShell', 'SIP Trunking', 'Voice Gateway Management'] },
+    { name: 'Solutions Architect', category: 'IT', skills: ['High-Level Design', 'Technical Documentation', 'Stakeholder Management', 'Cloud Architecture', 'Cost Analysis', 'Proof of Concept Dev'] },
+    { name: 'DevOps Engineer', category: 'IT', skills: ['CI/CD Pipelines (Jenkins/GitLab)', 'Docker & Kubernetes', 'Infrastructure as Code (IaC)', 'Scripting (Bash/Python)', 'Configuration Management', 'Monitoring & Logging'] },
+    { name: 'Database Administrator (DBA)', category: 'IT', skills: ['SQL Server/PostgreSQL', 'Backup & Recovery', 'Performance Tuning', 'Database Security', 'Query Optimization', 'High Availability Setup'] },
+
+    // --- Management Roles ---
+    { name: 'AV Project Manager', category: 'Management', skills: ['Project Scoping', 'Gantt Charts (MS Project)', 'Budget Management', 'Client Communication', 'Risk Assessment', 'Change Order Management'] },
+    { name: 'IT Project Manager', category: 'Management', skills: ['Agile/Scrum Methodology', 'Jira/Confluence', 'Resource Planning', 'Vendor Management', 'Status Reporting', 'Risk Mitigation'] },
+    { name: 'Technical Sales / Pre-Sales', category: 'Management', skills: ['Requirement Gathering', 'Solution Demonstration', 'Proposal Writing', 'Client Relationship', 'Technical Presentations', 'Competitive Analysis'] },
+];
+
+
 // --- Inlined from mockDataGenerator.ts ---
 // PAID AV Engineer
 const MOCK_ENGINEER_1: EngineerProfile = {
@@ -178,17 +219,30 @@ const MOCK_ENGINEER_1: EngineerProfile = {
         { name: 'Control Systems', rating: 95 }, 
         { name: 'DSP Programming', rating: 92 },
     ],
-    specialistJobRoles: [
+    selectedJobRoles: [
         {
-            roleName: 'Lead AV Commissioning Engineer',
+            roleName: 'AV Commissioning Engineer',
             skills: [
-                { name: 'Crestron DM NVX Commissioning', rating: 95 }, 
-                { name: 'Biamp Tesira Server Configuration', rating: 90 }, 
-                { name: 'Q-SYS Core Programming', rating: 85 }, 
-                { name: 'Dante Level 3 Troubleshooting', rating: 98 }, 
-                { name: 'Shure MXA920 Setup', rating: 93 },
-                { name: 'Complex System Fault Finding', rating: 100 }
-            ]
+                { name: 'System Commissioning', rating: 98 },
+                { name: 'Crestron Toolbox', rating: 95 },
+                { name: 'Biamp Tesira', rating: 92 },
+                { name: 'Q-SYS Designer', rating: 88 },
+                { name: 'Dante Level 3', rating: 96 },
+                { name: 'Network Troubleshooting', rating: 90 },
+            ],
+            overallScore: 93
+        },
+        {
+            roleName: 'Crestron Programmer',
+            skills: [
+                { name: 'SIMPL Windows', rating: 94 },
+                { name: 'C# (for SIMPL#)', rating: 78 },
+                { name: 'Crestron HTML5 UI', rating: 82 },
+                { name: 'DM NVX Configuration', rating: 95 },
+                { name: 'System Architecture', rating: 90 },
+                { name: 'API Integration', rating: 85 },
+            ],
+            overallScore: 87
         }
     ],
     certifications: [
@@ -256,24 +310,30 @@ const MOCK_ENGINEER_3: EngineerProfile = {
         { name: 'Network Engineering', rating: 94 },
         { name: 'Cybersecurity', rating: 88 },
     ],
-    specialistJobRoles: [
+    selectedJobRoles: [
         {
-            roleName: 'Cloud Engineer',
+            roleName: 'Cloud Engineer (AWS/Azure)',
             skills: [
-                { name: 'AWS EC2 & S3 Configuration', rating: 98 },
-                { name: 'AWS VPC Peering', rating: 92 },
-                { name: 'Infrastructure as Code (Terraform)', rating: 90 },
-                { name: 'Azure Active Directory', rating: 85 },
-            ]
+                { name: 'AWS EC2/Azure VMs', rating: 98 },
+                { name: 'VPC/VNet Networking', rating: 92 },
+                { name: 'IAM/Azure AD', rating: 94 },
+                { name: 'CloudFormation/Terraform', rating: 90 },
+                { name: 'Serverless Functions', rating: 85 },
+                { name: 'Cloud Monitoring', rating: 88 },
+            ],
+            overallScore: 91
         },
         {
             roleName: 'Network Engineer',
             skills: [
-                { name: 'Cisco Router/Switch CLI', rating: 95 },
-                { name: 'BGP & OSPF Routing Protocols', rating: 93 },
-                { name: 'Palo Alto Firewall Policy', rating: 89 },
-                { name: 'VPN Configuration (IPSec)', rating: 91 },
-            ]
+                { name: 'Cisco iOS/NX-OS', rating: 96 },
+                { name: 'Routing (BGP/OSPF)', rating: 94 },
+                { name: 'Switching (VLANs/STP)', rating: 95 },
+                { name: 'Firewall Management', rating: 89 },
+                { name: 'Network Monitoring', rating: 90 },
+                { name: 'Wi-Fi Surveys', rating: 85 },
+            ],
+            overallScore: 92
         }
     ],
     certifications: [
@@ -284,13 +344,100 @@ const MOCK_ENGINEER_3: EngineerProfile = {
     caseStudies: [],
 };
 
+// --- START: Programmatic Data Generation for Scale ---
+const FIRST_NAMES = ['Aiden', 'Bella', 'Charlie', 'Daisy', 'Ethan', 'Freya', 'George', 'Hannah', 'Isaac', 'Jasmine', 'Leo', 'Mia', 'Noah', 'Olivia', 'Poppy', 'Riley', 'Sophia', 'Thomas', 'William', 'Zoe'];
+const LAST_NAMES = ['Smith', 'Jones', 'Taylor', 'Brown', 'Williams', 'Wilson', 'Johnson', 'Roberts', 'Walker', 'Wright', 'Thompson', 'White', 'Harris', 'Clark', 'Lewis', 'Hall'];
+const LOCATIONS = ['London', 'Manchester', 'Birmingham', 'Leeds', 'Glasgow', 'Bristol', 'Edinburgh', 'Liverpool', 'Sheffield', 'Cardiff', 'Belfast', 'Newcastle', 'Nottingham'];
+const COMPANY_NAMES = ['Innovate', 'Synergy', 'Apex', 'Pinnacle', 'Fusion', 'Quantum', 'Starlight', 'Nexus', 'Momentum', 'Digital', 'Vision', 'Core', 'Link', 'Signal'];
+const COMPANY_SUFFIXES = ['Solutions', 'Systems', 'Integrations', 'AV', 'IT Services', 'Group', 'Ltd', 'Pro', 'Tech', 'Networks'];
 
-export const MOCK_ENGINEERS = [MOCK_ENGINEER_1, MOCK_ENGINEER_2, MOCK_ENGINEER_3];
+const getRandom = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
+const getRandomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+const generateUniqueId = () => Math.random().toString(36).substring(2, 10);
 
-export const MOCK_COMPANIES: CompanyProfile[] = [
+const generateMockEngineers = (count: number): EngineerProfile[] => {
+    const engineers: EngineerProfile[] = [];
+    for (let i = 0; i < count; i++) {
+        const profileTier = Math.random() > 0.6 ? 'paid' : 'free';
+        const jobRoleDef = getRandom(JOB_ROLE_DEFINITIONS);
+        const firstName = getRandom(FIRST_NAMES);
+        const lastName = getRandom(LAST_NAMES);
+        const name = `${firstName} ${lastName}`;
+        
+        const summarySkills: Skill[] = jobRoleDef.skills.slice(0, 3).map(skillName => ({
+            name: skillName,
+            rating: getRandomInt(70, 98)
+        }));
+
+        const engineer: EngineerProfile = {
+            id: `gen-eng-${i}`,
+            name: name,
+            firstName: firstName,
+            surname: lastName,
+            tagline: jobRoleDef.name,
+            avatar: `https://i.pravatar.cc/150?u=${name.replace(' ', '')}`,
+            location: `${getRandom(LOCATIONS)}, UK`,
+            currency: Currency.GBP,
+            dayRate: getRandomInt(13, 30) * 25, // 325 to 750 in 25 increments
+            experience: getRandomInt(3, 20),
+            availability: new Date(new Date().getTime() + getRandomInt(1, 90) * 24 * 60 * 60 * 1000),
+            description: `A highly skilled ${jobRoleDef.name} with ${name.length % 10 + 5} years of experience in the field. Proficient in various technologies and dedicated to delivering high-quality results.`,
+            profileTier: profileTier,
+            skills: summarySkills,
+            certifications: [],
+            contact: {
+                email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
+                phone: `07${getRandomInt(100000000, 999999999)}`,
+                website: `www.${firstName.toLowerCase()}${lastName.toLowerCase()}.com`,
+                linkedin: `linkedin.com/in/${firstName.toLowerCase()}${lastName.toLowerCase()}`
+            },
+            caseStudies: [],
+        };
+
+        if (profileTier === 'paid') {
+            const ratedSkills: RatedSkill[] = jobRoleDef.skills.map(skillName => ({
+                name: skillName,
+                rating: getRandomInt(65, 99)
+            }));
+            const totalScore = ratedSkills.reduce((acc, skill) => acc + skill.rating, 0);
+            const overallScore = Math.round(totalScore / ratedSkills.length);
+            
+            engineer.selectedJobRoles = [{
+                roleName: jobRoleDef.name,
+                skills: ratedSkills,
+                overallScore: overallScore
+            }];
+        }
+        
+        engineers.push(engineer);
+    }
+    return engineers;
+};
+
+const generateMockCompanies = (count: number): CompanyProfile[] => {
+    const companies: CompanyProfile[] = [];
+    for (let i = 0; i < count; i++) {
+        const name = `${getRandom(COMPANY_NAMES)} ${getRandom(COMPANY_SUFFIXES)}`;
+        companies.push({
+            id: `gen-comp-${i}`,
+            name: name,
+            avatar: `https://i.pravatar.cc/150?u=${name.replace(/\s/g, '')}`,
+            website: `www.${name.replace(/\s/g, '').toLowerCase()}.com`
+        });
+    }
+    return companies;
+};
+
+// --- END: Programmatic Data Generation ---
+
+const EXISTING_COMPANIES: CompanyProfile[] = [
     { id: 'comp-1', name: 'Innovate AV Ltd.', avatar: 'https://i.pravatar.cc/150?u=innovate' },
     { id: 'comp-2', name: 'Future Systems Inc.', avatar: 'https://i.pravatar.cc/150?u=future' },
 ];
+
+export const MOCK_ENGINEERS = [MOCK_ENGINEER_1, MOCK_ENGINEER_2, MOCK_ENGINEER_3, ...generateMockEngineers(997)];
+export const MOCK_COMPANIES: CompanyProfile[] = [...EXISTING_COMPANIES, ...generateMockCompanies(98)];
+
 
 export const MOCK_USERS: { [key in Role]: User } = {
     [Role.ENGINEER]: { id: 'user-1', role: Role.ENGINEER, profile: MOCK_ENGINEER_1 },
@@ -313,8 +460,6 @@ export const MOCK_JOBS: Job[] = [
         postedDate: new Date('2024-06-10'), startDate: new Date('2024-08-05'),
     },
 ];
-
-const generateUniqueId = () => Math.random().toString(36).substring(2, 10);
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const geminiService = {

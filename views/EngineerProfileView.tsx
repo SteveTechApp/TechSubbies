@@ -1,5 +1,5 @@
-import React from 'react';
-import { EngineerProfile, Skill, JobRoleSkills } from '../context/AppContext.tsx';
+import React, { useState } from 'react';
+import { EngineerProfile, Skill, SelectedJobRole } from '../context/AppContext.tsx';
 import { Edit } from '../components/Icons.tsx';
 
 const InfoItem = ({ label, value, url }: { label: string, value?: string, url?: string }) => {
@@ -66,26 +66,17 @@ const SkillBar = ({ name, rating }: Skill) => (
     </div>
 );
 
-const SpecialistRoleSection = ({ role }: { role: JobRoleSkills }) => (
-    <div className="mb-6">
-        <h4 className="text-lg font-semibold text-gray-800 mb-3">{role.roleName}</h4>
-        <div className="space-y-4">
-            {role.skills.map(skill => (
-                <SkillBar key={skill.name} name={skill.name} rating={skill.rating} />
-            ))}
-        </div>
-    </div>
-);
-
 
 export const EngineerProfileView = ({ profile, isEditable, onEdit }: { profile: EngineerProfile | null, isEditable: boolean, onEdit: () => void }) => {
+    const [activeTab, setActiveTab] = useState(0);
+
     if (!profile) return <div>Loading profile...</div>;
 
     const {
         name, tagline, description, avatar, title, firstName, middleName, surname,
         companyName, travelRadius, contact, socials, associates, otherLinks,
         compliance, generalAvailability, customerRating, peerRating,
-        googleCalendarLink, rightColumnLinks, skills, profileTier, specialistJobRoles
+        googleCalendarLink, rightColumnLinks, skills, profileTier, selectedJobRoles
     } = profile;
 
     const complianceItems = compliance ? [
@@ -170,13 +161,51 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: { profile: 
                         <h3 className="text-xl font-bold text-gray-800 mb-4">
                             {profileTier === 'paid' ? 'Specialist Job Roles' : 'Core Skills'}
                         </h3>
-                        {profileTier === 'paid' && specialistJobRoles && specialistJobRoles.length > 0 ? (
-                            specialistJobRoles.map((role, i) => <SpecialistRoleSection key={i} role={role} />)
+                        {profileTier === 'paid' && selectedJobRoles && selectedJobRoles.length > 0 ? (
+                            <div>
+                                <div className="flex border-b border-gray-200 -mb-px">
+                                    {selectedJobRoles.map((role, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => setActiveTab(index)}
+                                            className={`py-3 px-4 font-semibold text-sm focus:outline-none transition-colors duration-200 ${
+                                                activeTab === index
+                                                    ? 'border-b-2 border-blue-600 text-blue-600'
+                                                    : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent'
+                                            }`}
+                                            aria-current={activeTab === index ? 'page' : undefined}
+                                        >
+                                            {role.roleName} 
+                                            <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${
+                                                activeTab === index ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+                                            }`}>
+                                                {role.overallScore}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="pt-4">
+                                    {selectedJobRoles[activeTab] && (
+                                        <div className="p-4 bg-gray-50 rounded-b-lg space-y-4">
+                                            {selectedJobRoles[activeTab].skills.map(skill => (
+                                                <SkillBar key={skill.name} name={skill.name} rating={skill.rating} />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         ) : (
-                            <div className="space-y-4">
-                                {skills && skills.map(skill => (
-                                    <SkillBar key={skill.name} name={skill.name} rating={skill.rating} />
-                                ))}
+                             <div className="p-4 border-l-4 border-gray-300 bg-gray-50">
+                                {skills && skills.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {skills.map(skill => (
+                                            <SkillBar key={skill.name} name={skill.name} rating={skill.rating} />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-gray-500">No core skills listed.</p>
+                                )}
+                                <p className="text-xs text-center text-gray-500 mt-4">Upgrade to a Job Profile to add specialist roles and detailed skill ratings.</p>
                             </div>
                         )}
                     </div>
