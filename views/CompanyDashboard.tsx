@@ -1,20 +1,128 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
+import { useAppContext, EngineerProfile } from '../context/AppContext.tsx';
 import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
 import { JobPostModal } from '../components/JobPostModal.tsx';
 import { DashboardView } from './CompanyDashboard/DashboardView.tsx';
 import { MyJobsView } from './CompanyDashboard/MyJobsView.tsx';
+import { EngineerCard } from '../components/EngineerCard.tsx';
+import { EngineerProfileView } from './EngineerProfileView.tsx';
+import { Search, Layers, DollarSign, ArrowLeft } from '../components/Icons.tsx';
+
+// --- NEW VIEW: FindTalentView with Autotrader-style filtering ---
+const FindTalentView = ({ engineers, onSelectEngineer }: { engineers: EngineerProfile[], onSelectEngineer: (eng: EngineerProfile) => void }) => {
+    const [filters, setFilters] = useState({
+        keyword: '',
+        role: 'any',
+        maxRate: 1000,
+    });
+    
+    const specialistRoles = useMemo(() => {
+        const roles = new Set<string>();
+        engineers.forEach(e => {
+            if(e.profileTier === 'paid' && e.specialistJobRoles) {
+                e.specialistJobRoles.forEach(r => roles.add(r.roleName));
+            }
+        });
+        return Array.from(roles).sort();
+    }, [engineers]);
+    
+    const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({...prev, [name]: name === 'maxRate' ? parseInt(value) : value }));
+    };
+
+    const filteredEngineers = useMemo(() => {
+        return engineers
+            .filter(eng => {
+                const keywordMatch = filters.keyword.toLowerCase() === '' || 
+                    eng.name.toLowerCase().includes(filters.keyword.toLowerCase()) ||
+                    eng.tagline.toLowerCase().includes(filters.keyword.toLowerCase()) ||
+                    eng.skills.some(s => s.name.toLowerCase().includes(filters.keyword.toLowerCase())) ||
+                    (eng.specialistJobRoles && eng.specialistJobRoles.some(r => r.skills.some(s => s.name.toLowerCase().includes(filters.keyword.toLowerCase()))));
+                
+                const roleMatch = filters.role === 'any' || 
+                    (eng.specialistJobRoles && eng.specialistJobRoles.some(r => r.roleName === filters.role));
+                    
+                const rateMatch = eng.dayRate <= filters.maxRate;
+
+                return keywordMatch && roleMatch && rateMatch;
+            })
+            // Prioritize paid profiles
+            .sort((a, b) => (a.profileTier === 'paid' ? -1 : 1) - (b.profileTier === 'paid' ? -1 : 1)); 
+    }, [engineers, filters]);
+
+    return (
+        <div className="flex gap-8 h-[calc(100vh-10rem)]">
+            {/* Filters Sidebar */}
+            <aside className="w-1/3 lg:w-1/4 bg-white p-6 rounded-lg shadow-md flex-shrink-0">
+                <h2 className="text-xl font-bold mb-4 flex items-center"><Search size={20} className="mr-2"/> Find Talent</h2>
+                <div className="space-y-6">
+                    <div>
+                        <label htmlFor="keyword" className="block text-sm font-medium text-gray-700">Keyword or Skill</label>
+                        <input type="text" id="keyword" name="keyword" value={filters.keyword} onChange={handleFilterChange} placeholder="e.g., Crestron, Cisco, AWS" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2" />
+                    </div>
+                    <div>
+                        <label htmlFor="role" className="block text-sm font-medium text-gray-700 flex items-center"><Layers size={14} className="mr-1.5"/> Specialist Role</label>
+                        <select id="role" name="role" value={filters.role} onChange={handleFilterChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 bg-white">
+                            <option value="any">Any Role</option>
+                            {specialistRoles.map(role => <option key={role} value={role}>{role}</option>)}
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">Only engineers with a 'Job Profile' appear here.</p>
+                    </div>
+                    <div>
+                        <label htmlFor="maxRate" className="block text-sm font-medium text-gray-700 flex items-center"><DollarSign size={14} className="mr-1.5"/> Max Day Rate: £{filters.maxRate}</label>
+                        <input type="range" id="maxRate" name="maxRate" min="200" max="1000" step="25" value={filters.maxRate} onChange={handleFilterChange} className="mt-1 block w-full" />
+                    </div>
+                </div>
+            </aside>
+
+            {/* Results */}
+            <main className="flex-1 bg-gray-50 overflow-y-auto custom-scrollbar pr-2">
+                 <p className="text-sm text-gray-600 mb-4">Showing {filteredEngineers.length} of {engineers.length} engineers.</p>
+                <div className="space-y-4">
+                    {filteredEngineers.length > 0 ? (
+                         filteredEngineers.map(eng => <EngineerCard key={eng.id} profile={eng} onClick={() => onSelectEngineer(eng)} />)
+                    ) : (
+                        <div className="text-center py-10">
+                            <p className="font-semibold">No engineers match your criteria.</p>
+                            <p className="text-sm text-gray-500">Try adjusting your filters.</p>
+                        </div>
+                    )}
+                </div>
+            </main>
+        </div>
+    );
+};
+
 
 export const CompanyDashboard = () => {
     const { user, postJob, jobs, engineers } = useAppContext();
-    const [activeView, setActiveView] = useState('Dashboard');
+    const [activeView, setActiveView] = useState('Find Talent');
     const [isJobModalOpen, setIsJobModalOpen] = useState(false);
+    
+    // State for Find Talent view
+    const [talentView, setTalentView] = useState<'list' | 'profile'>('list');
+    const [selectedEngineer, setSelectedEngineer] = useState<EngineerProfile | null>(null);
+
+    const handleSelectEngineer = (engineer: EngineerProfile) => {
+        setSelectedEngineer(engineer);
+        setTalentView('profile');
+    };
+
+    const handleBackToSearch = () => {
+        setSelectedEngineer(null);
+        setTalentView('list');
+    };
+
 
     const myJobs = useMemo(() => jobs.filter(j => j.companyId === user?.profile?.id), [jobs, user]);
 
     useEffect(() => {
         if (activeView === 'Post a Job') {
             setIsJobModalOpen(true);
+        } else {
+            // Reset talent view when switching main tabs
+            handleBackToSearch();
         }
     }, [activeView]);
 
@@ -29,6 +137,22 @@ export const CompanyDashboard = () => {
         switch(activeView) {
             case 'Dashboard':
                 return <DashboardView user={user} myJobs={myJobs} engineers={engineers} />;
+            case 'Find Talent':
+                 if (talentView === 'profile' && selectedEngineer) {
+                    return (
+                        <div className="h-full overflow-y-auto custom-scrollbar">
+                            <button 
+                                onClick={handleBackToSearch} 
+                                className="flex items-center mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                            >
+                                <ArrowLeft size={16} className="mr-2" />
+                                Back to Search Results
+                            </button>
+                            <EngineerProfileView profile={selectedEngineer} isEditable={false} onEdit={() => {}} />
+                        </div>
+                    )
+                }
+                return <FindTalentView engineers={engineers} onSelectEngineer={handleSelectEngineer} />;
             case 'Post a Job': // Intentionally fall through, modal handles it
             case 'My Jobs':
                 return <MyJobsView myJobs={myJobs} />;
@@ -45,7 +169,7 @@ export const CompanyDashboard = () => {
     return (
         <div className="flex">
             <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-grow p-8 bg-gray-50">
+            <main className="flex-grow p-8 bg-gray-50 h-screen overflow-hidden">
                 {renderActiveView()}
             </main>
             <JobPostModal

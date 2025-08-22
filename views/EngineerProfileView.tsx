@@ -1,5 +1,5 @@
 import React from 'react';
-import { EngineerProfile } from '../context/AppContext.tsx';
+import { EngineerProfile, Skill, JobRoleSkills } from '../context/AppContext.tsx';
 import { Edit } from '../components/Icons.tsx';
 
 const InfoItem = ({ label, value, url }: { label: string, value?: string, url?: string }) => {
@@ -54,6 +54,29 @@ const StarRating = ({ rating = 0, label }: { rating?: number, label: string }) =
     );
 };
 
+const SkillBar = ({ name, rating }: Skill) => (
+    <div>
+        <div className="flex justify-between items-center mb-1">
+            <span className="font-medium text-gray-800">{name}</span>
+            <span className="font-bold text-blue-600">{rating} / 100</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2.5">
+            <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${rating}%` }}></div>
+        </div>
+    </div>
+);
+
+const SpecialistRoleSection = ({ role }: { role: JobRoleSkills }) => (
+    <div className="mb-6">
+        <h4 className="text-lg font-semibold text-gray-800 mb-3">{role.roleName}</h4>
+        <div className="space-y-4">
+            {role.skills.map(skill => (
+                <SkillBar key={skill.name} name={skill.name} rating={skill.rating} />
+            ))}
+        </div>
+    </div>
+);
+
 
 export const EngineerProfileView = ({ profile, isEditable, onEdit }: { profile: EngineerProfile | null, isEditable: boolean, onEdit: () => void }) => {
     if (!profile) return <div>Loading profile...</div>;
@@ -62,7 +85,7 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: { profile: 
         name, tagline, description, avatar, title, firstName, middleName, surname,
         companyName, travelRadius, contact, socials, associates, otherLinks,
         compliance, generalAvailability, customerRating, peerRating,
-        googleCalendarLink, rightColumnLinks
+        googleCalendarLink, rightColumnLinks, skills, profileTier, specialistJobRoles
     } = profile;
 
     const complianceItems = compliance ? [
@@ -87,7 +110,12 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: { profile: 
             <div className="flex items-start mb-6">
                 {avatar && <img src={avatar} alt={name} className="w-32 h-32 rounded-lg mr-8 object-cover" />}
                 <div>
-                    <h1 className="text-4xl font-bold">{name}</h1>
+                    <div className="flex items-center gap-3">
+                         <h1 className="text-4xl font-bold">{name}</h1>
+                         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${profileTier === 'paid' ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-800'}`}>
+                           {profileTier === 'paid' ? 'JOB PROFILE' : 'BASIC PROFILE'}
+                         </span>
+                    </div>
                     <h2 className="text-xl text-gray-600 font-semibold mb-2">{tagline}</h2>
                     <p className="text-gray-700">{description}</p>
                 </div>
@@ -138,6 +166,21 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: { profile: 
 
                 {/* Right Column */}
                 <div className="space-y-6 mt-6 md:mt-0">
+                    <div>
+                        <h3 className="text-xl font-bold text-gray-800 mb-4">
+                            {profileTier === 'paid' ? 'Specialist Job Roles' : 'Core Skills'}
+                        </h3>
+                        {profileTier === 'paid' && specialistJobRoles && specialistJobRoles.length > 0 ? (
+                            specialistJobRoles.map((role, i) => <SpecialistRoleSection key={i} role={role} />)
+                        ) : (
+                            <div className="space-y-4">
+                                {skills && skills.map(skill => (
+                                    <SkillBar key={skill.name} name={skill.name} rating={skill.rating} />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    <hr />
                     <div>
                         {complianceItems.map((item, i) => (
                             <div key={i} className="flex items-baseline mb-2">

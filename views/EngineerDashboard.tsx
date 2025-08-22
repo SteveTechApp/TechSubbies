@@ -2,14 +2,16 @@ import React, { useState } from 'react';
 import { useAppContext, EngineerProfile, Skill } from '../context/AppContext.tsx';
 import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
 import { EngineerProfileView } from './EngineerProfileView.tsx';
-import { EditSkillProfileModal } from '../components/EditSkillProfileModal.tsx';
 import { DashboardView } from './EngineerDashboard/DashboardView.tsx';
 import { AvailabilityView } from './EngineerDashboard/AvailabilityView.tsx';
+import { JobSearchView } from './EngineerDashboard/JobSearchView.tsx';
+import { ProfileManagementView } from './EngineerDashboard/ProfileManagementView.tsx';
+import { SettingsView } from './EngineerDashboard/SettingsView.tsx';
+
 
 export const EngineerDashboard = () => {
-    const { user, updateUserProfile, geminiService, upgradeUserTier } = useAppContext();
+    const { user, updateEngineerProfile, geminiService, upgradeUserTier } = useAppContext();
     const [activeView, setActiveView] = useState('Dashboard');
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
 
     if (!user || !('skills' in user.profile)) {
@@ -17,14 +19,15 @@ export const EngineerDashboard = () => {
     }
     const engineerProfile = user.profile as EngineerProfile;
 
-    const handleProfileSave = (updatedProfile: EngineerProfile) => {
-        updateUserProfile(updatedProfile);
+    const handleProfileSave = (updatedProfile: Partial<EngineerProfile>) => {
+        updateEngineerProfile(updatedProfile);
+        alert("Profile updated successfully!");
     };
 
     const handleGenerateDescription = async () => {
         setIsGeneratingDesc(true);
         const desc = await geminiService.generateDescriptionForProfile(engineerProfile);
-        updateUserProfile({ description: desc });
+        updateEngineerProfile({ description: desc });
         setIsGeneratingDesc(false);
     };
 
@@ -32,13 +35,13 @@ export const EngineerDashboard = () => {
         const currentSkillNames = engineerProfile.skills.map((s: Skill) => s.name.toLowerCase());
         const uniqueNewSkills = newSkills.filter(ns => !currentSkillNames.includes(ns.name.toLowerCase()));
         
-        updateUserProfile({
+        updateEngineerProfile({
             skills: [...engineerProfile.skills, ...uniqueNewSkills]
         });
     };
 
     const handleUpdateAvailability = (newDate: Date) => {
-        updateUserProfile({ availability: newDate });
+        updateEngineerProfile({ availability: newDate });
     };
 
     const renderActiveView = () => {
@@ -55,14 +58,15 @@ export const EngineerDashboard = () => {
                         onUpgradeTier={upgradeUserTier}
                     />
                 );
-            case 'My Profile':
-                return (
-                    <EngineerProfileView 
+            case 'Manage Profile':
+                 return (
+                    <ProfileManagementView 
                         profile={engineerProfile} 
-                        isEditable={true} 
-                        onEdit={() => setIsEditModalOpen(true)} 
+                        onSave={handleProfileSave} 
                     />
                 );
+            case 'View Public Profile':
+                return <EngineerProfileView profile={engineerProfile} isEditable={false} onEdit={() => {}} />;
             case 'Availability':
                  return (
                     <AvailabilityView 
@@ -70,6 +74,10 @@ export const EngineerDashboard = () => {
                         onUpdateAvailability={handleUpdateAvailability} 
                     />
                  );
+            case 'Job Search':
+                return <JobSearchView />;
+            case 'Settings':
+                return <SettingsView profile={engineerProfile} onSave={handleProfileSave} />;
             default:
                 return (
                     <div>
@@ -83,15 +91,9 @@ export const EngineerDashboard = () => {
     return (
         <div className="flex">
             <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-grow p-8 bg-gray-50">
+            <main className="flex-grow p-8 bg-gray-50 h-screen overflow-y-auto custom-scrollbar">
                 {renderActiveView()}
             </main>
-            <EditSkillProfileModal
-                isOpen={isEditModalOpen}
-                onClose={() => setIsEditModalOpen(false)}
-                userProfile={engineerProfile}
-                onSave={handleProfileSave}
-            />
         </div>
     );
 };

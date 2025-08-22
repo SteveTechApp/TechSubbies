@@ -46,13 +46,13 @@ export const AISkillDiscovery = ({ onSkillsAdded }: AISkillDiscoveryProps) => {
                 <BrainCircuit className="w-8 h-8 text-blue-600 mr-3" />
                 <h3 className="text-xl font-bold text-blue-800">AI Skill Discovery</h3>
             </div>
-            <p className="text-gray-600 mb-4">Don't want to add skills manually? Enter a job title (e.g., "AV Programmer") and let our AI suggest relevant skills for you.</p>
+            <p className="text-gray-600 mb-4">Don't want to add skills manually? Enter a job title (e.g., "Network Engineer") and let our AI suggest relevant skills for you.</p>
             <div className="flex items-center space-x-2">
                 <input
                     type="text"
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
-                    placeholder="e.g., Senior Network Engineer"
+                    placeholder="e.g., Lead Tech Subcontractor"
                     className="w-full border p-2 rounded-md focus:ring-2 focus:ring-blue-500"
                 />
                 <button
@@ -70,7 +70,7 @@ export const AISkillDiscovery = ({ onSkillsAdded }: AISkillDiscoveryProps) => {
                     <div className="flex flex-wrap gap-2 my-2">
                         {discoveredSkills.map(skill =>
                             <span key={skill.name} className="bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm">
-                                {skill.name} (Rated: {skill.rating}/5)
+                                {skill.name} (Rating: {skill.rating})
                             </span>
                         )}
                     </div>

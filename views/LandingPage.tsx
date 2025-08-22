@@ -35,7 +35,7 @@ export const LandingPage = () => {
                   <p 
                       className="text-lg md:text-xl max-w-3xl mx-auto mb-8 fade-in-up" 
                       style={{ animationDelay: '0.2s' }}
-                  >The free-to-use platform for companies to find and hire expert freelance engineers with verified availability. No placement fees. No hassle.</p>
+                  >The free-to-use platform for companies to find and hire expert freelance Tech (AV & IT) engineers with verified availability. No placement fees. No hassle.</p>
                   <div 
                       className="flex justify-center space-x-4 fade-in-up"
                       style={{ animationDelay: '0.4s' }}
@@ -49,7 +49,7 @@ export const LandingPage = () => {
           {/* Stats Section */}
           <section className="py-16">
               <div className="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
-                  <StatCard icon={Users} value={`${engineers.length}+`} label="Vetted Engineers" />
+                  <StatCard icon={Users} value={`${engineers.length}+`} label="Vetted Tech Engineers" />
                   <StatCard icon={Building} value={`${MOCK_COMPANIES.length}+`} label="Active Companies" />
                   <StatCard icon={ClipboardList} value={`${jobs.length}+`} label="Jobs Posted" />
               </div>
@@ -58,13 +58,13 @@ export const LandingPage = () => {
           {/* Trusted By Section */}
           <section className="py-12 bg-gray-100">
             <div className="container mx-auto px-4 text-center">
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-6">Trusted by leading tech companies & AV integrators</h3>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-6">Trusted by leading integrators & managed service providers</h3>
               <div className="flex justify-center items-center space-x-12 flex-wrap text-gray-400">
-                  <span className="text-2xl font-bold">INNOVATE</span>
-                  <span className="text-2xl font-bold">FutureSystems</span>
-                  <span className="text-2xl font-bold">CyberConnect</span>
-                  <span className="text-2xl font-bold">AV Solutions</span>
-                  <span className="text-2xl font-bold">QuantumLeap</span>
+                  <span className="text-2xl font-bold">TechSolutions</span>
+                  <span className="text-2xl font-bold">Pro Integrate</span>
+                  <span className="text-2xl font-bold">Cloud MSP</span>
+                  <span className="text-2xl font-bold">EventPro</span>
+                  <span className="text-2xl font-bold">Future Systems</span>
               </div>
             </div>
           </section>

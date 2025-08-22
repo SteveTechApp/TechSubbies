@@ -9,12 +9,12 @@ export const InvestorPage = () => {
             <div className="container mx-auto px-4">
                 <div className="text-center mb-16">
                     <h2 className="text-4xl font-extrabold text-gray-800">An Investment in the Future of Work</h2>
-                    <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">TechSubbies.com is poised to become the essential infrastructure for the freelance technical economy. Discover why we're a high-growth opportunity.</p>
+                    <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">TechSubbies.com is poised to become the essential infrastructure for the freelance tech economy. Discover why we're a high-growth opportunity.</p>
                 </div>
 
                 <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg mb-16">
                     <h3 className="text-2xl font-bold mb-4 text-center">Executive Summary</h3>
-                    <p className="text-gray-700 text-center">In today's fast-paced digital economy, project managers waste countless hours searching for specialized tech talent and vetting availability. TechSubbies.com solves this by providing instant access to a curated network of qualified freelance tech engineers with real-time availability, dramatically reducing hiring time from weeks to days.</p>
+                    <p className="text-gray-700 text-center">In today's fast-paced Tech industry, project managers waste countless hours searching for specialized AV & IT talent and vetting availability. TechSubbies.com solves this by providing instant access to a curated network of qualified freelance engineers with real-time availability, dramatically reducing hiring time from weeks to days.</p>
                 </div>
 
                 <div className="mb-16">
@@ -23,15 +23,15 @@ export const InvestorPage = () => {
                         <HighlightCard icon={Zap} title="Disruptive Business Model">Free access for companies drives massive adoption and network effects, creating a deep pool of opportunities for our paying engineer user base.</HighlightCard>
                         <HighlightCard icon={Layers} title="Multiple Revenue Streams">Revenue is generated through a high-volume, low-cost subscription model for talent, supplemented by high-margin, value-added services.</HighlightCard>
                         <HighlightCard icon={TrendingUp} title="High-Demand Market">The global gig economy and the increasing reliance on a flexible, specialized tech workforce are fueling massive market growth.</HighlightCard>
-                        <HighlightCard icon={BrainCircuit} title="Technology Differentiation">Advanced search filters, AI-powered team building, and real-time availability tracking set our platform apart.</HighlightCard>
-                        <HighlightCard icon={Rocket} title="First-Mover Advantage">We are targeting a high-value vertical with a purpose-built solution designed for the unique needs of the technical contracting industry.</HighlightCard>
+                        <HighlightCard icon={BrainCircuit} title="Technology Differentiation">Advanced filtering, AI-powered team building, and real-time availability tracking set our platform apart.</HighlightCard>
+                        <HighlightCard icon={Rocket} title="First-Mover Advantage">We are targeting a high-value vertical with a purpose-built solution designed for the unique needs of the tech contracting industry.</HighlightCard>
                     </div>
                 </div>
                 
                 <div className="mb-16 bg-blue-50 py-12 rounded-lg">
                     <h3 className="text-3xl font-bold text-center mb-10">Our Modern Revenue Model</h3>
                     <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-8 px-4">
-                         <RevenueCard number="1" title="Subscriptions">A low-cost monthly subscription for engineers and resourcing companies unlocks premium features, encouraging a large, active user base.</RevenueCard>
+                         <RevenueCard number="1" title="Job Profile Subscriptions">A low-cost monthly subscription for engineers unlocks a premium "Job Profile", enabling them to showcase specialist skills and appear in detailed searches.</RevenueCard>
                          <RevenueCard number="2" title='"Boost Profile" Credits'>A pay-per-use feature allowing engineers to purchase credits that temporarily place their profile at the top of relevant search results.</RevenueCard>
                          <RevenueCard number="3" title="Targeted Advertising">Premium advertising slots for industry-specific manufacturers and training companies to reach their ideal audience.</RevenueCard>
                     </div>

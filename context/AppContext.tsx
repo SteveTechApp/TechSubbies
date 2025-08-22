@@ -17,7 +17,17 @@ export enum Currency {
 
 export interface Skill {
     name: string;
-    rating: number; // 1-5
+    rating: number; // 0-100 (represents general proficiency for basic skills)
+}
+
+export interface DetailedSkill {
+    name: string;
+    rating: number; // 0-100 (represents specific knowledge for specialist skills)
+}
+
+export interface JobRoleSkills {
+    roleName: string;
+    skills: DetailedSkill[];
 }
 
 export interface Certification {
@@ -45,6 +55,7 @@ export interface Associate {
 }
 
 export interface CaseStudy {
+    id: string; // Added for easier management
     name: string;
     url: string;
 }
@@ -73,7 +84,8 @@ export interface EngineerProfile extends BaseProfile {
     experience: number; // years
     availability: Date;
     description: string;
-    skills: Skill[];
+    skills: Skill[]; // Basic skills for free tier
+    specialistJobRoles?: JobRoleSkills[]; // Detailed skills for paid tier
     certifications: Certification[];
     contact: Contact;
     profileTier: 'free' | 'paid';
@@ -91,7 +103,7 @@ export interface EngineerProfile extends BaseProfile {
 
     compliance?: Compliance;
 
-    generalAvailability?: string; // e.g. 'Medium'
+    generalAvailability?: string; // e.g., 'Medium'
     customerRating?: number; // 1-5
     peerRating?: number; // 1-5
     googleCalendarLink?: string;
@@ -128,6 +140,13 @@ export interface Job {
     startDate: Date | null;
 }
 
+export interface Application {
+    jobId: string;
+    engineerId: string;
+    date: Date;
+}
+
+
 // --- Inlined from constants.ts ---
 export const APP_NAME = "TechSubbies.com";
 export const CURRENCY_ICONS: { [key in Currency]: React.ComponentType<any> } = {
@@ -136,105 +155,140 @@ export const CURRENCY_ICONS: { [key in Currency]: React.ComponentType<any> } = {
 };
 
 // --- Inlined from mockDataGenerator.ts ---
+// PAID AV Engineer
 const MOCK_ENGINEER_1: EngineerProfile = {
     id: 'eng-1',
     name: 'Neil Bishop',
     firstName: 'Neil',
-    middleName: 'John',
     surname: 'Bishop',
     title: 'Mr',
-    tagline: 'AV Technician',
+    tagline: 'Lead AV Commissioning Engineer',
     avatar: 'https://i.imgur.com/8Qtm93t.jpeg',
     location: 'London, UK',
     currency: Currency.GBP,
     dayRate: 550,
     experience: 15,
     availability: new Date('2024-08-01'),
-    description: "Experienced AV techhnician with over 15 years in the industry, specializing in installation, maintenance, and troubleshootingof audio-visual systems:",
+    description: "Senior AV commissioning engineer with 15+ years' experience specializing in corporate and residential projects. Expert in Crestron, Biamp, and Q-SYS ecosystems, ensuring flawless system integration and performance.",
     companyName: 'AV Innovations',
     travelRadius: '< 500 miles',
-    
+    profileTier: 'paid',
+    skills: [ // Summary skills for card view
+        { name: 'AV Commissioning', rating: 98 }, 
+        { name: 'Control Systems', rating: 95 }, 
+        { name: 'DSP Programming', rating: 92 },
+    ],
+    specialistJobRoles: [
+        {
+            roleName: 'Lead AV Commissioning Engineer',
+            skills: [
+                { name: 'Crestron DM NVX Commissioning', rating: 95 }, 
+                { name: 'Biamp Tesira Server Configuration', rating: 90 }, 
+                { name: 'Q-SYS Core Programming', rating: 85 }, 
+                { name: 'Dante Level 3 Troubleshooting', rating: 98 }, 
+                { name: 'Shure MXA920 Setup', rating: 93 },
+                { name: 'Complex System Fault Finding', rating: 100 }
+            ]
+        }
+    ],
+    certifications: [
+        { name: 'Crestron Certified Programmer', verified: true }, 
+        { name: 'Biamp TesiraFORTE Certified', verified: true }, 
+        { name: 'Dante Certification Level 3', verified: true }
+    ],
     contact: {
         email: 'neil.bishop@example.com',
         phone: '07123456789',
-        telephone: '—',
         website: 'www.neilbishop.com',
         linkedin: 'linkedin.com/in/nelib',
     },
-    
-    socials: [
-        { name: 'Social 1', url: 'social 1' },
-        { name: 'Social 2', url: 'social 2' },
-        { name: 'Social 3', url: 'social 3' },
+    caseStudies: [
+        { id: 'cs-1', name: 'Corporate HQ Audiovisual Integration', url: 'https://example.com/case-study-1' },
+        { id: 'cs-2', name: 'Luxury Residential Smart Home System', url: 'https://example.com/case-study-2' },
     ],
-
-    associates: [
-        { name: 'Associate', value: 'John Smith', url: '#' },
-        { name: 'Associate 2', value: '—' },
-        { name: 'Associate 3', value: '—' },
-    ],
-
-    otherLinks: [
-        { name: 'Gmail', url: 'www.nelibishop.com' },
-        { name: 'Web', url: 'social' },
-    ],
-
-    compliance: {
-        professionalIndemnity: true,
-        publicLiability: true,
-        siteSafe: true,
-        ownPPE: true,
-        accessEquipmentTrained: true,
-        firstAidTrained: true,
-    },
-
-    generalAvailability: 'Medium',
-    customerRating: 4,
-    peerRating: 4,
-    googleCalendarLink: 'Google Calender',
-
-    rightColumnLinks: [
-        { label: 'Associate 1', value: 'John Smith', url: '#' },
-        { label: 'Case Study', value: 'Case study 1', url: '#' },
-        { label: 'Case Study 1', value: 'Isite link', url: '#' },
-    ],
-
-    skills: [
-        { name: 'Crestron', rating: 5 }, { name: 'Cisco CCNA', rating: 4 }, { name: 'Dante Level 3', rating: 5 }, { name: 'AutoCAD', rating: 3 }, { name: 'Project Management', rating: 4 }
-    ],
-    certifications: [
-        { name: 'Crestron Certified Programmer', verified: true }, { name: 'Cisco CCNA', verified: true }, { name: 'Dante Certification Level 3', verified: true }
-    ],
-    profileTier: 'paid',
 };
 
+// FREE IT Engineer
 const MOCK_ENGINEER_2: EngineerProfile = {
     id: 'eng-2',
     name: 'Samantha Greene',
     firstName: 'Samantha',
     surname: 'Greene',
-    tagline: 'Unified Communications Specialist',
+    tagline: 'IT Support Specialist',
     avatar: 'https://i.pravatar.cc/150?u=samanthagreene',
     location: 'Manchester, UK',
     currency: Currency.GBP,
-    dayRate: 480,
+    dayRate: 350,
     experience: 8,
     availability: new Date('2024-07-20'),
-    description: "Microsoft Certified Unified Communications specialist focusing on Teams, Zoom, and large-scale video conferencing deployments. Passionate about creating seamless collaboration experiences for global enterprises.",
-    skills: [
-        { name: 'Microsoft Teams Rooms', rating: 5 }, { name: 'Zoom Rooms', rating: 5 }, { name: 'Polycom', rating: 4 }, { name: 'SIP/H.323', rating: 4 }, { name: 'PowerShell', rating: 3 }
+    description: "Microsoft Certified support specialist focusing on SME infrastructure, Office 365, and user support. Passionate about creating efficient and secure IT environments.",
+    profileTier: 'free',
+    skills: [ // Only basic skills, no specialist roles
+        { name: 'Microsoft 365 Admin', rating: 92 }, 
+        { name: 'Active Directory', rating: 90 }, 
+        { name: 'Network Troubleshooting', rating: 88 }, 
+        { name: 'Hardware Support', rating: 85 },
     ],
     certifications: [
-        { name: 'Microsoft 365 Certified: Teams Administrator Associate', verified: true }, { name: 'Zoom Certified Integrator', verified: true }
+        { name: 'Microsoft 365 Certified: Modern Desktop Administrator Associate', verified: true }, 
     ],
     contact: { email: 'sam.greene@example.com', phone: '01234 567891', website: 'https://sgreene.com', linkedin: 'https://linkedin.com/in/samanthagreene' },
-    profileTier: 'paid',
+    caseStudies: [],
 };
 
-export const MOCK_ENGINEERS = [MOCK_ENGINEER_1, MOCK_ENGINEER_2];
+// PAID IT Engineer
+const MOCK_ENGINEER_3: EngineerProfile = {
+    id: 'eng-3',
+    name: 'David Chen',
+    firstName: 'David',
+    surname: 'Chen',
+    tagline: 'Cloud & Network Engineer',
+    avatar: 'https://i.pravatar.cc/150?u=davidchen',
+    location: 'Birmingham, UK',
+    currency: Currency.GBP,
+    dayRate: 600,
+    experience: 10,
+    availability: new Date('2024-09-15'),
+    description: "AWS Certified Solutions Architect with a deep background in Cisco networking. Specializes in designing and implementing scalable, secure cloud infrastructure and hybrid networks.",
+    profileTier: 'paid',
+    skills: [ // Summary skills for card view
+        { name: 'Cloud Architecture (AWS)', rating: 95 },
+        { name: 'Network Engineering', rating: 94 },
+        { name: 'Cybersecurity', rating: 88 },
+    ],
+    specialistJobRoles: [
+        {
+            roleName: 'Cloud Engineer',
+            skills: [
+                { name: 'AWS EC2 & S3 Configuration', rating: 98 },
+                { name: 'AWS VPC Peering', rating: 92 },
+                { name: 'Infrastructure as Code (Terraform)', rating: 90 },
+                { name: 'Azure Active Directory', rating: 85 },
+            ]
+        },
+        {
+            roleName: 'Network Engineer',
+            skills: [
+                { name: 'Cisco Router/Switch CLI', rating: 95 },
+                { name: 'BGP & OSPF Routing Protocols', rating: 93 },
+                { name: 'Palo Alto Firewall Policy', rating: 89 },
+                { name: 'VPN Configuration (IPSec)', rating: 91 },
+            ]
+        }
+    ],
+    certifications: [
+        { name: 'AWS Certified Solutions Architect - Professional', verified: true },
+        { name: 'Cisco Certified Network Professional (CCNP)', verified: true },
+    ],
+    contact: { email: 'david.chen@example.com', phone: '07111222333', website: 'https://chencloud.dev', linkedin: 'https://linkedin.com/in/davidchen' },
+    caseStudies: [],
+};
+
+
+export const MOCK_ENGINEERS = [MOCK_ENGINEER_1, MOCK_ENGINEER_2, MOCK_ENGINEER_3];
 
 export const MOCK_COMPANIES: CompanyProfile[] = [
-    { id: 'comp-1', name: 'Innovate Solutions Ltd.', avatar: 'https://i.pravatar.cc/150?u=innovate' },
+    { id: 'comp-1', name: 'Innovate AV Ltd.', avatar: 'https://i.pravatar.cc/150?u=innovate' },
     { id: 'comp-2', name: 'Future Systems Inc.', avatar: 'https://i.pravatar.cc/150?u=future' },
 ];
 
@@ -252,6 +306,12 @@ export const MOCK_JOBS: Job[] = [
         location: 'London, UK', dayRate: '575', currency: Currency.GBP, duration: '6 weeks',
         postedDate: new Date('2024-05-20'), startDate: new Date('2024-07-29'),
     },
+     {
+        id: 'job-2', companyId: 'comp-2', title: 'Senior Network Engineer (Contract)',
+        description: 'Seeking a Senior Network Engineer for a 3-month contract to assist with a Cisco ACI deployment. Must have proven experience with network architecture, BGP, OSPF, and Palo Alto firewalls. CCNP certification is highly desirable.',
+        location: 'Remote (UK Based)', dayRate: '500', currency: Currency.GBP, duration: '3 months',
+        postedDate: new Date('2024-06-10'), startDate: new Date('2024-08-05'),
+    },
 ];
 
 const generateUniqueId = () => Math.random().toString(36).substring(2, 10);
@@ -259,7 +319,7 @@ const generateUniqueId = () => Math.random().toString(36).substring(2, 10);
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const geminiService = {
     generateDescriptionForProfile: async (profile: EngineerProfile) => {
-        const prompt = `Generate a compelling but brief professional bio (around 50-70 words) for a freelance tech engineer. Here are their details:\n- Name: ${profile.name}\n- Role/Tagline: ${profile.tagline}\n- Experience: ${profile.experience} years\n- Key Skills: ${profile.skills.slice(0, 5).map(s => s.name).join(', ')}\n\nWrite a professional, first-person summary.`;
+        const prompt = `Generate a compelling but brief professional bio (around 50-70 words) for a freelance Tech engineer. Here are their details:\n- Name: ${profile.name}\n- Role/Tagline: ${profile.tagline}\n- Experience: ${profile.experience} years\n- Key Skills: ${profile.skills.slice(0, 5).map(s => s.name).join(', ')}\n\nWrite a professional, first-person summary.`;
         try {
             const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
             return String(response.text).trim();
@@ -269,7 +329,7 @@ const geminiService = {
         }
     },
     generateSkillsForRole: async (role: string) => {
-        const prompt = `Based on the job title "${role}", suggest 5 to 7 key technical skills. For each skill, provide a "rating" from 3 to 5, where 3 is proficient, 4 is advanced, and 5 is expert. This rating should reflect the typical proficiency expected for someone in that role.`;
+        const prompt = `Based on the Tech industry job title "${role}", suggest 5 to 7 key technical skills. For each skill, provide a "rating" from 60 to 95, where 60 is proficient and 95 is expert. This rating should reflect the typical proficiency expected for someone in that role.`;
         try {
             const response = await ai.models.generateContent({
                 model: "gemini-2.5-flash", contents: prompt,
@@ -288,7 +348,7 @@ const geminiService = {
         }
     },
     suggestTeamForProject: async (description: string) => {
-        const prompt = `Based on this project description, suggest a small team of freelance specialists that would be required. For each role, list 2-3 key skills needed.\n\nProject Description: "${description}"`;
+        const prompt = `Based on this IT/AV project description, suggest a small team of freelance specialists that would be required. For each role, list 2-3 key skills needed.\n\nProject Description: "${description}"`;
         try {
             const response = await ai.models.generateContent({
                 model: "gemini-2.5-flash", contents: prompt,
@@ -307,13 +367,13 @@ const geminiService = {
         }
     },
     analyzeEngineerCost: async (jobDescription: string, engineerProfile: EngineerProfile) => {
-        const prompt = `Analyze the cost-effectiveness of hiring a freelance engineer for a project.
+        const prompt = `Analyze the cost-effectiveness of hiring a freelance tech engineer for a project.
         Project Description: "${jobDescription}"
         Engineer Profile:
         - Role: ${engineerProfile.tagline}
         - Experience: ${engineerProfile.experience} years
         - Day Rate: ${engineerProfile.currency}${engineerProfile.dayRate}
-        - Key Skills: ${engineerProfile.skills.map(s => `${s.name} (rated ${s.rating}/5)`).join(', ')}
+        - Key Skills: ${engineerProfile.skills.map(s => `${s.name} (rated ${s.rating}/100)`).join(', ')}
         Provide a JSON response with:
         1. "skill_match_assessment" (string): A brief sentence on how well their skills match the project.
         2. "rate_justification" (string): A brief sentence justifying if their day rate is fair, high, or low based on their experience and skills for this project.
@@ -349,10 +409,12 @@ interface AppContextType {
     engineers: EngineerProfile[];
     login: (role: Role) => void;
     logout: () => void;
-    updateUserProfile: (updatedProfile: Partial<EngineerProfile>) => void;
+    updateEngineerProfile: (updatedProfile: Partial<EngineerProfile>) => void;
     postJob: (jobData: any) => void;
     upgradeUserTier: () => void;
     geminiService: typeof geminiService;
+    applications: Application[];
+    applyForJob: (jobId: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -361,6 +423,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [jobs, setJobs] = useState<Job[]>(MOCK_JOBS);
     const [engineers, setEngineers] = useState<EngineerProfile[]>(MOCK_ENGINEERS);
+    const [applications, setApplications] = useState<Application[]>([]);
 
     const login = (role: Role) => {
         if (MOCK_USERS[role]) {
@@ -372,7 +435,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setUser(null);
     };
 
-    const updateUserProfile = (updatedProfile: Partial<EngineerProfile>) => {
+    const updateEngineerProfile = (updatedProfile: Partial<EngineerProfile>) => {
         if (user && 'skills' in user.profile) { // Type guard to ensure it's an engineer
             const newUser = {
                 ...user,
@@ -394,7 +457,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     const upgradeUserTier = () => {
         if (user && 'skills' in user.profile) {
-            updateUserProfile({ profileTier: 'paid' });
+            updateEngineerProfile({ profileTier: 'paid' });
         }
     };
 
@@ -411,7 +474,24 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const value = { user, jobs, engineers, login, logout, updateUserProfile, postJob, upgradeUserTier, geminiService };
+    const applyForJob = (jobId: string) => {
+        if (user && user.role === Role.ENGINEER) {
+            if (applications.some(app => app.jobId === jobId && app.engineerId === user.profile.id)) {
+                alert("You have already applied for this job.");
+                return;
+            }
+            const newApplication: Application = {
+                jobId,
+                engineerId: user.profile.id,
+                date: new Date(),
+            };
+            setApplications(prev => [newApplication, ...prev]);
+            alert("Application submitted successfully!");
+        }
+    };
+
+
+    const value = { user, jobs, engineers, login, logout, updateEngineerProfile, postJob, upgradeUserTier, geminiService, applications, applyForJob };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

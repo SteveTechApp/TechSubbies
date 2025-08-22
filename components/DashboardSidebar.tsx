@@ -3,7 +3,7 @@ import { useAppContext, Role } from '../context/AppContext.tsx';
 import { NavLink } from './NavLink.tsx';
 import { 
     LayoutDashboard, User, CalendarDays, Search, Settings, PlusCircle, Briefcase, 
-    Users, Building, BarChart2, SlidersHorizontal
+    Users, Building, BarChart2, SlidersHorizontal, Edit
 } from './Icons.tsx';
 
 interface DashboardSidebarProps {
@@ -15,7 +15,12 @@ const getLinksForRole = (role: Role) => {
     switch (role) {
         case Role.ENGINEER:
             return [
-                { label: 'Dashboard', icon: LayoutDashboard }, { label: 'My Profile', icon: User }, { label: 'Availability', icon: CalendarDays }, { label: 'Job Search', icon: Search }, { label: 'Settings', icon: Settings },
+                { label: 'Dashboard', icon: LayoutDashboard }, 
+                { label: 'Manage Profile', icon: Edit },
+                { label: 'View Public Profile', icon: User }, 
+                { label: 'Availability', icon: CalendarDays }, 
+                { label: 'Job Search', icon: Search }, 
+                { label: 'Settings', icon: Settings },
             ];
         case Role.COMPANY:
             return [
