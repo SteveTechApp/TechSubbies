@@ -2,6 +2,15 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { PoundSterling, DollarSign } from '../components/Icons.tsx';
 
+// --- SIMULATED PRE-AUTHENTICATION ---
+// In a real application, this would come from an authentication service (e.g., Firebase Auth, Auth0)
+// *before* the user reaches the role selection screen. For this demo, we mock the signed-in user.
+export const PRE_AUTH_USER = {
+    email: 'SteveGoodwin1972@gmail.com',
+    name: 'Steve Goodwin',
+};
+
+
 // --- Inlined from types.ts ---
 export enum Role {
     ENGINEER = 'engineer',
@@ -120,6 +129,7 @@ export interface EngineerProfile extends BaseProfile {
 
 export interface CompanyProfile extends BaseProfile {
     website?: string;
+    consentToFeature?: boolean;
 }
 
 export type UserProfile = EngineerProfile | CompanyProfile;
@@ -422,17 +432,46 @@ const generateMockCompanies = (count: number): CompanyProfile[] => {
             id: `gen-comp-${i}`,
             name: name,
             avatar: `https://i.pravatar.cc/150?u=${name.replace(/\s/g, '')}`,
-            website: `www.${name.replace(/\s/g, '').toLowerCase()}.com`
+            website: `www.${name.replace(/\s/g, '').toLowerCase()}.com`,
+            consentToFeature: Math.random() < 0.2, // ~20% of companies consent to be featured
         });
     }
     return companies;
 };
 
+const DURATIONS = ['2 weeks', '1 month', '6 weeks', '3 months', '6 months', '12 months', 'Ongoing'];
+
+const generateMockJobs = (count: number, companies: CompanyProfile[]): Job[] => {
+    const jobs: Job[] = [];
+    if (companies.length === 0) return [];
+
+    for (let i = 0; i < count; i++) {
+        const roleDef = getRandom(JOB_ROLE_DEFINITIONS);
+        const company = getRandom(companies);
+
+        const job: Job = {
+            id: `gen-job-${i}`,
+            companyId: company.id,
+            title: roleDef.name,
+            description: `We are looking for a skilled ${roleDef.name} for an upcoming project. The ideal candidate will have strong experience in ${roleDef.skills.slice(0, 3).join(', ')}. This is a contract role with potential for extension. Please apply if you have the relevant skills and are available to start soon.`,
+            location: Math.random() > 0.2 ? `${getRandom(LOCATIONS)}, UK` : 'Remote (UK Based)',
+            dayRate: String(getRandomInt(13, 30) * 25),
+            currency: Currency.GBP,
+            duration: getRandom(DURATIONS),
+            postedDate: new Date(new Date().getTime() - getRandomInt(1, 60) * 24 * 60 * 60 * 1000), // Posted in the last 60 days
+            startDate: new Date(new Date().getTime() + getRandomInt(7, 90) * 24 * 60 * 60 * 1000), // Starts in the next 7-90 days
+        };
+        jobs.push(job);
+    }
+    return jobs;
+};
+
+
 // --- END: Programmatic Data Generation ---
 
 const EXISTING_COMPANIES: CompanyProfile[] = [
-    { id: 'comp-1', name: 'Innovate AV Ltd.', avatar: 'https://i.pravatar.cc/150?u=innovate' },
-    { id: 'comp-2', name: 'Future Systems Inc.', avatar: 'https://i.pravatar.cc/150?u=future' },
+    { id: 'comp-1', name: 'Innovate AV Ltd.', avatar: 'https://i.pravatar.cc/150?u=innovate', consentToFeature: true },
+    { id: 'comp-2', name: 'Future Systems Inc.', avatar: 'https://i.pravatar.cc/150?u=future', consentToFeature: true },
 ];
 
 export const MOCK_ENGINEERS = [MOCK_ENGINEER_1, MOCK_ENGINEER_2, MOCK_ENGINEER_3, ...generateMockEngineers(997)];
@@ -446,7 +485,7 @@ export const MOCK_USERS: { [key in Role]: User } = {
     [Role.ADMIN]: { id: 'user-4', role: Role.ADMIN, profile: { id: 'admin-1', name: 'Admin User', avatar: 'https://i.pravatar.cc/150?u=admin' } },
 };
 
-export const MOCK_JOBS: Job[] = [
+const EXISTING_JOBS: Job[] = [
     {
         id: 'job-1', companyId: 'comp-1', title: 'Lead AV Commissioning Engineer',
         description: 'We require a lead commissioning engineer for a 6-week corporate office fit-out project in Central London. The ideal candidate will have extensive experience with Crestron DM NVX, Biamp Tesira, and Shure MXA series microphones. Must be able to lead a small team and sign-off on completed rooms.',
@@ -460,6 +499,8 @@ export const MOCK_JOBS: Job[] = [
         postedDate: new Date('2024-06-10'), startDate: new Date('2024-08-05'),
     },
 ];
+
+export const MOCK_JOBS: Job[] = [...EXISTING_JOBS, ...generateMockJobs(123, MOCK_COMPANIES)];
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const geminiService = {

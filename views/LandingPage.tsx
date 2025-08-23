@@ -7,19 +7,22 @@ import { StatCard } from '../components/StatCard.tsx';
 import { FeatureCard } from '../components/FeatureCard.tsx';
 import { Users, Building, ClipboardList, DollarSign, Calendar, Handshake } from '../components/Icons.tsx';
 import { HowItWorksModal } from '../components/HowItWorksModal.tsx';
-import { LoginSelector } from './LoginSelector.tsx';
 
-export const LandingPage = () => {
+interface LandingPageProps {
+  onLoginClick: () => void;
+}
+
+export const LandingPage = ({ onLoginClick }: LandingPageProps) => {
   const { engineers, jobs } = useAppContext();
-  const [isLoginSelectorOpen, setIsLoginSelectorOpen] = useState(false);
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
   
-  const handleLoginClick = () => setIsLoginSelectorOpen(true);
   const handleHowItWorksClick = () => setIsHowItWorksOpen(true);
+
+  const featuredCompanies = MOCK_COMPANIES.filter(c => c.consentToFeature).slice(0, 5);
 
   return (
     <>
-      <Header isLanding={true} onLoginClick={handleLoginClick} onHowItWorksClick={handleHowItWorksClick} />
+      <Header isLanding={true} onLoginClick={onLoginClick} onHowItWorksClick={handleHowItWorksClick} />
       <main className="bg-gray-50">
           {/* Hero Section */}
           <section className="relative text-white text-center min-h-[60vh] md:min-h-[70vh] flex items-center justify-center px-4">
@@ -40,8 +43,8 @@ export const LandingPage = () => {
                       className="flex justify-center space-x-4 fade-in-up"
                       style={{ animationDelay: '0.4s' }}
                   >
-                      <button onClick={handleLoginClick} className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">Post a Job for FREE</button>
-                      <button onClick={handleLoginClick} className="bg-white/20 backdrop-blur-sm text-white font-bold py-3 px-8 rounded-lg hover:bg-white/30 transition">Find Talent</button>
+                      <button onClick={onLoginClick} className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">Post a Job for FREE</button>
+                      <button onClick={onLoginClick} className="bg-white/20 backdrop-blur-sm text-white font-bold py-3 px-8 rounded-lg hover:bg-white/30 transition">Find Talent</button>
                   </div>
               </div>
           </section>
@@ -60,11 +63,9 @@ export const LandingPage = () => {
             <div className="container mx-auto px-4 text-center">
               <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-6">Trusted by leading integrators & managed service providers</h3>
               <div className="flex justify-center items-center space-x-12 flex-wrap text-gray-400">
-                  <span className="text-2xl font-bold">TechSolutions</span>
-                  <span className="text-2xl font-bold">Pro Integrate</span>
-                  <span className="text-2xl font-bold">Cloud MSP</span>
-                  <span className="text-2xl font-bold">EventPro</span>
-                  <span className="text-2xl font-bold">Future Systems</span>
+                  {featuredCompanies.map(company => (
+                      <span key={company.id} className="text-2xl font-bold">{company.name}</span>
+                  ))}
               </div>
             </div>
           </section>
@@ -80,17 +81,11 @@ export const LandingPage = () => {
                   </div>
               </div>
           </section>
-
-          <InvestorPage />
       </main>
-      <Footer onLoginClick={handleLoginClick} />
+      <Footer onLoginClick={onLoginClick} />
       <HowItWorksModal 
           isOpen={isHowItWorksOpen} 
           onClose={() => setIsHowItWorksOpen(false)} 
-      />
-      <LoginSelector 
-          isOpen={isLoginSelectorOpen} 
-          onClose={() => setIsLoginSelectorOpen(false)} 
       />
     </>
   );

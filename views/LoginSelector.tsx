@@ -1,33 +1,37 @@
 import React from 'react';
-import { useAppContext, Role } from '../context/AppContext.tsx';
+import { useAppContext, Role, PRE_AUTH_USER } from '../context/AppContext.tsx';
 import { Logo } from '../components/Logo.tsx';
 import { LoginButton } from '../components/LoginButton.tsx';
-import { User, Building, Users, UserCog } from '../components/Icons.tsx';
+import { User, Building, Users, UserCog, ArrowLeft } from '../components/Icons.tsx';
 
-interface LoginSelectorProps {
-    isOpen: boolean;
-    onClose: () => void;
+interface LoginPageProps {
+    onNavigateHome: () => void;
 }
 
-export const LoginSelector = ({ isOpen, onClose }: LoginSelectorProps) => {
+export const LoginPage = ({ onNavigateHome }: LoginPageProps) => {
     const { login } = useAppContext();
-
-    if (!isOpen) return null;
+    const isAdminUser = PRE_AUTH_USER.email === 'SteveGoodwin1972@gmail.com';
 
     const handleLogin = (role: Role) => {
         login(role);
-        onClose();
+        // App.tsx will handle re-rendering to the dashboard after login
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex flex-col justify-center items-center z-50 p-4" onClick={onClose}>
-            <div className="w-full max-w-4xl" onClick={e => e.stopPropagation()}>
-                <div className="text-center mb-12">
-                    <Logo className="text-4xl justify-center mb-4 text-white" />
-                    <h1 className="text-3xl font-bold text-white">Explore the TechSubbies Demo</h1>
-                    <p className="text-lg text-gray-300 mt-2">Please select a role to see the platform features.</p>
+        <div className="min-h-screen bg-gray-50 flex flex-col antialiased">
+            <header className="p-4 sm:p-6 absolute top-0 left-0">
+                <button onClick={onNavigateHome} className="flex items-center text-gray-600 hover:text-gray-900 font-semibold transition-colors">
+                    <ArrowLeft size={18} className="mr-2" />
+                    Back to Home
+                </button>
+            </header>
+            <main className="flex-grow flex flex-col justify-center items-center p-4">
+                <div className="w-full max-w-4xl text-center">
+                    <Logo className="text-4xl justify-center mb-4 text-gray-800" />
+                    <h1 className="text-3xl font-bold text-gray-900">Welcome to TechSubbies</h1>
+                    <p className="text-lg text-gray-600 mt-2">Select a role to sign in and continue.</p>
                 </div>
-                <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
                     <LoginButton
                         role={Role.ENGINEER}
                         label="Engineer"
@@ -49,15 +53,21 @@ export const LoginSelector = ({ isOpen, onClose }: LoginSelectorProps) => {
                         description="Manage multiple engineer profiles and streamline your subcontractor placements."
                         onLogin={handleLogin}
                     />
-                    <LoginButton
-                        role={Role.ADMIN}
-                        label="Platform Admin"
-                        icon={UserCog}
-                        description="Oversee platform activity, manage users and jobs, and view analytics."
-                        onLogin={handleLogin}
-                    />
+                    {isAdminUser && (
+                        <LoginButton
+                            role={Role.ADMIN}
+                            label="Platform Admin"
+                            icon={UserCog}
+                            description="Oversee platform activity, manage users and jobs, and view analytics."
+                            onLogin={handleLogin}
+                        />
+                    )}
                 </div>
-            </div>
+            </main>
         </div>
     );
 };
+
+// This export is retained to prevent breaking changes in case other files reference it,
+// though its usage as a modal is now deprecated.
+export const LoginSelector = LoginPage;

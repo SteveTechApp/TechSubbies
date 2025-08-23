@@ -1,5 +1,5 @@
 {
-  "name": "TechSubbies.com Demo",
-  "description": "A fully functional demonstration of the TechSubbies.com platform, designed to connect freelance Tech (AV & IT) engineers with companies. This demo showcases profile management, job posting, and AI-powered matching to attract investment.",
+  "name": "TechSubbies.com",
+  "description": "A platform to connect freelance Tech (AV & IT) engineers with companies, showcasing profile management, job posting, and AI-powered matching.",
   "requestFramePermissions": []
 }

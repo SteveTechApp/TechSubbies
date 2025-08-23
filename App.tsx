@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppContext, Role } from './context/AppContext.tsx';
 import { Header } from './components/Header.tsx';
 import { Footer } from './components/Footer.tsx';
@@ -7,6 +7,7 @@ import { EngineerDashboard } from './views/EngineerDashboard.tsx';
 import { CompanyDashboard } from './views/CompanyDashboard.tsx';
 import { ResourcingDashboard } from './views/ResourcingDashboard.tsx';
 import { AdminDashboard } from './views/AdminDashboard.tsx';
+import { LoginPage } from './views/LoginSelector.tsx';
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -18,9 +19,13 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => (
 
 const App = () => {
     const { user } = useAppContext();
+    const [isLoginView, setIsLoginView] = useState(false);
 
     if (!user) {
-        return <LandingPage />;
+        if (isLoginView) {
+            return <LoginPage onNavigateHome={() => setIsLoginView(false)} />;
+        }
+        return <LandingPage onLoginClick={() => setIsLoginView(true)} />;
     }
 
     const renderDashboard = () => {
