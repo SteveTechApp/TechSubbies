@@ -15,6 +15,7 @@ const FindTalentView = ({ engineers, onSelectEngineer }: { engineers: EngineerPr
         role: 'any',
         maxRate: 1000,
     });
+    const [sort, setSort] = useState('relevance');
     
     const specialistRoles = useMemo(() => {
         return JOB_ROLE_DEFINITIONS.map(r => r.name).sort();
@@ -25,7 +26,7 @@ const FindTalentView = ({ engineers, onSelectEngineer }: { engineers: EngineerPr
         setFilters(prev => ({...prev, [name]: name === 'maxRate' ? parseInt(value) : value }));
     };
 
-    const filteredEngineers = useMemo(() => {
+    const processedEngineers = useMemo(() => {
         return engineers
             .filter(eng => {
                 // Keyword match (including new selectedJobRoles skills)
@@ -43,9 +44,23 @@ const FindTalentView = ({ engineers, onSelectEngineer }: { engineers: EngineerPr
 
                 return keywordMatch && roleMatch && rateMatch;
             })
-            // Prioritize paid profiles
-            .sort((a, b) => (a.profileTier === 'paid' ? -1 : 1) - (b.profileTier === 'paid' ? -1 : 1)); 
-    }, [engineers, filters]);
+            .sort((a, b) => {
+                const tierSort = (b.profileTier === 'paid' ? 1 : 0) - (a.profileTier === 'paid' ? 1 : 0);
+                switch (sort) {
+                    case 'name-asc':
+                        return a.name.localeCompare(b.name) || tierSort;
+                    case 'name-desc':
+                        return b.name.localeCompare(a.name) || tierSort;
+                    case 'rate-asc':
+                        return a.dayRate - b.dayRate || tierSort;
+                    case 'rate-desc':
+                        return b.dayRate - a.dayRate || tierSort;
+                    case 'relevance':
+                    default:
+                        return tierSort;
+                }
+            });
+    }, [engineers, filters, sort]);
 
     return (
         <div className="flex gap-8 h-[calc(100vh-10rem)]">
@@ -74,10 +89,22 @@ const FindTalentView = ({ engineers, onSelectEngineer }: { engineers: EngineerPr
 
             {/* Results */}
             <main className="flex-1 bg-gray-50 overflow-y-auto custom-scrollbar pr-2">
-                 <p className="text-sm text-gray-600 mb-4">Showing {filteredEngineers.length} of {engineers.length} engineers.</p>
+                 <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
+                     <p className="text-sm text-gray-600 mb-2 sm:mb-0">Showing {processedEngineers.length} of {engineers.length} engineers.</p>
+                     <div className="flex items-center gap-2">
+                         <label htmlFor="sort" className="text-sm font-medium text-gray-700">Sort by:</label>
+                         <select id="sort" name="sort" value={sort} onChange={(e) => setSort(e.target.value)} className="text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 bg-white">
+                             <option value="relevance">Relevance</option>
+                             <option value="name-asc">Name (A-Z)</option>
+                             <option value="name-desc">Name (Z-A)</option>
+                             <option value="rate-asc">Day Rate (Low-High)</option>
+                             <option value="rate-desc">Day Rate (High-Low)</option>
+                         </select>
+                     </div>
+                 </div>
                 <div className="space-y-4">
-                    {filteredEngineers.length > 0 ? (
-                         filteredEngineers.map(eng => <EngineerCard key={eng.id} profile={eng} onClick={() => onSelectEngineer(eng)} />)
+                    {processedEngineers.length > 0 ? (
+                         processedEngineers.map(eng => <EngineerCard key={eng.id} profile={eng} onClick={() => onSelectEngineer(eng)} />)
                     ) : (
                         <div className="text-center py-10">
                             <p className="font-semibold">No engineers match your criteria.</p>

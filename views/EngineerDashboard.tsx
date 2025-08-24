@@ -10,7 +10,7 @@ import { SettingsView } from './EngineerDashboard/SettingsView.tsx';
 
 
 export const EngineerDashboard = () => {
-    const { user, updateEngineerProfile, geminiService, upgradeUserTier } = useAppContext();
+    const { user, updateEngineerProfile, geminiService, startTrial } = useAppContext();
     const [activeView, setActiveView] = useState('Dashboard');
     const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
 
@@ -49,13 +49,11 @@ export const EngineerDashboard = () => {
             case 'Dashboard':
                 return (
                     <DashboardView
-                        user={user}
-                        profileDescription={engineerProfile.description}
+                        engineerProfile={engineerProfile}
                         onGenerateDescription={handleGenerateDescription}
                         isGeneratingDesc={isGeneratingDesc}
                         onSkillsAdded={addSkillsFromAI}
-                        profileTier={engineerProfile.profileTier}
-                        onUpgradeTier={upgradeUserTier}
+                        onUpgradeTier={startTrial}
                     />
                 );
             case 'Manage Profile':

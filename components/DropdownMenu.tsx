@@ -10,11 +10,9 @@ interface DropdownMenuProps {
 export const DropdownMenu = ({ triggerText, children, isLanding = false }: DropdownMenuProps) => {
     const [isOpen, setIsOpen] = useState(false);
 
-    const menuClasses = isLanding
-        ? 'bg-black/50 backdrop-blur-md border border-white/20'
-        : 'bg-white shadow-lg border border-gray-200';
+    const menuClasses = 'bg-white shadow-lg border border-gray-200';
     
-    const triggerColor = isLanding ? 'text-white hover:text-gray-200' : 'text-gray-700 hover:text-blue-600';
+    const triggerColor = 'text-gray-700 hover:text-blue-600';
 
     return (
         <div 

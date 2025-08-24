@@ -2,7 +2,8 @@ import React from 'react';
 import { useAppContext, Role, PRE_AUTH_USER } from '../context/AppContext.tsx';
 import { Logo } from '../components/Logo.tsx';
 import { LoginButton } from '../components/LoginButton.tsx';
-import { User, Building, Users, UserCog, ArrowLeft } from '../components/Icons.tsx';
+import { User, Building, Users, UserCog } from '../components/Icons.tsx';
+import { PageHeader } from '../components/PageHeader.tsx';
 
 interface LoginPageProps {
     onNavigateHome: () => void;
@@ -14,20 +15,16 @@ export const LoginPage = ({ onNavigateHome }: LoginPageProps) => {
 
     const handleLogin = (role: Role) => {
         login(role);
-        // App.tsx will handle re-rendering to the dashboard after login
     };
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col antialiased">
-            <header className="p-4 sm:p-6 absolute top-0 left-0">
-                <button onClick={onNavigateHome} className="flex items-center text-gray-600 hover:text-gray-900 font-semibold transition-colors">
-                    <ArrowLeft size={18} className="mr-2" />
-                    Back to Home
-                </button>
-            </header>
+            <PageHeader onBack={onNavigateHome} />
             <main className="flex-grow flex flex-col justify-center items-center p-4">
                 <div className="w-full max-w-4xl text-center">
-                    <Logo className="text-4xl justify-center mb-4 text-gray-800" />
+                    <a href="/" aria-label="Go to homepage">
+                      <Logo className="text-4xl justify-center mb-4 text-gray-800" />
+                    </a>
                     <h1 className="text-3xl font-bold text-gray-900">Welcome to TechSubbies</h1>
                     <p className="text-lg text-gray-600 mt-2">Select a role to sign in and continue.</p>
                 </div>
@@ -68,6 +65,4 @@ export const LoginPage = ({ onNavigateHome }: LoginPageProps) => {
     );
 };
 
-// This export is retained to prevent breaking changes in case other files reference it,
-// though its usage as a modal is now deprecated.
 export const LoginSelector = LoginPage;

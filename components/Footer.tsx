@@ -30,7 +30,9 @@ export const Footer = ({ onLoginClick }: FooterProps) => {
         <footer className="bg-gray-800 text-white p-8 mt-12">
             <div className="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div className="col-span-1">
-                    <Logo className="text-white" />
+                    <a href="/" aria-label="Go to homepage">
+                      <Logo className="text-white" />
+                    </a>
                     <p className="mt-2 text-gray-400">Connecting tech talent with opportunity.</p>
                 </div>
                 <div>

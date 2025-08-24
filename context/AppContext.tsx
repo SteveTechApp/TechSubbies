@@ -101,6 +101,8 @@ export interface EngineerProfile extends BaseProfile {
     certifications: Certification[];
     contact: Contact;
     profileTier: 'free' | 'paid';
+    resourcingCompanyId?: string; // ID of the managing resourcing company
+    trialEndDate?: Date; // NEW: For managing Job Profile trials
 
     // New fields from image
     title?: string;
@@ -206,7 +208,7 @@ export const JOB_ROLE_DEFINITIONS: JobRoleDefinition[] = [
 
 
 // --- Inlined from mockDataGenerator.ts ---
-// PAID AV Engineer
+// PAID AV Engineer (Independent)
 const MOCK_ENGINEER_1: EngineerProfile = {
     id: 'eng-1',
     name: 'Neil Bishop',
@@ -272,7 +274,7 @@ const MOCK_ENGINEER_1: EngineerProfile = {
     ],
 };
 
-// FREE IT Engineer
+// FREE IT Engineer (Managed by AV Placements)
 const MOCK_ENGINEER_2: EngineerProfile = {
     id: 'eng-2',
     name: 'Samantha Greene',
@@ -287,6 +289,7 @@ const MOCK_ENGINEER_2: EngineerProfile = {
     availability: new Date('2024-07-20'),
     description: "Microsoft Certified support specialist focusing on SME infrastructure, Office 365, and user support. Passionate about creating efficient and secure IT environments.",
     profileTier: 'free',
+    resourcingCompanyId: 'res-1', // Managed by AV Placements
     skills: [ // Only basic skills, no specialist roles
         { name: 'Microsoft 365 Admin', rating: 92 }, 
         { name: 'Active Directory', rating: 90 }, 
@@ -300,7 +303,7 @@ const MOCK_ENGINEER_2: EngineerProfile = {
     caseStudies: [],
 };
 
-// PAID IT Engineer
+// PAID IT Engineer (Managed by AV Placements)
 const MOCK_ENGINEER_3: EngineerProfile = {
     id: 'eng-3',
     name: 'David Chen',
@@ -315,6 +318,7 @@ const MOCK_ENGINEER_3: EngineerProfile = {
     availability: new Date('2024-09-15'),
     description: "AWS Certified Solutions Architect with a deep background in Cisco networking. Specializes in designing and implementing scalable, secure cloud infrastructure and hybrid networks.",
     profileTier: 'paid',
+    resourcingCompanyId: 'res-1', // Managed by AV Placements
     skills: [ // Summary skills for card view
         { name: 'Cloud Architecture (AWS)', rating: 95 },
         { name: 'Network Engineering', rating: 94 },
@@ -402,6 +406,8 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
                 linkedin: `linkedin.com/in/${firstName.toLowerCase()}${lastName.toLowerCase()}`
             },
             caseStudies: [],
+            // 10% of generated engineers are managed by AV Placements
+            resourcingCompanyId: Math.random() < 0.1 ? 'res-1' : undefined,
         };
 
         if (profileTier === 'paid') {
@@ -505,7 +511,16 @@ export const MOCK_JOBS: Job[] = [...EXISTING_JOBS, ...generateMockJobs(123, MOCK
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const geminiService = {
     generateDescriptionForProfile: async (profile: EngineerProfile) => {
-        const prompt = `Generate a compelling but brief professional bio (around 50-70 words) for a freelance Tech engineer. Here are their details:\n- Name: ${profile.name}\n- Role/Tagline: ${profile.tagline}\n- Experience: ${profile.experience} years\n- Key Skills: ${profile.skills.slice(0, 5).map(s => s.name).join(', ')}\n\nWrite a professional, first-person summary.`;
+        let prompt: string;
+
+        if (profile.profileTier === 'paid') {
+            // Paid users get a detailed bio leveraging their listed skills
+            prompt = `Generate a compelling but brief professional bio (around 50-70 words) for a freelance Tech engineer. Here are their details:\n- Name: ${profile.name}\n- Role/Tagline: ${profile.tagline}\n- Experience: ${profile.experience} years\n- Key Skills: ${profile.skills.slice(0, 5).map(s => s.name).join(', ')}\n\nWrite a professional, first-person summary highlighting their expertise based on the provided skills.`;
+        } else {
+            // Free users get a more general bio to encourage upgrading
+            prompt = `Generate a compelling but brief professional bio (around 50-70 words) for a freelance Tech engineer. Do not mention any specific technical skills or technologies from a list. Focus on their general role and years of experience. Here are their details:\n- Name: ${profile.name}\n- Role/Tagline: ${profile.tagline}\n- Experience: ${profile.experience} years\n\nWrite a professional, first-person summary that encourages companies to unlock their full profile to see detailed skills.`;
+        }
+        
         try {
             const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
             return String(response.text).trim();
@@ -597,10 +612,10 @@ interface AppContextType {
     logout: () => void;
     updateEngineerProfile: (updatedProfile: Partial<EngineerProfile>) => void;
     postJob: (jobData: any) => void;
-    upgradeUserTier: () => void;
+    startTrial: () => void;
     geminiService: typeof geminiService;
     applications: Application[];
-    applyForJob: (jobId: string) => void;
+    applyForJob: (jobId: string, engineerId?: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -613,7 +628,29 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     const login = (role: Role) => {
         if (MOCK_USERS[role]) {
-            setUser(MOCK_USERS[role]);
+            let userToLogin = { ...MOCK_USERS[role] }; // Make a copy to modify
+            
+            // Check for expired trial on login for engineers
+            if (userToLogin.role === Role.ENGINEER) {
+                const profile = { ...(userToLogin.profile as EngineerProfile) }; // Copy profile
+                
+                // This logic simulates what a server would do: check trial status and downgrade if needed.
+                if (profile.profileTier === 'paid' && profile.trialEndDate && new Date(profile.trialEndDate) < new Date()) {
+                    console.log(`Trial for ${profile.name} expired. Downgrading to free tier.`);
+                    profile.profileTier = 'free'; // Downgrade the copied profile
+                    userToLogin.profile = profile; // Assign the modified profile back
+
+                    // Also update the main engineers list for consistency across the app
+                    const engineerIndex = engineers.findIndex(e => e.id === profile.id);
+                     if (engineerIndex !== -1) {
+                        const updatedEngineers = [...engineers];
+                        updatedEngineers[engineerIndex] = profile;
+                        setEngineers(updatedEngineers);
+                    }
+                }
+            }
+            
+            setUser(userToLogin);
         }
     };
 
@@ -641,9 +678,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const upgradeUserTier = () => {
+    const startTrial = () => {
         if (user && 'skills' in user.profile) {
-            updateEngineerProfile({ profileTier: 'paid' });
+            const trialEndDate = new Date();
+            trialEndDate.setDate(trialEndDate.getDate() + 30);
+            updateEngineerProfile({ 
+                profileTier: 'paid',
+                trialEndDate: trialEndDate 
+            });
+            alert("30-Day Job Profile trial started! You now have access to all premium features.");
         }
     };
 
@@ -660,24 +703,35 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const applyForJob = (jobId: string) => {
-        if (user && user.role === Role.ENGINEER) {
-            if (applications.some(app => app.jobId === jobId && app.engineerId === user.profile.id)) {
-                alert("You have already applied for this job.");
+    const applyForJob = (jobId: string, engineerId?: string) => {
+        let applyingEngineerId: string | undefined = engineerId;
+
+        // If engineerId is not provided, it's an engineer applying for themselves
+        if (!applyingEngineerId) {
+            if (user && user.role === Role.ENGINEER) {
+                applyingEngineerId = user.profile.id;
+            } else {
+                alert("No engineer specified for application.");
                 return;
             }
-            const newApplication: Application = {
-                jobId,
-                engineerId: user.profile.id,
-                date: new Date(),
-            };
-            setApplications(prev => [newApplication, ...prev]);
-            alert("Application submitted successfully!");
         }
+
+        if (applications.some(app => app.jobId === jobId && app.engineerId === applyingEngineerId)) {
+            alert("This engineer has already applied for this job.");
+            return;
+        }
+
+        const newApplication: Application = {
+            jobId,
+            engineerId: applyingEngineerId,
+            date: new Date(),
+        };
+        setApplications(prev => [newApplication, ...prev]);
+        alert(`Application for ${engineers.find(e => e.id === applyingEngineerId)?.name} submitted successfully!`);
     };
 
 
-    const value = { user, jobs, engineers, login, logout, updateEngineerProfile, postJob, upgradeUserTier, geminiService, applications, applyForJob };
+    const value = { user, jobs, engineers, login, logout, updateEngineerProfile, postJob, startTrial, geminiService, applications, applyForJob };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

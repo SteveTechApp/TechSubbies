@@ -28,7 +28,7 @@ const getLinksForRole = (role: Role) => {
             ];
         case Role.RESOURCING_COMPANY:
              return [
-                { label: 'Dashboard', icon: LayoutDashboard }, { label: 'Manage Engineers', icon: Users }, { label: 'Find Jobs', icon: Search }, { label: 'Company Profile', icon: Building }, { label: 'Settings', icon: Settings },
+                { label: 'Dashboard', icon: LayoutDashboard }, { label: 'Manage Engineers', icon: Users }, { label: 'Find Jobs', icon: Search }, { label: 'Settings', icon: Settings },
             ];
         case Role.ADMIN:
             return [

@@ -8,20 +8,23 @@ interface HeaderProps {
     isLanding?: boolean;
     onHowItWorksClick?: () => void;
     onLoginClick?: () => void;
+    onNavigate?: (page: 'forEngineers' | 'forCompanies') => void;
 }
 
-export const Header = ({ isLanding = false, onHowItWorksClick, onLoginClick }: HeaderProps) => {
+export const Header = ({ isLanding = false, onHowItWorksClick, onLoginClick, onNavigate }: HeaderProps) => {
     const { user, logout } = useAppContext();
 
     const headerClasses = isLanding
-        ? "absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-50 bg-transparent"
+        ? "bg-white shadow-md p-4 flex justify-between items-center z-50"
         : "bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-50";
     
-    const logoColorClass = isLanding ? "text-white" : "text-gray-800";
+    const logoColorClass = "text-gray-800";
 
     return (
         <header className={headerClasses}>
-            <Logo className={logoColorClass} />
+            <a href="/" aria-label="Go to homepage">
+              <Logo className={logoColorClass} />
+            </a>
             <nav>
                 {user ? (
                     <UserMenu user={user} logout={logout} />
@@ -29,7 +32,8 @@ export const Header = ({ isLanding = false, onHowItWorksClick, onLoginClick }: H
                     <GuestMenu 
                         isLanding={isLanding}
                         onHowItWorksClick={onHowItWorksClick!} 
-                        onLoginClick={onLoginClick!} 
+                        onLoginClick={onLoginClick!}
+                        onNavigate={onNavigate}
                     />
                 )}
             </nav>

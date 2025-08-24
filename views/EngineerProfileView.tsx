@@ -76,8 +76,10 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: { profile: 
         name, tagline, description, avatar, title, firstName, middleName, surname,
         companyName, travelRadius, contact, socials, associates, otherLinks,
         compliance, generalAvailability, customerRating, peerRating,
-        googleCalendarLink, rightColumnLinks, skills, profileTier, selectedJobRoles
+        googleCalendarLink, rightColumnLinks, skills, profileTier, selectedJobRoles, trialEndDate
     } = profile;
+
+    const isOnTrial = profileTier === 'paid' && trialEndDate && new Date(trialEndDate) > new Date();
 
     const complianceItems = compliance ? [
         { label: 'Professional Indemnity Insurance', value: compliance.professionalIndemnity },
@@ -104,7 +106,7 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: { profile: 
                     <div className="flex items-center gap-3">
                          <h1 className="text-4xl font-bold">{name}</h1>
                          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${profileTier === 'paid' ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-800'}`}>
-                           {profileTier === 'paid' ? 'JOB PROFILE' : 'BASIC PROFILE'}
+                           {profileTier === 'paid' ? `JOB PROFILE ${isOnTrial ? '(TRIAL)' : ''}` : 'BASIC PROFILE'}
                          </span>
                     </div>
                     <h2 className="text-xl text-gray-600 font-semibold mb-2">{tagline}</h2>
