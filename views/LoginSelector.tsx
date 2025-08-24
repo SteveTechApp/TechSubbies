@@ -1,68 +1,87 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppContext, Role, PRE_AUTH_USER } from '../context/AppContext.tsx';
 import { Logo } from '../components/Logo.tsx';
-import { LoginButton } from '../components/LoginButton.tsx';
-import { User, Building, Users, UserCog } from '../components/Icons.tsx';
-import { PageHeader } from '../components/PageHeader.tsx';
+import { User, Building } from '../components/Icons.tsx';
 
-interface LoginPageProps {
-    onNavigateHome: () => void;
+type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp';
+
+interface LoginSelectorProps {
+    onNavigate: (page: Page) => void;
 }
 
-export const LoginPage = ({ onNavigateHome }: LoginPageProps) => {
+export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
     const { login } = useAppContext();
+    const [activeTab, setActiveTab] = useState('signin');
     const isAdminUser = PRE_AUTH_USER.email === 'SteveGoodwin1972@gmail.com';
 
     const handleLogin = (role: Role) => {
         login(role);
     };
+    
+    const tabClass = (tabName: string) => 
+        `w-1/2 py-3 text-center font-semibold border-b-2 transition-colors ${
+            activeTab === tabName 
+            ? 'border-blue-600 text-blue-600' 
+            : 'border-gray-200 text-gray-500 hover:bg-gray-100'
+        }`;
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col antialiased">
-            <PageHeader onBack={onNavigateHome} />
-            <main className="flex-grow flex flex-col justify-center items-center p-4">
-                <div className="w-full max-w-4xl text-center">
-                    <a href="/" aria-label="Go to homepage">
-                      <Logo className="text-4xl justify-center mb-4 text-gray-800" />
-                    </a>
-                    <h1 className="text-3xl font-bold text-gray-900">Welcome to TechSubbies</h1>
-                    <p className="text-lg text-gray-600 mt-2">Select a role to sign in and continue.</p>
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 antialiased" style={{backgroundImage: "url('https://images.unsplash.com/photo-1554672408-758865e23218?q=80&w=2070&auto=format&fit=crop')", backgroundSize: 'cover'}}>
+            <div className="w-full max-w-md">
+                 <button onClick={() => onNavigate('landing')} className="block mx-auto mb-6">
+                    <Logo />
+                </button>
+                <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+                    <div className="flex">
+                        <button onClick={() => setActiveTab('signin')} className={tabClass('signin')}>Sign In</button>
+                        <button onClick={() => setActiveTab('create')} className={tabClass('create')}>Create Account</button>
+                    </div>
+
+                    <div className="p-8">
+                        {/* --- SIGN IN TAB --- */}
+                        {activeTab === 'signin' && (
+                            <div className="space-y-4 fade-in-up">
+                                <h2 className="text-2xl font-bold text-center text-gray-800">Welcome Back</h2>
+                                <p className="text-center text-gray-500">Select your role to sign in.</p>
+                                <button onClick={() => handleLogin(Role.ENGINEER)} className="w-full text-left p-4 border rounded-lg hover:bg-gray-50 transition-colors">Engineer Sign In</button>
+                                <button onClick={() => handleLogin(Role.COMPANY)} className="w-full text-left p-4 border rounded-lg hover:bg-gray-50 transition-colors">Company Sign In</button>
+                                <button onClick={() => handleLogin(Role.RESOURCING_COMPANY)} className="w-full text-left p-4 border rounded-lg hover:bg-gray-50 transition-colors">Resourcing Co. Sign In</button>
+                                {isAdminUser && (
+                                    <button onClick={() => handleLogin(Role.ADMIN)} className="w-full text-left p-4 border rounded-lg hover:bg-gray-50 transition-colors">Admin Sign In</button>
+                                )}
+                            </div>
+                        )}
+                        
+                        {/* --- CREATE ACCOUNT TAB --- */}
+                        {activeTab === 'create' && (
+                            <div className="space-y-4 fade-in-up">
+                                <h2 className="text-2xl font-bold text-center text-gray-800">Join TechSubbies</h2>
+                                <p className="text-center text-gray-500">Are you looking for work or to hire talent?</p>
+                                
+                                <button onClick={() => onNavigate('engineerSignUp')} className="w-full p-6 text-left border-2 border-blue-500 bg-blue-50 rounded-lg hover:shadow-lg transition-shadow">
+                                    <div className="flex items-center">
+                                        <User className="w-8 h-8 text-blue-600 mr-4"/>
+                                        <div>
+                                            <h3 className="font-bold text-lg text-gray-800">I'm an Engineer</h3>
+                                            <p className="text-gray-600">Create a profile to find freelance work.</p>
+                                        </div>
+                                    </div>
+                                </button>
+                                
+                                <button onClick={() => handleLogin(Role.COMPANY)} className="w-full p-6 text-left border rounded-lg hover:shadow-lg transition-shadow">
+                                     <div className="flex items-center">
+                                        <Building className="w-8 h-8 text-gray-600 mr-4"/>
+                                        <div>
+                                            <h3 className="font-bold text-lg text-gray-800">I'm a Company</h3>
+                                            <p className="text-gray-600">Post jobs and find talent for free.</p>
+                                        </div>
+                                    </div>
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
-                <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
-                    <LoginButton
-                        role={Role.ENGINEER}
-                        label="Engineer"
-                        icon={User}
-                        description="Manage your profile, set your availability, and find your next contract."
-                        onLogin={handleLogin}
-                    />
-                    <LoginButton
-                        role={Role.COMPANY}
-                        label="Company"
-                        icon={Building}
-                        description="Post jobs for free, search for expert talent, and build your project teams."
-                        onLogin={handleLogin}
-                    />
-                    <LoginButton
-                        role={Role.RESOURCING_COMPANY}
-                        label="Resourcing Company"
-                        icon={Users}
-                        description="Manage multiple engineer profiles and streamline your subcontractor placements."
-                        onLogin={handleLogin}
-                    />
-                    {isAdminUser && (
-                        <LoginButton
-                            role={Role.ADMIN}
-                            label="Platform Admin"
-                            icon={UserCog}
-                            description="Oversee platform activity, manage users and jobs, and view analytics."
-                            onLogin={handleLogin}
-                        />
-                    )}
-                </div>
-            </main>
+            </div>
         </div>
     );
 };
-
-export const LoginSelector = LoginPage;

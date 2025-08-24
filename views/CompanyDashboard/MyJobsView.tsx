@@ -17,7 +17,7 @@ const ApplicantCard = ({ profile }: { profile: EngineerProfile }) => (
         <img src={profile.avatar} alt={profile.name} className="w-16 h-16 rounded-full border-2 border-gray-200" />
         <div className="flex-grow">
             <h4 className="text-lg font-bold text-gray-800">{profile.name}</h4>
-            <p className="text-blue-600 font-semibold">{profile.tagline}</p>
+            <p className="text-blue-600 font-semibold">{profile.discipline}</p>
             <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
                 <span className="flex items-center"><User size={14} className="mr-1.5"/> {profile.experience} years exp.</span>
                 <span className="flex items-center"><Mail size={14} className="mr-1.5"/> {profile.contact.email}</span>
@@ -56,7 +56,7 @@ export const MyJobsView = ({ myJobs }: MyJobsViewProps) => {
                     <ArrowLeft size={16} className="mr-2" />
                     Back to Jobs List
                 </button>
-                <div className="bg-white p-6 rounded-lg shadow">
+                <div className="bg-white p-5 rounded-lg shadow">
                     <h2 className="text-2xl font-bold mb-1">Applicants for "{selectedJob.title}"</h2>
                     <p className="text-gray-600 mb-6">You have {applicants.length} applicant(s) for this role.</p>
                      {applicants.length > 0 ? (
@@ -73,8 +73,8 @@ export const MyJobsView = ({ myJobs }: MyJobsViewProps) => {
     
     return (
       <div>
-        <h1 className="text-3xl font-bold mb-6">My Posted Jobs</h1>
-        <div className="bg-white p-6 rounded-lg shadow">
+        <h1 className="text-3xl font-bold mb-4">My Posted Jobs</h1>
+        <div className="bg-white p-5 rounded-lg shadow">
             {myJobs.length > 0 ? (
                 <div className="space-y-4">
                 {myJobs.map(job => 

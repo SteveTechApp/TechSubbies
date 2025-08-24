@@ -18,8 +18,8 @@ export const JobSearchView = () => {
 
     return (
         <div>
-            <h1 className="text-3xl font-bold mb-6">Job Search</h1>
-            <div className="mb-6 relative">
+            <h1 className="text-3xl font-bold mb-4">Job Search</h1>
+            <div className="mb-4 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 <input 
                     type="text"

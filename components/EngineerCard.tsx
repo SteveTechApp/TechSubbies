@@ -21,7 +21,7 @@ export const EngineerCard = ({ profile, onClick }: EngineerCardProps) => (
                             </span>
                         )}
                     </div>
-                    <p className="text-blue-600 font-semibold">{profile.tagline}</p>
+                    <p className="text-blue-600 font-semibold">{profile.discipline}</p>
                     <p className="text-sm text-gray-500 flex items-center mt-1"><MapPin size={14} className="mr-1"/> {profile.location}</p>
                 </div>
             </div>

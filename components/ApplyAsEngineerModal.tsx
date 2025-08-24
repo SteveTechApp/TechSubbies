@@ -47,7 +47,7 @@ export const ApplyAsEngineerModal = ({ isOpen, onClose, job, managedEngineers, o
                         <option value="" disabled>-- Choose an engineer --</option>
                         {managedEngineers.map(eng => (
                             <option key={eng.id} value={eng.id}>
-                                {eng.name} - ({eng.tagline})
+                                {eng.name} - ({eng.discipline})
                             </option>
                         ))}
                     </select>

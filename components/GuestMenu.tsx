@@ -2,14 +2,14 @@ import React from 'react';
 import { LogIn } from './Icons.tsx';
 import { DropdownMenu } from './DropdownMenu.tsx';
 
+type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp';
+
 interface GuestMenuProps {
     onHowItWorksClick: () => void;
-    onLoginClick: () => void;
-    onNavigate?: (page: 'forEngineers' | 'forCompanies') => void;
-    isLanding?: boolean;
+    onNavigate: (page: Page) => void;
 }
 
-export const GuestMenu = ({ onHowItWorksClick, onLoginClick, onNavigate, isLanding = false }: GuestMenuProps) => {
+export const GuestMenu = ({ onHowItWorksClick, onNavigate }: GuestMenuProps) => {
     const textColor = 'text-gray-700 hover:text-blue-600';
     const loginButtonClass = "flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors";
     
@@ -17,13 +17,13 @@ export const GuestMenu = ({ onHowItWorksClick, onLoginClick, onNavigate, isLandi
 
     return (
         <div className="flex items-center space-x-1">
-             <DropdownMenu triggerText="For Engineers" isLanding={isLanding}>
-                <button onClick={() => onNavigate && onNavigate('forEngineers')} className={dropdownItemClass}>Explore Features</button>
-                <button onClick={onLoginClick} className={dropdownItemClass}>Profile Setup</button>
+             <DropdownMenu triggerText="For Engineers">
+                <button onClick={() => onNavigate('forEngineers')} className={dropdownItemClass}>Explore Features</button>
+                <button onClick={() => onNavigate('engineerSignUp')} className={dropdownItemClass}>Profile Setup</button>
             </DropdownMenu>
-            <DropdownMenu triggerText="For Companies" isLanding={isLanding}>
-                <button onClick={() => onNavigate && onNavigate('forCompanies')} className={dropdownItemClass}>Why It's Free</button>
-                <button onClick={onLoginClick} className={dropdownItemClass}>Post a Job</button>
+            <DropdownMenu triggerText="For Companies">
+                <button onClick={() => onNavigate('forCompanies')} className={dropdownItemClass}>Why It's Free</button>
+                <button onClick={() => onNavigate('login')} className={dropdownItemClass}>Post a Job</button>
             </DropdownMenu>
             <button
                 onClick={onHowItWorksClick}
@@ -38,7 +38,7 @@ export const GuestMenu = ({ onHowItWorksClick, onLoginClick, onNavigate, isLandi
                 For Investors
             </a>
             <button
-                onClick={onLoginClick}
+                onClick={() => onNavigate('login')}
                 className={loginButtonClass}
             >
                 <LogIn className="w-4 h-4 mr-2" />

@@ -16,7 +16,7 @@ const ManagedEngineerCard = ({ profile }: { profile: EngineerProfile }) => (
             <img src={profile.avatar} alt={profile.name} className="w-16 h-16 rounded-full mr-4 border-2 border-gray-200" />
             <div>
                 <h3 className="text-lg font-bold text-gray-800">{profile.name}</h3>
-                <p className="text-blue-600 font-semibold">{profile.tagline}</p>
+                <p className="text-blue-600 font-semibold">{profile.discipline}</p>
                 <p className="text-sm text-gray-500 flex items-center mt-1"><MapPin size={14} className="mr-1"/> {profile.location}</p>
             </div>
         </div>
@@ -50,7 +50,7 @@ export const ManageEngineersView = ({ managedEngineers }: ManageEngineersViewPro
         return managedEngineers
             .filter(profile =>
                 profile.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                profile.tagline.toLowerCase().includes(searchTerm.toLowerCase())
+                profile.discipline.toLowerCase().includes(searchTerm.toLowerCase())
             )
             .sort((a, b) => {
                 const nameA = a.name.toLowerCase();
@@ -65,7 +65,7 @@ export const ManageEngineersView = ({ managedEngineers }: ManageEngineersViewPro
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-4">
                 <h1 className="text-3xl font-bold">Manage Engineers</h1>
                 <button className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700">
                     <PlusCircle size={18} className="mr-2" />
@@ -74,7 +74,7 @@ export const ManageEngineersView = ({ managedEngineers }: ManageEngineersViewPro
             </div>
 
             {/* Search and Sort Controls */}
-            <div className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-white rounded-lg shadow-sm border">
+            <div className="mb-4 flex flex-col sm:flex-row justify-between items-center gap-4 p-3 bg-white rounded-lg shadow-sm border">
                 <div className="relative w-full sm:w-auto sm:flex-grow">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                     <input

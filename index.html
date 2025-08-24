@@ -42,6 +42,18 @@
         animation: fadeInUp 0.5s ease-out forwards;
         opacity: 0; /* Start hidden */
       }
+      /* NEW: Slow zoom for hero background */
+      @keyframes slow-zoom {
+        from {
+          transform: scale(1);
+        }
+        to {
+          transform: scale(1.05);
+        }
+      }
+      .slow-zoom {
+        animation: slow-zoom 20s ease-in-out infinite alternate;
+      }
       /* Custom scrollbar for filter view */
       .custom-scrollbar::-webkit-scrollbar {
         width: 8px;

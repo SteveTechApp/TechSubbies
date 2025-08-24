@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useAppContext, Skill } from '../context/AppContext.tsx';
+import React, { useState, useMemo } from 'react';
+import { useAppContext, Skill, JOB_ROLE_DEFINITIONS } from '../context/AppContext.tsx';
 import { BrainCircuit, Loader, Plus } from './Icons.tsx';
 
 interface AISkillDiscoveryProps {
@@ -13,9 +13,19 @@ export const AISkillDiscovery = ({ onSkillsAdded }: AISkillDiscoveryProps) => {
     const [error, setError] = useState('');
     const { geminiService } = useAppContext();
 
+    const groupedRoles = useMemo(() => {
+        return JOB_ROLE_DEFINITIONS.reduce((acc, role) => {
+            if (!acc[role.category]) {
+                acc[role.category] = [];
+            }
+            acc[role.category].push(role);
+            return acc;
+        }, {} as Record<string, typeof JOB_ROLE_DEFINITIONS>);
+    }, []);
+
     const handleDiscover = async () => {
         if (!role.trim()) {
-            setError('Please enter a role or job title.');
+            setError('Please select a role from the list.');
             return;
         }
         setIsLoading(true);
@@ -46,19 +56,26 @@ export const AISkillDiscovery = ({ onSkillsAdded }: AISkillDiscoveryProps) => {
                 <BrainCircuit className="w-8 h-8 text-blue-600 mr-3" />
                 <h3 className="text-xl font-bold text-blue-800">AI Skill Discovery</h3>
             </div>
-            <p className="text-gray-600 mb-4">Don't want to add skills manually? Enter a job title (e.g., "Network Engineer") and let our AI suggest relevant skills for you.</p>
+            <p className="text-gray-600 mb-4">Don't want to add skills manually? Select a job role from our list and let our AI suggest relevant skills for you.</p>
             <div className="flex items-center space-x-2">
-                <input
-                    type="text"
+                <select
                     value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    placeholder="e.g., Lead Tech Subcontractor"
-                    className="w-full border p-2 rounded-md focus:ring-2 focus:ring-blue-500"
-                />
+                    onChange={(e) => { setRole(e.target.value); setError(''); setDiscoveredSkills(null); }}
+                    className="w-full border p-2 rounded-md focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                    <option value="" disabled>-- Select a Job Role --</option>
+                    {Object.entries(groupedRoles).map(([category, roles]) => (
+                        <optgroup label={category} key={category}>
+                            {roles.map(roleDef => (
+                                <option key={roleDef.name} value={roleDef.name}>{roleDef.name}</option>
+                            ))}
+                        </optgroup>
+                    ))}
+                </select>
                 <button
                     onClick={handleDiscover}
-                    disabled={isLoading}
-                    className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 disabled:bg-blue-300 flex items-center justify-center w-28"
+                    disabled={isLoading || !role}
+                    className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 disabled:bg-gray-400 flex items-center justify-center w-28"
                 >
                     {buttonContent}
                 </button>

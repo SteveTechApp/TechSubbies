@@ -67,12 +67,12 @@ export const ProfileManagementView = ({ profile, onSave }: ProfileManagementView
 
     return (
         <div>
-            <h1 className="text-3xl font-bold mb-6">Manage Profile Details</h1>
+            <h1 className="text-3xl font-bold mb-4">Manage Profile Details</h1>
             
-            <div className="bg-white p-6 rounded-lg shadow mb-8">
+            <div className="bg-white p-5 rounded-lg shadow mb-6">
                 <h2 className="text-2xl font-bold mb-4">Specialist Job Roles</h2>
                 {profile.profileTier === 'free' ? <UpgradeCta /> : (
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                         {roles.map((role, rIndex) => (
                             <div key={rIndex} className="p-4 border rounded-lg bg-gray-50/50">
                                 <div className="flex justify-between items-center mb-4">
@@ -112,7 +112,7 @@ export const ProfileManagementView = ({ profile, onSave }: ProfileManagementView
                 )}
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow mb-8">
+            <div className="bg-white p-5 rounded-lg shadow mb-6">
                 <h2 className="text-2xl font-bold mb-4">Case Studies / Portfolio</h2>
                  <div className="space-y-4">
                     {caseStudies.map(cs => (

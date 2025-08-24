@@ -11,7 +11,7 @@ const calculateDaysRemaining = (endDate: Date): number => {
 };
 
 const TrialCtaBanner = ({ onUpgrade }: { onUpgrade: () => void }) => (
-    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-lg shadow-lg mb-6 flex items-center justify-between">
+    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-lg shadow-lg mb-4 flex items-center justify-between">
         <div>
             <h3 className="font-bold text-xl mb-1">Get Hired Faster with a Job Profile</h3>
             <p className="text-blue-100">Appear at the top of search results and showcase your specialist skills to top companies.</p>
@@ -31,7 +31,7 @@ const ActiveTrialBanner = ({ trialEndDate }: { trialEndDate: Date }) => {
     if (daysRemaining <= 0) return null; // Should be handled by login logic, but as a fallback.
 
     return (
-        <div className="bg-gradient-to-r from-green-500 to-teal-500 text-white p-6 rounded-lg shadow-lg mb-6 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-green-500 to-teal-500 text-white p-6 rounded-lg shadow-lg mb-4 flex items-center justify-between">
             <div>
                 <h3 className="font-bold text-xl mb-1 flex items-center"><Rocket size={20} className="mr-2"/> Your Job Profile Trial is Active!</h3>
                 <p className="text-green-100 flex items-center mt-2"><Clock size={16} className="mr-2"/> You have <strong className="mx-1.5">{daysRemaining}</strong> day{daysRemaining !== 1 ? 's' : ''} remaining.</p>
@@ -76,7 +76,7 @@ export const DashboardView = ({ engineerProfile, onGenerateDescription, isGenera
             {engineerProfile.profileTier === 'free' && <TrialCtaBanner onUpgrade={onUpgradeTier} />}
             {isOnTrial && <ActiveTrialBanner trialEndDate={engineerProfile.trialEndDate!} />}
             
-            <h1 className="text-3xl font-bold mb-6">Welcome back, {engineerProfile.name.split(' ')[0]}!</h1>
+            <h1 className="text-3xl font-bold mb-4">Welcome back, {engineerProfile.name.split(' ')[0]}!</h1>
             
             <AISkillDiscovery onSkillsAdded={onSkillsAdded} />
             

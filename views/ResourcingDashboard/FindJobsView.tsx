@@ -14,11 +14,11 @@ interface ResourcingJobCardProps {
 }
 
 const ResourcingJobCard = ({ job, onApply }: ResourcingJobCardProps) => (
-    <div className="bg-white p-5 rounded-lg shadow-md border border-gray-200">
+    <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200">
         <div className="flex justify-between items-start">
             <div>
                 <h3 className="text-xl font-bold text-blue-700">{job.title}</h3>
-                <p className="text-gray-500">Posted on {formatDate(job.postedDate)}</p>
+                <p className="text-gray-500 text-sm">Posted on {formatDate(job.postedDate)}</p>
             </div>
             <button 
                 onClick={() => onApply(job)}
@@ -27,10 +27,10 @@ const ResourcingJobCard = ({ job, onApply }: ResourcingJobCardProps) => (
                 Apply on Behalf of...
             </button>
         </div>
-        <div className="my-4 text-gray-700">
+        <div className="my-3 text-gray-700">
             <p>{job.description.substring(0, 200)}...</p>
         </div>
-        <div className="flex flex-wrap gap-x-6 gap-y-2 text-gray-600 border-t pt-3">
+        <div className="flex flex-wrap gap-x-6 gap-y-2 text-gray-600 border-t pt-3 text-sm">
             <span className="flex items-center"><MapPin size={16} className="mr-2 text-gray-400"/> {job.location}</span>
             <span className="flex items-center"><DollarSign size={16} className="mr-2 text-gray-400"/> {job.currency}{job.dayRate} / day</span>
             <span className="flex items-center"><Clock size={16} className="mr-2 text-gray-400"/> {job.duration}</span>
@@ -76,8 +76,8 @@ export const FindJobsView = ({ managedEngineers }: FindJobsViewProps) => {
 
     return (
         <div>
-            <h1 className="text-3xl font-bold mb-6">Find Jobs for Your Engineers</h1>
-            <div className="mb-6 relative">
+            <h1 className="text-3xl font-bold mb-4">Find Jobs for Your Engineers</h1>
+            <div className="mb-4 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 <input 
                     type="text"

@@ -32,7 +32,7 @@ const FindTalentView = ({ engineers, onSelectEngineer }: { engineers: EngineerPr
                 // Keyword match (including new selectedJobRoles skills)
                 const keywordMatch = filters.keyword.toLowerCase() === '' || 
                     eng.name.toLowerCase().includes(filters.keyword.toLowerCase()) ||
-                    eng.tagline.toLowerCase().includes(filters.keyword.toLowerCase()) ||
+                    eng.discipline.toLowerCase().includes(filters.keyword.toLowerCase()) ||
                     eng.skills.some(s => s.name.toLowerCase().includes(filters.keyword.toLowerCase())) ||
                     (eng.selectedJobRoles && eng.selectedJobRoles.some(r => r.skills.some(s => s.name.toLowerCase().includes(filters.keyword.toLowerCase()))));
                 

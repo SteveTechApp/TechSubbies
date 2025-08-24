@@ -93,10 +93,10 @@ export const AvailabilityView = ({ profile, onUpdateAvailability }: Availability
 
     return (
         <div>
-            <h1 className="text-3xl font-bold mb-6">My Availability</h1>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <h1 className="text-3xl font-bold mb-4">My Availability</h1>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-1">
-                    <div className="bg-white p-6 rounded-lg shadow">
+                    <div className="bg-white p-5 rounded-lg shadow">
                         <h2 className="text-xl font-bold mb-4">Update Your Status</h2>
                         <p className="text-gray-600 mb-4">Companies will see you as available from this date onwards.</p>
                         <label className="block font-medium mb-1">Available from date:</label>
@@ -112,7 +112,7 @@ export const AvailabilityView = ({ profile, onUpdateAvailability }: Availability
                         >
                             Update Availability
                         </button>
-                        <div className="mt-6 pt-6 border-t border-gray-200">
+                        <div className="mt-5 pt-5 border-t border-gray-200">
                             <h3 className="text-lg font-semibold mb-3">Calendar Integration</h3>
                             <p className="text-gray-600 mb-4 text-sm">Add your availability start date to your personal calendar to keep track of your schedule.</p>
                             <div className="space-y-3">
@@ -133,7 +133,7 @@ export const AvailabilityView = ({ profile, onUpdateAvailability }: Availability
                     </div>
                 </div>
                 <div className="lg:col-span-2">
-                    <div className="bg-white p-6 rounded-lg shadow">
+                    <div className="bg-white p-5 rounded-lg shadow">
                         <div className="flex justify-between items-center mb-4">
                             <button onClick={prevMonth} className="p-2 rounded-full hover:bg-gray-100"><ChevronLeft /></button>
                             <h2 className="text-xl font-bold">{monthName} {currentYear}</h2>

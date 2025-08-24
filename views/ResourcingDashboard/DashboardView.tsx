@@ -15,9 +15,9 @@ export const DashboardView = ({ managedEngineers, applications }: DashboardViewP
 
     return (
         <div>
-            <h1 className="text-3xl font-bold mb-6">Resourcing Dashboard</h1>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div className="bg-white p-6 rounded-lg shadow flex items-start">
+            <h1 className="text-3xl font-bold mb-4">Resourcing Dashboard</h1>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="bg-white p-5 rounded-lg shadow flex items-start">
                     <div className="p-3 bg-blue-100 rounded-full mr-4">
                         <Users className="w-8 h-8 text-blue-500" />
                     </div>
@@ -26,7 +26,7 @@ export const DashboardView = ({ managedEngineers, applications }: DashboardViewP
                         <p className="text-4xl font-extrabold text-blue-600">{managedEngineers.length}</p>
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-lg shadow flex items-start">
+                <div className="bg-white p-5 rounded-lg shadow flex items-start">
                     <div className="p-3 bg-green-100 rounded-full mr-4">
                         <UserCheck className="w-8 h-8 text-green-500" />
                     </div>
@@ -35,7 +35,7 @@ export const DashboardView = ({ managedEngineers, applications }: DashboardViewP
                         <p className="text-4xl font-extrabold text-green-600">{availableEngineers.length}</p>
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-lg shadow flex items-start">
+                <div className="bg-white p-5 rounded-lg shadow flex items-start">
                     <div className="p-3 bg-yellow-100 rounded-full mr-4">
                         <Briefcase className="w-8 h-8 text-yellow-500" />
                     </div>
@@ -45,7 +45,7 @@ export const DashboardView = ({ managedEngineers, applications }: DashboardViewP
                     </div>
                 </div>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow">
+            <div className="bg-white p-5 rounded-lg shadow">
                 <h2 className="text-xl font-bold mb-4">Activity Feed</h2>
                 <p className="text-gray-500">The activity feed showing recent applications and job matches is coming soon.</p>
             </div>

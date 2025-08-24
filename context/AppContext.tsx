@@ -24,6 +24,12 @@ export enum Currency {
     USD = '$',
 }
 
+export enum Discipline {
+    AV = 'AV Engineer',
+    IT = 'IT Engineer',
+    BOTH = 'AV & IT Engineer',
+}
+
 export interface Skill {
     name: string;
     rating: number; // 0-100 (represents general proficiency for basic skills)
@@ -89,7 +95,7 @@ interface BaseProfile {
 }
 
 export interface EngineerProfile extends BaseProfile {
-    tagline: string;
+    discipline: Discipline;
     location: string;
     currency: Currency;
     dayRate: number;
@@ -206,6 +212,7 @@ export const JOB_ROLE_DEFINITIONS: JobRoleDefinition[] = [
     { name: 'Technical Sales / Pre-Sales', category: 'Management', skills: ['Requirement Gathering', 'Solution Demonstration', 'Proposal Writing', 'Client Relationship', 'Technical Presentations', 'Competitive Analysis'] },
 ];
 
+const generateUniqueId = () => Math.random().toString(36).substring(2, 10);
 
 // --- Inlined from mockDataGenerator.ts ---
 // PAID AV Engineer (Independent)
@@ -213,9 +220,10 @@ const MOCK_ENGINEER_1: EngineerProfile = {
     id: 'eng-1',
     name: 'Neil Bishop',
     firstName: 'Neil',
+    middleName: 'John',
     surname: 'Bishop',
     title: 'Mr',
-    tagline: 'Lead AV Commissioning Engineer',
+    discipline: Discipline.AV,
     avatar: 'https://i.imgur.com/8Qtm93t.jpeg',
     location: 'London, UK',
     currency: Currency.GBP,
@@ -268,10 +276,30 @@ const MOCK_ENGINEER_1: EngineerProfile = {
         website: 'www.neilbishop.com',
         linkedin: 'linkedin.com/in/nelib',
     },
+    socials: [
+        { name: 'Social 1', url: 'social 1' },
+        { name: 'Social 2', url: 'social 2' },
+        { name: 'Social 3', url: 'social 3' },
+    ],
+    associates: [
+        { name: 'Associate', value: 'John Smith' },
+        { name: 'Associate 2', value: 'Jane Doe' },
+    ],
+    compliance: {
+        professionalIndemnity: true,
+        publicLiability: true,
+        siteSafe: true,
+        ownPPE: true,
+        accessEquipmentTrained: false,
+        firstAidTrained: true,
+    },
+    generalAvailability: 'Medium',
     caseStudies: [
         { id: 'cs-1', name: 'Corporate HQ Audiovisual Integration', url: 'https://example.com/case-study-1' },
         { id: 'cs-2', name: 'Luxury Residential Smart Home System', url: 'https://example.com/case-study-2' },
     ],
+    customerRating: 5,
+    peerRating: 5,
 };
 
 // FREE IT Engineer (Managed by AV Placements)
@@ -280,7 +308,8 @@ const MOCK_ENGINEER_2: EngineerProfile = {
     name: 'Samantha Greene',
     firstName: 'Samantha',
     surname: 'Greene',
-    tagline: 'IT Support Specialist',
+    title: 'Ms',
+    discipline: Discipline.IT,
     avatar: 'https://i.pravatar.cc/150?u=samanthagreene',
     location: 'Manchester, UK',
     currency: Currency.GBP,
@@ -288,6 +317,8 @@ const MOCK_ENGINEER_2: EngineerProfile = {
     experience: 8,
     availability: new Date('2024-07-20'),
     description: "Microsoft Certified support specialist focusing on SME infrastructure, Office 365, and user support. Passionate about creating efficient and secure IT environments.",
+    companyName: 'Greene IT Solutions',
+    travelRadius: '< 100 miles',
     profileTier: 'free',
     resourcingCompanyId: 'res-1', // Managed by AV Placements
     skills: [ // Only basic skills, no specialist roles
@@ -299,8 +330,33 @@ const MOCK_ENGINEER_2: EngineerProfile = {
     certifications: [
         { name: 'Microsoft 365 Certified: Modern Desktop Administrator Associate', verified: true }, 
     ],
-    contact: { email: 'sam.greene@example.com', phone: '01234 567891', website: 'https://sgreene.com', linkedin: 'https://linkedin.com/in/samanthagreene' },
-    caseStudies: [],
+    contact: { 
+        email: 'sam.greene@example.com', 
+        phone: '01234 567891', 
+        website: 'https://sgreene.com', 
+        linkedin: 'https://linkedin.com/in/samanthagreene' 
+    },
+    socials: [
+        { name: 'Social 1', url: 'social 1 link' }
+    ],
+    associates: [
+        { name: 'Associate 1', value: 'Managed by AV Placements' }
+    ],
+    compliance: {
+        professionalIndemnity: true,
+        publicLiability: true,
+        siteSafe: false,
+        ownPPE: true,
+        accessEquipmentTrained: false,
+        firstAidTrained: false,
+    },
+    generalAvailability: 'High',
+    caseStudies: [
+      { id: 'cs-3', name: 'SME Office 365 Migration', url: 'https://example.com/case-study-3'}
+    ],
+    customerRating: 4,
+    peerRating: 5,
+    googleCalendarLink: '#',
 };
 
 // PAID IT Engineer (Managed by AV Placements)
@@ -309,7 +365,7 @@ const MOCK_ENGINEER_3: EngineerProfile = {
     name: 'David Chen',
     firstName: 'David',
     surname: 'Chen',
-    tagline: 'Cloud & Network Engineer',
+    discipline: Discipline.IT,
     avatar: 'https://i.pravatar.cc/150?u=davidchen',
     location: 'Birmingham, UK',
     currency: Currency.GBP,
@@ -367,16 +423,18 @@ const COMPANY_SUFFIXES = ['Solutions', 'Systems', 'Integrations', 'AV', 'IT Serv
 
 const getRandom = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
 const getRandomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
-const generateUniqueId = () => Math.random().toString(36).substring(2, 10);
 
 const generateMockEngineers = (count: number): EngineerProfile[] => {
     const engineers: EngineerProfile[] = [];
+    const disciplines = [Discipline.AV, Discipline.IT, Discipline.BOTH];
+
     for (let i = 0; i < count; i++) {
         const profileTier = Math.random() > 0.6 ? 'paid' : 'free';
         const jobRoleDef = getRandom(JOB_ROLE_DEFINITIONS);
         const firstName = getRandom(FIRST_NAMES);
         const lastName = getRandom(LAST_NAMES);
         const name = `${firstName} ${lastName}`;
+        const discipline = getRandom(disciplines);
         
         const summarySkills: Skill[] = jobRoleDef.skills.slice(0, 3).map(skillName => ({
             name: skillName,
@@ -388,14 +446,14 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
             name: name,
             firstName: firstName,
             surname: lastName,
-            tagline: jobRoleDef.name,
+            discipline: discipline,
             avatar: `https://i.pravatar.cc/150?u=${name.replace(' ', '')}`,
             location: `${getRandom(LOCATIONS)}, UK`,
             currency: Currency.GBP,
             dayRate: getRandomInt(13, 30) * 25, // 325 to 750 in 25 increments
             experience: getRandomInt(3, 20),
             availability: new Date(new Date().getTime() + getRandomInt(1, 90) * 24 * 60 * 60 * 1000),
-            description: `A highly skilled ${jobRoleDef.name} with ${name.length % 10 + 5} years of experience in the field. Proficient in various technologies and dedicated to delivering high-quality results.`,
+            description: `A highly skilled ${discipline} with ${name.length % 10 + 5} years of experience in the field. Proficient in various technologies and dedicated to delivering high-quality results.`,
             profileTier: profileTier,
             skills: summarySkills,
             certifications: [],
@@ -515,10 +573,10 @@ const geminiService = {
 
         if (profile.profileTier === 'paid') {
             // Paid users get a detailed bio leveraging their listed skills
-            prompt = `Generate a compelling but brief professional bio (around 50-70 words) for a freelance Tech engineer. Here are their details:\n- Name: ${profile.name}\n- Role/Tagline: ${profile.tagline}\n- Experience: ${profile.experience} years\n- Key Skills: ${profile.skills.slice(0, 5).map(s => s.name).join(', ')}\n\nWrite a professional, first-person summary highlighting their expertise based on the provided skills.`;
+            prompt = `Generate a compelling but brief professional bio (around 50-70 words) for a freelance Tech engineer. Here are their details:\n- Name: ${profile.name}\n- Role/Discipline: ${profile.discipline}\n- Experience: ${profile.experience} years\n- Key Skills: ${profile.skills.slice(0, 5).map(s => s.name).join(', ')}\n\nWrite a professional, first-person summary highlighting their expertise based on the provided skills.`;
         } else {
             // Free users get a more general bio to encourage upgrading
-            prompt = `Generate a compelling but brief professional bio (around 50-70 words) for a freelance Tech engineer. Do not mention any specific technical skills or technologies from a list. Focus on their general role and years of experience. Here are their details:\n- Name: ${profile.name}\n- Role/Tagline: ${profile.tagline}\n- Experience: ${profile.experience} years\n\nWrite a professional, first-person summary that encourages companies to unlock their full profile to see detailed skills.`;
+            prompt = `Generate a compelling but brief professional bio (around 50-70 words) for a freelance Tech engineer. Do not mention any specific technical skills or technologies from a list. Focus on their general role and years of experience. Here are their details:\n- Name: ${profile.name}\n- Role/Discipline: ${profile.discipline}\n- Experience: ${profile.experience} years\n\nWrite a professional, first-person summary that encourages companies to unlock their full profile to see detailed skills.`;
         }
         
         try {
@@ -571,7 +629,7 @@ const geminiService = {
         const prompt = `Analyze the cost-effectiveness of hiring a freelance tech engineer for a project.
         Project Description: "${jobDescription}"
         Engineer Profile:
-        - Role: ${engineerProfile.tagline}
+        - Role: ${engineerProfile.discipline}
         - Experience: ${engineerProfile.experience} years
         - Day Rate: ${engineerProfile.currency}${engineerProfile.dayRate}
         - Key Skills: ${engineerProfile.skills.map(s => `${s.name} (rated ${s.rating}/100)`).join(', ')}
@@ -616,6 +674,7 @@ interface AppContextType {
     geminiService: typeof geminiService;
     applications: Application[];
     applyForJob: (jobId: string, engineerId?: string) => void;
+    createAndLoginEngineer: (data: any) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -657,6 +716,47 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const logout = () => {
         setUser(null);
     };
+
+    const createAndLoginEngineer = (data: any) => {
+        const [firstName, ...lastNameParts] = data.name.split(' ');
+        const newEngineer: EngineerProfile = {
+            id: `eng-${generateUniqueId()}`,
+            name: data.name,
+            firstName: firstName,
+            surname: lastNameParts.join(' ') || ' ',
+            avatar: `https://i.pravatar.cc/150?u=${data.name.replace(' ', '')}`,
+            profileTier: 'free',
+            certifications: [],
+            caseStudies: [],
+            // From wizard
+            discipline: data.discipline,
+            location: data.location,
+            experience: data.experience,
+            currency: data.currency,
+            dayRate: data.dayRate,
+            availability: new Date(data.availability),
+            skills: data.skills.map((s: string) => ({ name: s, rating: 50 })), // default rating
+            contact: {
+                email: data.email,
+                phone: '',
+                website: '',
+                linkedin: '',
+            },
+            description: `Newly joined freelance ${data.discipline} with ${data.experience} years of experience, based in ${data.location}. Ready for new opportunities starting ${new Date(data.availability).toLocaleDateString()}.`
+        };
+
+        // Add to main list
+        setEngineers(prev => [newEngineer, ...prev]);
+
+        // Create user object and log in
+        const newUser: User = {
+            id: `user-${generateUniqueId()}`,
+            role: Role.ENGINEER,
+            profile: newEngineer,
+        };
+        setUser(newUser);
+    };
+
 
     const updateEngineerProfile = (updatedProfile: Partial<EngineerProfile>) => {
         if (user && 'skills' in user.profile) { // Type guard to ensure it's an engineer
@@ -731,7 +831,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     };
 
 
-    const value = { user, jobs, engineers, login, logout, updateEngineerProfile, postJob, startTrial, geminiService, applications, applyForJob };
+    const value = { user, jobs, engineers, login, logout, updateEngineerProfile, postJob, startTrial, geminiService, applications, applyForJob, createAndLoginEngineer };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
