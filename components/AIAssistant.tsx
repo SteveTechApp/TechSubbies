@@ -17,6 +17,63 @@ export const AIAssistant = () => {
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    // --- Draggable Logic ---
+    const fabRef = useRef<HTMLButtonElement>(null);
+    const [position, setPosition] = useState({ x: window.innerWidth - 80, y: window.innerHeight - 80 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [hasMoved, setHasMoved] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setPosition(prev => ({
+                x: Math.min(prev.x, window.innerWidth - 80),
+                y: Math.min(prev.y, window.innerHeight - 80)
+            }));
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+        setIsDragging(true);
+        setHasMoved(false);
+        setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+        fabRef.current?.setPointerCapture(e.pointerId);
+    };
+
+    const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+        if (!isDragging) return;
+
+        if (!hasMoved) {
+            const dx = e.clientX - (dragStart.x + position.x);
+            const dy = e.clientY - (dragStart.y + position.y);
+            if (Math.sqrt(dx * dx + dy * dy) > 5) {
+                setHasMoved(true);
+            }
+        }
+        
+        let newX = e.clientX - dragStart.x;
+        let newY = e.clientY - dragStart.y;
+        
+        if (fabRef.current) {
+            const fabWidth = fabRef.current.offsetWidth;
+            const fabHeight = fabRef.current.offsetHeight;
+            newX = Math.max(8, Math.min(newX, window.innerWidth - fabWidth - 8));
+            newY = Math.max(8, Math.min(newY, window.innerHeight - fabHeight - 8));
+        }
+
+        setPosition({ x: newX, y: newY });
+    };
+
+    const handlePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+        setIsDragging(false);
+        fabRef.current?.releasePointerCapture(e.pointerId);
+        if (!hasMoved) {
+            setIsOpen(prev => !prev);
+        }
+    };
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
@@ -35,7 +92,7 @@ export const AIAssistant = () => {
         try {
             const stream = await chatSession.sendMessageStream({ message: userInput });
             let aiResponseText = '';
-            setMessages(prev => [...prev, { role: 'ai', text: '' }]); // Add empty AI message bubble
+            setMessages(prev => [...prev, { role: 'ai', text: '' }]);
 
             for await (const chunk of stream) {
                 aiResponseText += chunk.text;
@@ -57,9 +114,18 @@ export const AIAssistant = () => {
         <>
             {/* Floating Action Button */}
             <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="fixed bottom-6 right-6 bg-blue-600 text-white rounded-full p-4 shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-110 z-50"
-                aria-label="Open AI Assistant"
+                ref={fabRef}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                style={{
+                    position: 'fixed',
+                    top: `${position.y}px`,
+                    left: `${position.x}px`,
+                    touchAction: 'none'
+                }}
+                className="bg-blue-600 text-white rounded-full p-4 shadow-lg hover:bg-blue-700 transition-colors z-50 cursor-grab active:cursor-grabbing"
+                aria-label={isOpen ? "Close AI Assistant" : "Open AI Assistant"}
             >
                 {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
             </button>
@@ -85,7 +151,7 @@ export const AIAssistant = () => {
                                 {msg.text}
                             </div>
                         ))}
-                         {isLoading && messages[messages.length - 1].role === 'user' && (
+                         {isLoading && messages.length > 0 && messages[messages.length - 1].role !== 'ai' && (
                             <div className="chat-message-ai p-3 rounded-lg max-w-[85%] flex items-center">
                                 <Loader className="animate-spin w-5 h-5" />
                             </div>

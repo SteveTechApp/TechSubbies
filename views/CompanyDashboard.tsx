@@ -30,37 +30,102 @@ const FindTalentView = ({ engineers, onSelectEngineer }: { engineers: EngineerPr
         setFilters(prev => ({...prev, [name]: name === 'maxRate' ? parseInt(value) : value }));
     };
 
+    const calculateMatchScore = (eng: EngineerProfile): number => {
+        let score = 0;
+        const maxScore = 100;
+
+        // 1. Role Match (50 points)
+        if (filters.role === 'any') {
+            score += 50;
+        } else if (eng.selectedJobRoles?.some(r => r.roleName === filters.role)) {
+            score += 50;
+        }
+
+        // 2. Keyword Match (40 points)
+        if (filters.keyword.trim() !== '') {
+            const keywords = filters.keyword.toLowerCase().split(' ').filter(k => k);
+            let matchedKeywords = 0;
+            const searchableText = [
+                eng.name,
+                eng.discipline,
+                ...eng.skills.map(s => s.name),
+                ...(eng.selectedJobRoles?.flatMap(r => r.skills.map(s => s.name)) || [])
+            ].join(' ').toLowerCase();
+
+            keywords.forEach(kw => {
+                if (searchableText.includes(kw)) {
+                    matchedKeywords++;
+                }
+            });
+            score += (matchedKeywords / keywords.length) * 40;
+        } else {
+            // No keyword, give full points for this section
+            score += 40;
+        }
+        
+        // 3. Rate Match (10 points)
+        if (eng.dayRate <= filters.maxRate) {
+            const rateScore = (1 - (eng.dayRate / filters.maxRate)) * 10;
+            score += rateScore;
+        }
+
+        return Math.min(Math.round(score), maxScore);
+    };
+
+
     const processedEngineers = useMemo(() => {
         return engineers
+            .map(eng => ({
+                ...eng,
+                matchScore: calculateMatchScore(eng),
+            }))
             .filter(eng => {
-                // Keyword match (including new selectedJobRoles skills)
-                const keywordMatch = filters.keyword.toLowerCase() === '' || 
-                    eng.name.toLowerCase().includes(filters.keyword.toLowerCase()) ||
-                    eng.discipline.toLowerCase().includes(filters.keyword.toLowerCase()) ||
-                    eng.skills.some(s => s.name.toLowerCase().includes(filters.keyword.toLowerCase())) ||
-                    (eng.selectedJobRoles && eng.selectedJobRoles.some(r => r.skills.some(s => s.name.toLowerCase().includes(filters.keyword.toLowerCase()))));
+                // Main rate filter
+                if (eng.dayRate > filters.maxRate) return false;
                 
-                // Role match (based on new selectedJobRoles)
-                const roleMatch = filters.role === 'any' || 
-                    (eng.selectedJobRoles && eng.selectedJobRoles.some(r => r.roleName === filters.role));
-                    
-                const rateMatch = eng.dayRate <= filters.maxRate;
+                // Role filter (only filter out if a specific role is selected and it doesn't match)
+                if (filters.role !== 'any' && !eng.selectedJobRoles?.some(r => r.roleName === filters.role)) {
+                    return false;
+                }
+                
+                // Keyword filter
+                if (filters.keyword.trim() !== '') {
+                     const searchableText = [
+                        eng.name,
+                        eng.discipline,
+                        eng.description,
+                        ...eng.skills.map(s => s.name),
+                        ...(eng.selectedJobRoles?.flatMap(r => [...r.skills.map(s => s.name), r.roleName]) || [])
+                    ].join(' ').toLowerCase();
+                    if (!searchableText.includes(filters.keyword.toLowerCase())) {
+                        return false;
+                    }
+                }
 
-                return keywordMatch && roleMatch && rateMatch;
+                return true;
             })
             .sort((a, b) => {
                 const tierSort = (b.profileTier === 'paid' ? 1 : 0) - (a.profileTier === 'paid' ? 1 : 0);
                 switch (sort) {
                     case 'name-asc':
-                        return a.name.localeCompare(b.name) || tierSort;
+                        return a.name.localeCompare(b.name);
                     case 'name-desc':
-                        return b.name.localeCompare(a.name) || tierSort;
+                        return b.name.localeCompare(a.name);
                     case 'rate-asc':
-                        return a.dayRate - b.dayRate || tierSort;
+                        return a.dayRate - b.dayRate;
                     case 'rate-desc':
-                        return b.dayRate - a.dayRate || tierSort;
+                        return b.dayRate - a.dayRate;
                     case 'relevance':
                     default:
+                        // Boosted profiles first
+                        if (a.isBoosted !== b.isBoosted) {
+                            return a.isBoosted ? -1 : 1;
+                        }
+                        // Then by match score
+                        if (a.matchScore !== b.matchScore) {
+                            return b.matchScore - a.matchScore;
+                        }
+                        // Then by tier
                         return tierSort;
                 }
             });
@@ -106,11 +171,11 @@ const FindTalentView = ({ engineers, onSelectEngineer }: { engineers: EngineerPr
                          </select>
                      </div>
                  </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {processedEngineers.length > 0 ? (
-                         processedEngineers.map(eng => <EngineerCard key={eng.id} profile={eng} onClick={() => onSelectEngineer(eng)} />)
+                         processedEngineers.map(eng => <EngineerCard key={eng.id} profile={eng} matchScore={eng.matchScore} onClick={() => onSelectEngineer(eng)} />)
                     ) : (
-                        <div className="text-center py-10 md:col-span-2 xl:col-span-3">
+                        <div className="text-center py-10 md:col-span-2 xl:col-span-4">
                             <p className="font-semibold">No engineers match your criteria.</p>
                             <p className="text-sm text-gray-500">Try adjusting your filters.</p>
                         </div>

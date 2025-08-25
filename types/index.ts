@@ -126,12 +126,14 @@ export interface EngineerProfile extends BaseProfile {
     otherLinks?: SocialLink[];
     rightColumnLinks?: { label: string, value: string, url: string }[];
     isBoosted?: boolean;
+    matchScore?: number;
 }
 
 
 export interface CompanyProfile extends BaseProfile {
     website?: string;
     consentToFeature?: boolean;
+    logo?: string;
 }
 
 export type UserProfile = EngineerProfile | CompanyProfile;

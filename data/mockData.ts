@@ -1,6 +1,14 @@
 import { EngineerProfile, CompanyProfile, Job, User, Role, Discipline, Currency, Skill, RatedSkill, Conversation, Message, Application, Review } from '../types/index.ts';
 import { JOB_ROLE_DEFINITIONS } from './jobRoles.ts';
 
+// NEW: Gendered names for more realistic profile images
+const MALE_FIRST_NAMES = ['Neil', 'David', 'Aiden', 'Charlie', 'Ethan', 'George', 'Isaac', 'Leo', 'Noah', 'Thomas', 'William', 'Riley', 'Sam'];
+const FEMALE_FIRST_NAMES = ['Samantha', 'Emily', 'Bella', 'Daisy', 'Freya', 'Hannah', 'Jasmine', 'Mia', 'Olivia', 'Poppy', 'Sophia', 'Zoe'];
+const LAST_NAMES = ['Bishop', 'Greene', 'Chen', 'Carter', 'Smith', 'Jones', 'Taylor', 'Brown', 'Williams', 'Wilson', 'Johnson', 'Roberts', 'Walker', 'Wright', 'Thompson', 'White', 'Harris', 'Clark', 'Lewis', 'Hall'];
+const LOCATIONS = ['London', 'Manchester', 'Birmingham', 'Leeds', 'Glasgow', 'Bristol', 'Edinburgh', 'Liverpool', 'Sheffield', 'Cardiff', 'Belfast', 'Newcastle', 'Nottingham'];
+const COMPANY_NAMES = ['Innovate', 'Synergy', 'Apex', 'Pinnacle', 'Fusion', 'Quantum', 'Starlight', 'Nexus', 'Momentum', 'Digital', 'Vision', 'Core', 'Link', 'Signal'];
+const COMPANY_SUFFIXES = ['Solutions', 'Systems', 'Integrations', 'AV', 'IT Services', 'Group', 'Ltd', 'Pro', 'Tech', 'Networks'];
+
 // PAID AV Engineer (Independent)
 const MOCK_ENGINEER_1: EngineerProfile = {
     id: 'eng-1',
@@ -11,7 +19,7 @@ const MOCK_ENGINEER_1: EngineerProfile = {
     title: 'Mr',
     status: 'active',
     discipline: Discipline.AV,
-    avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=1887&auto=format&fit=crop',
+    avatar: 'https://xsgames.co/randomusers/assets/avatars/male/74.jpg',
     location: 'London, UK',
     currency: Currency.GBP,
     dayRate: 550,
@@ -86,6 +94,7 @@ const MOCK_ENGINEER_1: EngineerProfile = {
         { id: 'cs-1', name: 'Corporate HQ Audiovisual Integration', url: 'https://example.com/case-study-1' },
         { id: 'cs-2', name: 'Luxury Residential Smart Home System', url: 'https://example.com/case-study-2' },
     ],
+    isBoosted: true,
     customerRating: 5,
     peerRating: 5,
 };
@@ -99,7 +108,7 @@ const MOCK_ENGINEER_2: EngineerProfile = {
     title: 'Ms',
     status: 'active',
     discipline: Discipline.IT,
-    avatar: 'https://i.pravatar.cc/150?u=samanthagreene',
+    avatar: 'https://xsgames.co/randomusers/assets/avatars/female/10.jpg',
     location: 'Manchester, UK',
     currency: Currency.GBP,
     dayRate: 350,
@@ -156,7 +165,7 @@ const MOCK_ENGINEER_3: EngineerProfile = {
     surname: 'Chen',
     status: 'active',
     discipline: Discipline.IT,
-    avatar: 'https://i.pravatar.cc/150?u=davidchen',
+    avatar: 'https://xsgames.co/randomusers/assets/avatars/male/15.jpg',
     location: 'Birmingham, UK',
     currency: Currency.GBP,
     dayRate: 600,
@@ -205,12 +214,6 @@ const MOCK_ENGINEER_3: EngineerProfile = {
 };
 
 // --- START: Programmatic Data Generation for Scale ---
-const FIRST_NAMES = ['Aiden', 'Bella', 'Charlie', 'Daisy', 'Ethan', 'Freya', 'George', 'Hannah', 'Isaac', 'Jasmine', 'Leo', 'Mia', 'Noah', 'Olivia', 'Poppy', 'Riley', 'Sophia', 'Thomas', 'William', 'Zoe'];
-const LAST_NAMES = ['Smith', 'Jones', 'Taylor', 'Brown', 'Williams', 'Wilson', 'Johnson', 'Roberts', 'Walker', 'Wright', 'Thompson', 'White', 'Harris', 'Clark', 'Lewis', 'Hall'];
-const LOCATIONS = ['London', 'Manchester', 'Birmingham', 'Leeds', 'Glasgow', 'Bristol', 'Edinburgh', 'Liverpool', 'Sheffield', 'Cardiff', 'Belfast', 'Newcastle', 'Nottingham'];
-const COMPANY_NAMES = ['Innovate', 'Synergy', 'Apex', 'Pinnacle', 'Fusion', 'Quantum', 'Starlight', 'Nexus', 'Momentum', 'Digital', 'Vision', 'Core', 'Link', 'Signal'];
-const COMPANY_SUFFIXES = ['Solutions', 'Systems', 'Integrations', 'AV', 'IT Services', 'Group', 'Ltd', 'Pro', 'Tech', 'Networks'];
-
 const getRandom = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
 const getRandomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
@@ -221,9 +224,13 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
     for (let i = 0; i < count; i++) {
         const profileTier = Math.random() > 0.6 ? 'paid' : 'free';
         const jobRoleDef = getRandom(JOB_ROLE_DEFINITIONS);
-        const firstName = getRandom(FIRST_NAMES);
+
+        const isMale = Math.random() > 0.5;
+        const firstName = isMale ? getRandom(MALE_FIRST_NAMES) : getRandom(FEMALE_FIRST_NAMES);
         const lastName = getRandom(LAST_NAMES);
         const name = `${firstName} ${lastName}`;
+        const gender = isMale ? 'male' : 'female';
+        const avatarIndex = getRandomInt(0, 78);
         const discipline = getRandom(disciplines);
         
         const summarySkills: Skill[] = jobRoleDef.skills.slice(0, 3).map(skillName => ({
@@ -238,7 +245,7 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
             surname: lastName,
             status: 'active',
             discipline: discipline,
-            avatar: `https://i.pravatar.cc/150?u=${name.replace(' ', '')}`,
+            avatar: `https://xsgames.co/randomusers/assets/avatars/${gender}/${avatarIndex}.jpg`,
             location: `${getRandom(LOCATIONS)}, UK`,
             currency: Currency.GBP,
             dayRate: getRandomInt(13, 30) * 25, // 325 to 750 in 25 increments
@@ -272,6 +279,10 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
                 skills: ratedSkills,
                 overallScore: overallScore
             }];
+            
+            if (Math.random() < 0.2) { // ~20% of premium users are boosted
+                engineer.isBoosted = true;
+            }
         }
         
         engineers.push(engineer);
@@ -290,6 +301,7 @@ const generateMockCompanies = (count: number): CompanyProfile[] => {
             avatar: `https://i.pravatar.cc/150?u=${name.replace(/\s/g, '')}`,
             website: `www.${name.replace(/\s/g, '').toLowerCase()}.com`,
             consentToFeature: Math.random() < 0.2, // ~20% of companies consent to be featured
+            logo: `https://logo.clearbit.com/${name.replace(/\s/g, '').toLowerCase().replace('ltd','')}.com?size=100`
         });
     }
     return companies;
@@ -328,9 +340,9 @@ const generateMockJobs = (count: number, companies: CompanyProfile[]): Job[] => 
 export const MOCK_ENGINEERS = [MOCK_ENGINEER_1, MOCK_ENGINEER_2, MOCK_ENGINEER_3, ...generateMockEngineers(20)];
 
 export const MOCK_COMPANIES: CompanyProfile[] = [
-    { id: 'comp-1', name: 'Pro AV Solutions', avatar: 'https://i.pravatar.cc/150?u=proav', consentToFeature: true, status: 'active' },
-    { id: 'comp-2', name: 'Starlight Events', avatar: 'https://i.pravatar.cc/150?u=starlight', consentToFeature: true, status: 'active' },
-    { id: 'comp-3', name: 'Nexus IT Integrators', avatar: 'https://i.pravatar.cc/150?u=nexusit', consentToFeature: true, status: 'active' },
+    { id: 'comp-1', name: 'Pro AV Solutions', avatar: 'https://i.pravatar.cc/150?u=proav', consentToFeature: true, status: 'active', logo: 'https://i.imgur.com/cO0k4Sj.png' },
+    { id: 'comp-2', name: 'Starlight Events', avatar: 'https://i.pravatar.cc/150?u=starlight', consentToFeature: true, status: 'active', logo: 'https://i.imgur.com/U5n41QT.png' },
+    { id: 'comp-3', name: 'Nexus IT Integrators', avatar: 'https://i.pravatar.cc/150?u=nexusit', consentToFeature: true, status: 'active', logo: 'https://i.imgur.com/dJeEvD5.png' },
     ...generateMockCompanies(15)
 ];
 
@@ -355,8 +367,8 @@ export const MOCK_JOBS: Job[] = [
     ...generateMockJobs(15, MOCK_COMPANIES)
 ];
 
-const MOCK_RESOURCING_COMPANY_1: CompanyProfile = { id: 'res-1', name: 'AV Placements', avatar: 'https://i.pravatar.cc/150?u=avplacements', status: 'active' };
-const MOCK_ADMIN_PROFILE: CompanyProfile = { id: 'admin-1', name: 'Steve Goodwin', avatar: 'https://i.imgur.com/RfjB4zR.jpg', status: 'active' };
+const MOCK_RESOURCING_COMPANY_1: CompanyProfile = { id: 'res-1', name: 'AV Placements', avatar: 'https://i.pravatar.cc/150?u=avplacements', status: 'active', logo: 'https://i.imgur.com/2yF5t1x.png' };
+const MOCK_ADMIN_PROFILE: CompanyProfile = { id: 'admin-1', name: 'Steve Goodwin', avatar: 'https://i.imgur.com/RfjB4zR.jpg', status: 'active', logo: 'https://i.imgur.com/2yF5t1x.png' };
 
 const MOCK_FREE_ENGINEER: EngineerProfile = {
     ...MOCK_ENGINEER_2,
@@ -365,7 +377,7 @@ const MOCK_FREE_ENGINEER: EngineerProfile = {
     firstName: 'Emily',
     surname: 'Carter',
     status: 'active',
-    avatar: 'https://i.pravatar.cc/150?u=emilycarter',
+    avatar: 'https://xsgames.co/randomusers/assets/avatars/female/20.jpg',
     profileTier: 'free',
     resourcingCompanyId: undefined,
     contact: { ...MOCK_ENGINEER_2.contact, email: 'emily.carter@example.com' },
