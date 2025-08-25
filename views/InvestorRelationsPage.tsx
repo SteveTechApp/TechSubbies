@@ -8,13 +8,14 @@ import { Zap, Layers, TrendingUp, BrainCircuit, Rocket, BarChart, Users } from '
 
 interface InvestorRelationsPageProps {
     onNavigate: (page: Page) => void;
+    onHowItWorksClick: () => void;
 }
 
-export const InvestorRelationsPage = ({ onNavigate }: InvestorRelationsPageProps) => {
+export const InvestorRelationsPage = ({ onNavigate, onHowItWorksClick }: InvestorRelationsPageProps) => {
 
     return (
         <div className="bg-gray-50 flex flex-col min-h-screen">
-            <Header onNavigate={onNavigate} />
+            <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
             <main className="flex-grow pt-24">
                 {/* Hero Section */}
                 <section 
@@ -65,7 +66,7 @@ export const InvestorRelationsPage = ({ onNavigate }: InvestorRelationsPageProps
                 </section>
 
             </main>
-            <Footer onNavigate={onNavigate} />
+            <Footer onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
         </div>
     );
 };

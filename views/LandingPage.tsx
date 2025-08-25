@@ -7,10 +7,10 @@ import { Footer } from '../components/Footer.tsx';
 import { StatCard } from '../components/StatCard.tsx';
 import { FeatureCard } from '../components/FeatureCard.tsx';
 import { Users, Building, ClipboardList, DollarSign, Calendar, Handshake, User, Briefcase } from '../components/Icons.tsx';
-import { HowItWorksModal } from '../components/HowItWorksModal.tsx';
 
 interface LandingPageProps {
   onNavigate: (page: Page) => void;
+  onHowItWorksClick: () => void;
 }
 
 // Dynamic text for the headline
@@ -44,9 +44,8 @@ const HERO_IMAGES = [
 ];
 
 
-export const LandingPage = ({ onNavigate }: LandingPageProps) => {
+export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps) => {
   const { engineers, jobs } = useAppContext();
-  const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
   const [heroImage, setHeroImage] = useState('');
 
   // State for headline animation
@@ -68,12 +67,11 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
       return () => clearInterval(roleInterval);
   }, []);
 
-  const handleHowItWorksClick = () => setIsHowItWorksOpen(true);
   const featuredCompanies = MOCK_COMPANIES.filter(c => c.consentToFeature).slice(0, 5);
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header onNavigate={onNavigate} onHowItWorksClick={handleHowItWorksClick} />
+      <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
       <main className="bg-gray-50 flex-grow pt-24">
            {/* Hero Section */}
            <section className="relative text-white text-center h-[65vh] flex items-center justify-center px-4 overflow-hidden">
@@ -168,11 +166,7 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
               </div>
           </section>
       </main>
-      <Footer onNavigate={onNavigate} />
-      <HowItWorksModal 
-          isOpen={isHowItWorksOpen} 
-          onClose={() => setIsHowItWorksOpen(false)} 
-      />
+      <Footer onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
     </div>
   );
 };

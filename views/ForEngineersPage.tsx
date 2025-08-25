@@ -7,6 +7,7 @@ import { Page } from '../types/index.ts';
 
 interface ForEngineersPageProps {
     onNavigate: (page: Page) => void;
+    onHowItWorksClick: () => void;
 }
 
 // Curated list of high-quality, relevant hero images for engineers
@@ -18,7 +19,7 @@ const ENGINEER_HERO_IMAGES = [
     'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?q=80&w=1974&auto=format&fit=crop', // Close up of a circuit board
 ];
 
-export const ForEngineersPage = ({ onNavigate }: ForEngineersPageProps) => {
+export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineersPageProps) => {
     const [heroImage, setHeroImage] = useState('');
 
     useEffect(() => {
@@ -28,7 +29,7 @@ export const ForEngineersPage = ({ onNavigate }: ForEngineersPageProps) => {
 
     return (
         <div className="bg-gray-50 flex flex-col min-h-screen">
-            <Header onNavigate={onNavigate} />
+            <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
             <main className="flex-grow pt-24">
                 {/* Hero Section */}
                 <section 
@@ -70,7 +71,7 @@ export const ForEngineersPage = ({ onNavigate }: ForEngineersPageProps) => {
                     </div>
                 </section>
             </main>
-            <Footer onNavigate={onNavigate} />
+            <Footer onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
         </div>
     );
 };

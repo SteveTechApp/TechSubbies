@@ -7,6 +7,7 @@ import { Page } from '../types/index.ts';
 
 interface ForCompaniesPageProps {
     onNavigate: (page: Page) => void;
+    onHowItWorksClick: () => void;
 }
 
 // Curated list of high-quality, relevant hero images for companies
@@ -18,7 +19,7 @@ const COMPANY_HERO_IMAGES = [
     'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop', // Modern conference room with large screen
 ];
 
-export const ForCompaniesPage = ({ onNavigate }: ForCompaniesPageProps) => {
+export const ForCompaniesPage = ({ onNavigate, onHowItWorksClick }: ForCompaniesPageProps) => {
     const [heroImage, setHeroImage] = useState('');
 
     useEffect(() => {
@@ -28,7 +29,7 @@ export const ForCompaniesPage = ({ onNavigate }: ForCompaniesPageProps) => {
 
     return (
         <div className="bg-gray-50 flex flex-col min-h-screen">
-            <Header onNavigate={onNavigate} />
+            <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
             <main className="flex-grow pt-24">
                 {/* Hero Section */}
                 <section 
@@ -70,7 +71,7 @@ export const ForCompaniesPage = ({ onNavigate }: ForCompaniesPageProps) => {
                     </div>
                 </section>
             </main>
-            <Footer onNavigate={onNavigate} />
+            <Footer onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
         </div>
     );
 };

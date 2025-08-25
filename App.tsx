@@ -12,15 +12,19 @@ import { ForCompaniesPage } from './views/ForCompaniesPage.tsx';
 import { EngineerSignUpWizard } from './views/EngineerSignUpWizard.tsx';
 import { InvestorRelationsPage } from './views/InvestorRelationsPage.tsx';
 import { AIAssistant } from './components/AIAssistant.tsx';
+import { HowItWorksModal } from './components/HowItWorksModal.tsx';
 
 
 const App = () => {
     const { user } = useAppContext();
     const [page, setPage] = useState<Page>('landing');
+    const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
 
     const onNavigate = (targetPage: Page) => {
         setPage(targetPage);
     };
+    
+    const handleHowItWorksClick = () => setIsHowItWorksOpen(true);
 
     const renderPage = () => {
         if (user) {
@@ -38,20 +42,22 @@ const App = () => {
             }
         }
 
+        const pageProps = { onNavigate, onHowItWorksClick: handleHowItWorksClick };
+
         switch (page) {
             case 'login':
                 return <LoginSelector onNavigate={onNavigate} />;
             case 'engineerSignUp':
                 return <EngineerSignUpWizard onCancel={() => onNavigate('login')} />;
             case 'forEngineers':
-                return <ForEngineersPage onNavigate={onNavigate} />;
+                return <ForEngineersPage {...pageProps} />;
             case 'forCompanies':
-                return <ForCompaniesPage onNavigate={onNavigate} />;
+                return <ForCompaniesPage {...pageProps} />;
             case 'investors':
-                return <InvestorRelationsPage onNavigate={onNavigate} />;
+                return <InvestorRelationsPage {...pageProps} />;
             case 'landing':
             default:
-                return <LandingPage onNavigate={onNavigate} />;
+                return <LandingPage {...pageProps} />;
         }
     };
 
@@ -59,6 +65,7 @@ const App = () => {
         <>
             {renderPage()}
             <AIAssistant />
+            <HowItWorksModal isOpen={isHowItWorksOpen} onClose={() => setIsHowItWorksOpen(false)} />
         </>
     );
 };
