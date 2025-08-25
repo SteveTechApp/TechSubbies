@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useAppContext, EngineerProfile, JOB_ROLE_DEFINITIONS } from '../context/AppContext.tsx';
+import { useAppContext } from '../context/AppContext.tsx';
+import { EngineerProfile } from '../types/index.ts';
+import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles.ts';
 import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
 import { JobPostModal } from '../components/JobPostModal.tsx';
 import { DashboardView } from './CompanyDashboard/DashboardView.tsx';
@@ -102,11 +104,11 @@ const FindTalentView = ({ engineers, onSelectEngineer }: { engineers: EngineerPr
                          </select>
                      </div>
                  </div>
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {processedEngineers.length > 0 ? (
                          processedEngineers.map(eng => <EngineerCard key={eng.id} profile={eng} onClick={() => onSelectEngineer(eng)} />)
                     ) : (
-                        <div className="text-center py-10">
+                        <div className="text-center py-10 md:col-span-2 xl:col-span-3">
                             <p className="font-semibold">No engineers match your criteria.</p>
                             <p className="text-sm text-gray-500">Try adjusting your filters.</p>
                         </div>

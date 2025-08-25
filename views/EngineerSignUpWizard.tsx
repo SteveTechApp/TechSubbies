@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useAppContext, Currency, Discipline } from '../context/AppContext.tsx';
+import { useAppContext } from '../context/AppContext.tsx';
+import { Currency, Discipline } from '../types/index.ts';
 import { Logo } from '../components/Logo.tsx';
 import { ArrowLeft, User, Briefcase, PoundSterling, Sparkles, Calendar } from '../components/Icons.tsx';
 
@@ -75,7 +76,7 @@ export const EngineerSignUpWizard = ({ onCancel }: EngineerSignUpWizardProps) =>
 
                 <div className="bg-white rounded-lg shadow-xl p-8">
                     <div className="mb-8">
-                         <Logo className="mb-4" />
+                         <Logo className="mb-4 h-16" />
                         <h1 className="text-2xl font-bold text-gray-800">Create Your Engineer Profile</h1>
                         <p className="text-gray-500">Let's get you set up to find your next contract.</p>
                     </div>

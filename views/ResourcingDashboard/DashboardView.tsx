@@ -1,5 +1,5 @@
 import React from 'react';
-import { EngineerProfile, Application } from '../../context/AppContext.tsx';
+import { EngineerProfile, Application } from '../../types/index.ts';
 import { Users, UserCheck, Briefcase } from '../../components/Icons.tsx';
 
 interface DashboardViewProps {

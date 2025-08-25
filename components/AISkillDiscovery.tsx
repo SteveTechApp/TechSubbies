@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext, Skill, JOB_ROLE_DEFINITIONS } from '../context/AppContext.tsx';
+import { useAppContext } from '../context/AppContext.tsx';
+import { Skill } from '../types/index.ts';
+import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles.ts';
 import { BrainCircuit, Loader, Plus } from './Icons.tsx';
 
 interface AISkillDiscoveryProps {

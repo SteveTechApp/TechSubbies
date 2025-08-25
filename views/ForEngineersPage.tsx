@@ -3,8 +3,7 @@ import { Footer } from '../components/Footer.tsx';
 import { Header } from '../components/Header.tsx';
 import { FeatureCard } from '../components/FeatureCard.tsx';
 import { UserCog, CalendarDays, Briefcase } from '../components/Icons.tsx';
-
-type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp';
+import { Page } from '../types/index.ts';
 
 interface ForEngineersPageProps {
     onNavigate: (page: Page) => void;
@@ -30,7 +29,7 @@ export const ForEngineersPage = ({ onNavigate }: ForEngineersPageProps) => {
     return (
         <div className="bg-gray-50 flex flex-col min-h-screen">
             <Header onNavigate={onNavigate} />
-            <main className="flex-grow">
+            <main className="flex-grow pt-24">
                 {/* Hero Section */}
                 <section 
                     className="relative text-white text-center min-h-[40vh] flex items-center justify-center px-4 bg-cover bg-center"

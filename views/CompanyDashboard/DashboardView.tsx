@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Job, EngineerProfile } from '../../context/AppContext.tsx';
+import { User, Job, EngineerProfile } from '../../types/index.ts';
 import { AIEngineerCostAnalysis } from '../../components/AIEngineerCostAnalysis.tsx';
 
 interface DashboardViewProps {

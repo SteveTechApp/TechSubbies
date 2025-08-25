@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Job, EngineerProfile, useAppContext } from '../../context/AppContext.tsx';
+import { useAppContext } from '../../context/AppContext.tsx';
+import { Job, EngineerProfile } from '../../types/index.ts';
 import { MapPin, ArrowLeft, User, Mail, Phone } from '../../components/Icons.tsx';
 
 const formatDate = (date: any): string => {

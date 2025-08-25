@@ -1,9 +1,10 @@
 import React from 'react';
-import { useAppContext, Role } from '../context/AppContext.tsx';
+import { useAppContext } from '../context/AppContext.tsx';
+import { Role } from '../types/index.ts';
 import { NavLink } from './NavLink.tsx';
 import { 
     LayoutDashboard, User, CalendarDays, Search, Settings, PlusCircle, Briefcase, 
-    Users, Building, BarChart2, SlidersHorizontal, Edit
+    Users, Building, BarChart2, SlidersHorizontal, Edit, BrainCircuit, CreditCard
 } from './Icons.tsx';
 
 interface DashboardSidebarProps {
@@ -19,8 +20,9 @@ const getLinksForRole = (role: Role) => {
                 { label: 'Manage Profile', icon: Edit },
                 { label: 'View Public Profile', icon: User }, 
                 { label: 'Availability', icon: CalendarDays }, 
-                { label: 'Job Search', icon: Search }, 
-                { label: 'Settings', icon: Settings },
+                { label: 'Job Search', icon: Search },
+                { label: 'AI Tools', icon: BrainCircuit },
+                { label: 'Billing', icon: CreditCard },
             ];
         case Role.COMPANY:
             return [

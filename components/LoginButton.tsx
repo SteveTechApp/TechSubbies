@@ -1,5 +1,5 @@
 import React from 'react';
-import { Role } from '../context/AppContext.tsx';
+import { Role } from '../types/index.ts';
 
 interface LoginButtonProps {
     role: Role;

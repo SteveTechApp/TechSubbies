@@ -3,8 +3,7 @@ import { Footer } from '../components/Footer.tsx';
 import { Header } from '../components/Header.tsx';
 import { FeatureCard } from '../components/FeatureCard.tsx';
 import { PenSquare, Search, Handshake } from '../components/Icons.tsx';
-
-type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp';
+import { Page } from '../types/index.ts';
 
 interface ForCompaniesPageProps {
     onNavigate: (page: Page) => void;
@@ -30,7 +29,7 @@ export const ForCompaniesPage = ({ onNavigate }: ForCompaniesPageProps) => {
     return (
         <div className="bg-gray-50 flex flex-col min-h-screen">
             <Header onNavigate={onNavigate} />
-            <main className="flex-grow">
+            <main className="flex-grow pt-24">
                 {/* Hero Section */}
                 <section 
                     className="relative text-white text-center min-h-[40vh] flex items-center justify-center px-4 bg-cover bg-center"
@@ -39,7 +38,7 @@ export const ForCompaniesPage = ({ onNavigate }: ForCompaniesPageProps) => {
                     <div className="absolute inset-0 bg-black opacity-60"></div>
                     <div className="relative z-10 max-w-3xl">
                         <h1 className="text-4xl md:text-6xl font-extrabold mb-4">The Talent You Need. The Moment You Need It.</h1>
-                        <p className="text-lg md:text-xl mx-auto mb-8">Stop searching, start building. Post jobs for free and instantly access our network of vetted AV & IT freelance engineers with confirmed availability.</p>
+                        <p className="text-lg md:text-xl mx-auto mb-8">Stop searching, start building. Post jobs for free and instantly access our network of skilled AV & IT freelance engineers with confirmed availability.</p>
                         <button onClick={() => onNavigate('login')} className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">Find Talent for Free</button>
                     </div>
                 </section>
@@ -52,7 +51,7 @@ export const ForCompaniesPage = ({ onNavigate }: ForCompaniesPageProps) => {
                             <FeatureCard icon={PenSquare} title="Post Jobs for Free">
                                 Describe your project and requirements in minutes. Our platform is completely free for companies to post jobs and find talent. No hidden costs.
                             </FeatureCard>
-                            <FeatureCard icon={Search} title="Find Vetted Specialists">
+                            <FeatureCard icon={Search} title="Find Skilled Specialists">
                                 Search our database of qualified engineers with advanced filters for specialist skills, day rate, and real-time availability.
                             </FeatureCard>
                             <FeatureCard icon={Handshake} title="Engage Directly. No Fees.">

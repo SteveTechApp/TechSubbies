@@ -1,5 +1,6 @@
 import React from 'react';
-import { Job, useAppContext } from '../context/AppContext.tsx';
+import { useAppContext } from '../context/AppContext.tsx';
+import { Job } from '../types/index.ts';
 import { MapPin, Calendar, DollarSign, Clock } from './Icons.tsx';
 
 interface JobCardProps {

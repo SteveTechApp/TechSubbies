@@ -20,7 +20,7 @@ export const DropdownMenu = ({ triggerText, children, isLanding = false }: Dropd
             onMouseEnter={() => setIsOpen(true)} 
             onMouseLeave={() => setIsOpen(false)}
         >
-            <button className={`flex items-center px-4 py-2 transition-colors font-medium ${triggerColor}`}>
+            <button className={`flex items-center px-4 py-2 transition-colors font-medium text-xs ${triggerColor}`}>
                 {triggerText}
                 <ChevronDown className="w-4 h-4 ml-1" />
             </button>

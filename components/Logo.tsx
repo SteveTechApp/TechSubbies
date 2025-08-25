@@ -6,30 +6,30 @@ interface LogoProps {
 
 export const Logo = ({ className }: LogoProps) => (
   <div className={["flex items-center", className].join(" ")}>
-    <svg viewBox="0 0 450 90" className="h-12 w-auto sm:h-16">
-      {/* Icon */}
+    <svg viewBox="0 0 450 90" className="h-full w-auto">
+      {/* Icon - updated to better match user image */}
       <g>
-        <rect x="0" y="0" width="64" height="64" rx="14" fill="#1D73EB" />
-        <g>
-          <ellipse cx="24" cy="32" rx="10" ry="20" stroke="white" strokeWidth="4.5" fill="none" transform="rotate(-15 24 32)" />
-          <ellipse cx="38" cy="32" rx="20" ry="10" stroke="white" strokeWidth="4.5" fill="none" />
+        <rect x="0" y="0" width="64" height="64" rx="14" fill="#2563EB" />
+        <g stroke="white" strokeWidth="4.5" fill="none">
+           <ellipse cx="32" cy="32" rx="12" ry="22" />
+           <ellipse cx="32" cy="32" rx="22" ry="12" />
         </g>
       </g>
       
-      {/* Main Text */}
+      {/* Main Text - updated font weight and colors */}
       <g transform="translate(80, 0)">
-        <text y="40" fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif" fontWeight="900" fontSize="42" dominantBaseline="middle">
-            <tspan fill="#1D73EB">Tech</tspan>
-            <tspan fill="#18293D">Subbies</tspan>
-            <tspan fill="#6B7280">.com</tspan>
+        <text y="40" fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif" fontWeight="bold" fontSize="42" dominantBaseline="middle">
+            <tspan fill="#2563EB">Tech</tspan>
+            <tspan fill="#1F2937">Subbies</tspan>
+            <tspan fill="#1F2937">.com</tspan>
         </text>
       </g>
       
-      {/* Strapline */}
+      {/* Strapline - updated to match user image */}
       <text y="78" x="0" fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif" fontSize="15">
-          <tspan fill="#6B7280">AV &amp; IT Professional Network</tspan>
-          <tspan fill="#1D73EB" fontWeight="bold"> • </tspan>
-          <tspan fill="#1D73EB" fontStyle="italic">Where Expertise Meets Opportunity</tspan>
+          <tspan fill="#4B5563">AV &amp; IT Professional Network</tspan>
+          <tspan fill="#2563EB" fontWeight="bold"> • </tspan>
+          <tspan fill="#2563EB" fontStyle="italic">Where Expertise Meets Opportunity</tspan>
       </text>
     </svg>
   </div>

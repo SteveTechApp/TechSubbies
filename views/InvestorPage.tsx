@@ -31,7 +31,7 @@ export const InvestorPage = () => {
                 <div className="mb-10 bg-blue-50 py-10 rounded-lg">
                     <h3 className="text-3xl font-bold text-center mb-8">Our Modern Revenue Model</h3>
                     <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-6 px-4">
-                         <RevenueCard number="1" title="Job Profile Subscriptions">A low-cost monthly subscription for engineers unlocks a premium "Job Profile", enabling them to showcase specialist skills and appear in detailed searches.</RevenueCard>
+                         <RevenueCard number="1" title="Skills Profile Subscriptions">A low-cost monthly subscription for engineers unlocks a premium "Skills Profile", enabling them to showcase specialist skills and appear in detailed searches.</RevenueCard>
                          <RevenueCard number="2" title='"Boost Profile" Credits'>A pay-per-use feature allowing engineers to purchase credits that temporarily place their profile at the top of relevant search results.</RevenueCard>
                          <RevenueCard number="3" title="Targeted Advertising">Premium advertising slots for industry-specific manufacturers and training companies to reach their ideal audience.</RevenueCard>
                     </div>

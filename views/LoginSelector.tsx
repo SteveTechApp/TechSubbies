@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useAppContext, Role, PRE_AUTH_USER } from '../context/AppContext.tsx';
+import { useAppContext } from '../context/AppContext.tsx';
+import { Role, PRE_AUTH_USER } from '../types/index.ts';
 import { Logo } from '../components/Logo.tsx';
 import { User, Building } from '../components/Icons.tsx';
 
@@ -14,8 +15,8 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
     const [activeTab, setActiveTab] = useState('signin');
     const isAdminUser = PRE_AUTH_USER.email === 'SteveGoodwin1972@gmail.com';
 
-    const handleLogin = (role: Role) => {
-        login(role);
+    const handleLogin = (role: Role, isFreeTier: boolean = false) => {
+        login(role, isFreeTier);
     };
     
     const tabClass = (tabName: string) => 
@@ -29,7 +30,7 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
         <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 antialiased" style={{backgroundImage: "url('https://images.unsplash.com/photo-1554672408-758865e23218?q=80&w=2070&auto=format&fit=crop')", backgroundSize: 'cover'}}>
             <div className="w-full max-w-md">
                  <button onClick={() => onNavigate('landing')} className="block mx-auto mb-6">
-                    <Logo />
+                    <Logo className="h-16"/>
                 </button>
                 <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
                     <div className="flex">
@@ -43,7 +44,8 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
                             <div className="space-y-4 fade-in-up">
                                 <h2 className="text-2xl font-bold text-center text-gray-800">Welcome Back</h2>
                                 <p className="text-center text-gray-500">Select your role to sign in.</p>
-                                <button onClick={() => handleLogin(Role.ENGINEER)} className="w-full text-left p-4 border rounded-lg hover:bg-gray-50 transition-colors">Engineer Sign In</button>
+                                <button onClick={() => handleLogin(Role.ENGINEER)} className="w-full text-left p-4 border rounded-lg hover:bg-gray-50 transition-colors font-semibold text-blue-700">Engineer Sign In (Skills Profile)</button>
+                                <button onClick={() => handleLogin(Role.ENGINEER, true)} className="w-full text-left p-4 border rounded-lg hover:bg-gray-50 transition-colors">Engineer Sign In (Free Tier)</button>
                                 <button onClick={() => handleLogin(Role.COMPANY)} className="w-full text-left p-4 border rounded-lg hover:bg-gray-50 transition-colors">Company Sign In</button>
                                 <button onClick={() => handleLogin(Role.RESOURCING_COMPANY)} className="w-full text-left p-4 border rounded-lg hover:bg-gray-50 transition-colors">Resourcing Co. Sign In</button>
                                 {isAdminUser && (

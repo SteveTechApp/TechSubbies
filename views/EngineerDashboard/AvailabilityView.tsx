@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { EngineerProfile } from '../../context/AppContext.tsx';
+import { EngineerProfile } from '../../types/index.ts';
 import { ChevronLeft, ChevronRight, Download, CalendarPlus } from '../../components/Icons.tsx';
 
 interface AvailabilityViewProps {

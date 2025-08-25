@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Job, EngineerProfile } from '../context/AppContext.tsx';
+import { Job, EngineerProfile } from '../types/index.ts';
 import { X } from './Icons.tsx';
 
 interface ApplyAsEngineerModalProps {

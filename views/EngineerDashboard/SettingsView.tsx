@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { EngineerProfile, Discipline } from '../../context/AppContext.tsx';
+import { EngineerProfile, Discipline } from '../../types/index.ts';
 
 interface SettingsViewProps {
     profile: EngineerProfile;

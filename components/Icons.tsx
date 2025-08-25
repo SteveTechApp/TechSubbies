@@ -70,3 +70,10 @@ export const Star = createIcon(<polygon points="12 2 15.09 8.26 22 9.27 17 14.14
 export const PoundSterling = createIcon(<><path d="M18 7c0-5.333-8-5.333-8 0" /><path d="M10 7v14" /><path d="M6 21h12" /><path d="M6 13h10" /></>);
 export const ChevronDown = createIcon(<path d="m6 9 6 6 6-6"/>);
 export const ArrowLeft = createIcon(<path d="m15 18-6-6 6-6"/>);
+export const ArrowRight = createIcon(<path d="m9 18 6-6-6-6"/>);
+export const Save = createIcon(<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></>);
+export const Image = createIcon(<><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></>);
+export const Upload = createIcon(<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></>);
+export const Clapperboard = createIcon(<><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3L20.2 6Z" /><path d="m3.3 11.2 13.5-4" /><path d="m16.5 12.3-1.8-5.8" /><path d="m11.5 15.3-1.8-5.8" /><path d="m6.5 18.3-1.8-5.8" /><path d="M21 12c-1.9 0-3.5-1-4.5-2.5s-1-3.5-1-3.5-2 2-4.5 2.5-4.5 1-4.5 1L1 22h22l-2-10Z" /></>);
+export const CreditCard = createIcon(<><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></>);
+export const MessageCircle = createIcon(<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />);

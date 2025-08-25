@@ -4,7 +4,6 @@ import { useAppContext } from '../context/AppContext.tsx';
 import { DashboardView } from './ResourcingDashboard/DashboardView.tsx';
 import { ManageEngineersView } from './ResourcingDashboard/ManageEngineersView.tsx';
 import { FindJobsView } from './ResourcingDashboard/FindJobsView.tsx';
-import { SettingsView } from './EngineerDashboard/SettingsView.tsx'; // Re-use settings view for simplicity
 
 export const ResourcingDashboard = () => {
     const { user, engineers, applications } = useAppContext();

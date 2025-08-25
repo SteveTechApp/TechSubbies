@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext, Job, EngineerProfile } from '../../context/AppContext.tsx';
+import { useAppContext, } from '../../context/AppContext.tsx';
+import { Job, EngineerProfile } from '../../types/index.ts';
 import { ApplyAsEngineerModal } from '../../components/ApplyAsEngineerModal.tsx';
 import { Search, MapPin, Calendar, DollarSign, Clock } from '../../components/Icons.tsx';
 

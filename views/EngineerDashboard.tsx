@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
-import { useAppContext, EngineerProfile, Skill } from '../context/AppContext.tsx';
+import { useAppContext } from '../context/AppContext.tsx';
+import { EngineerProfile, Skill } from '../types/index.ts';
 import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
 import { EngineerProfileView } from './EngineerProfileView.tsx';
 import { DashboardView } from './EngineerDashboard/DashboardView.tsx';
 import { AvailabilityView } from './EngineerDashboard/AvailabilityView.tsx';
 import { JobSearchView } from './EngineerDashboard/JobSearchView.tsx';
 import { ProfileManagementView } from './EngineerDashboard/ProfileManagementView.tsx';
-import { SettingsView } from './EngineerDashboard/SettingsView.tsx';
+import { StoryboardCreatorView } from './EngineerDashboard/StoryboardCreatorView.tsx';
+import { PaymentsView } from './EngineerDashboard/PaymentsView.tsx';
+import { AIToolsView } from './EngineerDashboard/AIToolsView.tsx';
 
 
 export const EngineerDashboard = () => {
-    const { user, updateEngineerProfile, geminiService, startTrial } = useAppContext();
+    const { user, updateEngineerProfile, startTrial, boostProfile } = useAppContext();
     const [activeView, setActiveView] = useState('Dashboard');
-    const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
 
     if (!user || !('skills' in user.profile)) {
         return <div>Loading...</div>; // or a proper loading spinner
@@ -22,13 +24,6 @@ export const EngineerDashboard = () => {
     const handleProfileSave = (updatedProfile: Partial<EngineerProfile>) => {
         updateEngineerProfile(updatedProfile);
         alert("Profile updated successfully!");
-    };
-
-    const handleGenerateDescription = async () => {
-        setIsGeneratingDesc(true);
-        const desc = await geminiService.generateDescriptionForProfile(engineerProfile);
-        updateEngineerProfile({ description: desc });
-        setIsGeneratingDesc(false);
     };
 
     const addSkillsFromAI = (newSkills: Skill[]) => {
@@ -50,10 +45,9 @@ export const EngineerDashboard = () => {
                 return (
                     <DashboardView
                         engineerProfile={engineerProfile}
-                        onGenerateDescription={handleGenerateDescription}
-                        isGeneratingDesc={isGeneratingDesc}
-                        onSkillsAdded={addSkillsFromAI}
                         onUpgradeTier={startTrial}
+                        setActiveView={setActiveView}
+                        boostProfile={boostProfile}
                     />
                 );
             case 'Manage Profile':
@@ -61,6 +55,7 @@ export const EngineerDashboard = () => {
                     <ProfileManagementView 
                         profile={engineerProfile} 
                         onSave={handleProfileSave} 
+                        setActiveView={setActiveView}
                     />
                 );
             case 'View Public Profile':
@@ -74,8 +69,12 @@ export const EngineerDashboard = () => {
                  );
             case 'Job Search':
                 return <JobSearchView />;
-            case 'Settings':
-                return <SettingsView profile={engineerProfile} onSave={handleProfileSave} />;
+            case 'AI Tools':
+                return <AIToolsView profile={engineerProfile} onSkillsAdded={addSkillsFromAI} />;
+            case 'Billing':
+                return <PaymentsView profile={engineerProfile} />;
+            case 'Create Storyboard':
+                return <StoryboardCreatorView profile={engineerProfile} setActiveView={setActiveView} />;
             default:
                 return (
                     <div>

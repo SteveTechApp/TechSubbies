@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext, MOCK_COMPANIES } from '../context/AppContext.tsx';
+import { useAppContext } from '../context/AppContext.tsx';
+import { MOCK_COMPANIES } from '../data/mockData.ts';
+import { Page } from '../types/index.ts';
 import { Header } from '../components/Header.tsx';
 import { Footer } from '../components/Footer.tsx';
-import { InvestorPage } from './InvestorPage.tsx';
 import { StatCard } from '../components/StatCard.tsx';
 import { FeatureCard } from '../components/FeatureCard.tsx';
 import { Users, Building, ClipboardList, DollarSign, Calendar, Handshake, User, Briefcase } from '../components/Icons.tsx';
 import { HowItWorksModal } from '../components/HowItWorksModal.tsx';
-
-type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp';
 
 interface LandingPageProps {
   onNavigate: (page: Page) => void;
@@ -75,7 +74,7 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
   return (
     <div className="flex flex-col min-h-screen">
       <Header onNavigate={onNavigate} onHowItWorksClick={handleHowItWorksClick} />
-      <main className="bg-gray-50 flex-grow">
+      <main className="bg-gray-50 flex-grow pt-24">
            {/* Hero Section */}
            <section className="relative text-white text-center h-[65vh] flex items-center justify-center px-4 overflow-hidden">
                 {/* Static Background Image with slow zoom effect */}
@@ -115,7 +114,7 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
           {/* Stats Section */}
           <section className="py-10">
               <div className="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
-                  <StatCard icon={Users} value={`${engineers.length}+`} label="Vetted Tech Engineers" />
+                  <StatCard icon={Users} value={`${engineers.length}+`} label="Skilled Tech Engineers" />
                   <StatCard icon={Building} value={`${MOCK_COMPANIES.length}+`} label="Active Companies" />
                   <StatCard icon={ClipboardList} value={`${jobs.length}+`} label="Jobs Posted" />
               </div>
@@ -139,7 +138,7 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
                     <Briefcase className="w-8 h-8 text-green-600" />
                   </div>
                   <h3 className="text-2xl font-bold mb-2">For Companies</h3>
-                  <p className="text-gray-600">Access a curated network of vetted AV & IT specialists. Post jobs for free and find the right talent instantly.</p>
+                  <p className="text-gray-600">Access a curated network of skilled AV & IT specialists. Post jobs for free and find the right talent instantly.</p>
                 </button>
               </div>
             </div>
@@ -168,7 +167,6 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
                   </div>
               </div>
           </section>
-          <InvestorPage />
       </main>
       <Footer onNavigate={onNavigate} />
       <HowItWorksModal 

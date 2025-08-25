@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useAppContext, Currency } from '../context/AppContext.tsx';
+import { useAppContext } from '../context/AppContext.tsx';
+import { Currency } from '../types/index.ts';
 import { X, Lightbulb } from './Icons.tsx';
 
 interface JobPostModalProps {
