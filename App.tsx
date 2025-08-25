@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from './context/AppContext.tsx';
 import { Role, Page } from './types/index.ts';
 import { LandingPage } from './views/LandingPage.tsx';
@@ -22,6 +22,11 @@ const App = () => {
     const { user } = useAppContext();
     const [page, setPage] = useState<Page>('landing');
     const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
+
+    // Scroll to top whenever the page changes
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [page]);
 
     const onNavigate = (targetPage: Page) => {
         setPage(targetPage);

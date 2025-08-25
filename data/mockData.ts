@@ -9,6 +9,11 @@ const LOCATIONS = ['London', 'Manchester', 'Birmingham', 'Leeds', 'Glasgow', 'Br
 const COMPANY_NAMES = ['Innovate', 'Synergy', 'Apex', 'Pinnacle', 'Fusion', 'Quantum', 'Starlight', 'Nexus', 'Momentum', 'Digital', 'Vision', 'Core', 'Link', 'Signal'];
 const COMPANY_SUFFIXES = ['Solutions', 'Systems', 'Integrations', 'AV', 'IT Services', 'Group', 'Ltd', 'Pro', 'Tech', 'Networks'];
 
+// DEFINE KEY ENTITIES
+const MOCK_RESOURCING_COMPANY_1: CompanyProfile = { id: 'res-1', name: 'AV Placements', avatar: 'https://i.pravatar.cc/150?u=avplacements', status: 'active', logo: 'https://i.imgur.com/2yF5t1x.png' };
+const MOCK_ADMIN_PROFILE: CompanyProfile = { id: 'admin-1', name: 'Steve Goodwin', avatar: 'https://i.imgur.com/RfjB4zR.jpg', status: 'active', logo: 'https://i.imgur.com/2yF5t1x.png' };
+
+
 // PAID AV Engineer (Independent)
 const MOCK_ENGINEER_1: EngineerProfile = {
     id: 'eng-1',
@@ -343,6 +348,7 @@ export const MOCK_COMPANIES: CompanyProfile[] = [
     { id: 'comp-1', name: 'Pro AV Solutions', avatar: 'https://i.pravatar.cc/150?u=proav', consentToFeature: true, status: 'active', logo: 'https://i.imgur.com/cO0k4Sj.png' },
     { id: 'comp-2', name: 'Starlight Events', avatar: 'https://i.pravatar.cc/150?u=starlight', consentToFeature: true, status: 'active', logo: 'https://i.imgur.com/U5n41QT.png' },
     { id: 'comp-3', name: 'Nexus IT Integrators', avatar: 'https://i.pravatar.cc/150?u=nexusit', consentToFeature: true, status: 'active', logo: 'https://i.imgur.com/dJeEvD5.png' },
+    MOCK_RESOURCING_COMPANY_1, // **FIX**: Ensure the resourcing company is in the main list
     ...generateMockCompanies(15)
 ];
 
@@ -366,9 +372,6 @@ export const MOCK_JOBS: Job[] = [
     MOCK_JOB_1,
     ...generateMockJobs(15, MOCK_COMPANIES)
 ];
-
-const MOCK_RESOURCING_COMPANY_1: CompanyProfile = { id: 'res-1', name: 'AV Placements', avatar: 'https://i.pravatar.cc/150?u=avplacements', status: 'active', logo: 'https://i.imgur.com/2yF5t1x.png' };
-const MOCK_ADMIN_PROFILE: CompanyProfile = { id: 'admin-1', name: 'Steve Goodwin', avatar: 'https://i.imgur.com/RfjB4zR.jpg', status: 'active', logo: 'https://i.imgur.com/2yF5t1x.png' };
 
 const MOCK_FREE_ENGINEER: EngineerProfile = {
     ...MOCK_ENGINEER_2,
@@ -400,10 +403,9 @@ export const ALL_MOCK_USERS: User[] = [
     })),
     ...MOCK_COMPANIES.map(profile => ({
         id: `user-comp-${profile.id}`,
-        role: Role.COMPANY,
+        role: profile.id.startsWith('res-') ? Role.RESOURCING_COMPANY : Role.COMPANY,
         profile
     })),
-     { id: 'user-res-1', role: Role.RESOURCING_COMPANY, profile: MOCK_RESOURCING_COMPANY_1 },
      { id: 'user-admin-1', role: Role.ADMIN, profile: MOCK_ADMIN_PROFILE }
 ];
 
@@ -437,7 +439,7 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     },
     {
         id: 'convo-2',
-        participantIds: ['user-eng-eng-2', 'user-res-1'], // Samantha Greene & AV Placements
+        participantIds: ['user-eng-eng-2', 'user-comp-res-1'], // Samantha Greene & AV Placements
         lastMessageTimestamp: new Date(new Date(new Date().setDate(new Date().getDate() - 1)).setHours(11, 0)),
         lastMessageText: "Yes, I'm available from that date. Please feel free to submit my profile."
     }
@@ -449,7 +451,7 @@ export const MOCK_MESSAGES: Message[] = [
     { id: 'msg-2', conversationId: 'convo-1', senderId: 'user-eng-eng-1', text: "Hi there! Thanks for reaching out. Yes, my calendar is up to date. I'm available from the 1st of August. Can you tell me more about the project?", timestamp: new Date(new Date().setHours(new Date().getHours() - 1, 50)), isRead: true },
     { id: 'msg-3', conversationId: 'convo-1', senderId: 'user-comp-comp-1', text: "It's a large corporate HQ installation. Primarily Crestron and Biamp. I can send over the spec sheet if you're interested.", timestamp: new Date(new Date().setHours(new Date().getHours() - 1, 40)), isRead: true },
     { id: 'msg-4', conversationId: 'convo-1', senderId: 'user-eng-eng-1', text: "Perfect, I've just sent over the revised quote. Let me know what you think.", timestamp: new Date(new Date().setHours(new Date().getHours() - 1)), isRead: false },
-    // Convo 2: Samantha Greene (user-eng-eng-2) & AV Placements (user-res-1)
-    { id: 'msg-5', conversationId: 'convo-2', senderId: 'user-res-1', text: "Hi Samantha, a new IT support role came up that looks like a great fit for you. Are you happy for us to put you forward?", timestamp: new Date(new Date(new Date().setDate(new Date().getDate() - 1)).setHours(10, 0)), isRead: true },
+    // Convo 2: Samantha Greene (user-eng-eng-2) & AV Placements (user-comp-res-1)
+    { id: 'msg-5', conversationId: 'convo-2', senderId: 'user-comp-res-1', text: "Hi Samantha, a new IT support role came up that looks like a great fit for you. Are you happy for us to put you forward?", timestamp: new Date(new Date(new Date().setDate(new Date().getDate() - 1)).setHours(10, 0)), isRead: true },
     { id: 'msg-6', conversationId: 'convo-2', senderId: 'user-eng-eng-2', text: "Yes, I'm available from that date. Please feel free to submit my profile.", timestamp: new Date(new Date(new Date().setDate(new Date().getDate() - 1)).setHours(11, 0)), isRead: true },
 ];
