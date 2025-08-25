@@ -156,7 +156,7 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
                     </div>
                      <div className="sm:col-span-2">
                         {isPremium ? (
-                            <DashboardPanel icon={Rocket} title="Boost Profile" description="Get to the top of search results for 24 hours." onClick={boostProfile} isFeatured={true} />
+                            <DashboardPanel icon={Rocket} title="Boost Profile" description="Get to the top of search results for 12 hours." onClick={boostProfile} isFeatured={true} />
                         ) : (
                             <DashboardPanel icon={Star} title="Upgrade to Premium" description="For £15/mo, unlock specialist roles, Boosts, and appear higher in searches." onClick={onUpgradeTier} isFeatured={true} />
                         )}

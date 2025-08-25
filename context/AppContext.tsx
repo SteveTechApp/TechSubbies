@@ -252,7 +252,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const boostProfile = () => {
         if (user && user.role === Role.ENGINEER && 'profileTier' in user.profile && user.profile.profileTier === 'paid') {
             updateEngineerProfile({ isBoosted: true });
-            alert("Your profile has been boosted! You'll appear at the top of relevant searches for 24 hours.");
+            alert("Your profile has been boosted! You'll appear at the top of relevant searches for 12 hours.");
         } else {
             alert("Profile Boost is a premium feature. Please upgrade to a Skills Profile first.");
         }

@@ -66,7 +66,7 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
                             <p className="text-4xl font-bold text-purple-600">3</p>
                             <p className="text-gray-500">Available Credits</p>
                         </div>
-                        <p className="text-xs text-center text-gray-500 mb-4">Boosts place your profile at the top of relevant search results for 24 hours.</p>
+                        <p className="text-xs text-center text-gray-500 mb-4">Boosts place your profile at the top of relevant search results for 12 hours.</p>
                         <button disabled={!isPremium} className="w-full text-center px-4 py-2 bg-purple-600 text-white font-bold rounded-md hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
                             {isPremium ? 'Purchase More Boosts' : 'Upgrade to Use Boosts'}
                         </button>
