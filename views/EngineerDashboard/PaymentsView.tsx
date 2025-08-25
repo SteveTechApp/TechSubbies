@@ -1,9 +1,10 @@
 import React from 'react';
 import { EngineerProfile } from '../../types/index.ts';
-import { CreditCard, Download, Star, Rocket } from '../../components/Icons.tsx';
+import { CreditCard, Download, Star, Rocket, ArrowLeft } from '../../components/Icons.tsx';
 
 interface PaymentsViewProps {
     profile: EngineerProfile;
+    setActiveView: (view: string) => void;
 }
 
 const BillingHistoryItem = ({ date, description, amount }: { date: string, description: string, amount: string }) => (
@@ -19,11 +20,18 @@ const BillingHistoryItem = ({ date, description, amount }: { date: string, descr
     </div>
 );
 
-export const PaymentsView = ({ profile }: PaymentsViewProps) => {
+export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
     const isPremium = profile.profileTier === 'paid';
 
     return (
         <div>
+            <button 
+                onClick={() => setActiveView('Dashboard')} 
+                className="flex items-center mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+            >
+                <ArrowLeft size={16} className="mr-2" />
+                Back to Dashboard
+            </button>
             <h1 className="text-3xl font-bold mb-4 flex items-center"><CreditCard size={32} className="mr-3 text-blue-600"/> Billing & Subscriptions</h1>
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

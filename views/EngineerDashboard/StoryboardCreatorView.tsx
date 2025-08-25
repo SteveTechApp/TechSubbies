@@ -106,11 +106,11 @@ export const StoryboardCreatorView = ({ profile, setActiveView }: { profile: Eng
     return (
         <div>
              <button 
-                onClick={() => setActiveView('Manage Profile')} 
+                onClick={() => setActiveView('Dashboard')} 
                 className="flex items-center mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
             >
                 <ArrowLeft size={16} className="mr-2" />
-                Back to Profile Management
+                Back to Dashboard
             </button>
 
             <div className="bg-white p-6 rounded-lg shadow-md">

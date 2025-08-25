@@ -121,8 +121,8 @@ const FindTalentView = ({ engineers, onSelectEngineer }: { engineers: EngineerPr
 
 
 export const CompanyDashboard = () => {
-    const { user, postJob, jobs, engineers } = useAppContext();
-    const [activeView, setActiveView] = useState('Find Talent');
+    const { user, postJob, jobs, engineers, applications } = useAppContext();
+    const [activeView, setActiveView] = useState('Dashboard');
     const [isJobModalOpen, setIsJobModalOpen] = useState(false);
     
     // State for Find Talent view
@@ -161,7 +161,7 @@ export const CompanyDashboard = () => {
         if (!user) return null;
         switch(activeView) {
             case 'Dashboard':
-                return <DashboardView user={user} myJobs={myJobs} engineers={engineers} />;
+                return <DashboardView user={user} myJobs={myJobs} engineers={engineers} applications={applications} />;
             case 'Find Talent':
                  if (talentView === 'profile' && selectedEngineer) {
                     return (

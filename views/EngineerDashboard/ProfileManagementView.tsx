@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { EngineerProfile, SelectedJobRole, CaseStudy, Discipline } from '../../types/index.ts';
 import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles.ts';
-import { Plus, Trash2, Edit, Clapperboard } from '../../components/Icons.tsx';
+import { Plus, Trash2, Edit, Clapperboard, ArrowLeft } from '../../components/Icons.tsx';
 import { EditSkillProfileModal } from '../../components/EditSkillProfileModal.tsx';
 
 const generateUniqueId = () => `id-${Math.random().toString(36).substring(2, 10)}`;
@@ -91,6 +91,14 @@ export const ProfileManagementView = ({ profile, onSave, setActiveView }: Profil
 
     return (
         <form onSubmit={(e) => { e.preventDefault(); handleSaveChanges(); }}>
+             <button 
+                type="button"
+                onClick={() => setActiveView('Dashboard')} 
+                className="flex items-center mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+            >
+                <ArrowLeft size={16} className="mr-2" />
+                Back to Dashboard
+            </button>
             <div className="flex justify-between items-center mb-4">
                 <h1 className="text-3xl font-bold">Manage Profile Details</h1>
                 <button 

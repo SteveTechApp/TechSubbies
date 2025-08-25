@@ -1,13 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { EngineerProfile } from '../../types/index.ts';
-import { ChevronLeft, ChevronRight, Download, CalendarPlus } from '../../components/Icons.tsx';
+import { ChevronLeft, ChevronRight, Download, CalendarPlus, ArrowLeft } from '../../components/Icons.tsx';
 
 interface AvailabilityViewProps {
     profile: EngineerProfile;
     onUpdateAvailability: (date: Date) => void;
+    setActiveView: (view: string) => void;
 }
 
-export const AvailabilityView = ({ profile, onUpdateAvailability }: AvailabilityViewProps) => {
+export const AvailabilityView = ({ profile, onUpdateAvailability, setActiveView }: AvailabilityViewProps) => {
     const getInitialDateString = () => {
         try {
             const date = new Date(profile.availability);
@@ -93,6 +94,13 @@ export const AvailabilityView = ({ profile, onUpdateAvailability }: Availability
 
     return (
         <div>
+            <button 
+                onClick={() => setActiveView('Dashboard')} 
+                className="flex items-center mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+            >
+                <ArrowLeft size={16} className="mr-2" />
+                Back to Dashboard
+            </button>
             <h1 className="text-3xl font-bold mb-4">My Availability</h1>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-1">

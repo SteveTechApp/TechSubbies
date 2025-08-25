@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
 import { EngineerProfile, Skill } from '../types/index.ts';
-import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
 import { EngineerProfileView } from './EngineerProfileView.tsx';
 import { DashboardView } from './EngineerDashboard/DashboardView.tsx';
 import { AvailabilityView } from './EngineerDashboard/AvailabilityView.tsx';
@@ -10,6 +9,7 @@ import { ProfileManagementView } from './EngineerDashboard/ProfileManagementView
 import { StoryboardCreatorView } from './EngineerDashboard/StoryboardCreatorView.tsx';
 import { PaymentsView } from './EngineerDashboard/PaymentsView.tsx';
 import { AIToolsView } from './EngineerDashboard/AIToolsView.tsx';
+import { ArrowLeft } from '../components/Icons.tsx';
 
 
 export const EngineerDashboard = () => {
@@ -59,20 +59,32 @@ export const EngineerDashboard = () => {
                     />
                 );
             case 'View Public Profile':
-                return <EngineerProfileView profile={engineerProfile} isEditable={false} onEdit={() => {}} />;
+                return (
+                    <div>
+                        <button 
+                            onClick={() => setActiveView('Dashboard')} 
+                            className="flex items-center mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                        >
+                            <ArrowLeft size={16} className="mr-2" />
+                            Back to Dashboard
+                        </button>
+                        <EngineerProfileView profile={engineerProfile} isEditable={false} onEdit={() => {}} />
+                    </div>
+                );
             case 'Availability':
                  return (
                     <AvailabilityView 
                         profile={engineerProfile} 
                         onUpdateAvailability={handleUpdateAvailability} 
+                        setActiveView={setActiveView}
                     />
                  );
             case 'Job Search':
-                return <JobSearchView />;
+                return <JobSearchView setActiveView={setActiveView} />;
             case 'AI Tools':
-                return <AIToolsView profile={engineerProfile} onSkillsAdded={addSkillsFromAI} />;
+                return <AIToolsView profile={engineerProfile} onSkillsAdded={addSkillsFromAI} setActiveView={setActiveView} />;
             case 'Billing':
-                return <PaymentsView profile={engineerProfile} />;
+                return <PaymentsView profile={engineerProfile} setActiveView={setActiveView} />;
             case 'Create Storyboard':
                 return <StoryboardCreatorView profile={engineerProfile} setActiveView={setActiveView} />;
             default:
@@ -86,11 +98,8 @@ export const EngineerDashboard = () => {
     };
 
     return (
-        <div className="flex">
-            <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-grow p-8 bg-gray-50 h-screen overflow-y-auto custom-scrollbar">
-                {renderActiveView()}
-            </main>
-        </div>
+        <main className="p-8 bg-gray-50 min-h-screen">
+            {renderActiveView()}
+        </main>
     );
 };
