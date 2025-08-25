@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAppContext, } from '../../context/AppContext.tsx';
 import { Job, EngineerProfile } from '../../types/index.ts';
 import { ApplyAsEngineerModal } from '../../components/ApplyAsEngineerModal.tsx';
-import { Search, MapPin, Calendar, DollarSign, Clock } from '../../components/Icons.tsx';
+import { Search, MapPin, Calendar, DollarSign, Clock, MessageCircle } from '../../components/Icons.tsx';
 
 const formatDate = (date: any): string => {
     if (!date) return 'TBD';
@@ -12,21 +12,30 @@ const formatDate = (date: any): string => {
 interface ResourcingJobCardProps {
     job: Job;
     onApply: (job: Job) => void;
+    onMessage: (companyProfileId: string) => void;
 }
 
-const ResourcingJobCard = ({ job, onApply }: ResourcingJobCardProps) => (
+const ResourcingJobCard = ({ job, onApply, onMessage }: ResourcingJobCardProps) => (
     <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200">
         <div className="flex justify-between items-start">
             <div>
                 <h3 className="text-xl font-bold text-blue-700">{job.title}</h3>
                 <p className="text-gray-500 text-sm">Posted on {formatDate(job.postedDate)}</p>
             </div>
-            <button 
-                onClick={() => onApply(job)}
-                className="bg-green-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-green-700 transition-transform transform hover:scale-105 whitespace-nowrap"
-            >
-                Apply on Behalf of...
-            </button>
+            <div className="flex items-center gap-2">
+                 <button 
+                    onClick={() => onMessage(job.companyId)}
+                    className="bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors text-sm"
+                >
+                    <MessageCircle size={16}/>
+                </button>
+                <button 
+                    onClick={() => onApply(job)}
+                    className="bg-green-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-green-700 transition-transform transform hover:scale-105 whitespace-nowrap"
+                >
+                    Apply on Behalf of...
+                </button>
+            </div>
         </div>
         <div className="my-3 text-gray-700">
             <p>{job.description.substring(0, 200)}...</p>
@@ -43,10 +52,11 @@ const ResourcingJobCard = ({ job, onApply }: ResourcingJobCardProps) => (
 
 interface FindJobsViewProps {
     managedEngineers: EngineerProfile[];
+    setActiveView: (view: string) => void;
 }
 
-export const FindJobsView = ({ managedEngineers }: FindJobsViewProps) => {
-    const { jobs, applyForJob } = useAppContext();
+export const FindJobsView = ({ managedEngineers, setActiveView }: FindJobsViewProps) => {
+    const { jobs, applyForJob, startConversationAndNavigate } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -75,6 +85,10 @@ export const FindJobsView = ({ managedEngineers }: FindJobsViewProps) => {
         handleCloseModal();
     };
 
+    const handleMessageCompany = (companyProfileId: string) => {
+        startConversationAndNavigate(companyProfileId, () => setActiveView('Messages'));
+    };
+
     return (
         <div>
             <h1 className="text-3xl font-bold mb-4">Find Jobs for Your Engineers</h1>
@@ -90,7 +104,7 @@ export const FindJobsView = ({ managedEngineers }: FindJobsViewProps) => {
             </div>
             <div className="space-y-4">
                 {filteredJobs.map(job => 
-                    <ResourcingJobCard key={job.id} job={job} onApply={handleOpenApplyModal} />
+                    <ResourcingJobCard key={job.id} job={job} onApply={handleOpenApplyModal} onMessage={handleMessageCompany} />
                 )}
             </div>
 

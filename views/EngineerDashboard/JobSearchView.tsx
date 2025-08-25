@@ -65,7 +65,7 @@ export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string)
                     <p className="text-sm text-gray-600 mb-4">Showing {filteredJobs.length} of {jobs.length} available jobs.</p>
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                         {filteredJobs.length > 0 ? (
-                            filteredJobs.map(job => <JobCard key={job.id} job={job} />)
+                            filteredJobs.map(job => <JobCard key={job.id} job={job} setActiveView={setActiveView} />)
                         ) : (
                             <div className="text-center py-10 bg-white rounded-lg shadow-sm col-span-full">
                                 <p className="font-semibold">No jobs match your search.</p>

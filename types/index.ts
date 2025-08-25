@@ -91,6 +91,7 @@ interface BaseProfile {
     id: string;
     name: string;
     avatar: string;
+    status: 'active' | 'suspended';
 }
 
 export interface EngineerProfile extends BaseProfile {
@@ -143,7 +144,7 @@ export interface User {
 
 export interface Job {
     id:string;
-    companyId: string;
+    companyId: string; // This is a profile ID
     title: string;
     description: string;
     location: string;
@@ -152,11 +153,25 @@ export interface Job {
     duration: string;
     postedDate: Date;
     startDate: Date | null;
+    status: 'active' | 'inactive';
 }
 
 export interface Application {
     jobId: string;
     engineerId: string;
+    date: Date;
+    completed?: boolean;
+    reviewed?: boolean;
+}
+
+export interface Review {
+    id: string;
+    jobId: string;
+    companyId: string;
+    engineerId: string;
+    peerRating: number; // Technical skill
+    customerRating: number; // Communication etc.
+    comment: string;
     date: Date;
 }
 
@@ -166,4 +181,21 @@ export interface TrainingProvider {
     specialties: string[]; // e.g., ['Crestron', 'Cisco', 'AWS']
 }
 
-export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'investors';
+export interface Message {
+    id: string;
+    conversationId: string;
+    senderId: string; // user.id
+    text: string;
+    timestamp: Date;
+    isRead: boolean;
+}
+
+export interface Conversation {
+    id: string;
+    participantIds: string[]; // array of user.id
+    lastMessageTimestamp: Date;
+    lastMessageText: string;
+}
+
+
+export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'investors' | 'aboutUs' | 'terms' | 'privacy';

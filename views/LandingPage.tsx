@@ -129,7 +129,7 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
                     <User className="w-8 h-8 text-blue-600" />
                   </div>
                   <h3 className="text-2xl font-bold mb-2">For Engineers</h3>
-                  <p className="text-gray-600">Showcase your skills, set your availability, and let top companies come to you. Find your next contract without the hassle.</p>
+                  <p className="text-gray-600">Create a free profile, set your availability, and upgrade to a Skills Profile to showcase specialist expertise and land top contracts.</p>
                 </button>
                 <button onClick={() => onNavigate('forCompanies')} className="text-left p-8 bg-white rounded-lg shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
                   <div className="p-3 bg-green-100 rounded-full inline-block mb-4">

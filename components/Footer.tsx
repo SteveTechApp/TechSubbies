@@ -35,12 +35,14 @@ export const Footer = ({ onNavigate, onHowItWorksClick }: FooterProps) => {
                     >
                         How It<br/>Works
                     </button>
-                    <button
-                        onClick={() => onNavigate('investors')}
-                        className={navButtonClass}
-                    >
-                        For<br/>Investors
-                    </button>
+                    <DropdownMenu triggerText={<span>Company</span>} direction="up">
+                        <button onClick={() => onNavigate('aboutUs')} className={dropdownItemClass}>About Us</button>
+                        <button onClick={() => onNavigate('investors')} className={dropdownItemClass}>For Investors</button>
+                    </DropdownMenu>
+                     <DropdownMenu triggerText={<span>Legal</span>} direction="up">
+                        <button onClick={() => onNavigate('terms')} className={dropdownItemClass}>Terms of Service</button>
+                        <button onClick={() => onNavigate('privacy')} className={dropdownItemClass}>Privacy Policy</button>
+                    </DropdownMenu>
                     {/* Invisible placeholder to align with header's login button */}
                     <div className="flex items-center justify-center text-center px-4 py-2 text-xs h-12 invisible" aria-hidden="true">
                         <LogIn className="w-4 h-4 mr-2" />

@@ -4,7 +4,7 @@ import { Role } from '../types/index.ts';
 import { NavLink } from './NavLink.tsx';
 import { 
     LayoutDashboard, User, CalendarDays, Search, Settings, PlusCircle, Briefcase, 
-    Users, Building, BarChart2, SlidersHorizontal, Edit, BrainCircuit, CreditCard
+    Users, Building, BarChart2, SlidersHorizontal, Edit, BrainCircuit, CreditCard, Mail
 } from './Icons.tsx';
 
 interface DashboardSidebarProps {
@@ -17,6 +17,7 @@ const getLinksForRole = (role: Role) => {
         case Role.ENGINEER:
             return [
                 { label: 'Dashboard', icon: LayoutDashboard }, 
+                { label: 'Messages', icon: Mail },
                 { label: 'Manage Profile', icon: Edit },
                 { label: 'View Public Profile', icon: User }, 
                 { label: 'Availability', icon: CalendarDays }, 
@@ -26,11 +27,20 @@ const getLinksForRole = (role: Role) => {
             ];
         case Role.COMPANY:
             return [
-                { label: 'Dashboard', icon: LayoutDashboard }, { label: 'Post a Job', icon: PlusCircle }, { label: 'Find Talent', icon: Search }, { label: 'My Jobs', icon: Briefcase }, { label: 'Settings', icon: Settings },
+                { label: 'Dashboard', icon: LayoutDashboard }, 
+                { label: 'Messages', icon: Mail },
+                { label: 'Post a Job', icon: PlusCircle }, 
+                { label: 'Find Talent', icon: Search }, 
+                { label: 'My Jobs', icon: Briefcase }, 
+                { label: 'Settings', icon: Settings },
             ];
         case Role.RESOURCING_COMPANY:
              return [
-                { label: 'Dashboard', icon: LayoutDashboard }, { label: 'Manage Engineers', icon: Users }, { label: 'Find Jobs', icon: Search }, { label: 'Settings', icon: Settings },
+                { label: 'Dashboard', icon: LayoutDashboard },
+                { label: 'Messages', icon: Mail },
+                { label: 'Manage Engineers', icon: Users }, 
+                { label: 'Find Jobs', icon: Search }, 
+                { label: 'Settings', icon: Settings },
             ];
         case Role.ADMIN:
             return [

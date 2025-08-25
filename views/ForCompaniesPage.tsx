@@ -53,7 +53,7 @@ export const ForCompaniesPage = ({ onNavigate, onHowItWorksClick }: ForCompanies
                                 Describe your project and requirements in minutes. Our platform is completely free for companies to post jobs and find talent. No hidden costs.
                             </FeatureCard>
                             <FeatureCard icon={Search} title="Find Skilled Specialists">
-                                Search our database of qualified engineers with advanced filters for specialist skills, day rate, and real-time availability.
+                                Search our database of qualified engineers. Use advanced filters for specialist roles, day rate, and real-time availability. Look for engineers with a premium 'Skills Profile' for the most detailed information.
                             </FeatureCard>
                             <FeatureCard icon={Handshake} title="Engage Directly. No Fees.">
                                 Connect, negotiate, and contract directly with freelancers. We get out of the way, saving you from costly placement fees and delays.

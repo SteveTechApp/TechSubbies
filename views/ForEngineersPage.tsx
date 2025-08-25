@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Footer } from '../components/Footer.tsx';
 import { Header } from '../components/Header.tsx';
 import { FeatureCard } from '../components/FeatureCard.tsx';
-import { UserCog, CalendarDays, Briefcase } from '../components/Icons.tsx';
+import { Briefcase, Star, User } from '../components/Icons.tsx';
 import { Page } from '../types/index.ts';
 
 interface ForEngineersPageProps {
@@ -49,14 +49,14 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                     <div className="container mx-auto px-4">
                         <h2 className="text-4xl font-bold text-center mb-10">The Tools You Need to Succeed</h2>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                            <FeatureCard icon={UserCog} title="Create a Powerful Profile">
-                                Go beyond a simple CV. Add specialist job roles with detailed, rated skills to prove your expertise in niche areas like Crestron, Cisco, or AWS.
+                            <FeatureCard icon={User} title="Your Basic Profile (Free)">
+                                Get started by creating your free profile. Add your core discipline, location, experience, top skills, and set your availability so companies can find you.
                             </FeatureCard>
-                            <FeatureCard icon={CalendarDays} title="Set Real-Time Availability">
-                                A simple, clear calendar shows companies you're ready for new projects. Sync it with your personal calendar to reduce unwanted contact.
+                            <FeatureCard icon={Star} title="The Skills Profile (Premium)">
+                                Supercharge your presence. Upgrade to add specialist roles, get rated on granular skills, showcase visual case studies, and appear higher in search results.
                             </FeatureCard>
-                            <FeatureCard icon={Briefcase} title="Get Matched Directly">
-                                Companies find you based on your skills and availability. Receive direct offers, negotiate terms, and manage your contracts all in one place.
+                            <FeatureCard icon={Briefcase} title="Direct Opportunities">
+                                Once your profile is live, companies can find you and message you directly about roles. No recruitment fees, just direct connections.
                             </FeatureCard>
                         </div>
                     </div>

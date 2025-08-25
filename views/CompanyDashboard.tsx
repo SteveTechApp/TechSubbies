@@ -6,8 +6,10 @@ import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
 import { JobPostModal } from '../components/JobPostModal.tsx';
 import { DashboardView } from './CompanyDashboard/DashboardView.tsx';
 import { MyJobsView } from './CompanyDashboard/MyJobsView.tsx';
+import { SettingsView } from './CompanyDashboard/SettingsView.tsx';
 import { EngineerCard } from '../components/EngineerCard.tsx';
 import { EngineerProfileView } from './EngineerProfileView.tsx';
+import { MessagesView } from './MessagesView.tsx';
 import { Search, Layers, DollarSign, ArrowLeft } from '../components/Icons.tsx';
 
 // --- NEW VIEW: FindTalentView with Autotrader-style filtering ---
@@ -121,7 +123,7 @@ const FindTalentView = ({ engineers, onSelectEngineer }: { engineers: EngineerPr
 
 
 export const CompanyDashboard = () => {
-    const { user, postJob, jobs, engineers, applications } = useAppContext();
+    const { user, postJob, jobs, engineers, applications, updateCompanyProfile } = useAppContext();
     const [activeView, setActiveView] = useState('Dashboard');
     const [isJobModalOpen, setIsJobModalOpen] = useState(false);
     
@@ -180,7 +182,11 @@ export const CompanyDashboard = () => {
                 return <FindTalentView engineers={engineers} onSelectEngineer={handleSelectEngineer} />;
             case 'Post a Job': // Intentionally fall through, modal handles it
             case 'My Jobs':
-                return <MyJobsView myJobs={myJobs} />;
+                return <MyJobsView myJobs={myJobs} setActiveView={setActiveView} />;
+            case 'Messages':
+                return <MessagesView />;
+            case 'Settings':
+                return <SettingsView profile={user.profile} onSave={updateCompanyProfile} />;
             default:
                 return (
                     <div>

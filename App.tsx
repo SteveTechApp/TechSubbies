@@ -11,6 +11,8 @@ import { ForEngineersPage } from './views/ForEngineersPage.tsx';
 import { ForCompaniesPage } from './views/ForCompaniesPage.tsx';
 import { EngineerSignUpWizard } from './views/EngineerSignUpWizard.tsx';
 import { InvestorRelationsPage } from './views/InvestorRelationsPage.tsx';
+import { AboutUsPage } from './views/AboutUsPage.tsx';
+import { LegalPage } from './views/LegalPage.tsx';
 import { AIAssistant } from './components/AIAssistant.tsx';
 import { HowItWorksModal } from './components/HowItWorksModal.tsx';
 
@@ -55,6 +57,12 @@ const App = () => {
                 return <ForCompaniesPage {...pageProps} />;
             case 'investors':
                 return <InvestorRelationsPage {...pageProps} />;
+            case 'aboutUs':
+                return <AboutUsPage {...pageProps} />;
+            case 'terms':
+                return <LegalPage documentType="terms" {...pageProps} />;
+            case 'privacy':
+                return <LegalPage documentType="privacy" {...pageProps} />;
             case 'landing':
             default:
                 return <LandingPage {...pageProps} />;

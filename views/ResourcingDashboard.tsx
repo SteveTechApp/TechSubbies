@@ -4,6 +4,7 @@ import { useAppContext } from '../context/AppContext.tsx';
 import { DashboardView } from './ResourcingDashboard/DashboardView.tsx';
 import { ManageEngineersView } from './ResourcingDashboard/ManageEngineersView.tsx';
 import { FindJobsView } from './ResourcingDashboard/FindJobsView.tsx';
+import { MessagesView } from './MessagesView.tsx';
 
 export const ResourcingDashboard = () => {
     const { user, engineers, applications } = useAppContext();
@@ -21,9 +22,11 @@ export const ResourcingDashboard = () => {
             case 'Dashboard':
                 return <DashboardView managedEngineers={managedEngineers} applications={applications} />;
             case 'Manage Engineers':
-                return <ManageEngineersView managedEngineers={managedEngineers} />;
+                return <ManageEngineersView managedEngineers={managedEngineers} setActiveView={setActiveView} />;
             case 'Find Jobs':
-                return <FindJobsView managedEngineers={managedEngineers} />;
+                return <FindJobsView managedEngineers={managedEngineers} setActiveView={setActiveView} />;
+            case 'Messages':
+                return <MessagesView />;
             case 'Settings':
                  // In a real app, this would be a dedicated settings view for the resourcing company.
                  // We can show a placeholder or a simplified view for now.

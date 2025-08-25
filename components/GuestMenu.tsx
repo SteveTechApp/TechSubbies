@@ -38,6 +38,12 @@ export const GuestMenu = ({ onHowItWorksClick, onNavigate }: GuestMenuProps) => 
                 For<br/>Investors
             </button>
             <button
+                onClick={() => onNavigate('aboutUs')}
+                className={navButtonClass}
+            >
+                About<br/>Us
+            </button>
+            <button
                 onClick={() => onNavigate('login')}
                 className={loginButtonClass}
             >

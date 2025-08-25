@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext.tsx';
-import { Job, EngineerProfile } from '../../types/index.ts';
-import { MapPin, ArrowLeft, User, Mail, Phone } from '../../components/Icons.tsx';
+import { Job, EngineerProfile, Application } from '../../types/index.ts';
+import { MapPin, ArrowLeft, User, Mail, Phone, MessageCircle, Star } from '../../components/Icons.tsx';
+import { ReviewModal } from '../../components/ReviewModal.tsx';
 
 const formatDate = (date: any): string => {
     if (!date) return 'TBD';
@@ -13,7 +14,14 @@ const formatDate = (date: any): string => {
     }
 };
 
-const ApplicantCard = ({ profile }: { profile: EngineerProfile }) => (
+interface ApplicantCardProps {
+    profile: EngineerProfile;
+    application: Application;
+    onMessage: (profileId: string) => void;
+    onReview: (profile: EngineerProfile) => void;
+}
+
+const ApplicantCard = ({ profile, application, onMessage, onReview }: ApplicantCardProps) => (
     <div className="p-4 bg-white rounded-lg shadow-md border flex items-start gap-4">
         <img src={profile.avatar} alt={profile.name} className="w-16 h-16 rounded-full border-2 border-gray-200" />
         <div className="flex-grow">
@@ -25,27 +33,60 @@ const ApplicantCard = ({ profile }: { profile: EngineerProfile }) => (
                 <span className="flex items-center"><Phone size={14} className="mr-1.5"/> {profile.contact.phone}</span>
             </div>
         </div>
-        <div className="text-right flex-shrink-0">
-            <p className="text-lg font-bold">{profile.currency}{profile.dayRate}</p>
-            <p className="text-sm text-gray-500">Day Rate</p>
-            <button className="mt-2 px-3 py-1 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600">View Full Profile</button>
+        <div className="text-right flex-shrink-0 flex flex-col items-end gap-2">
+            <div>
+                <p className="text-lg font-bold">{profile.currency}{profile.dayRate}</p>
+                <p className="text-sm text-gray-500">Day Rate</p>
+            </div>
+             <div className="flex items-center gap-2">
+                <button 
+                    onClick={() => onMessage(profile.id)}
+                    className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded-md hover:bg-gray-300 flex items-center"
+                >
+                    <MessageCircle size={14} className="mr-1.5" /> Message
+                </button>
+                <button className="px-3 py-1 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600">View Profile</button>
+                 <button 
+                    onClick={() => onReview(profile)}
+                    disabled={application.reviewed}
+                    className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 flex items-center disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                    <Star size={14} className="mr-1.5" /> {application.reviewed ? 'Reviewed' : 'Mark as Complete & Rate'}
+                </button>
+            </div>
         </div>
     </div>
 );
 
 interface MyJobsViewProps {
     myJobs: Job[];
+    setActiveView: (view: string) => void;
 }
 
-export const MyJobsView = ({ myJobs }: MyJobsViewProps) => {
-    const { applications, engineers } = useAppContext();
+export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
+    const { applications, engineers, startConversationAndNavigate, submitReview } = useAppContext();
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+    const [reviewingApplicant, setReviewingApplicant] = useState<EngineerProfile | null>(null);
 
-    const getApplicantsForJob = (jobId: string): EngineerProfile[] => {
-        const applicantIds = applications.filter(app => app.jobId === jobId).map(app => app.engineerId);
-        return engineers.filter(eng => applicantIds.includes(eng.id));
+
+    const getApplicantsForJob = (jobId: string) => {
+        return applications
+            .filter(app => app.jobId === jobId)
+            .map(app => {
+                const engineer = engineers.find(eng => eng.id === app.engineerId);
+                return { application: app, engineer };
+            })
+            .filter(item => item.engineer); // Filter out any cases where engineer wasn't found
     };
     
+    const handleMessageApplicant = (profileId: string) => {
+        startConversationAndNavigate(profileId, () => setActiveView('Messages'));
+    };
+    
+    const handleReviewApplicant = (profile: EngineerProfile) => {
+        setReviewingApplicant(profile);
+    };
+
     if (selectedJob) {
         const applicants = getApplicantsForJob(selectedJob.id);
         return (
@@ -62,12 +103,23 @@ export const MyJobsView = ({ myJobs }: MyJobsViewProps) => {
                     <p className="text-gray-600 mb-6">You have {applicants.length} applicant(s) for this role.</p>
                      {applicants.length > 0 ? (
                         <div className="space-y-4">
-                            {applicants.map(profile => <ApplicantCard key={profile.id} profile={profile} />)}
+                            {applicants.map(({ application, engineer }) => 
+                                engineer && <ApplicantCard key={engineer.id} profile={engineer} application={application} onMessage={handleMessageApplicant} onReview={handleReviewApplicant} />
+                            )}
                         </div>
                     ) : (
                         <p className="text-center text-gray-500 py-8">No applications received yet.</p>
                     )}
                 </div>
+                {reviewingApplicant && (
+                    <ReviewModal 
+                        isOpen={!!reviewingApplicant}
+                        onClose={() => setReviewingApplicant(null)}
+                        job={selectedJob}
+                        engineer={reviewingApplicant}
+                        onSubmit={submitReview}
+                    />
+                )}
             </div>
         );
     }

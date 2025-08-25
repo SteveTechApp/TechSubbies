@@ -1,4 +1,4 @@
-import { EngineerProfile, CompanyProfile, Job, User, Role, Discipline, Currency, Skill, RatedSkill } from '../types/index.ts';
+import { EngineerProfile, CompanyProfile, Job, User, Role, Discipline, Currency, Skill, RatedSkill, Conversation, Message, Application, Review } from '../types/index.ts';
 import { JOB_ROLE_DEFINITIONS } from './jobRoles.ts';
 
 // PAID AV Engineer (Independent)
@@ -9,6 +9,7 @@ const MOCK_ENGINEER_1: EngineerProfile = {
     middleName: 'John',
     surname: 'Bishop',
     title: 'Mr',
+    status: 'active',
     discipline: Discipline.AV,
     avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=1887&auto=format&fit=crop',
     location: 'London, UK',
@@ -96,6 +97,7 @@ const MOCK_ENGINEER_2: EngineerProfile = {
     firstName: 'Samantha',
     surname: 'Greene',
     title: 'Ms',
+    status: 'active',
     discipline: Discipline.IT,
     avatar: 'https://i.pravatar.cc/150?u=samanthagreene',
     location: 'Manchester, UK',
@@ -152,6 +154,7 @@ const MOCK_ENGINEER_3: EngineerProfile = {
     name: 'David Chen',
     firstName: 'David',
     surname: 'Chen',
+    status: 'active',
     discipline: Discipline.IT,
     avatar: 'https://i.pravatar.cc/150?u=davidchen',
     location: 'Birmingham, UK',
@@ -233,6 +236,7 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
             name: name,
             firstName: firstName,
             surname: lastName,
+            status: 'active',
             discipline: discipline,
             avatar: `https://i.pravatar.cc/150?u=${name.replace(' ', '')}`,
             location: `${getRandom(LOCATIONS)}, UK`,
@@ -282,6 +286,7 @@ const generateMockCompanies = (count: number): CompanyProfile[] => {
         companies.push({
             id: `gen-comp-${i}`,
             name: name,
+            status: 'active',
             avatar: `https://i.pravatar.cc/150?u=${name.replace(/\s/g, '')}`,
             website: `www.${name.replace(/\s/g, '').toLowerCase()}.com`,
             consentToFeature: Math.random() < 0.2, // ~20% of companies consent to be featured
@@ -311,6 +316,7 @@ const generateMockJobs = (count: number, companies: CompanyProfile[]): Job[] => 
             duration: getRandom(DURATIONS),
             postedDate: new Date(new Date().getTime() - getRandomInt(1, 30) * 24 * 60 * 60 * 1000),
             startDate: new Date(new Date().getTime() + getRandomInt(1, 60) * 24 * 60 * 60 * 1000),
+            status: 'active',
         };
         
         jobs.push(job);
@@ -322,9 +328,9 @@ const generateMockJobs = (count: number, companies: CompanyProfile[]): Job[] => 
 export const MOCK_ENGINEERS = [MOCK_ENGINEER_1, MOCK_ENGINEER_2, MOCK_ENGINEER_3, ...generateMockEngineers(20)];
 
 export const MOCK_COMPANIES: CompanyProfile[] = [
-    { id: 'comp-1', name: 'Pro AV Solutions', avatar: 'https://i.pravatar.cc/150?u=proav', consentToFeature: true },
-    { id: 'comp-2', name: 'Starlight Events', avatar: 'https://i.pravatar.cc/150?u=starlight', consentToFeature: true },
-    { id: 'comp-3', name: 'Nexus IT Integrators', avatar: 'https://i.pravatar.cc/150?u=nexusit', consentToFeature: true },
+    { id: 'comp-1', name: 'Pro AV Solutions', avatar: 'https://i.pravatar.cc/150?u=proav', consentToFeature: true, status: 'active' },
+    { id: 'comp-2', name: 'Starlight Events', avatar: 'https://i.pravatar.cc/150?u=starlight', consentToFeature: true, status: 'active' },
+    { id: 'comp-3', name: 'Nexus IT Integrators', avatar: 'https://i.pravatar.cc/150?u=nexusit', consentToFeature: true, status: 'active' },
     ...generateMockCompanies(15)
 ];
 
@@ -341,6 +347,7 @@ const MOCK_JOB_1: Job = {
     duration: '6 weeks',
     postedDate: new Date('2024-06-15'),
     startDate: new Date('2024-07-29'),
+    status: 'active',
 };
 
 export const MOCK_JOBS: Job[] = [
@@ -348,8 +355,8 @@ export const MOCK_JOBS: Job[] = [
     ...generateMockJobs(15, MOCK_COMPANIES)
 ];
 
-const MOCK_RESOURCING_COMPANY_1: CompanyProfile = { id: 'res-1', name: 'AV Placements', avatar: 'https://i.pravatar.cc/150?u=avplacements' };
-const MOCK_ADMIN_PROFILE: CompanyProfile = { id: 'admin-1', name: 'Steve Goodwin', avatar: 'https://i.pravatar.cc/150?u=stevegoodwin' };
+const MOCK_RESOURCING_COMPANY_1: CompanyProfile = { id: 'res-1', name: 'AV Placements', avatar: 'https://i.pravatar.cc/150?u=avplacements', status: 'active' };
+const MOCK_ADMIN_PROFILE: CompanyProfile = { id: 'admin-1', name: 'Steve Goodwin', avatar: 'https://i.imgur.com/RfjB4zR.jpg', status: 'active' };
 
 const MOCK_FREE_ENGINEER: EngineerProfile = {
     ...MOCK_ENGINEER_2,
@@ -357,9 +364,11 @@ const MOCK_FREE_ENGINEER: EngineerProfile = {
     name: 'Emily Carter',
     firstName: 'Emily',
     surname: 'Carter',
+    status: 'active',
     avatar: 'https://i.pravatar.cc/150?u=emilycarter',
     profileTier: 'free',
     resourcingCompanyId: undefined,
+    contact: { ...MOCK_ENGINEER_2.contact, email: 'emily.carter@example.com' },
 };
 export const MOCK_USER_FREE_ENGINEER: User = { id: 'user-free', role: Role.ENGINEER, profile: MOCK_FREE_ENGINEER };
 
@@ -370,3 +379,65 @@ export const MOCK_USERS: { [key in Role]: User } = {
     [Role.RESOURCING_COMPANY]: { id: 'user-3', role: Role.RESOURCING_COMPANY, profile: MOCK_RESOURCING_COMPANY_1 },
     [Role.ADMIN]: { id: 'user-4', role: Role.ADMIN, profile: MOCK_ADMIN_PROFILE },
 };
+
+export const ALL_MOCK_USERS: User[] = [
+    ...MOCK_ENGINEERS.map((profile, i) => ({
+        id: `user-eng-${profile.id}`,
+        role: Role.ENGINEER,
+        profile
+    })),
+    ...MOCK_COMPANIES.map(profile => ({
+        id: `user-comp-${profile.id}`,
+        role: Role.COMPANY,
+        profile
+    })),
+     { id: 'user-res-1', role: Role.RESOURCING_COMPANY, profile: MOCK_RESOURCING_COMPANY_1 },
+     { id: 'user-admin-1', role: Role.ADMIN, profile: MOCK_ADMIN_PROFILE }
+];
+
+export const MOCK_APPLICATIONS: Application[] = [
+    { jobId: 'job-1', engineerId: 'eng-1', date: new Date('2024-06-20'), completed: true, reviewed: true },
+    { jobId: 'job-1', engineerId: 'gen-eng-5', date: new Date('2024-06-21'), completed: false, reviewed: false },
+    { jobId: 'gen-job-1', engineerId: 'eng-2', date: new Date('2024-07-01'), completed: true, reviewed: false },
+];
+
+export const MOCK_REVIEWS: Review[] = [
+    { 
+        id: 'rev-1',
+        jobId: 'job-1',
+        companyId: 'comp-1',
+        engineerId: 'eng-1',
+        peerRating: 5, // Technical
+        customerRating: 5, // Communication
+        comment: "Neil was an absolute professional. His expertise in Crestron was evident from day one and he was a pleasure to have on site. Highly recommended.",
+        date: new Date('2024-07-28')
+    },
+];
+
+
+// --- MESSAGING MOCK DATA ---
+export const MOCK_CONVERSATIONS: Conversation[] = [
+    {
+        id: 'convo-1',
+        participantIds: ['user-eng-eng-1', 'user-comp-comp-1'], // Neil Bishop & Pro AV
+        lastMessageTimestamp: new Date(new Date().setHours(new Date().getHours() - 1)),
+        lastMessageText: "Perfect, I've just sent over the revised quote. Let me know what you think."
+    },
+    {
+        id: 'convo-2',
+        participantIds: ['user-eng-eng-2', 'user-res-1'], // Samantha Greene & AV Placements
+        lastMessageTimestamp: new Date(new Date(new Date().setDate(new Date().getDate() - 1)).setHours(11, 0)),
+        lastMessageText: "Yes, I'm available from that date. Please feel free to submit my profile."
+    }
+];
+
+export const MOCK_MESSAGES: Message[] = [
+    // Convo 1: Neil Bishop (user-eng-eng-1) & Pro AV (user-comp-comp-1)
+    { id: 'msg-1', conversationId: 'convo-1', senderId: 'user-comp-comp-1', text: "Hi Neil, we were impressed with your profile. We have a project starting soon, are you available?", timestamp: new Date(new Date().setHours(new Date().getHours() - 2)), isRead: true },
+    { id: 'msg-2', conversationId: 'convo-1', senderId: 'user-eng-eng-1', text: "Hi there! Thanks for reaching out. Yes, my calendar is up to date. I'm available from the 1st of August. Can you tell me more about the project?", timestamp: new Date(new Date().setHours(new Date().getHours() - 1, 50)), isRead: true },
+    { id: 'msg-3', conversationId: 'convo-1', senderId: 'user-comp-comp-1', text: "It's a large corporate HQ installation. Primarily Crestron and Biamp. I can send over the spec sheet if you're interested.", timestamp: new Date(new Date().setHours(new Date().getHours() - 1, 40)), isRead: true },
+    { id: 'msg-4', conversationId: 'convo-1', senderId: 'user-eng-eng-1', text: "Perfect, I've just sent over the revised quote. Let me know what you think.", timestamp: new Date(new Date().setHours(new Date().getHours() - 1)), isRead: false },
+    // Convo 2: Samantha Greene (user-eng-eng-2) & AV Placements (user-res-1)
+    { id: 'msg-5', conversationId: 'convo-2', senderId: 'user-res-1', text: "Hi Samantha, a new IT support role came up that looks like a great fit for you. Are you happy for us to put you forward?", timestamp: new Date(new Date(new Date().setDate(new Date().getDate() - 1)).setHours(10, 0)), isRead: true },
+    { id: 'msg-6', conversationId: 'convo-2', senderId: 'user-eng-eng-2', text: "Yes, I'm available from that date. Please feel free to submit my profile.", timestamp: new Date(new Date(new Date().setDate(new Date().getDate() - 1)).setHours(11, 0)), isRead: true },
+];
