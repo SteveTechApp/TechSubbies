@@ -2,8 +2,9 @@ import React from 'react';
 import { EngineerProfile } from '../../types/index.ts';
 import { 
     Edit, User, CalendarDays, Search, BrainCircuit, CreditCard, 
-    Clapperboard, Rocket, Star, CheckCircle, ArrowRight, TrendingUp, Mail
+    Clapperboard, Rocket, Star, CheckCircle, ArrowRight, TrendingUp, Mail, ShieldCheck
 } from '../../components/Icons.tsx';
+import { useAppContext } from '../../context/AppContext.tsx';
 
 interface DashboardPanelProps {
     icon: React.ComponentType<any>;
@@ -114,6 +115,7 @@ interface DashboardViewProps {
 }
 
 export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, boostProfile }: DashboardViewProps) => {
+    const { reactivateProfile } = useAppContext();
     const isPremium = engineerProfile.profileTier === 'paid';
     const firstName = engineerProfile.name.split(' ')[0];
 
@@ -140,6 +142,19 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
         <div>
             <h1 className="text-3xl font-bold mb-1">Welcome back, {firstName}!</h1>
             <p className="text-gray-500 mb-6">This is your command center for managing your freelance career.</p>
+
+            {engineerProfile.status === 'inactive' && (
+                 <div className="p-4 mb-6 bg-orange-100 border-l-4 border-orange-500 text-orange-700">
+                    <div className="flex">
+                        <div className="py-1"><svg className="fill-current h-6 w-6 text-orange-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zM9 5v6h2V5H9zm0 8v2h2v-2H9z"/></svg></div>
+                        <div>
+                            <p className="font-bold">Your Profile is Inactive</p>
+                            <p className="text-sm">Your profile is currently hidden from search results. Reactivate it to become visible to companies again.</p>
+                             <button onClick={reactivateProfile} className="mt-2 px-3 py-1 bg-orange-500 text-white text-sm font-bold rounded hover:bg-orange-600">Reactivate Profile</button>
+                        </div>
+                    </div>
+                </div>
+            )}
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 

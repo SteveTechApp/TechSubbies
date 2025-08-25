@@ -22,6 +22,7 @@ interface AppContextType {
     companies: CompanyProfile[];
     engineers: EngineerProfile[];
     login: (role: Role, isFreeTier?: boolean) => void;
+    loginAsSteve: () => void; // New login function for Steve's engineer profile
     logout: () => void;
     updateEngineerProfile: (updatedProfile: Partial<EngineerProfile>) => void;
     updateCompanyProfile: (updatedProfile: Partial<CompanyProfile>) => void;
@@ -32,6 +33,8 @@ interface AppContextType {
     applyForJob: (jobId: string, engineerId?: string) => void;
     createAndLoginEngineer: (data: any) => void;
     boostProfile: () => void;
+    claimSecurityNetGuarantee: () => void;
+    reactivateProfile: () => void;
     chatSession: Chat | null;
     // Messaging
     conversations: Conversation[];
@@ -107,6 +110,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         
         setUser(userToLogin);
     };
+
+    const loginAsSteve = () => {
+        const steveUser = allUsers.find(u => u.profile.id === 'eng-steve');
+        if (steveUser) {
+            if (steveUser.profile.status === 'suspended') {
+                alert("This account has been suspended. Please contact support.");
+                return;
+            }
+            setUser(steveUser);
+        } else {
+            alert("Could not find Steve Goodwin's engineer profile.");
+        }
+    };
+
 
     const logout = () => {
         setUser(null);
@@ -200,9 +217,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (user && 'skills' in user.profile) {
             const trialEndDate = new Date();
             trialEndDate.setDate(trialEndDate.getDate() + 30);
+            const subscriptionEndDate = new Date(trialEndDate);
+            
             updateEngineerProfile({ 
                 profileTier: 'paid',
-                trialEndDate: trialEndDate 
+                trialEndDate: trialEndDate,
+                subscriptionEndDate: subscriptionEndDate,
+                securityNetCreditsUsed: 0,
             });
             alert("30-Day Skills Profile trial started! You now have access to all premium features.");
         }
@@ -257,6 +278,64 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             alert("Profile Boost is a premium feature. Please upgrade to a Skills Profile first.");
         }
     };
+    
+    // --- Security Net Guarantee ---
+    const claimSecurityNetGuarantee = () => {
+        if (!user || user.role !== Role.ENGINEER || !('profileTier' in user.profile)) return;
+        
+        const profile = user.profile as EngineerProfile;
+
+        if (profile.profileTier !== 'paid') {
+            alert("The Security Net Guarantee is only for paid Skills Profile subscribers.");
+            return;
+        }
+
+        const creditsUsed = profile.securityNetCreditsUsed ?? 0;
+        if (creditsUsed >= 3) {
+            alert("You have already used all of your Security Net credits.");
+            return;
+        }
+
+        // MOCK: Check for "offers" by checking conversations with companies
+        const companyUserIds = new Set(allUsers.filter(u => u.role === Role.COMPANY).map(u => u.id));
+        const hasCompanyConversations = conversations.some(c => 
+            c.participantIds.includes(user.id) && c.participantIds.some(pId => companyUserIds.has(pId))
+        );
+
+        if (hasCompanyConversations) {
+            alert("Our records show you have been in contact with companies. If you believe this is an error, please contact support.");
+            return;
+        }
+        
+        // MOCK: Check if they've been subscribed for 30 days. We'll just approve it for the demo.
+        const newCreditsUsed = creditsUsed + 1;
+        const currentSubEnd = profile.subscriptionEndDate ? new Date(profile.subscriptionEndDate) : new Date();
+        const newSubEnd = new Date(currentSubEnd.setDate(currentSubEnd.getDate() + 30));
+
+        let newStatus = profile.status;
+        let alertMessage = `Your claim has been approved! Your subscription has been extended by one month to ${newSubEnd.toLocaleDateString()}. You have used ${newCreditsUsed} of 3 credits.`;
+
+        if (newCreditsUsed >= 3) {
+            newStatus = 'inactive';
+            alertMessage += "\n\nYou have now used all available credits. To ensure companies see an active talent pool, your profile has been marked as inactive and will be hidden from search results. You can reactivate it from your dashboard at any time.";
+        }
+        
+        updateEngineerProfile({
+            securityNetCreditsUsed: newCreditsUsed,
+            subscriptionEndDate: newSubEnd,
+            status: newStatus,
+        });
+
+        alert(alertMessage);
+    };
+
+    const reactivateProfile = () => {
+        if (user && 'status' in user.profile && user.profile.status === 'inactive') {
+            updateEngineerProfile({ status: 'active' });
+            alert("Your profile has been reactivated and is now visible in search results.");
+        }
+    };
+
 
     // --- Messaging Methods ---
     const sendMessage = (conversationId: string, text: string) => {
@@ -379,7 +458,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     };
 
 
-    const value = { user, allUsers, jobs, companies, engineers, login, logout, updateEngineerProfile, updateCompanyProfile, postJob, startTrial, geminiService, applications, applyForJob, createAndLoginEngineer, boostProfile, chatSession, conversations, messages, selectedConversationId, setSelectedConversationId, findUserById, findUserByProfileId, sendMessage, startConversationAndNavigate, reviews, submitReview, toggleUserStatus, toggleJobStatus };
+    const value = { user, allUsers, jobs, companies, engineers, login, loginAsSteve, logout, updateEngineerProfile, updateCompanyProfile, postJob, startTrial, geminiService, applications, applyForJob, createAndLoginEngineer, boostProfile, claimSecurityNetGuarantee, reactivateProfile, chatSession, conversations, messages, selectedConversationId, setSelectedConversationId, findUserById, findUserByProfileId, sendMessage, startConversationAndNavigate, reviews, submitReview, toggleUserStatus, toggleJobStatus };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

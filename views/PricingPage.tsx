@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Footer } from '../components/Footer.tsx';
 import { Header } from '../components/Header.tsx';
 import { Page, Currency } from '../types/index.ts';
-import { CheckCircle, Users, Briefcase, Rocket } from '../components/Icons.tsx';
+import { CheckCircle, Users, Briefcase, Rocket, ShieldCheck } from '../components/Icons.tsx';
 
 interface PricingPageProps {
     onNavigate: (page: Page) => void;
@@ -157,7 +157,8 @@ export const PricingPage = ({ onNavigate, onHowItWorksClick }: PricingPageProps)
                                         Unlock Profile Boosts 
                                         (<Rocket size={14} className="inline-block mx-1"/> 
                                         <strong>{PRICING_DATA.engineer.boosts.bundle.count} for {getPrice(PRICING_DATA.engineer.boosts.bundle.gbp)}</strong>)
-                                    </>
+                                    </>,
+                                    <span className="flex items-center gap-1.5"><ShieldCheck size={16} className="text-blue-500"/> <strong>Security Net Guarantee</strong> for peace of mind</span>
                                 ]}
                                 ctaText="Start 30-Day Free Trial"
                                 onCtaClick={() => onNavigate('engineerSignUp')}
@@ -230,6 +231,10 @@ export const PricingPage = ({ onNavigate, onHowItWorksClick }: PricingPageProps)
                             <div>
                                 <h3 className="font-semibold text-lg">Is it really free for companies to post jobs?</h3>
                                 <p className="text-gray-600 mt-1">Yes, 100%. Companies can post as many jobs as they like and search the talent database for free. We believe in removing all barriers to connecting talent with opportunity.</p>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-lg">What is the Security Net Guarantee?</h3>
+                                <p className="text-gray-600 mt-1">It's our promise to paid subscribers. If you're available for over 30 days and don't receive any offers, we'll credit you with a free month of subscription. You can claim this up to 3 times. It's our way of showing we're invested in your success.</p>
                             </div>
                             <div>
                                 <h3 className="font-semibold text-lg">Can I cancel my subscription at any time?</h3>

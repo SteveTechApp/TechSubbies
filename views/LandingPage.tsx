@@ -74,7 +74,7 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
       <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
       <main className="bg-gray-50 flex-grow pt-24">
            {/* Hero Section */}
-           <section className="relative text-white text-center h-[65vh] flex items-center justify-center px-4 overflow-hidden">
+           <section className="relative text-white text-center h-screen flex items-center justify-center px-4 overflow-hidden">
                 {/* Static Background Image with slow zoom effect */}
                 <div
                     className="absolute inset-0 bg-cover bg-center z-0 slow-zoom"

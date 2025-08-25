@@ -91,7 +91,7 @@ interface BaseProfile {
     id: string;
     name: string;
     avatar: string;
-    status: 'active' | 'suspended';
+    status: 'active' | 'suspended' | 'inactive';
 }
 
 export interface EngineerProfile extends BaseProfile {
@@ -109,6 +109,8 @@ export interface EngineerProfile extends BaseProfile {
     profileTier: 'free' | 'paid';
     resourcingCompanyId?: string; // ID of the managing resourcing company
     trialEndDate?: Date; // NEW: For managing Skills Profile trials
+    subscriptionEndDate?: Date; // NEW: For Security Net Guarantee
+    securityNetCreditsUsed?: number; // NEW: For Security Net Guarantee
     title?: string;
     firstName: string;
     middleName?: string;

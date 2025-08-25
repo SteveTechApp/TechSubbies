@@ -11,7 +11,7 @@ interface LoginSelectorProps {
 }
 
 export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
-    const { login } = useAppContext();
+    const { login, loginAsSteve } = useAppContext();
     const [activeTab, setActiveTab] = useState('signin');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -24,6 +24,9 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
         // This is a mock authentication system based on email.
         // In a real app, you would send email and password to a server.
         switch (email.toLowerCase()) {
+            case 'steve.goodwin@techsubbies.com':
+                loginAsSteve();
+                break;
             case 'neil.bishop@example.com':
                 login(Role.ENGINEER, false); // Premium Engineer
                 break;
@@ -102,6 +105,7 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
                                 <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-md">
                                     <strong>Demo Logins:</strong>
                                     <ul className="list-disc pl-4 mt-1">
+                                        <li><code className="bg-gray-200 px-1 rounded">steve.goodwin@techsubbies.com</code> (Founder/Engineer)</li>
                                         <li><code className="bg-gray-200 px-1 rounded">neil.bishop@example.com</code> (Premium Engineer)</li>
                                         <li><code className="bg-gray-200 px-1 rounded">emily.carter@example.com</code> (Free Engineer)</li>
                                         <li><code className="bg-gray-200 px-1 rounded">contact@proav.com</code> (Company)</li>

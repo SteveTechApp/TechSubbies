@@ -24,7 +24,7 @@ export const DropdownMenu = ({ triggerText, children, isLanding = false, directi
             onMouseEnter={() => setIsOpen(true)} 
             onMouseLeave={() => setIsOpen(false)}
         >
-            <button className={`flex items-center px-4 py-2 transition-colors font-medium text-xs text-center h-12 ${triggerColor}`}>
+            <button className={`flex items-center px-4 py-2 transition-colors font-medium text-xs text-center ${triggerColor}`}>
                 {triggerText}
                 <ChevronDown className={`w-4 h-4 ml-1 transition-transform duration-200 ${isOpen && direction === 'down' ? 'rotate-180' : ''} ${isOpen && direction === 'up' ? '-rotate-180' : ''}`} />
             </button>

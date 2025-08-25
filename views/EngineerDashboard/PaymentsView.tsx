@@ -1,6 +1,8 @@
 import React from 'react';
 import { EngineerProfile } from '../../types/index.ts';
-import { CreditCard, Download, Star, Rocket, ArrowLeft } from '../../components/Icons.tsx';
+import { CreditCard, Download, Star, Rocket, ArrowLeft, ShieldCheck } from '../../components/Icons.tsx';
+import { useAppContext } from '../../context/AppContext.tsx';
+
 
 interface PaymentsViewProps {
     profile: EngineerProfile;
@@ -21,7 +23,9 @@ const BillingHistoryItem = ({ date, description, amount }: { date: string, descr
 );
 
 export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
+    const { claimSecurityNetGuarantee } = useAppContext();
     const isPremium = profile.profileTier === 'paid';
+    const creditsUsed = profile.securityNetCreditsUsed ?? 0;
 
     return (
         <div>
@@ -36,7 +40,7 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                {/* Subscription Management */}
+                {/* Left Column */}
                 <div className="lg:col-span-1 space-y-6">
                     <div className="bg-white p-5 rounded-lg shadow">
                         <h2 className="text-xl font-bold mb-3 flex items-center">
@@ -45,8 +49,13 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
                         </h2>
                         {isPremium ? (
                             <div>
-                                <p className="text-gray-600">You are currently subscribed to the <span className="font-bold text-green-700">Skills Profile (Premium)</span> plan.</p>
-                                <p className="text-sm text-gray-500 mt-2">Next billing date: August 25, 2024</p>
+                                <p className="text-gray-600">You are on the <span className="font-bold text-green-700">Skills Profile (Premium)</span> plan.</p>
+                                <p className="text-sm text-gray-500 mt-2">
+                                    {profile.subscriptionEndDate 
+                                        ? `Renews on: ${new Date(profile.subscriptionEndDate).toLocaleDateString()}`
+                                        : 'No renewal date set.'
+                                    }
+                                </p>
                                 <button className="mt-4 w-full text-center px-4 py-2 bg-red-100 text-red-700 text-sm font-semibold rounded-md hover:bg-red-200">Cancel Subscription</button>
                             </div>
                         ) : (
@@ -73,14 +82,41 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
                     </div>
                 </div>
 
-                {/* Billing History */}
-                <div className="lg:col-span-2 bg-white p-5 rounded-lg shadow">
-                    <h2 className="text-xl font-bold mb-3">Billing History</h2>
-                    <div>
-                        <BillingHistoryItem date="July 25, 2024" description="Skills Profile Subscription" amount="£15.00" />
-                        <BillingHistoryItem date="July 10, 2024" description="Profile Boost Credits (x5)" amount="£20.00" />
-                        <BillingHistoryItem date="June 25, 2024" description="Skills Profile Subscription" amount="£15.00" />
-                        <BillingHistoryItem date="May 25, 2024" description="Skills Profile Subscription" amount="£15.00" />
+                {/* Right Column */}
+                <div className="lg:col-span-2 space-y-6">
+                     <div className="bg-white p-5 rounded-lg shadow">
+                        <h2 className="text-xl font-bold mb-3 flex items-center">
+                            <ShieldCheck size={20} className="mr-2 text-blue-500"/>
+                            Security Net Guarantee
+                        </h2>
+                        {isPremium ? (
+                            <div>
+                                <p className="text-gray-600 mb-4">If you're available for over 30 days and don't receive any work offers, we'll credit you with an additional month's subscription, up to 3 times.</p>
+                                <div className="text-center mb-4 p-4 bg-gray-50 rounded-md">
+                                    <p className="text-4xl font-bold text-blue-600">{creditsUsed} / 3</p>
+                                    <p className="text-gray-500">Credits Used</p>
+                                </div>
+                                <button
+                                    onClick={claimSecurityNetGuarantee}
+                                    disabled={creditsUsed >= 3}
+                                    className="w-full text-center px-4 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                >
+                                    {creditsUsed >= 3 ? 'All Credits Used' : 'Claim Free Month'}
+                                </button>
+                            </div>
+                        ) : (
+                             <p className="text-gray-600">Upgrade to a Skills Profile to be covered by our Security Net Guarantee.</p>
+                        )}
+                     </div>
+
+                    <div className="bg-white p-5 rounded-lg shadow">
+                        <h2 className="text-xl font-bold mb-3">Billing History</h2>
+                        <div>
+                            <BillingHistoryItem date="July 25, 2024" description="Skills Profile Subscription" amount="£15.00" />
+                            <BillingHistoryItem date="July 10, 2024" description="Profile Boost Credits (x5)" amount="£20.00" />
+                            <BillingHistoryItem date="June 25, 2024" description="Skills Profile Subscription" amount="£15.00" />
+                            <BillingHistoryItem date="May 25, 2024" description="Skills Profile Subscription" amount="£15.00" />
+                        </div>
                     </div>
                 </div>
 

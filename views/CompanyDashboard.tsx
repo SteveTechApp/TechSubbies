@@ -80,6 +80,9 @@ const FindTalentView = ({ engineers, onSelectEngineer }: { engineers: EngineerPr
                 matchScore: calculateMatchScore(eng),
             }))
             .filter(eng => {
+                // Only show active engineers
+                if (eng.status !== 'active') return false;
+
                 // Main rate filter
                 if (eng.dayRate > filters.maxRate) return false;
                 
@@ -159,7 +162,7 @@ const FindTalentView = ({ engineers, onSelectEngineer }: { engineers: EngineerPr
             {/* Results */}
             <main className="flex-1 bg-gray-50 overflow-y-auto custom-scrollbar pr-2">
                  <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
-                     <p className="text-sm text-gray-600 mb-2 sm:mb-0">Showing {processedEngineers.length} of {engineers.length} engineers.</p>
+                     <p className="text-sm text-gray-600 mb-2 sm:mb-0">Showing {processedEngineers.length} of {engineers.filter(e => e.status === 'active').length} active engineers.</p>
                      <div className="flex items-center gap-2">
                          <label htmlFor="sort" className="text-sm font-medium text-gray-700">Sort by:</label>
                          <select id="sort" name="sort" value={sort} onChange={(e) => setSort(e.target.value)} className="text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 bg-white">
