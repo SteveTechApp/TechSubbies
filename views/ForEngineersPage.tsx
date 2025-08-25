@@ -53,7 +53,7 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                                 Get started by creating your free profile. Add your core discipline, location, experience, top skills, and set your availability so companies can find you.
                             </FeatureCard>
                             <FeatureCard icon={Star} title="The Skills Profile (Premium)">
-                                Supercharge your presence. Upgrade to add specialist roles, get rated on granular skills, showcase visual case studies, and appear higher in search results.
+                                Supercharge your presence for just <strong>£15/month</strong>. Upgrade to add specialist roles, get rated on granular skills, showcase visual case studies, and appear higher in search results.
                             </FeatureCard>
                             <FeatureCard icon={Briefcase} title="Direct Opportunities">
                                 Once your profile is live, companies can find you and message you directly about roles. No recruitment fees, just direct connections.

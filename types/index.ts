@@ -198,4 +198,4 @@ export interface Conversation {
 }
 
 
-export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'investors' | 'aboutUs' | 'terms' | 'privacy';
+export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'investors' | 'aboutUs' | 'terms' | 'privacy' | 'pricing';

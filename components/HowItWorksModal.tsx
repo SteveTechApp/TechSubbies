@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, PenSquare, Search, Handshake, Users, Briefcase, Star } from './Icons.tsx';
+import { Page } from '../types/index.ts';
 
 interface StepProps {
     icon: React.ComponentType<any>;
@@ -18,10 +19,16 @@ const Step = ({ icon: Icon, title, description }: StepProps) => (
 interface HowItWorksModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onNavigate: (page: Page) => void;
 }
 
-export const HowItWorksModal = ({ isOpen, onClose }: HowItWorksModalProps) => {
+export const HowItWorksModal = ({ isOpen, onClose, onNavigate }: HowItWorksModalProps) => {
     if (!isOpen) return null;
+    
+    const handleNavigate = (page: Page) => {
+        onNavigate(page);
+        onClose();
+    };
 
     return (
         <div
@@ -29,7 +36,7 @@ export const HowItWorksModal = ({ isOpen, onClose }: HowItWorksModalProps) => {
             onClick={onClose}
         >
             <div
-                className="bg-white rounded-lg p-8 m-4 max-w-4xl w-full relative transform transition-all duration-300 scale-100"
+                className="bg-white rounded-lg p-8 m-4 max-w-5xl w-full relative transform transition-all duration-300 scale-100"
                 onClick={(e) => e.stopPropagation()}
             >
                 <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
@@ -67,6 +74,17 @@ export const HowItWorksModal = ({ isOpen, onClose }: HowItWorksModalProps) => {
                             />
                         </div>
                     </div>
+                </div>
+                
+                <div className="mt-10 pt-6 border-t text-center">
+                    <h3 className="text-xl font-bold text-gray-800">Ready to Get Started?</h3>
+                    <p className="text-gray-600 my-2">Join the network and take control of your freelance career today.</p>
+                    <button 
+                        onClick={() => handleNavigate('engineerSignUp')} 
+                        className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 mt-2"
+                    >
+                        Create Your Profile Now
+                    </button>
                 </div>
             </div>
         </div>

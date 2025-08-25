@@ -77,3 +77,7 @@ export const Upload = createIcon(<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2
 export const Clapperboard = createIcon(<><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3L20.2 6Z" /><path d="m3.3 11.2 13.5-4" /><path d="m16.5 12.3-1.8-5.8" /><path d="m11.5 15.3-1.8-5.8" /><path d="m6.5 18.3-1.8-5.8" /><path d="M21 12c-1.9 0-3.5-1-4.5-2.5s-1-3.5-1-3.5-2 2-4.5 2.5-4.5 1-4.5 1L1 22h22l-2-10Z" /></>);
 export const CreditCard = createIcon(<><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></>);
 export const MessageCircle = createIcon(<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />);
+export const Menu = createIcon(<><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></>);
+export const Instagram = createIcon(<><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></>);
+export const Facebook = createIcon(<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>);
+export const XIcon = createIcon(<path d="m18 6-12 12M6 6l12 12" />);

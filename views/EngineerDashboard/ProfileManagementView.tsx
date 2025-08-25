@@ -15,7 +15,7 @@ interface ProfileManagementViewProps {
 const UpgradeCta = () => (
     <div className="text-center p-8 bg-gray-100 rounded-lg border-2 border-dashed">
         <h3 className="text-xl font-bold text-gray-800">This is a Premium Feature</h3>
-        <p className="text-gray-600 mt-2">Upgrade to a "Skills Profile" to add specialist roles and showcase your detailed expertise to top companies.</p>
+        <p className="text-gray-600 mt-2">Upgrade to a "Skills Profile" for just £15/month to add specialist roles and showcase your detailed expertise to top companies.</p>
         <button className="mt-4 bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700">Upgrade Now</button>
     </div>
 );

@@ -13,6 +13,7 @@ import { EngineerSignUpWizard } from './views/EngineerSignUpWizard.tsx';
 import { InvestorRelationsPage } from './views/InvestorRelationsPage.tsx';
 import { AboutUsPage } from './views/AboutUsPage.tsx';
 import { LegalPage } from './views/LegalPage.tsx';
+import { PricingPage } from './views/PricingPage.tsx';
 import { AIAssistant } from './components/AIAssistant.tsx';
 import { HowItWorksModal } from './components/HowItWorksModal.tsx';
 
@@ -63,6 +64,8 @@ const App = () => {
                 return <LegalPage documentType="terms" {...pageProps} />;
             case 'privacy':
                 return <LegalPage documentType="privacy" {...pageProps} />;
+            case 'pricing':
+                return <PricingPage {...pageProps} />;
             case 'landing':
             default:
                 return <LandingPage {...pageProps} />;
@@ -73,7 +76,7 @@ const App = () => {
         <>
             {renderPage()}
             <AIAssistant />
-            <HowItWorksModal isOpen={isHowItWorksOpen} onClose={() => setIsHowItWorksOpen(false)} />
+            <HowItWorksModal isOpen={isHowItWorksOpen} onClose={() => setIsHowItWorksOpen(false)} onNavigate={onNavigate} />
         </>
     );
 };
