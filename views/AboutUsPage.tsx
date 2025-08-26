@@ -43,38 +43,4 @@ export const AboutUsPage = ({ onNavigate, onHowItWorksClick }: AboutUsPageProps)
                         <div className="grid md:grid-cols-2 gap-12 items-center">
                             <div className="text-gray-700 space-y-4">
                                 <p>TechSubbies.com was founded by Steve Goodwin, an industry veteran with over two decades of experience in technical project management. After years of relying on outdated spreadsheets, personal networks, and expensive recruitment agencies to find specialist freelancers, Steve knew there had to be a better way.</p>
-                                <p>The traditional hiring process was broken—it was slow, inefficient, and created unnecessary barriers between skilled engineers and the companies that needed them. The vision was simple: create a purpose-built platform that streamlines the entire engagement lifecycle.</p>
-                                <p>Today, TechSubbies.com is that solution—a modern, intuitive hub where companies can post jobs for free and engineers can build powerful profiles that truly represent their skills and real-time availability. We are passionate about empowering freelance professionals and helping companies build the best teams for their projects.</p>
-                            </div>
-                             <div>
-                                <div className="bg-gray-100 p-8 rounded-lg shadow-lg text-center">
-                                    <img 
-                                        src="https://i.imgur.com/RfjB4zR.jpg" 
-                                        alt="Steve Goodwin, Founder"
-                                        className="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-blue-500"
-                                    />
-                                    <h3 className="text-2xl font-bold text-gray-800">Steve Goodwin</h3>
-                                    <p className="text-blue-600 font-semibold">Founder & CEO</p>
-                                    <p className="text-gray-600 mt-2 text-sm">"We're not just building a platform; we're building a community. Our goal is to be the trusted partner for every freelance tech professional and every company looking to hire them."</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Final CTA */}
-                <section className="py-16 bg-blue-600 text-white">
-                    <div className="container mx-auto px-4 text-center">
-                        <h2 className="text-4xl font-bold mb-4">Join the Network</h2>
-                        <p className="text-xl mb-8 max-w-2xl mx-auto">Whether you're a company looking to hire or an engineer looking for your next challenge, TechSubbies is your platform for success.</p>
-                        <div className="flex justify-center space-x-4">
-                            <button onClick={() => onNavigate('login')} className="bg-white text-blue-600 font-bold py-3 px-8 rounded-lg hover:bg-gray-200 transition-transform transform hover:scale-105">Find Talent</button>
-                            <button onClick={() => onNavigate('engineerSignUp')} className="bg-white/20 backdrop-blur-sm border border-white/20 text-white font-bold py-3 px-8 rounded-lg hover:bg-white/30 transition">Find Work</button>
-                        </div>
-                    </div>
-                </section>
-            </main>
-            <Footer onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
-        </div>
-    );
-};
+                                <p>The traditional hiring process was broken—it was slow, inefficient, and created unnecessary barriers between skilled engineers and the companies that needed them. The vision was simple: create a

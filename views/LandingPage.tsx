@@ -104,7 +104,7 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
                     </p>
                     <div className="flex justify-center space-x-4 fade-in-up" style={{ animationDelay: '0.4s' }}>
                         <button onClick={() => onNavigate('login')} className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 shadow-lg">Post a Job for FREE</button>
-                        <button onClick={() => onNavigate('engineerSignUp')} className="bg-white/20 backdrop-blur-sm border border-white/20 text-white font-bold py-3 px-8 rounded-lg hover:bg-white/30 transition">Find Work</button>
+                        <button onClick={() => onNavigate('login')} className="bg-white/20 backdrop-blur-sm border border-white/20 text-white font-bold py-3 px-8 rounded-lg hover:bg-white/30 transition">Find Work</button>
                     </div>
                 </div>
             </section>
