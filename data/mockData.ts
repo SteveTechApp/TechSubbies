@@ -10,8 +10,8 @@ const COMPANY_NAMES = ['Innovate', 'Synergy', 'Apex', 'Pinnacle', 'Fusion', 'Qua
 const COMPANY_SUFFIXES = ['Solutions', 'Systems', 'Integrations', 'AV', 'IT Services', 'Group', 'Ltd', 'Pro', 'Tech', 'Networks'];
 
 // DEFINE KEY ENTITIES
-const MOCK_RESOURCING_COMPANY_1: CompanyProfile = { id: 'res-1', name: 'AV Placements', avatar: 'https://i.pravatar.cc/150?u=avplacements', status: 'active', logo: 'https://i.imgur.com/2yF5t1x.png' };
-const MOCK_ADMIN_PROFILE: CompanyProfile = { id: 'admin-1', name: 'Steve Goodwin', avatar: 'https://i.imgur.com/RfjB4zR.jpg', status: 'active', logo: 'https://i.imgur.com/2yF5t1x.png' };
+const MOCK_RESOURCING_COMPANY_1: CompanyProfile = { id: 'res-1', name: 'AV Placements', avatar: 'https://i.pravatar.cc/150?u=avplacements', status: 'active', logo: 'https://i.imgur.com/2yF5t1x.png', companyRegNumber: 'VALID-RES-01', isVerified: true };
+const MOCK_ADMIN_PROFILE: CompanyProfile = { id: 'admin-1', name: 'Steve Goodwin', avatar: 'https://i.imgur.com/RfjB4zR.jpg', status: 'active', logo: 'https://i.imgur.com/2yF5t1x.png', companyRegNumber: 'N/A', isVerified: true };
 
 // NEW: Engineer Profile for Steve Goodwin (Founder)
 const MOCK_ENGINEER_STEVE: EngineerProfile = {
@@ -359,7 +359,9 @@ const generateMockCompanies = (count: number): CompanyProfile[] => {
             avatar: `https://i.pravatar.cc/150?u=${name.replace(/\s/g, '')}`,
             website: `www.${name.replace(/\s/g, '').toLowerCase()}.com`,
             consentToFeature: Math.random() < 0.2, // ~20% of companies consent to be featured
-            logo: `https://logo.clearbit.com/${name.replace(/\s/g, '').toLowerCase().replace('ltd','')}.com?size=100`
+            logo: `https://logo.clearbit.com/${name.replace(/\s/g, '').toLowerCase().replace('ltd','')}.com?size=100`,
+            companyRegNumber: `GB${getRandomInt(10000000, 99999999)}`,
+            isVerified: true,
         });
     }
     return companies;
@@ -398,9 +400,9 @@ const generateMockJobs = (count: number, companies: CompanyProfile[]): Job[] => 
 export const MOCK_ENGINEERS = [MOCK_ENGINEER_STEVE, MOCK_ENGINEER_1, MOCK_ENGINEER_2, MOCK_ENGINEER_3, ...generateMockEngineers(20)];
 
 export const MOCK_COMPANIES: CompanyProfile[] = [
-    { id: 'comp-1', name: 'Pro AV Solutions', avatar: 'https://i.pravatar.cc/150?u=proav', consentToFeature: true, status: 'active', logo: 'https://i.imgur.com/cO0k4Sj.png' },
-    { id: 'comp-2', name: 'Starlight Events', avatar: 'https://i.pravatar.cc/150?u=starlight', consentToFeature: true, status: 'active', logo: 'https://i.imgur.com/U5n41QT.png' },
-    { id: 'comp-3', name: 'Nexus IT Integrators', avatar: 'https://i.pravatar.cc/150?u=nexusit', consentToFeature: true, status: 'active', logo: 'https://i.imgur.com/dJeEvD5.png' },
+    { id: 'comp-1', name: 'Pro AV Solutions', avatar: 'https://i.pravatar.cc/150?u=proav', consentToFeature: true, status: 'active', logo: 'https://i.imgur.com/cO0k4Sj.png', companyRegNumber: 'VALID-12345', isVerified: true },
+    { id: 'comp-2', name: 'Starlight Events', avatar: 'https://i.pravatar.cc/150?u=starlight', consentToFeature: true, status: 'active', logo: 'https://i.imgur.com/U5n41QT.png', companyRegNumber: 'VALID-67890', isVerified: true },
+    { id: 'comp-3', name: 'Nexus IT Integrators', avatar: 'https://i.pravatar.cc/150?u=nexusit', consentToFeature: true, status: 'active', logo: 'https://i.imgur.com/dJeEvD5.png', companyRegNumber: 'VALID-11223', isVerified: true },
     MOCK_RESOURCING_COMPANY_1, // **FIX**: Ensure the resourcing company is in the main list
     ...generateMockCompanies(15)
 ];

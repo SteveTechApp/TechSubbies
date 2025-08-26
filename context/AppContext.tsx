@@ -32,6 +32,7 @@ interface AppContextType {
     applications: Application[];
     applyForJob: (jobId: string, engineerId?: string) => void;
     createAndLoginEngineer: (data: any) => void;
+    createAndLoginCompany: (data: any) => void;
     boostProfile: () => void;
     claimSecurityNetGuarantee: () => void;
     reactivateProfile: () => void;
@@ -169,6 +170,44 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         };
         setUser(newUser);
         setAllUsers(prev => [...prev, newUser]);
+    };
+
+    const createAndLoginCompany = (data: any) => {
+        // Mock verification
+        let isVerified = false;
+        // Simple mock check: A real app would have an API call here.
+        const validPrefixes = ['123', 'GB', 'VALID']; 
+        if (validPrefixes.some(p => data.regNumber.toUpperCase().startsWith(p)) && data.regNumber.length > 5) {
+            isVerified = true;
+            alert("Company verified successfully! Welcome to your dashboard.");
+        } else {
+            isVerified = false;
+            alert("Your company profile has been created. However, we could not automatically verify your registration number. Your account may be subject to review. You can now access your dashboard.");
+        }
+    
+        const websiteDomain = data.website.replace('https://','').replace('www.','');
+        const newCompany: CompanyProfile = {
+            id: `comp-${generateUniqueId()}`,
+            name: data.companyName,
+            status: 'active',
+            // Try to get a logo from clearbit, fallback to pravatar
+            avatar: `https://logo.clearbit.com/${websiteDomain}`,
+            logo: `https://logo.clearbit.com/${websiteDomain}`,
+            website: data.website,
+            companyRegNumber: data.regNumber,
+            isVerified: isVerified,
+        };
+    
+        setCompanies(prev => [newCompany, ...prev]);
+    
+        const newUser: User = {
+            id: `user-${generateUniqueId()}`,
+            role: Role.COMPANY,
+            profile: newCompany,
+        };
+    
+        setAllUsers(prev => [...prev, newUser]);
+        setUser(newUser);
     };
 
 
@@ -458,7 +497,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     };
 
 
-    const value = { user, allUsers, jobs, companies, engineers, login, loginAsSteve, logout, updateEngineerProfile, updateCompanyProfile, postJob, startTrial, geminiService, applications, applyForJob, createAndLoginEngineer, boostProfile, claimSecurityNetGuarantee, reactivateProfile, chatSession, conversations, messages, selectedConversationId, setSelectedConversationId, findUserById, findUserByProfileId, sendMessage, startConversationAndNavigate, reviews, submitReview, toggleUserStatus, toggleJobStatus };
+    const value = { user, allUsers, jobs, companies, engineers, login, loginAsSteve, logout, updateEngineerProfile, updateCompanyProfile, postJob, startTrial, geminiService, applications, applyForJob, createAndLoginEngineer, createAndLoginCompany, boostProfile, claimSecurityNetGuarantee, reactivateProfile, chatSession, conversations, messages, selectedConversationId, setSelectedConversationId, findUserById, findUserByProfileId, sendMessage, startConversationAndNavigate, reviews, submitReview, toggleUserStatus, toggleJobStatus };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

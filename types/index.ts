@@ -136,6 +136,8 @@ export interface CompanyProfile extends BaseProfile {
     website?: string;
     consentToFeature?: boolean;
     logo?: string;
+    companyRegNumber?: string;
+    isVerified?: boolean;
 }
 
 export type UserProfile = EngineerProfile | CompanyProfile;
@@ -202,4 +204,4 @@ export interface Conversation {
 }
 
 
-export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'investors' | 'aboutUs' | 'terms' | 'privacy' | 'pricing';
+export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'companySignUp' | 'investors' | 'aboutUs' | 'terms' | 'privacy' | 'pricing';

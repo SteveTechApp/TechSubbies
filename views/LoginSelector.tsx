@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
-import { Role } from '../types/index.ts';
+import { Role, Page } from '../types/index.ts';
 import { Logo } from '../components/Logo.tsx';
 import { User, Building } from '../components/Icons.tsx';
-
-type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp';
 
 interface LoginSelectorProps {
     onNavigate: (page: Page) => void;
@@ -135,7 +133,7 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
                                     </div>
                                 </button>
                                 
-                                <button onClick={() => login(Role.COMPANY)} className="w-full p-6 text-left border rounded-lg hover:shadow-lg transition-shadow">
+                                <button onClick={() => onNavigate('companySignUp')} className="w-full p-6 text-left border rounded-lg hover:shadow-lg transition-shadow">
                                      <div className="flex items-center">
                                         <Building className="w-8 h-8 text-gray-600 mr-4"/>
                                         <div>
