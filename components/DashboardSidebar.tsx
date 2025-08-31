@@ -22,6 +22,7 @@ const getLinksForRole = (role: Role) => {
                 { label: 'View Public Profile', icon: User }, 
                 { label: 'Availability', icon: CalendarDays }, 
                 { label: 'Job Search', icon: Search },
+                { label: 'My Network', icon: Users },
                 { label: 'AI Tools', icon: BrainCircuit },
                 { label: 'Billing', icon: CreditCard },
             ];

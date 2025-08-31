@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { EngineerProfile } from '../types/index.ts';
-import { Star, Briefcase, Award, Linkedin, Mail, Users } from './Icons.tsx';
+import { EngineerProfile, Compliance } from '../types/index.ts';
+import { Star, Briefcase, Award, Linkedin, Mail, Users, Calendar, MapPin, ShieldCheck, CheckCircle } from './Icons.tsx';
 
 // A simple component to render a star rating on the card
 const CardStarRating = ({ rating = 0, label }: { rating?: number, label: string }) => (
@@ -26,14 +26,16 @@ const StatRow = ({ label, value }: { label: string; value: string | number }) =>
 const CardFront = ({ profile }: { profile: EngineerProfile }) => {
     const {
         name, discipline, avatar, experience, dayRate, currency,
-        customerRating, peerRating, skills, location, description, profileTier
+        customerRating, peerRating, location, description, profileTier
     } = profile;
 
     const topSkillScore = profile.selectedJobRoles && profile.selectedJobRoles.length > 0
         ? Math.max(...profile.selectedJobRoles.map(r => r.overallScore))
-        : Math.round(profile.skills.reduce((acc, s) => acc + s.rating, 0) / (profile.skills.length || 1));
+        : profile.skills && profile.skills.length > 0
+        ? Math.round(profile.skills.reduce((acc, s) => acc + s.rating, 0) / (profile.skills.length || 1))
+        : 0;
         
-    const topSkillName = profile.skills.length > 0 ? profile.skills.reduce((prev, current) => (prev.rating > current.rating) ? prev : current).name : 'N/A';
+    const topSkillName = profile.skills && profile.skills.length > 0 ? profile.skills.reduce((prev, current) => (prev.rating > current.rating) ? prev : current).name : 'N/A';
     const country = location.split(',').pop()?.trim() || 'UK';
     let countryFlag = '🇬🇧';
     if (country.toLowerCase() === 'usa') countryFlag = '🇺🇸';
@@ -59,10 +61,19 @@ const CardFront = ({ profile }: { profile: EngineerProfile }) => {
             <div className="bg-blue-800/50 rounded-lg border-2 border-white/50 overflow-hidden mb-4">
                 <StatRow label="Experience" value={`${experience} YRS`} />
                 <StatRow label="Day Rate" value={`${currency}${dayRate}`} />
-                <StatRow label="Top Skill Score" value={topSkillScore} />
-                <StatRow label="Top Skill" value={topSkillName} />
-                <StatRow label="Based In" value={location.split(',')[0]} />
+                {profile.profileTier === 'paid' ? (
+                    <>
+                        <StatRow label="Top Skill Score" value={topSkillScore} />
+                        <StatRow label="Top Skill" value={topSkillName} />
+                    </>
+                ) : (
+                     <>
+                        <StatRow label="Availability" value={new Date(profile.availability).toLocaleDateString('en-GB', {day: '2-digit', month: 'short'})} />
+                        <StatRow label="Based In" value={location.split(',')[0]} />
+                    </>
+                )}
                 <StatRow label="Peer Rating" value={`${peerRating || 0} / 5`} />
+                <StatRow label="Client Rating" value={`${customerRating || 0} / 5`} />
             </div>
             <div>
                  <h3 className="text-center font-bold uppercase text-yellow-400 tracking-wider mb-1">Profile File</h3>
@@ -83,6 +94,20 @@ const CardFront = ({ profile }: { profile: EngineerProfile }) => {
 const CardBack = ({ profile }: { profile: EngineerProfile }) => {
     const hasPaidFeatures = profile.profileTier === 'paid' && profile.selectedJobRoles && profile.selectedJobRoles.length > 0;
 
+    const readinessFlags = [
+        { key: 'hasOwnTransport', label: 'Own Transport' },
+        { key: 'hasOwnTools', label: 'Own Tools' },
+        { key: 'powerToolCompetency', label: 'Power Tool Competency' },
+        { key: 'cscsCard', label: 'CSCS Card' },
+        { key: 'siteSafe', label: 'Site Safety Certs' },
+        { key: 'accessEquipmentTrained', label: 'Access Equipment Trained' },
+        { key: 'firstAidTrained', label: 'First Aid Trained' },
+        { key: 'carriesSpares', label: 'Carries Spares' },
+        { key: 'ownPPE', label: 'Own PPE' },
+    ];
+    
+    const positiveReadiness = readinessFlags.filter(flag => profile.compliance?.[flag.key as keyof Compliance]);
+
     return (
         <div className="font-sans w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 text-white rounded-2xl border-8 border-white shadow-2xl p-4 flex flex-col">
             <div className="text-center border-b-2 border-blue-400 pb-2 mb-3">
@@ -90,6 +115,32 @@ const CardBack = ({ profile }: { profile: EngineerProfile }) => {
                 <p className="text-sm font-semibold text-gray-300">Detailed Profile</p>
             </div>
             <div className="flex-grow overflow-y-auto custom-scrollbar pr-2 space-y-3 text-sm">
+                
+                {/* WORK READINESS - VISIBLE FOR ALL */}
+                <div>
+                    <h3 className="font-bold text-blue-300 uppercase flex items-center mb-1"><ShieldCheck size={16} className="mr-2"/> Work Readiness</h3>
+                     <div className="bg-black/30 p-2 rounded-md">
+                        <div className="flex justify-around text-center border-b border-gray-600 pb-1 mb-1">
+                            <div className="text-xs">
+                                <span className="block font-bold">Prof. Indemnity</span>
+                                {profile.compliance?.professionalIndemnity ? <span className="text-green-400">Covered</span> : <span className="text-red-400">Not Covered</span>}
+                            </div>
+                            <div className="text-xs">
+                                <span className="block font-bold">Public Liability</span>
+                                {profile.compliance?.publicLiability ? <span className="text-green-400">Covered</span> : <span className="text-red-400">Not Covered</span>}
+                            </div>
+                        </div>
+                        <ul className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs mt-1">
+                            {positiveReadiness.map(flag => (
+                                <li key={flag.key} className="flex items-center">
+                                    <CheckCircle size={12} className="mr-1.5 text-green-400 flex-shrink-0" />
+                                    {flag.label}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+
                 {hasPaidFeatures ? (
                     <div>
                         <h3 className="font-bold text-blue-300 uppercase flex items-center mb-1"><Briefcase size={16} className="mr-2"/> Specialist Roles</h3>
@@ -153,10 +204,10 @@ export const TopTrumpCard = ({ profile }: { profile: EngineerProfile }) => {
 
     return (
         <div
-            className={`flip-card max-w-sm mx-auto h-[830px] cursor-pointer transform hover:scale-[1.02] transition-transform duration-300`}
+            className={`flip-card max-w-sm mx-auto h-[830px] cursor-pointer transform hover:scale-[1.02] transition-transform duration-300 ${isFlipped ? 'flipped' : ''}`}
             onClick={() => setIsFlipped(!isFlipped)}
         >
-            <div className={`flip-card-inner ${isFlipped ? 'flipped' : ''}`}>
+            <div className="flip-card-inner">
                 <div className="flip-card-front">
                     <CardFront profile={profile} />
                 </div>

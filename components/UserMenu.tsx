@@ -1,6 +1,7 @@
 import React from 'react';
 import { LogOut } from './Icons.tsx';
 import { User, Role, CompanyProfile } from '../types/index.ts';
+import { Notifications } from './Notifications.tsx';
 
 interface UserMenuProps {
     user: User | null;
@@ -20,6 +21,7 @@ export const UserMenu = ({ user, logout }: UserMenuProps) => {
 
     return (
         <div className="flex items-center space-x-4">
+            <Notifications />
             <span className="text-gray-700 hidden sm:block text-xs">Welcome, {user.profile.name}</span>
             <img 
                 src={displayImage} 

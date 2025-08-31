@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext.tsx';
-import { Job, EngineerProfile, Application } from '../../types/index.ts';
-import { MapPin, ArrowLeft, User, Mail, Phone, MessageCircle, Star } from '../../components/Icons.tsx';
+import { Job, EngineerProfile, Application, ApplicationStatus } from '../../types/index.ts';
+import { MapPin, ArrowLeft, User, Mail, Phone, MessageCircle, Star, Briefcase } from '../../components/Icons.tsx';
 import { ReviewModal } from '../../components/ReviewModal.tsx';
 
 const formatDate = (date: any): string => {
@@ -17,11 +17,13 @@ const formatDate = (date: any): string => {
 interface ApplicantCardProps {
     profile: EngineerProfile;
     application: Application;
+    job: Job;
     onMessage: (profileId: string) => void;
     onReview: (profile: EngineerProfile) => void;
+    onOffer: (jobId: string, engineerId: string) => void;
 }
 
-const ApplicantCard = ({ profile, application, onMessage, onReview }: ApplicantCardProps) => (
+const ApplicantCard = ({ profile, application, job, onMessage, onReview, onOffer }: ApplicantCardProps) => (
     <div className="p-4 bg-white rounded-lg shadow-md border flex items-start gap-4">
         <img src={profile.avatar} alt={profile.name} className="w-16 h-16 rounded-full border-2 border-gray-200" />
         <div className="flex-grow">
@@ -39,19 +41,35 @@ const ApplicantCard = ({ profile, application, onMessage, onReview }: ApplicantC
                 <p className="text-sm text-gray-500">Day Rate</p>
             </div>
              <div className="flex items-center gap-2">
+                {application.status === ApplicationStatus.APPLIED && (
+                    <button 
+                        onClick={() => onOffer(job.id, profile.id)}
+                        className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 font-bold flex items-center"
+                    >
+                        <Briefcase size={14} className="mr-1.5" /> Offer Job
+                    </button>
+                )}
+                 {application.status !== ApplicationStatus.APPLIED && (
+                    <span className={`px-3 py-1 text-sm font-bold rounded-md ${
+                        application.status === ApplicationStatus.OFFERED ? 'bg-yellow-100 text-yellow-800' :
+                        application.status === ApplicationStatus.ACCEPTED ? 'bg-green-100 text-green-800' :
+                        'bg-gray-100 text-gray-800'
+                    }`}>
+                        {application.status}
+                    </span>
+                 )}
                 <button 
                     onClick={() => onMessage(profile.id)}
                     className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded-md hover:bg-gray-300 flex items-center"
                 >
                     <MessageCircle size={14} className="mr-1.5" /> Message
                 </button>
-                <button className="px-3 py-1 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600">View Profile</button>
-                 <button 
+                <button 
                     onClick={() => onReview(profile)}
                     disabled={application.reviewed}
-                    className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 flex items-center disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 flex items-center disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                    <Star size={14} className="mr-1.5" /> {application.reviewed ? 'Reviewed' : 'Mark as Complete & Rate'}
+                    <Star size={14} className="mr-1.5" /> {application.reviewed ? 'Reviewed' : 'Complete & Rate'}
                 </button>
             </div>
         </div>
@@ -64,7 +82,7 @@ interface MyJobsViewProps {
 }
 
 export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
-    const { applications, engineers, startConversationAndNavigate, submitReview } = useAppContext();
+    const { applications, engineers, startConversationAndNavigate, submitReview, offerJob } = useAppContext();
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [reviewingApplicant, setReviewingApplicant] = useState<EngineerProfile | null>(null);
 
@@ -104,7 +122,7 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
                      {applicants.length > 0 ? (
                         <div className="space-y-4">
                             {applicants.map(({ application, engineer }) => 
-                                engineer && <ApplicantCard key={engineer.id} profile={engineer} application={application} onMessage={handleMessageApplicant} onReview={handleReviewApplicant} />
+                                engineer && <ApplicantCard key={engineer.id} profile={engineer} application={application} job={selectedJob} onMessage={handleMessageApplicant} onReview={handleReviewApplicant} onOffer={offerJob} />
                             )}
                         </div>
                     ) : (

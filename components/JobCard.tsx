@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
 import { Job, Role } from '../types/index.ts';
-import { MapPin, Calendar, DollarSign, Clock, MessageCircle } from './Icons.tsx';
+import { MapPin, Calendar, DollarSign, Clock, MessageCircle, Briefcase, Layers } from './Icons.tsx';
 
 interface JobCardProps {
     job: Job;
@@ -59,6 +59,8 @@ export const JobCard = ({ job, setActiveView }: JobCardProps) => {
                 <span className="flex items-center"><DollarSign size={16} className="mr-2 text-gray-400"/> {job.currency}{job.dayRate} / day</span>
                 <span className="flex items-center"><Clock size={16} className="mr-2 text-gray-400"/> {job.duration}</span>
                 <span className="flex items-center"><Calendar size={16} className="mr-2 text-gray-400"/> Starts: {formatDate(job.startDate)}</span>
+                <span className="flex items-center"><Briefcase size={16} className="mr-2 text-gray-400"/> {job.jobType}</span>
+                <span className="flex items-center"><Layers size={16} className="mr-2 text-gray-400"/> {job.experienceLevel}</span>
             </div>
         </div>
     );

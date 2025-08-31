@@ -1,0 +1,596 @@
+import { useState, useMemo } from 'react';
+import { PoundSterling, DollarSign } from '../components/Icons.tsx';
+import { Role, EngineerProfile, User, Job, Application, Currency, Conversation, Message, Review, CompanyProfile, ApplicationStatus, Notification, NotificationType, AppContextType } from '../types/index.ts';
+import { MOCK_JOBS, MOCK_ENGINEERS, MOCK_USERS, MOCK_USER_FREE_ENGINEER, ALL_MOCK_USERS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_COMPANIES, MOCK_NOTIFICATIONS } from '../data/mockData.ts';
+import { geminiService } from '../services/geminiService.ts';
+import type { Chat } from '@google/genai';
+
+// --- CONSTANTS ---
+export const APP_NAME = "TechSubbies.com";
+export const CURRENCY_ICONS: { [key in Currency]: React.ComponentType<any> } = {
+    [Currency.GBP]: PoundSterling,
+    [Currency.USD]: DollarSign,
+};
+
+const generateUniqueId = () => Math.random().toString(36).substring(2, 9);
+
+
+/**
+ * A custom hook containing all the business logic for the application.
+ * This centralizes state management and actions, cleaning up the AppProvider component.
+ */
+export const useAppLogic = (): AppContextType => {
+    const [user, setUser] = useState<User | null>(null);
+    const [allUsers, setAllUsers] = useState<User[]>(ALL_MOCK_USERS);
+    const [jobs, setJobs] = useState<Job[]>(MOCK_JOBS);
+    const [engineers, setEngineers] = useState<EngineerProfile[]>(MOCK_ENGINEERS);
+    const [companies, setCompanies] = useState<CompanyProfile[]>(MOCK_COMPANIES);
+    const [applications, setApplications] = useState<Application[]>(MOCK_APPLICATIONS);
+    const [reviews, setReviews] = useState<Review[]>(MOCK_REVIEWS);
+    const [chatSession, setChatSession] = useState<Chat | null>(() => geminiService.startChat());
+    
+    // Messaging State
+    const [conversations, setConversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
+    const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
+    const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+
+    // Notification State
+    const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+
+    const findUserById = (userId: string) => allUsers.find(u => u.id === userId);
+    const findUserByProfileId = (profileId: string) => allUsers.find(u => u.profile.id === profileId);
+
+    const login = (role: Role, isFreeTier: boolean = false) => {
+        let userToLogin: User;
+        if (isFreeTier && role === Role.ENGINEER) {
+            userToLogin = MOCK_USER_FREE_ENGINEER;
+        } else if (MOCK_USERS[role]) {
+             userToLogin = { ...MOCK_USERS[role] }; // Make a copy to modify
+        } else {
+            return;
+        }
+
+        if (userToLogin.profile.status === 'suspended') {
+            alert("This account has been suspended. Please contact support.");
+            return;
+        }
+
+        // Check for expired trial on login for engineers
+        if (userToLogin.role === Role.ENGINEER) {
+            const profile = { ...(userToLogin.profile as EngineerProfile) }; // Copy profile
+            
+            // This logic simulates what a server would do: check trial status and downgrade if needed.
+            if (profile.profileTier === 'paid' && profile.trialEndDate && new Date(profile.trialEndDate) < new Date()) {
+                console.log(`Trial for ${profile.name} expired. Downgrading to free tier.`);
+                profile.profileTier = 'free'; // Downgrade the copied profile
+                userToLogin.profile = profile; // Assign the modified profile back
+
+                // Also update the main engineers list for consistency across the app
+                const engineerIndex = engineers.findIndex(e => e.id === profile.id);
+                 if (engineerIndex !== -1) {
+                    const updatedEngineers = [...engineers];
+                    updatedEngineers[engineerIndex] = profile;
+                    setEngineers(updatedEngineers);
+                }
+            }
+        }
+        
+        setUser(userToLogin);
+    };
+
+    const loginAsSteve = () => {
+        const steveUser = allUsers.find(u => u.profile.id === 'eng-steve');
+        if (steveUser) {
+            if (steveUser.profile.status === 'suspended') {
+                alert("This account has been suspended. Please contact support.");
+                return;
+            }
+            setUser(steveUser);
+        } else {
+            alert("Could not find Steve's engineer profile.");
+        }
+    };
+
+
+    const logout = () => {
+        setUser(null);
+    };
+
+    const createAndLoginEngineer = (data: any) => {
+        const [firstName, ...lastNameParts] = data.name.split(' ');
+        const newEngineer: EngineerProfile = {
+            id: `eng-${generateUniqueId()}`,
+            name: data.name,
+            status: 'active',
+            firstName: firstName,
+            surname: lastNameParts.join(' ') || ' ',
+            avatar: `https://i.pravatar.cc/150?u=${data.name.replace(' ', '')}`,
+            profileTier: 'free',
+            certifications: [],
+            caseStudies: [],
+            // From wizard
+            discipline: data.discipline,
+            location: data.location,
+            experience: data.experience,
+            currency: data.currency,
+            dayRate: data.dayRate,
+            availability: new Date(data.availability),
+            skills: data.skills.map((s: string) => ({ name: s, rating: 50 })), // default rating
+            compliance: data.compliance,
+            contact: {
+                email: data.email,
+                phone: '',
+                website: '',
+                linkedin: '',
+            },
+            description: `Newly joined freelance ${data.discipline} with ${data.experience} years of experience, based in ${data.location}. Ready for new opportunities starting ${new Date(data.availability).toLocaleDateString()}.`
+        };
+
+        // Add to main list
+        setEngineers(prev => [newEngineer, ...prev]);
+
+        // Create user object and log in
+        const newUser: User = {
+            id: `user-${generateUniqueId()}`,
+            role: Role.ENGINEER,
+            profile: newEngineer,
+        };
+        setUser(newUser);
+        setAllUsers(prev => [...prev, newUser]);
+    };
+
+    const createAndLoginCompany = (data: any) => {
+        // Mock verification
+        let isVerified = false;
+        // Simple mock check: A real app would have an API call here.
+        const validPrefixes = ['123', 'GB', 'VALID']; 
+        if (validPrefixes.some(p => data.regNumber.toUpperCase().startsWith(p)) && data.regNumber.length > 5) {
+            isVerified = true;
+            alert("Company verified successfully! Welcome to your dashboard.");
+        } else {
+            isVerified = false;
+            alert("Your company profile has been created. However, we could not automatically verify your registration number. Your account may be subject to review. You can now access your dashboard.");
+        }
+    
+        const websiteDomain = data.website.replace('https://','').replace('www.','');
+        const newCompany: CompanyProfile = {
+            id: `comp-${generateUniqueId()}`,
+            name: data.companyName,
+            status: 'active',
+            // Try to get a logo from clearbit, fallback to pravatar
+            avatar: `https://logo.clearbit.com/${websiteDomain}`,
+            logo: `https://logo.clearbit.com/${websiteDomain}`,
+            website: data.website,
+            companyRegNumber: data.regNumber,
+            isVerified: isVerified,
+        };
+    
+        setCompanies(prev => [newCompany, ...prev]);
+    
+        const newUser: User = {
+            id: `user-${generateUniqueId()}`,
+            role: Role.COMPANY,
+            profile: newCompany,
+        };
+    
+        setAllUsers(prev => [...prev, newUser]);
+        setUser(newUser);
+    };
+
+    const createAndLoginResourcingCompany = (data: any) => {
+        // Mock verification can be the same as a regular company
+        let isVerified = false;
+        const validPrefixes = ['123', 'GB', 'VALID'];
+        if (validPrefixes.some(p => data.regNumber.toUpperCase().startsWith(p)) && data.regNumber.length > 5) {
+            isVerified = true;
+            alert("Resourcing company verified successfully! Welcome to your dashboard.");
+        } else {
+            isVerified = false;
+            alert("Your company profile has been created. Verification is pending review. You can now access your dashboard.");
+        }
+    
+        const websiteDomain = data.website.replace('https://','').replace('www.','');
+        const newCompany: CompanyProfile = {
+            id: `res-${generateUniqueId()}`,
+            name: data.companyName,
+            status: 'active',
+            avatar: `https://logo.clearbit.com/${websiteDomain}`,
+            logo: `https://logo.clearbit.com/${websiteDomain}`,
+            website: data.website,
+            companyRegNumber: data.regNumber,
+            isVerified: isVerified,
+        };
+    
+        setCompanies(prev => [newCompany, ...prev]);
+    
+        const newUser: User = {
+            id: `user-${generateUniqueId()}`,
+            role: Role.RESOURCING_COMPANY,
+            profile: newCompany,
+        };
+    
+        setAllUsers(prev => [...prev, newUser]);
+        setUser(newUser);
+    };
+
+
+    const updateEngineerProfile = (updatedProfile: Partial<EngineerProfile>) => {
+        if (user && user.role === Role.ENGINEER) { // Allow update even if not current user (for admin)
+            const profileId = ('skills' in user.profile) ? user.profile.id : null;
+            if (profileId) {
+                 const newUser = {
+                    ...user,
+                    profile: { ...user.profile, ...updatedProfile }
+                } as User;
+                setUser(newUser);
+            }
+        }
+         
+        const engineerIndex = engineers.findIndex(e => e.id === (updatedProfile.id || user?.profile.id));
+        if (engineerIndex !== -1) {
+            const updatedEngineers = [...engineers];
+            updatedEngineers[engineerIndex] = { ...updatedEngineers[engineerIndex], ...updatedProfile };
+            setEngineers(updatedEngineers);
+        }
+    };
+    
+    const updateCompanyProfile = (updatedProfile: Partial<CompanyProfile>) => {
+        const profileId = updatedProfile.id || user?.profile.id;
+        if (!profileId) return;
+
+        if (user && user.profile.id === profileId) {
+             const newUser = {
+                ...user,
+                profile: { ...user.profile, ...updatedProfile }
+            } as User;
+            setUser(newUser);
+        }
+         
+        const companyIndex = companies.findIndex(c => c.id === profileId);
+        if (companyIndex !== -1) {
+            const updatedCompanies = [...companies];
+            updatedCompanies[companyIndex] = { ...updatedCompanies[companyIndex], ...updatedProfile };
+            setCompanies(updatedCompanies);
+        }
+    };
+
+
+    const startTrial = () => {
+        if (user && 'skills' in user.profile) {
+            const trialEndDate = new Date();
+            trialEndDate.setDate(trialEndDate.getDate() + 30);
+            const subscriptionEndDate = new Date(trialEndDate);
+            
+            updateEngineerProfile({ 
+                profileTier: 'paid',
+                trialEndDate: trialEndDate,
+                subscriptionEndDate: subscriptionEndDate,
+                securityNetCreditsUsed: 0,
+            });
+            alert("30-Day Skills Profile trial started! You now have access to all premium features.");
+        }
+    };
+
+     const createNotification = (userId: string, type: NotificationType, text: string, link?: string) => {
+        const newNotification: Notification = {
+            id: `notif-${generateUniqueId()}`,
+            userId,
+            type,
+            text,
+            link,
+            isRead: false,
+            timestamp: new Date(),
+        };
+        setNotifications(prev => [newNotification, ...prev]);
+    };
+
+    const postJob = (jobData: any) => {
+        if (user) {
+            const newJob: Job = {
+                ...jobData,
+                id: `job-${generateUniqueId()}`,
+                companyId: user.profile?.id,
+                postedDate: new Date(),
+                startDate: jobData.startDate ? new Date(jobData.startDate) : null,
+                status: 'active',
+            };
+            setJobs(prevJobs => [newJob, ...prevJobs]);
+
+            // MOCK AI NOTIFICATION: Notify top 3 engineers with 'paid' profiles
+            const matchingEngineers = engineers
+                .filter(e => e.profileTier === 'paid' && e.status === 'active')
+                .slice(0, 3);
+            
+            matchingEngineers.forEach(eng => {
+                const engUser = findUserByProfileId(eng.id);
+                if (engUser) {
+                    createNotification(
+                        engUser.id,
+                        NotificationType.NEW_JOB_MATCH,
+                        `A new job, '${newJob.title}', matches your skills.`,
+                        'Job Search'
+                    );
+                }
+            });
+        }
+    };
+
+    const applyForJob = (jobId: string, engineerId?: string) => {
+        let applyingEngineerId: string | undefined = engineerId;
+
+        // If engineerId is not provided, it's an engineer applying for themselves
+        if (!applyingEngineerId) {
+            if (user && user.role === Role.ENGINEER) {
+                applyingEngineerId = user.profile.id;
+            } else {
+                alert("No engineer specified for application.");
+                return;
+            }
+        }
+
+        if (applications.some(app => app.jobId === jobId && app.engineerId === applyingEngineerId)) {
+            alert("This engineer has already applied for this job.");
+            return;
+        }
+
+        const newApplication: Application = {
+            jobId,
+            engineerId: applyingEngineerId,
+            date: new Date(),
+            status: ApplicationStatus.APPLIED,
+        };
+        setApplications(prev => [newApplication, ...prev]);
+        alert(`Application for ${engineers.find(e => e.id === applyingEngineerId)?.name} submitted successfully!`);
+    };
+
+    const boostProfile = () => {
+        if (user && user.role === Role.ENGINEER && 'profileTier' in user.profile && user.profile.profileTier === 'paid') {
+            updateEngineerProfile({ isBoosted: true });
+            alert("Your profile has been boosted! You'll appear at the top of relevant searches for 12 hours.");
+        } else {
+            alert("Profile Boost is a premium feature. Please upgrade to a Skills Profile first.");
+        }
+    };
+    
+    // --- Security Net Guarantee ---
+    const claimSecurityNetGuarantee = () => {
+        if (!user || user.role !== Role.ENGINEER || !('profileTier' in user.profile)) return;
+        
+        const profile = user.profile as EngineerProfile;
+
+        if (profile.profileTier !== 'paid') {
+            alert("The Security Net Guarantee is only for paid Skills Profile subscribers.");
+            return;
+        }
+
+        const creditsUsed = profile.securityNetCreditsUsed ?? 0;
+        if (creditsUsed >= 3) {
+            alert("You have already used all of your Security Net credits.");
+            return;
+        }
+
+        // MOCK: Check for "offers" by checking conversations with companies
+        const companyUserIds = new Set(allUsers.filter(u => u.role === Role.COMPANY).map(u => u.id));
+        const hasCompanyConversations = conversations.some(c => 
+            c.participantIds.includes(user.id) && c.participantIds.some(pId => companyUserIds.has(pId))
+        );
+
+        if (hasCompanyConversations) {
+            alert("Our records show you have been in contact with companies. If you believe this is an error, please contact support.");
+            return;
+        }
+        
+        // MOCK: Check if they've been subscribed for 30 days. We'll just approve it for the demo.
+        const newCreditsUsed = creditsUsed + 1;
+        const currentSubEnd = profile.subscriptionEndDate ? new Date(profile.subscriptionEndDate) : new Date();
+        const newSubEnd = new Date(currentSubEnd.setDate(currentSubEnd.getDate() + 30));
+
+        let newStatus = profile.status;
+        let alertMessage = `Your claim has been approved! Your subscription has been extended by one month to ${newSubEnd.toLocaleDateString()}. You have used ${newCreditsUsed} of 3 credits.`;
+
+        if (newCreditsUsed >= 3) {
+            newStatus = 'inactive';
+            alertMessage += "\n\nYou have now used all available credits. To ensure companies see an active talent pool, your profile has been marked as inactive and will be hidden from search results. You can reactivate it from your dashboard at any time.";
+        }
+        
+        updateEngineerProfile({
+            securityNetCreditsUsed: newCreditsUsed,
+            subscriptionEndDate: newSubEnd,
+            status: newStatus,
+        });
+
+        alert(alertMessage);
+    };
+
+    const reactivateProfile = () => {
+        if (user && 'status' in user.profile && user.profile.status === 'inactive') {
+            updateEngineerProfile({ status: 'active' });
+            alert("Your profile has been reactivated and is now visible in search results.");
+        }
+    };
+
+
+    // --- Messaging Methods ---
+    const sendMessage = (conversationId: string, text: string) => {
+        if (!user) return;
+        const newMessage: Message = {
+            id: `msg-${generateUniqueId()}`,
+            conversationId,
+            senderId: user.id,
+            text,
+            timestamp: new Date(),
+            isRead: false,
+        };
+        setMessages(prev => [...prev, newMessage]);
+
+        // Update the conversation's last message
+        const conversation = conversations.find(c => c.id === conversationId);
+        if (conversation) {
+            setConversations(prev => prev.map(c => 
+                c.id === conversationId 
+                    ? { ...c, lastMessageText: text, lastMessageTimestamp: newMessage.timestamp } 
+                    : c
+            ));
+            // Create a notification for the other participant
+            const recipientId = conversation.participantIds.find(id => id !== user.id);
+            if (recipientId) {
+                createNotification(recipientId, NotificationType.MESSAGE, `You have a new message from ${user.profile.name}.`, 'Messages');
+            }
+        }
+    };
+
+    const startConversationAndNavigate = (otherParticipantProfileId: string, navigateToMessages: () => void) => {
+        if (!user) {
+            alert("You must be logged in to send messages.");
+            return;
+        }
+
+        const otherParticipant = findUserByProfileId(otherParticipantProfileId);
+        if (!otherParticipant) {
+            alert("Could not find user to message.");
+            return;
+        }
+
+        if(user.id === otherParticipant.id) {
+            alert("You cannot message yourself.");
+            return;
+        }
+
+        // Check if a conversation already exists
+        let conversation = conversations.find(c =>
+            c.participantIds.includes(user.id) && c.participantIds.includes(otherParticipant.id)
+        );
+
+        // If not, create a new one
+        if (!conversation) {
+            const newConversation: Conversation = {
+                id: `convo-${generateUniqueId()}`,
+                participantIds: [user.id, otherParticipant.id],
+                lastMessageText: "Conversation started.",
+                lastMessageTimestamp: new Date(),
+            };
+            setConversations(prev => [newConversation, ...prev]);
+            conversation = newConversation;
+        }
+        
+        setSelectedConversationId(conversation.id);
+        navigateToMessages();
+    };
+    
+    // --- Review Methods ---
+    const submitReview = (reviewData: Omit<Review, 'id' | 'date'>) => {
+        const newReview: Review = {
+            ...reviewData,
+            id: `rev-${generateUniqueId()}`,
+            date: new Date(),
+        };
+        
+        // Add review to state
+        const updatedReviews = [...reviews, newReview];
+        setReviews(updatedReviews);
+
+        // Recalculate engineer's average ratings
+        const engineerReviews = updatedReviews.filter(r => r.engineerId === reviewData.engineerId);
+        const totalPeer = engineerReviews.reduce((sum, r) => sum + r.peerRating, 0);
+        const totalCustomer = engineerReviews.reduce((sum, r) => sum + r.customerRating, 0);
+        
+        const newPeerRating = parseFloat((totalPeer / engineerReviews.length).toFixed(1));
+        const newCustomerRating = parseFloat((totalCustomer / engineerReviews.length).toFixed(1));
+
+        updateEngineerProfile({
+            id: reviewData.engineerId,
+            peerRating: newPeerRating,
+            customerRating: newCustomerRating
+        });
+        
+        // Mark application as completed and reviewed
+        setApplications(prev => prev.map(app => 
+            (app.jobId === reviewData.jobId && app.engineerId === reviewData.engineerId)
+            ? { ...app, status: ApplicationStatus.COMPLETED, reviewed: true }
+            : app
+        ));
+        
+        alert("Review submitted successfully!");
+    };
+    
+    // --- Admin Methods ---
+    const toggleUserStatus = (profileId: string) => {
+        const userToUpdate = allUsers.find(u => u.profile.id === profileId);
+        if (!userToUpdate) return;
+        
+        const newStatus = userToUpdate.profile.status === 'active' ? 'suspended' : 'active';
+        
+        setAllUsers(prev => prev.map(u => u.profile.id === profileId ? { ...u, profile: { ...u.profile, status: newStatus } } : u));
+        
+        if (userToUpdate.role === Role.ENGINEER) {
+            setEngineers(prev => prev.map(e => e.id === profileId ? { ...e, status: newStatus } : e));
+        } else if (userToUpdate.role === Role.COMPANY || userToUpdate.role === Role.RESOURCING_COMPANY) {
+            setCompanies(prev => prev.map(c => c.id === profileId ? { ...c, status: newStatus } : c));
+        }
+    };
+    
+    const toggleJobStatus = (jobId: string) => {
+        setJobs(prev => prev.map(j => {
+            if (j.id === jobId) {
+                return { ...j, status: j.status === 'active' ? 'inactive' : 'active' };
+            }
+            return j;
+        }));
+    };
+
+    // --- Notification Methods ---
+    const markNotificationsAsRead = (userId: string) => {
+        setNotifications(prev => 
+            prev.map(n => (n.userId === userId ? { ...n, isRead: true } : n))
+        );
+    };
+
+    // --- Job Offer Workflow ---
+    const offerJob = (jobId: string, engineerId: string) => {
+        setApplications(prev => prev.map(app => 
+            app.jobId === jobId && app.engineerId === engineerId 
+                ? { ...app, status: ApplicationStatus.OFFERED }
+                : app
+        ));
+        
+        const engineerUser = findUserByProfileId(engineerId);
+        const job = jobs.find(j => j.id === jobId);
+        if (engineerUser && job && user) {
+            createNotification(
+                engineerUser.id,
+                NotificationType.JOB_OFFER,
+                `${user.profile.name} has offered you the '${job.title}' job.`,
+                'My Network'
+            );
+        }
+        alert(`Offer sent to engineer for the job: ${job?.title}`);
+    };
+
+    const acceptOffer = (jobId: string, engineerId: string) => {
+        setApplications(prev => prev.map(app => 
+            app.jobId === jobId && app.engineerId === engineerId 
+                ? { ...app, status: ApplicationStatus.ACCEPTED }
+                : app
+        ));
+    };
+
+    const declineOffer = (jobId: string, engineerId: string) => {
+         setApplications(prev => prev.map(app => 
+            app.jobId === jobId && app.engineerId === engineerId 
+                ? { ...app, status: ApplicationStatus.DECLINED }
+                : app
+        ));
+    };
+
+
+    return useMemo(() => ({
+        user, allUsers, jobs, companies, engineers, login, loginAsSteve, logout, 
+        updateEngineerProfile, updateCompanyProfile, postJob, startTrial, geminiService, 
+        applications, applyForJob, createAndLoginEngineer, createAndLoginCompany, 
+        createAndLoginResourcingCompany, boostProfile, claimSecurityNetGuarantee, 
+        reactivateProfile, chatSession, conversations, messages, selectedConversationId, 
+        setSelectedConversationId, findUserById, findUserByProfileId, sendMessage, 
+        startConversationAndNavigate, reviews, submitReview, toggleUserStatus, toggleJobStatus, 
+        notifications, markNotificationsAsRead, offerJob, acceptOffer, declineOffer
+    }), [user, allUsers, jobs, companies, engineers, applications, conversations, messages, selectedConversationId, reviews, notifications]);
+};

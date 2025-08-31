@@ -131,14 +131,15 @@ export const PricingPage = ({ onNavigate, onHowItWorksClick }: PricingPageProps)
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch max-w-4xl mx-auto">
                            <PricingCard
                                 title="Basic Profile"
-                                description="The essential tools to get you started and visible on the platform."
+                                description="The essential free profile for junior engineers and new-starters to gain visibility for entry-level and support roles, typically under £195/day."
                                 price="FREE"
                                 period=" / Forever"
                                 features={[
-                                    "Create your public profile",
-                                    "Be visible in general searches",
-                                    "List your core skills & experience",
-                                    "Set your availability",
+                                    "Create your public professional profile",
+                                    "Appear in general searches",
+                                    "List your core discipline & experience",
+                                    "Set your availability calendar",
+                                    "Search and apply for jobs",
                                 ]}
                                 ctaText="Get Started"
                                 onCtaClick={() => onNavigate('engineerSignUp')}

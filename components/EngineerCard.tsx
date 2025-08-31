@@ -1,15 +1,16 @@
 import React from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
 import { EngineerProfile } from '../types/index.ts';
-import { MapPin, Star, Rocket } from './Icons.tsx';
+import { MapPin, Star, Rocket, Sparkles } from './Icons.tsx';
 
 interface EngineerCardProps {
     profile: EngineerProfile;
     onClick: () => void;
     matchScore?: number;
+    isAiMatch?: boolean;
 }
 
-export const EngineerCard = ({ profile, onClick, matchScore }: EngineerCardProps) => {
+export const EngineerCard = ({ profile, onClick, matchScore, isAiMatch }: EngineerCardProps) => {
     const { companies } = useAppContext();
 
     // Find resourcing company if it exists
@@ -71,7 +72,14 @@ export const EngineerCard = ({ profile, onClick, matchScore }: EngineerCardProps
             </div>
             
             <div className="flex-grow">
-                <h3 className="text-lg font-bold text-gray-800 truncate">{profile.name}</h3>
+                <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-lg font-bold text-gray-800 truncate">{profile.name}</h3>
+                    {isAiMatch && (
+                        <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-0.5 rounded-full flex items-center shadow-sm flex-shrink-0">
+                            <Sparkles size={12} className="mr-1" /> AI Recommended
+                        </span>
+                    )}
+                </div>
                 <p className="text-blue-600 font-semibold text-sm">{profile.discipline}</p>
                 <p className="text-sm text-gray-500 flex items-center mt-1"><MapPin size={14} className="mr-1"/> {profile.location}</p>
             </div>
@@ -79,20 +87,26 @@ export const EngineerCard = ({ profile, onClick, matchScore }: EngineerCardProps
             <div className="mt-3 pt-3 border-t border-gray-100">
                 <div className="flex justify-between items-center">
                     <h4 className="text-xs font-bold text-gray-500 uppercase">
-                        Core Skills
+                        {profile.profileTier === 'paid' ? 'Core Skills' : 'Profile Tier'}
                     </h4>
                     <div className="text-right">
                         <p className="text-lg font-bold text-gray-800">{profile.currency}{profile.dayRate}</p>
                     </div>
                 </div>
-                <div className="flex flex-wrap gap-1 mt-1">
-                    {profile.skills.slice(0, 3).map(skill => (
-                        <span key={skill.name} className="bg-gray-200 text-gray-800 px-2 py-1 text-xs rounded-md">{skill.name}</span>
-                    ))}
-                     {profile.skills.length > 3 && (
-                        <span className="bg-gray-200 text-gray-800 px-2 py-1 text-xs rounded-md">+{profile.skills.length - 3} more</span>
-                    )}
-                </div>
+                {profile.profileTier === 'paid' && profile.skills && profile.skills.length > 0 ? (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                        {profile.skills.slice(0, 3).map(skill => (
+                            <span key={skill.name} className="bg-gray-200 text-gray-800 px-2 py-1 text-xs rounded-md">{skill.name}</span>
+                        ))}
+                         {profile.skills.length > 3 && (
+                            <span className="bg-gray-200 text-gray-800 px-2 py-1 text-xs rounded-md">+{profile.skills.length - 3} more</span>
+                        )}
+                    </div>
+                ) : (
+                    <div className="mt-1 text-center bg-gray-100 p-2 rounded-md">
+                        <p className="text-xs text-blue-700 font-semibold">Upgrade to Skills Profile to showcase expertise.</p>
+                    </div>
+                )}
             </div>
         </button>
     );

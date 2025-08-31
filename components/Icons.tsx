@@ -55,6 +55,8 @@ export const LayoutDashboard = createIcon(<><rect width="7" height="9" x="3" y="
 export const Settings = createIcon(<><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l-.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></>);
 export const PlusCircle = createIcon(<><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></>);
 export const BarChart2 = createIcon(<><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></>);
+// FIX: Add missing Bell icon for notifications
+export const Bell = createIcon(<><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></>);
 export const SlidersHorizontal = createIcon(<><line x1="21" y1="10" x2="11" y2="10" /><line x1="21" y1="16" x2="3" y2="16" /><line x1="21" y1="4" x2="13" y2="4" /><line x1="9" y1="10" x2="3" y2="10" /><line x1="11" y1="4" x2="3" y2="4" /><line x1="7" y1="16" x2="3" y2="16" /></>);
 export const Layers = createIcon(<><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.84l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.91a1 1 0 0 0 0-1.84Z" /><path d="m22 17.65-8.58 3.91a2 2 0 0 1-1.66 0L3.18 17.65" /><path d="m22 12.65-8.58 3.91a2 2 0 0 1-1.66 0L3.18 12.65" /></>);
 export const TrendingUp = createIcon(<><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></>);
@@ -71,6 +73,7 @@ export const PoundSterling = createIcon(<><path d="M18 7c0-5.333-8-5.333-8 0" />
 export const ChevronDown = createIcon(<path d="m6 9 6 6 6-6"/>);
 export const ArrowLeft = createIcon(<path d="m15 18-6-6 6-6"/>);
 export const ArrowRight = createIcon(<path d="m9 18 6-6-6-6"/>);
+export const ArrowUp = createIcon(<><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></>);
 export const Save = createIcon(<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></>);
 export const Image = createIcon(<><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></>);
 export const Upload = createIcon(<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></>);
@@ -81,3 +84,4 @@ export const Menu = createIcon(<><line x1="4" x2="20" y1="12" y2="12"/><line x1=
 export const Instagram = createIcon(<><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></>);
 export const Facebook = createIcon(<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>);
 export const XIcon = createIcon(<path d="m18 6-12 12M6 6l12 12" />);
+export const Home = createIcon(<><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></>);

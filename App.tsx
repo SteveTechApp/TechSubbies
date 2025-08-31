@@ -11,6 +11,7 @@ import { ForEngineersPage } from './views/ForEngineersPage.tsx';
 import { ForCompaniesPage } from './views/ForCompaniesPage.tsx';
 import { EngineerSignUpWizard } from './views/EngineerSignUpWizard.tsx';
 import { CompanySignUpWizard } from './views/CompanySignUpWizard.tsx';
+import { ResourcingCompanySignUpWizard } from './views/ResourcingCompanySignUpWizard.tsx';
 import { InvestorRelationsPage } from './views/InvestorRelationsPage.tsx';
 import { AboutUsPage } from './views/AboutUsPage.tsx';
 import { LegalPage } from './views/LegalPage.tsx';
@@ -60,6 +61,8 @@ const App = () => {
                 return <EngineerSignUpWizard onCancel={() => onNavigate('login')} />;
             case 'companySignUp':
                 return <CompanySignUpWizard onCancel={() => onNavigate('login')} />;
+            case 'resourcingCompanySignUp':
+                return <ResourcingCompanySignUpWizard onCancel={() => onNavigate('login')} />;
             case 'forEngineers':
                 return <ForEngineersPage {...pageProps} />;
             case 'forCompanies':

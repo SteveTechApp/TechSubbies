@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { EngineerProfile } from '../types/index.ts';
+import { EngineerProfile, Job } from '../types/index.ts';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -25,7 +25,7 @@ export const geminiService = {
     generateDescriptionForProfile: async (profile: EngineerProfile) => {
         let prompt: string;
 
-        if (profile.profileTier === 'paid') {
+        if (profile.profileTier === 'paid' && profile.skills && profile.skills.length > 0) {
             // Paid users get a detailed bio leveraging their listed skills
             prompt = `Generate a compelling but brief professional bio (around 50-70 words) for a freelance Tech engineer. Here are their details:\n- Name: ${profile.name}\n- Role/Discipline: ${profile.discipline}\n- Experience: ${profile.experience} years\n- Key Skills: ${profile.skills.slice(0, 5).map(s => s.name).join(', ')}\n\nWrite a professional, first-person summary highlighting their expertise based on the provided skills.`;
         } else {
@@ -86,7 +86,7 @@ export const geminiService = {
         - Role: ${engineerProfile.discipline}
         - Experience: ${engineerProfile.experience} years
         - Day Rate: ${engineerProfile.currency}${engineerProfile.dayRate}
-        - Key Skills: ${engineerProfile.skills.map(s => `${s.name} (rated ${s.rating}/100)`).join(', ')}
+        - Key Skills: ${engineerProfile.skills?.map(s => `${s.name} (rated ${s.rating}/100)`).join(', ') || 'Not specified'}
         Provide a JSON response with:
         1. "skill_match_assessment" (string): A brief sentence on how well their skills match the project.
         2. "rate_justification" (string): A brief sentence justifying if their day rate is fair, high, or low based on their experience and skills for this project.
@@ -115,8 +115,8 @@ export const geminiService = {
         }
     },
     getTrainingRecommendations: async (profile: EngineerProfile) => {
-        const lowRatedSkills = profile.skills.filter(s => s.rating < 75).map(s => s.name).join(', ');
-        const highRatedSkills = profile.skills.filter(s => s.rating >= 75).map(s => s.name).join(', ');
+        const lowRatedSkills = profile.skills?.filter(s => s.rating < 75).map(s => s.name).join(', ');
+        const highRatedSkills = profile.skills?.filter(s => s.rating >= 75).map(s => s.name).join(', ');
 
         const prompt = `Act as a career advisor for a freelance ${profile.discipline}.
         Their goal is to increase their day rate and get more contract offers.
@@ -161,6 +161,63 @@ export const geminiService = {
             return JSON.parse(String(response.text));
         } catch (error) {
             console.error("Error getting training recommendations:", error);
+            return null;
+        }
+    },
+    findBestMatchesForJob: async (job: Job, engineers: EngineerProfile[]) => {
+        const summarizedEngineers = engineers.map(eng => ({
+            id: eng.id,
+            profileTier: eng.profileTier,
+            discipline: eng.discipline,
+            experience: eng.experience,
+            dayRate: eng.dayRate,
+            skills: eng.skills?.map(s => s.name) || [],
+            specialist_roles: eng.selectedJobRoles?.map(r => r.roleName) || [],
+        }));
+    
+        const prompt = `As an expert technical recruiter, your task is to find the best freelance engineers for a specific job.
+        
+        Here is the job description:
+        ---
+        Title: ${job.title}
+        Description: ${job.description}
+        Location: ${job.location}
+        Target Day Rate: ${job.currency}${job.dayRate}
+        ---
+    
+        Here is a list of available engineers:
+        ---
+        ${JSON.stringify(summarizedEngineers, null, 2)}
+        ---
+    
+        Analyze the job description and the list of engineers. Identify the top 5 most suitable candidates. 
+        Consider their discipline, years of experience, key skills, specialist roles, and how their day rate compares to the target. 
+        Give strong preference to engineers with a 'paid' profileTier, as they have a premium 'Skills Profile' with more detailed information. Free profiles are generally for more junior roles.
+        Return a ranked list of their IDs, from best match to worst.
+        `;
+    
+        try {
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash", 
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            best_matches: {
+                                type: Type.ARRAY,
+                                items: { type: Type.STRING },
+                                description: "A ranked array of the top 5 engineer IDs, from best match to least."
+                            }
+                        },
+                        required: ["best_matches"]
+                    },
+                },
+            });
+            return JSON.parse(String(response.text));
+        } catch (error) {
+            console.error("Error finding best matches:", error);
             return null;
         }
     },

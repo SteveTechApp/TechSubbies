@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
 import { Role, Page } from '../types/index.ts';
 import { Logo } from '../components/Logo.tsx';
-import { User, Building } from '../components/Icons.tsx';
+import { User, Building, Users } from '../components/Icons.tsx';
 
 interface LoginSelectorProps {
     onNavigate: (page: Page) => void;
@@ -57,7 +57,7 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
         }`;
 
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 antialiased" style={{backgroundImage: "url('https://images.unsplash.com/photo-1554672408-758865e23218?q=80&w=2070&auto=format&fit=crop')", backgroundSize: 'cover'}}>
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 antialiased" style={{backgroundImage: "url('https://images.unsplash.com/photo-1554672408-758865e23218?q=80&w=2070&auto=format=fit=crop')", backgroundSize: 'cover'}}>
             <div className="w-full max-w-md">
                  <button onClick={() => onNavigate('landing')} className="block mx-auto mb-6">
                     <Logo className="h-16"/>
@@ -107,6 +107,7 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
                                         <li><code className="bg-gray-200 px-1 rounded">neil.bishop@example.com</code> (Premium Engineer)</li>
                                         <li><code className="bg-gray-200 px-1 rounded">emily.carter@example.com</code> (Free Engineer)</li>
                                         <li><code className="bg-gray-200 px-1 rounded">contact@proav.com</code> (Company)</li>
+                                        <li><code className="bg-gray-200 px-1 rounded">contact@avplacements.com</code> (Resourcing Co.)</li>
                                         <li><code className="bg-gray-200 px-1 rounded">stevegoodwin1972@gmail.com</code> (Admin)</li>
                                     </ul>
                                     <p className="mt-1">Password can be anything.</p>
@@ -139,6 +140,16 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
                                         <div>
                                             <h3 className="font-bold text-lg text-gray-800">I'm a Company</h3>
                                             <p className="text-gray-600">Post jobs and find talent for free.</p>
+                                        </div>
+                                    </div>
+                                </button>
+
+                                <button onClick={() => onNavigate('resourcingCompanySignUp')} className="w-full p-6 text-left border rounded-lg hover:shadow-lg transition-shadow">
+                                     <div className="flex items-center">
+                                        <Users className="w-8 h-8 text-gray-600 mr-4"/>
+                                        <div>
+                                            <h3 className="font-bold text-lg text-gray-800">I'm a Resourcing Company</h3>
+                                            <p className="text-gray-600">Manage your talent roster and find them work.</p>
                                         </div>
                                     </div>
                                 </button>

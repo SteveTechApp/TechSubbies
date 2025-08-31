@@ -1,3 +1,7 @@
+// FIX: Add imports for types used in AppContextType
+import type { Chat } from '@google/genai';
+import type { Dispatch, SetStateAction } from 'react';
+
 // --- SIMULATED PRE-AUTHENTICATION ---
 // In a real application, this would come from an authentication service (e.g., Firebase Auth, Auth0)
 // *before* the user reaches the role selection screen. For this demo, we mock the signed-in user.
@@ -26,13 +30,26 @@ export enum Discipline {
     BOTH = 'AV & IT Engineer',
 }
 
+export enum JobType {
+    CONTRACT = 'Contract',
+    FULL_TIME = 'Full-time',
+    PART_TIME = 'Part-time',
+}
+
+export enum ExperienceLevel {
+    JUNIOR = 'Junior',
+    MID_LEVEL = 'Mid-level',
+    SENIOR = 'Senior',
+    EXPERT = 'Expert',
+}
+
 export interface Skill {
     name: string;
     rating: number; // 0-100 (represents general proficiency for basic skills)
 }
 
 export interface RatedSkill {
-    name: string;
+    name:string;
     rating: number; // 1-100
 }
 
@@ -81,10 +98,15 @@ export interface CaseStudy {
 export interface Compliance {
     professionalIndemnity: boolean;
     publicLiability: boolean;
-    siteSafe: boolean;
+    siteSafe: boolean; // Site safety certifications like SSSTS
+    cscsCard: boolean; // CSCS Card
     ownPPE: boolean;
-    accessEquipmentTrained: boolean;
+    hasOwnTransport: boolean;
+    hasOwnTools: boolean;
+    powerToolCompetency: boolean;
+    accessEquipmentTrained: boolean; // e.g., IPAF, PASMA
     firstAidTrained: boolean;
+    carriesSpares: boolean; // Carries spares and consumables
 }
 
 interface BaseProfile {
@@ -102,8 +124,8 @@ export interface EngineerProfile extends BaseProfile {
     experience: number; // years
     availability: Date;
     description: string;
-    skills: Skill[]; // Basic skills for free tier
-    selectedJobRoles?: SelectedJobRole[]; // Replaces specialistJobRoles
+    skills?: Skill[]; // Basic skills/tags for paid tier only
+    selectedJobRoles?: SelectedJobRole[]; // Detailed skills for paid tier
     certifications: Certification[];
     contact: Contact;
     profileTier: 'free' | 'paid';
@@ -119,7 +141,7 @@ export interface EngineerProfile extends BaseProfile {
     travelRadius?: string;
     socials?: SocialLink[];
     associates?: Associate[];
-    compliance?: Compliance;
+    compliance: Compliance;
     generalAvailability?: string; // e.g., 'Medium'
     customerRating?: number; // 1-5
     peerRating?: number; // 1-5
@@ -160,13 +182,24 @@ export interface Job {
     postedDate: Date;
     startDate: Date | null;
     status: 'active' | 'inactive';
+    jobType: JobType;
+    experienceLevel: ExperienceLevel;
+}
+
+export enum ApplicationStatus {
+    APPLIED = 'Applied',
+    VIEWED = 'Viewed',
+    OFFERED = 'Offered',
+    ACCEPTED = 'Accepted',
+    DECLINED = 'Declined',
+    COMPLETED = 'Completed',
 }
 
 export interface Application {
     jobId: string;
     engineerId: string;
     date: Date;
-    completed?: boolean;
+    status: ApplicationStatus;
     reviewed?: boolean;
 }
 
@@ -176,7 +209,7 @@ export interface Review {
     companyId: string;
     engineerId: string;
     peerRating: number; // Technical skill
-    customerRating: number; // Communication etc.
+    customerRating: number; // Communication
     comment: string;
     date: Date;
 }
@@ -203,5 +236,65 @@ export interface Conversation {
     lastMessageText: string;
 }
 
+export enum NotificationType {
+    NEW_JOB_MATCH = 'new_job_match',
+    JOB_OFFER = 'job_offer',
+    MESSAGE = 'message',
+    APPLICATION_UPDATE = 'application_update',
+}
 
-export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'companySignUp' | 'investors' | 'aboutUs' | 'terms' | 'privacy' | 'pricing';
+export interface Notification {
+    id: string;
+    userId: string;
+    type: NotificationType;
+    text: string;
+    link?: string; // e.g., path to job or message view
+    isRead: boolean;
+    timestamp: Date;
+}
+
+
+export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'companySignUp' | 'resourcingCompanySignUp' | 'investors' | 'aboutUs' | 'terms' | 'privacy' | 'pricing';
+
+// FIX: Export AppContextType which was previously missing
+export interface AppContextType {
+    user: User | null;
+    allUsers: User[];
+    jobs: Job[];
+    companies: CompanyProfile[];
+    engineers: EngineerProfile[];
+    login: (role: Role, isFreeTier?: boolean) => void;
+    loginAsSteve: () => void;
+    logout: () => void;
+    updateEngineerProfile: (updatedProfile: Partial<EngineerProfile>) => void;
+    updateCompanyProfile: (updatedProfile: Partial<CompanyProfile>) => void;
+    postJob: (jobData: any) => void;
+    startTrial: () => void;
+    geminiService: any;
+    applications: Application[];
+    applyForJob: (jobId: string, engineerId?: string) => void;
+    createAndLoginEngineer: (data: any) => void;
+    createAndLoginCompany: (data: any) => void;
+    createAndLoginResourcingCompany: (data: any) => void;
+    boostProfile: () => void;
+    claimSecurityNetGuarantee: () => void;
+    reactivateProfile: () => void;
+    chatSession: Chat | null;
+    conversations: Conversation[];
+    messages: Message[];
+    selectedConversationId: string | null;
+    setSelectedConversationId: Dispatch<SetStateAction<string | null>>;
+    findUserById: (userId: string) => User | undefined;
+    findUserByProfileId: (profileId: string) => User | undefined;
+    sendMessage: (conversationId: string, text: string) => void;
+    startConversationAndNavigate: (otherParticipantProfileId: string, navigateToMessages: () => void) => void;
+    reviews: Review[];
+    submitReview: (reviewData: Omit<Review, 'id' | 'date'>) => void;
+    toggleUserStatus: (profileId: string) => void;
+    toggleJobStatus: (jobId: string) => void;
+    notifications: Notification[];
+    markNotificationsAsRead: (userId: string) => void;
+    offerJob: (jobId: string, engineerId: string) => void;
+    acceptOffer: (jobId: string, engineerId: string) => void;
+    declineOffer: (jobId: string, engineerId: string) => void;
+}

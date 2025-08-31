@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAppContext, } from '../../context/AppContext.tsx';
 import { Job, EngineerProfile } from '../../types/index.ts';
 import { ApplyAsEngineerModal } from '../../components/ApplyAsEngineerModal.tsx';
-import { Search, MapPin, Calendar, DollarSign, Clock, MessageCircle } from '../../components/Icons.tsx';
+import { Search, MapPin, Calendar, DollarSign, Clock, MessageCircle, Briefcase, Layers } from '../../components/Icons.tsx';
 
 const formatDate = (date: any): string => {
     if (!date) return 'TBD';
@@ -45,6 +45,8 @@ const ResourcingJobCard = ({ job, onApply, onMessage }: ResourcingJobCardProps) 
             <span className="flex items-center"><DollarSign size={16} className="mr-2 text-gray-400"/> {job.currency}{job.dayRate} / day</span>
             <span className="flex items-center"><Clock size={16} className="mr-2 text-gray-400"/> {job.duration}</span>
             <span className="flex items-center"><Calendar size={16} className="mr-2 text-gray-400"/> Starts: {formatDate(job.startDate)}</span>
+            <span className="flex items-center"><Briefcase size={16} className="mr-2 text-gray-400"/> {job.jobType}</span>
+            <span className="flex items-center"><Layers size={16} className="mr-2 text-gray-400"/> {job.experienceLevel}</span>
         </div>
     </div>
 );

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
-import { Currency } from '../types/index.ts';
+import { Currency, JobType, ExperienceLevel } from '../types/index.ts';
 import { X, Lightbulb } from './Icons.tsx';
 
 interface JobPostModalProps {
@@ -16,7 +16,8 @@ interface SuggestedTeamMember {
 
 export const JobPostModal = ({ isOpen, onClose, onPostJob }: JobPostModalProps) => {
   const [jobDetails, setJobDetails] = useState({
-    title: '', description: '', location: '', dayRate: '500', duration: '4 weeks', currency: Currency.GBP, startDate: ''
+    title: '', description: '', location: '', dayRate: '500', duration: '4 weeks', currency: Currency.GBP, startDate: '',
+    jobType: JobType.CONTRACT, experienceLevel: ExperienceLevel.MID_LEVEL,
   });
   const [suggestedTeam, setSuggestedTeam] = useState<SuggestedTeamMember[] | null>(null);
   const [isSuggesting, setIsSuggesting] = useState(false);
@@ -68,6 +69,20 @@ export const JobPostModal = ({ isOpen, onClose, onPostJob }: JobPostModalProps) 
             <div>
               <label className="block text-sm font-medium text-gray-700">Duration</label>
               <input name="duration" placeholder="e.g., 6 weeks" onChange={handleChange} className="w-full border p-2 rounded" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label className="block text-sm font-medium text-gray-700">Job Type</label>
+                <select name="jobType" value={jobDetails.jobType} onChange={handleChange} className="w-full border p-2 rounded bg-white h-[42px]">
+                    {Object.values(JobType).map(type => <option key={type} value={type}>{type}</option>)}
+                </select>
+            </div>
+            <div>
+                <label className="block text-sm font-medium text-gray-700">Experience Level</label>
+                <select name="experienceLevel" value={jobDetails.experienceLevel} onChange={handleChange} className="w-full border p-2 rounded bg-white h-[42px]">
+                    {Object.values(ExperienceLevel).map(level => <option key={level} value={level}>{level}</option>)}
+                </select>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

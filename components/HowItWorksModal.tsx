@@ -60,7 +60,7 @@ export const HowItWorksModal = ({ isOpen, onClose, onNavigate }: HowItWorksModal
                             <Step 
                                 icon={Users} 
                                 title="1. Join the Network (Free)" 
-                                description="Create a free Basic Profile to get visibility. This is the perfect entry-point for technicians to gain experience, join teams on larger projects, and be discovered for support roles." 
+                                description="Create a free Basic Profile to get visibility for entry-level and support roles. It's the perfect way for junior engineers to find positions (under £195/day) and gain valuable on-site experience." 
                             />
                             <Step 
                                 icon={Star} 

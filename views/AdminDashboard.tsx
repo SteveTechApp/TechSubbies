@@ -15,7 +15,7 @@ export const AdminDashboard = () => {
             case 'Manage Users':
                 return <UserManagementView />;
             case 'Manage Jobs':
-                return <JobManagementView />;
+                return <JobManagementView setActiveView={setActiveView} />;
             case 'Platform Settings':
                 return <PlatformSettingsView />;
             default:

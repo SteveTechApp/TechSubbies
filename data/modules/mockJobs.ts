@@ -1,0 +1,53 @@
+import { Job, CompanyProfile, Currency, JobType, ExperienceLevel } from '../../types/index.ts';
+import { MOCK_COMPANIES } from './mockProfiles.ts';
+import { JOB_ROLE_DEFINITIONS } from '../jobRoles.ts';
+import { LOCATIONS, DURATIONS, JOB_TYPES, EXP_LEVELS } from './mockConstants.ts';
+
+const getRandom = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
+const getRandomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+const MOCK_COMPANY_1 = MOCK_COMPANIES.find(c => c.id === 'comp-1')!;
+
+const MOCK_JOB_1: Job = {
+    id: 'job-1',
+    companyId: MOCK_COMPANY_1.id,
+    title: 'Senior AV Commissioning Engineer',
+    description: 'Lead the commissioning of a new corporate headquarters in Canary Wharf. Must be an expert in Crestron DM NVX, Biamp Tesira, and Dante. Client-facing role requiring excellent communication and documentation skills.',
+    location: 'London, UK',
+    dayRate: '550',
+    currency: Currency.GBP,
+    duration: '6 weeks',
+    postedDate: new Date('2024-06-15'),
+    startDate: new Date('2024-07-29'),
+    status: 'active',
+    jobType: JobType.CONTRACT,
+    experienceLevel: ExperienceLevel.SENIOR,
+};
+
+const generateMockJobs = (count: number, companies: CompanyProfile[]): Job[] => {
+    if (companies.length === 0) return [];
+    return Array.from({ length: count }, (_, i) => {
+        const roleDef = getRandom(JOB_ROLE_DEFINITIONS);
+        const company = getRandom(companies);
+        return {
+            id: `gen-job-${i}`,
+            companyId: company.id,
+            title: roleDef.name,
+            description: `We are looking for a skilled ${roleDef.name} for an upcoming project. The ideal candidate will have strong experience in ${roleDef.skills.slice(0, 3).join(', ')}. This is a contract role with potential for extension.`,
+            location: Math.random() > 0.2 ? `${getRandom(LOCATIONS)}, UK` : 'Remote',
+            dayRate: String(getRandomInt(13, 30) * 25),
+            currency: Currency.GBP,
+            duration: getRandom(DURATIONS),
+            postedDate: new Date(new Date().getTime() - getRandomInt(1, 30) * 24 * 60 * 60 * 1000),
+            startDate: new Date(new Date().getTime() + getRandomInt(1, 60) * 24 * 60 * 60 * 1000),
+            status: 'active',
+            jobType: getRandom(JOB_TYPES),
+            experienceLevel: getRandom(EXP_LEVELS),
+        };
+    });
+};
+
+export const MOCK_JOBS: Job[] = [
+    MOCK_JOB_1,
+    ...generateMockJobs(15, MOCK_COMPANIES)
+];

@@ -9,6 +9,7 @@ import { ProfileManagementView } from './EngineerDashboard/ProfileManagementView
 import { StoryboardCreatorView } from './EngineerDashboard/StoryboardCreatorView.tsx';
 import { PaymentsView } from './EngineerDashboard/PaymentsView.tsx';
 import { AIToolsView } from './EngineerDashboard/AIToolsView.tsx';
+import { MyNetworkView } from './EngineerDashboard/MyNetworkView.tsx';
 import { MessagesView } from './MessagesView.tsx';
 import { ArrowLeft } from '../components/Icons.tsx';
 
@@ -86,6 +87,8 @@ export const EngineerDashboard = () => {
                 return <AIToolsView profile={engineerProfile} onSkillsAdded={addSkillsFromAI} setActiveView={setActiveView} />;
             case 'Billing':
                 return <PaymentsView profile={engineerProfile} setActiveView={setActiveView} />;
+            case 'My Network':
+                return <MyNetworkView setActiveView={setActiveView} />;
             case 'Messages':
                 return <MessagesView />;
             case 'Create Storyboard':

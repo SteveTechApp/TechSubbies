@@ -73,7 +73,7 @@ const ActionableInsight = ({ profile, onUpgrade, onNavigate }: { profile: Engine
         insight = {
             icon: Star,
             title: "Unlock Your Potential",
-            description: "Upgrade to a Skills Profile to add specialist roles and appear higher in searches.",
+            description: "Upgrade to a Skills Profile to add specialist roles, showcase your expertise, and appear higher in searches for high-value contracts.",
             actionText: "Upgrade to Premium",
             action: onUpgrade,
             bgColor: 'bg-yellow-50',
@@ -123,15 +123,14 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
         let score = 0;
         if (isPremium) {
             if (engineerProfile.description) score += 15;
-            if (engineerProfile.skills.length > 0) score += 10;
+            if (engineerProfile.skills && engineerProfile.skills.length > 0) score += 10;
             if (engineerProfile.contact.phone || engineerProfile.contact.linkedin) score += 15;
             if (engineerProfile.selectedJobRoles && engineerProfile.selectedJobRoles.length > 0) score += 35;
             if (engineerProfile.caseStudies && engineerProfile.caseStudies.length > 0) score += 25;
         } else {
-            if (engineerProfile.description) score += 30;
-            if (engineerProfile.skills.length > 0) score += 30;
+            if (engineerProfile.description) score += 50;
             if (engineerProfile.contact.phone || engineerProfile.contact.linkedin) score += 25;
-            if (engineerProfile.availability) score += 15;
+            if (engineerProfile.availability) score += 25;
         }
         return Math.min(score, 100);
     };
@@ -160,7 +159,7 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
                 
                 {/* Main content */}
                 <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                    <DashboardPanel icon={Edit} title="Manage Profile" description="Update your skills, roles, and case studies." onClick={() => setActiveView('Manage Profile')} />
+                    <DashboardPanel icon={Edit} title="Manage Profile" description="Update your roles, bio, and case studies." onClick={() => setActiveView('Manage Profile')} />
                     <DashboardPanel icon={User} title="View Public Profile" description="See your Stats Card as companies see it." onClick={() => setActiveView('View Public Profile')} />
                     <DashboardPanel icon={CalendarDays} title="Set Availability" description="Update your calendar to get relevant offers." onClick={() => setActiveView('Availability')} />
                     <DashboardPanel icon={Search} title="Find Work" description="Search and apply for freelance contracts." onClick={() => setActiveView('Job Search')} />

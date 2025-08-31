@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext.tsx';
-import { Search, MapPin, Calendar, DollarSign } from '../../components/Icons.tsx';
+import { Search, MapPin, Calendar, DollarSign, Home, ArrowUp } from '../../components/Icons.tsx';
 
 const formatDate = (date: any): string => {
     if (!date) return 'TBD';
@@ -12,7 +12,11 @@ const formatDate = (date: any): string => {
     }
 };
 
-export const JobManagementView = () => {
+interface JobManagementViewProps {
+    setActiveView: (view: string) => void;
+}
+
+export const JobManagementView = ({ setActiveView }: JobManagementViewProps) => {
     const { jobs, companies, toggleJobStatus } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -28,8 +32,18 @@ export const JobManagementView = () => {
     }, [jobs, searchTerm, companies]);
 
     return (
-        <div>
-            <h1 className="text-3xl font-bold mb-6">Job Management</h1>
+        <div id="page-top">
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold">Job Management</h1>
+                <button
+                    onClick={() => setActiveView('Dashboard')}
+                    className="flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors"
+                >
+                    <Home size={18} className="mr-2" />
+                    Home
+                </button>
+            </div>
+
 
             <div className="mb-4 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -86,6 +100,13 @@ export const JobManagementView = () => {
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+             <div className="mt-8 text-center">
+                <a href="#page-top" className="inline-flex items-center text-blue-600 hover:underline font-semibold">
+                    <ArrowUp size={16} className="mr-2" />
+                    Return to Top
+                </a>
             </div>
         </div>
     );
