@@ -22,6 +22,7 @@ const MOCK_ENGINEER_STEVE: EngineerProfile = {
     currency: Currency.GBP, dayRate: 750, experience: 20, availability: new Date('2024-09-01'),
     description: "Industry veteran with over 20 years of experience in technical project management and system design. Founder of TechSubbies.com, passionate about connecting expertise with opportunity.",
     profileTier: 'paid',
+    jobDigestOptIn: true,
     skills: [ { name: 'Project Management', rating: 99 }, { name: 'System Design', rating: 95 }, { name: 'Client Relations', rating: 98 } ],
     selectedJobRoles: [ { roleName: 'AV Project Manager', skills: [ { name: 'Project Scoping', rating: 98 }, { name: 'Gantt Charts (MS Project)', rating: 92 }, { name: 'Budget Management', rating: 99 }, { name: 'Client Communication', rating: 99 }, { name: 'Risk Assessment', rating: 95 }, { name: 'Change Order Management', rating: 96 } ], overallScore: 97 } ],
     certifications: [{ name: 'PRINCE2® Practitioner', verified: true }],
@@ -37,6 +38,7 @@ const MOCK_ENGINEER_1: EngineerProfile = {
     description: "Senior AV commissioning engineer with 15+ years' experience specializing in corporate and residential projects. Expert in Crestron, Biamp, and Q-SYS ecosystems, ensuring flawless system integration and performance.",
     companyName: 'AV Innovations', travelRadius: '< 500 miles', profileTier: 'paid',
     subscriptionEndDate: new Date(new Date().setDate(new Date().getDate() + 20)), securityNetCreditsUsed: 0,
+    jobDigestOptIn: true,
     skills: [ { name: 'AV Commissioning', rating: 98 }, { name: 'Crestron Toolbox', rating: 95 }, { name: 'Biamp Tesira', rating: 92 }, { name: 'C# (for SIMPL#)', rating: 72 } ],
     selectedJobRoles: [
         { roleName: 'AV Commissioning Engineer', skills: [ { name: 'System Commissioning', rating: 98 }, { name: 'Crestron Toolbox', rating: 95 }, { name: 'Biamp Tesira', rating: 92 }, { name: 'Q-SYS Designer', rating: 88 }, { name: 'Dante Level 3', rating: 96 }, { name: 'Network Troubleshooting', rating: 90 } ], overallScore: 93 },
@@ -71,6 +73,7 @@ const MOCK_ENGINEER_3: EngineerProfile = {
     currency: Currency.GBP, dayRate: 600, experience: 10, availability: new Date('2024-09-15'),
     description: "AWS Certified Solutions Architect with a deep background in Cisco networking. Specializes in designing and implementing scalable, secure cloud infrastructure and hybrid networks.",
     profileTier: 'paid', subscriptionEndDate: new Date(new Date().setDate(new Date().getDate() + 15)), securityNetCreditsUsed: 1, resourcingCompanyId: 'res-1',
+    jobDigestOptIn: true,
     skills: [ { name: 'Cloud Architecture (AWS)', rating: 95 }, { name: 'Network Engineering', rating: 94 }, { name: 'Cybersecurity', rating: 88 } ],
     selectedJobRoles: [
         { roleName: 'Cloud Engineer (AWS/Azure)', skills: [ { name: 'AWS EC2/Azure VMs', rating: 98 }, { name: 'VPC/VNet Networking', rating: 92 }, { name: 'IAM/Azure AD', rating: 94 }, { name: 'CloudFormation/Terraform', rating: 90 }, { name: 'Serverless Functions', rating: 85 }, { name: 'Cloud Monitoring', rating: 88 } ], overallScore: 91 },
@@ -121,6 +124,7 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
             if (Math.random() < 0.2) engineer.isBoosted = true;
             engineer.subscriptionEndDate = new Date(new Date().setDate(new Date().getDate() + getRandomInt(1, 30)));
             engineer.securityNetCreditsUsed = 0;
+            engineer.jobDigestOptIn = true;
         }
         engineers.push(engineer);
     }

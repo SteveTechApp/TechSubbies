@@ -221,4 +221,79 @@ export const geminiService = {
             return null;
         }
     },
+    // NEW: AI Forum Moderator
+    moderateForumPost: async (post: { title: string; content: string }): Promise<{ decision: 'approve' | 'reject'; reason: string } | null> => {
+        const prompt = `You are a content moderator for a tech forum called TechSubbies.com. Your ONLY task is to determine if a new post is a job posting, an advertisement for services, or a request for work. The forum is strictly for technical discussions, sharing ideas, and asking for help. It is NOT for job listings.
+
+        Analyze the following post title and content.
+        Title: "${post.title}"
+        Content: "${post.content}"
+        
+        The decision should be "approve" if it is clearly a technical discussion, question, or news item.
+        The decision should be "reject" if it mentions hiring, job vacancies, looking for work, day rates, or is otherwise an advertisement.
+        
+        Provide a brief, one-sentence reason for your decision.`;
+        
+        try {
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            decision: {
+                                type: Type.STRING,
+                                enum: ['approve', 'reject'],
+                            },
+                            reason: {
+                                type: Type.STRING,
+                            },
+                        },
+                        required: ["decision", "reason"]
+                    },
+                },
+            });
+            return JSON.parse(String(response.text));
+        } catch (error) {
+            console.error("Error moderating forum post:", error);
+            return { decision: 'reject', reason: 'AI moderation service failed.' };
+        }
+    },
+    // NEW: AI Day Rate Suggester
+    suggestDayRate: async (title: string, description: string) => {
+        const prompt = `Based on the following freelance job details for the UK tech market (AV & IT), suggest a fair day rate range in GBP.
+        
+        Job Title: "${title}"
+        Job Description: "${description}"
+    
+        Provide a JSON response with:
+        1. "min_rate" (number): The lower end of the suggested day rate range.
+        2. "max_rate" (number): The upper end of the suggested day rate range.
+        3. "reasoning" (string): A brief, one-sentence justification for this range.`;
+        
+        try {
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            min_rate: { type: Type.NUMBER },
+                            max_rate: { type: Type.NUMBER },
+                            reasoning: { type: Type.STRING },
+                        },
+                        required: ["min_rate", "max_rate", "reasoning"],
+                    },
+                },
+            });
+            return JSON.parse(String(response.text));
+        } catch (error) {
+            console.error("Error suggesting day rate:", error);
+            return null;
+        }
+    },
 };

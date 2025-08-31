@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
 import { Currency, JobType, ExperienceLevel } from '../types/index.ts';
-import { X, Lightbulb } from './Icons.tsx';
+import { X, Lightbulb, Loader } from './Icons.tsx';
 
 interface JobPostModalProps {
     isOpen: boolean;
@@ -20,7 +20,9 @@ export const JobPostModal = ({ isOpen, onClose, onPostJob }: JobPostModalProps) 
     jobType: JobType.CONTRACT, experienceLevel: ExperienceLevel.MID_LEVEL,
   });
   const [suggestedTeam, setSuggestedTeam] = useState<SuggestedTeamMember[] | null>(null);
-  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [isSuggestingTeam, setIsSuggestingTeam] = useState(false);
+  const [isSuggestingRate, setIsSuggestingRate] = useState(false);
+  const [suggestedRate, setSuggestedRate] = useState<{min_rate: number, max_rate: number, reasoning: string} | null>(null);
   const { geminiService } = useAppContext();
 
   if (!isOpen) return null;
@@ -37,17 +39,24 @@ export const JobPostModal = ({ isOpen, onClose, onPostJob }: JobPostModalProps) 
 
   const handleSuggestTeam = async () => {
     if (!jobDetails.description) return;
-    setIsSuggesting(true);
+    setIsSuggestingTeam(true);
     const result = await geminiService.suggestTeamForProject(jobDetails.description);
     setSuggestedTeam(result?.team || null);
-    setIsSuggesting(false);
+    setIsSuggestingTeam(false);
   };
-
-  const suggestButtonText = isSuggesting ? 'Thinking...' : 'Suggest Roles';
+  
+  const handleSuggestRate = async () => {
+    if (!jobDetails.title && !jobDetails.description) return;
+    setIsSuggestingRate(true);
+    setSuggestedRate(null);
+    const result = await geminiService.suggestDayRate(jobDetails.title, jobDetails.description);
+    setSuggestedRate(result);
+    setIsSuggestingRate(false);
+};
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-      <div className="bg-white rounded-lg p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Post a New Job</h2>
           <button onClick={onClose}><X className="text-gray-500" /></button>
@@ -94,8 +103,19 @@ export const JobPostModal = ({ isOpen, onClose, onPostJob }: JobPostModalProps) 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Day Rate</label>
-              <input type="number" name="dayRate" placeholder="e.g., 550" onChange={handleChange} className="w-full border p-2 rounded" />
+                <div className="flex justify-between items-center">
+                    <label className="block text-sm font-medium text-gray-700">Day Rate</label>
+                    <button type="button" onClick={handleSuggestRate} disabled={isSuggestingRate} className="text-xs flex items-center gap-1 text-blue-600 hover:underline disabled:text-gray-400">
+                        {isSuggestingRate ? <Loader className="animate-spin w-4 h-4"/> : <Lightbulb className="w-4 h-4"/>}
+                        {isSuggestingRate ? 'Analyzing...' : 'AI Suggestion'}
+                    </button>
+                </div>
+                <input type="number" name="dayRate" placeholder="e.g., 550" onChange={handleChange} className="w-full border p-2 rounded" />
+                 {suggestedRate && (
+                    <div className="mt-2 p-2 bg-blue-50 border border-blue-200 text-blue-800 rounded-md text-xs">
+                        <strong>Suggestion:</strong> £{suggestedRate.min_rate} - £{suggestedRate.max_rate}. {suggestedRate.reasoning}
+                    </div>
+                )}
             </div>
              <div>
               <label className="block text-sm font-medium text-gray-700">Start Date</label>
@@ -105,8 +125,8 @@ export const JobPostModal = ({ isOpen, onClose, onPostJob }: JobPostModalProps) 
           <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
             <h3 className="font-bold text-blue-800 mb-2 flex items-center"><Lightbulb className="w-5 h-5 mr-2" /> AI Team Suggestion</h3>
             <p className="text-sm text-gray-600 mb-3">Based on your job description, let AI suggest the roles you might need to hire.</p>
-            <button onClick={handleSuggestTeam} disabled={isSuggesting || !jobDetails.description} className="px-4 py-2 text-sm bg-blue-600 text-white rounded disabled:bg-blue-300"> 
-              {suggestButtonText}
+            <button onClick={handleSuggestTeam} disabled={isSuggestingTeam || !jobDetails.description} className="px-4 py-2 text-sm bg-blue-600 text-white rounded disabled:bg-blue-300"> 
+              {isSuggestingTeam ? 'Thinking...' : 'Suggest Roles'}
             </button>
             {suggestedTeam && (
                 <div className="mt-4">

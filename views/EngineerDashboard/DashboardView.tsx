@@ -115,7 +115,7 @@ interface DashboardViewProps {
 }
 
 export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, boostProfile }: DashboardViewProps) => {
-    const { reactivateProfile } = useAppContext();
+    const { reactivateProfile, jobs } = useAppContext();
     const isPremium = engineerProfile.profileTier === 'paid';
     const firstName = engineerProfile.name.split(' ')[0];
 
@@ -136,6 +136,9 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
     };
 
     const profileScore = calculateProfileScore();
+    
+    const digestJobs = jobs.filter(j => j.status === 'active').sort((a,b) => b.postedDate.getTime() - a.postedDate.getTime()).slice(0, 3);
+
 
     return (
         <div>
@@ -175,6 +178,25 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
                             <DashboardPanel icon={Star} title="Upgrade to Premium" description="For £15/mo, unlock specialist roles, Boosts, and appear higher in searches." onClick={onUpgradeTier} isFeatured={true} />
                         )}
                     </div>
+                    {isPremium && engineerProfile.jobDigestOptIn && (
+                        <div className="sm:col-span-2 md:col-span-3 bg-white p-5 rounded-lg shadow">
+                            <h3 className="font-bold text-lg mb-2">Your Weekly Digest</h3>
+                            <p className="text-sm text-gray-500 mb-4">Here are some of the latest top-matching jobs. We'll send a full summary to your email.</p>
+                            <div className="space-y-3">
+                                {digestJobs.map(job => (
+                                    <div key={job.id} className="p-3 bg-gray-50 rounded-md flex justify-between items-center">
+                                        <div>
+                                            <p className="font-semibold text-blue-700">{job.title}</p>
+                                            <p className="text-xs text-gray-600">{job.location} • {job.currency}{job.dayRate}/day</p>
+                                        </div>
+                                        <button onClick={() => setActiveView('Job Search')} className="text-sm font-semibold text-blue-600 hover:underline flex items-center gap-1">
+                                            View <ArrowRight size={14} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Sidebar */}

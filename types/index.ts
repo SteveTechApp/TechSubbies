@@ -1,4 +1,3 @@
-// FIX: Add imports for types used in AppContextType
 import type { Chat } from '@google/genai';
 import type { Dispatch, SetStateAction } from 'react';
 
@@ -133,6 +132,7 @@ export interface EngineerProfile extends BaseProfile {
     trialEndDate?: Date; // NEW: For managing Skills Profile trials
     subscriptionEndDate?: Date; // NEW: For Security Net Guarantee
     securityNetCreditsUsed?: number; // NEW: For Security Net Guarantee
+    jobDigestOptIn?: boolean; // NEW: For personalized job digests
     title?: string;
     firstName: string;
     middleName?: string;
@@ -253,10 +253,33 @@ export interface Notification {
     timestamp: Date;
 }
 
+// --- NEW: Forum Types ---
+export interface ForumPost {
+    id: string;
+    authorId: string; // user.id
+    title: string;
+    content: string;
+    tags: string[];
+    timestamp: Date;
+    upvotes: number;
+    downvotes: number;
+    status: 'pending' | 'approved' | 'rejected';
+}
 
-export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'companySignUp' | 'resourcingCompanySignUp' | 'investors' | 'aboutUs' | 'terms' | 'privacy' | 'pricing';
+export interface ForumComment {
+    id: string;
+    postId: string;
+    authorId: string; // user.id
+    parentId: string | null; // For nested comments
+    content: string;
+    timestamp: Date;
+    upvotes: number;
+    downvotes: number;
+}
 
-// FIX: Export AppContextType which was previously missing
+
+export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'companySignUp' | 'resourcingCompanySignUp' | 'investors' | 'aboutUs' | 'terms' | 'privacy' | 'pricing' | 'howItWorks';
+
 export interface AppContextType {
     user: User | null;
     allUsers: User[];
@@ -297,4 +320,11 @@ export interface AppContextType {
     offerJob: (jobId: string, engineerId: string) => void;
     acceptOffer: (jobId: string, engineerId: string) => void;
     declineOffer: (jobId: string, engineerId: string) => void;
+    // NEW: Forum context
+    forumPosts: ForumPost[];
+    forumComments: ForumComment[];
+    createForumPost: (post: { title: string; content: string; tags: string[] }) => Promise<void>;
+    addForumComment: (comment: { postId: string; parentId: string | null; content: string }) => void;
+    voteOnPost: (postId: string, voteType: 'up' | 'down') => void;
+    voteOnComment: (commentId: string, voteType: 'up' | 'down') => void;
 }

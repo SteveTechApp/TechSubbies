@@ -1,11 +1,16 @@
 import { User, Role } from '../types/index.ts';
 import { MOCK_ENGINEERS, MOCK_COMPANIES, MOCK_RESOURCING_COMPANY_1, MOCK_ADMIN_PROFILE, MOCK_FREE_ENGINEER } from './modules/mockProfiles.ts';
 import { MOCK_JOBS } from './modules/mockJobs.ts';
-import { MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_NOTIFICATIONS } from './modules/mockInteractions.ts';
+import { MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_CONVERSATIONS, MOCK_MESSAGES } from './modules/mockInteractions.ts';
+import { MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_NOTIFICATIONS } from './modules/mockForum.ts';
+
 
 // Re-export all the mock data for use throughout the application.
 // This keeps the import paths consistent in other files despite the refactoring.
-export { MOCK_ENGINEERS, MOCK_COMPANIES, MOCK_JOBS, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_NOTIFICATIONS };
+export { 
+    MOCK_ENGINEERS, MOCK_COMPANIES, MOCK_JOBS, MOCK_APPLICATIONS, MOCK_REVIEWS, 
+    MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_NOTIFICATIONS 
+};
 
 
 // --- Define specific user roles for login simulation ---

@@ -1,4 +1,4 @@
-import { Application, Review, Conversation, Message, Notification, ApplicationStatus, NotificationType } from '../../types/index.ts';
+import { Application, Review, Conversation, Message, ApplicationStatus } from '../../types/index.ts';
 
 export const MOCK_APPLICATIONS: Application[] = [
     { jobId: 'job-1', engineerId: 'eng-1', date: new Date('2024-06-20'), status: ApplicationStatus.COMPLETED, reviewed: true },
@@ -42,34 +42,4 @@ export const MOCK_MESSAGES: Message[] = [
     { id: 'msg-4', conversationId: 'convo-1', senderId: 'user-eng-eng-1', text: "Perfect, I've just sent over the revised quote. Let me know what you think.", timestamp: new Date(new Date().getHours() - 1), isRead: false },
     { id: 'msg-5', conversationId: 'convo-2', senderId: 'user-comp-res-1', text: "Hi Samantha, a new IT support role came up that looks like a great fit for you. Are you happy for us to put you forward?", timestamp: new Date(new Date(new Date().setDate(new Date().getDate() - 1)).setHours(10, 0)), isRead: true },
     { id: 'msg-6', conversationId: 'convo-2', senderId: 'user-eng-eng-2', text: "Yes, I'm available from that date. Please feel free to submit my profile.", timestamp: new Date(new Date(new Date().setDate(new Date().getDate() - 1)).setHours(11, 0)), isRead: true },
-];
-
-export const MOCK_NOTIFICATIONS: Notification[] = [
-    {
-        id: 'notif-1',
-        userId: 'user-eng-eng-1',
-        type: NotificationType.JOB_OFFER,
-        text: "Pro AV Solutions has offered you the 'Senior AV Commissioning Engineer' job.",
-        link: 'My Network',
-        isRead: false,
-        timestamp: new Date(new Date().setHours(new Date().getHours() - 3)),
-    },
-    {
-        id: 'notif-2',
-        userId: 'user-eng-eng-1',
-        type: NotificationType.MESSAGE,
-        text: "You have a new message from Pro AV Solutions.",
-        link: 'Messages',
-        isRead: false,
-        timestamp: new Date(new Date().setHours(new Date().getHours() - 1)),
-    },
-     {
-        id: 'notif-3',
-        userId: 'user-eng-eng-1',
-        type: NotificationType.NEW_JOB_MATCH,
-        text: "A new job, 'Lead AV Installer', matches your skills.",
-        link: 'Job Search',
-        isRead: true,
-        timestamp: new Date(new Date().setDate(new Date().getDate() - 2)),
-    }
 ];

@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext.tsx';
-// FIX: Add CompanyProfile, Job, and Application to imports for explicit typing
 import { ApplicationStatus, Job, Role, CompanyProfile, Application } from '../../types/index.ts';
 import { ArrowLeft, Briefcase, CheckCircle, Mail, Download, X } from '../../components/Icons.tsx';
 
@@ -8,7 +7,6 @@ interface MyNetworkViewProps {
     setActiveView: (view: string) => void;
 }
 
-// FIX: Define a type for the accumulator object in the reduce function
 interface CompanyInteraction {
     company: CompanyProfile;
     interactions: {
@@ -66,7 +64,6 @@ export const MyNetworkView = ({ setActiveView }: MyNetworkViewProps) => {
         const engineerId = user.profile.id;
         const myApplications = applications.filter(app => app.engineerId === engineerId);
 
-        // FIX: Explicitly type the accumulator ('acc') in the reduce function to prevent type errors.
         const companyInteractions = myApplications.reduce((acc: Record<string, CompanyInteraction>, app) => {
             const job = jobs.find(j => j.id === app.jobId);
             if (!job) return acc;

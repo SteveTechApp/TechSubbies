@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
 import { PoundSterling, DollarSign } from '../components/Icons.tsx';
-import { Role, EngineerProfile, User, Job, Application, Currency, Conversation, Message, Review, CompanyProfile, ApplicationStatus, Notification, NotificationType, AppContextType } from '../types/index.ts';
-import { MOCK_JOBS, MOCK_ENGINEERS, MOCK_USERS, MOCK_USER_FREE_ENGINEER, ALL_MOCK_USERS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_COMPANIES, MOCK_NOTIFICATIONS } from '../data/mockData.ts';
+// FIX: Import ForumPost and ForumComment types to satisfy AppContextType
+import { Role, EngineerProfile, User, Job, Application, Currency, Conversation, Message, Review, CompanyProfile, ApplicationStatus, Notification, NotificationType, AppContextType, ForumPost, ForumComment } from '../types/index.ts';
+// FIX: Import mock forum data
+import { MOCK_JOBS, MOCK_ENGINEERS, MOCK_USERS, MOCK_USER_FREE_ENGINEER, ALL_MOCK_USERS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_COMPANIES, MOCK_NOTIFICATIONS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS } from '../data/mockData.ts';
 import { geminiService } from '../services/geminiService.ts';
 import type { Chat } from '@google/genai';
 
@@ -36,6 +38,10 @@ export const useAppLogic = (): AppContextType => {
 
     // Notification State
     const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+
+    // FIX: Add state for forum posts and comments
+    const [forumPosts, setForumPosts] = useState<ForumPost[]>(MOCK_FORUM_POSTS);
+    const [forumComments, setForumComments] = useState<ForumComment[]>(MOCK_FORUM_COMMENTS);
 
     const findUserById = (userId: string) => allUsers.find(u => u.id === userId);
     const findUserByProfileId = (profileId: string) => allUsers.find(u => u.profile.id === profileId);
@@ -582,7 +588,73 @@ export const useAppLogic = (): AppContextType => {
         ));
     };
 
+    // FIX: Add missing forum methods to satisfy AppContextType
+    const createForumPost = async (post: { title: string; content: string; tags: string[] }) => {
+        if (!user) {
+            alert("You must be logged in to create a post.");
+            return;
+        }
 
+        const moderationResult = await geminiService.moderateForumPost(post);
+
+        const decision = moderationResult?.decision || 'reject';
+        const reason = moderationResult?.reason || 'AI moderation failed.';
+
+        if (decision === 'reject') {
+            alert(`Post rejected by AI moderator: ${reason}`);
+            return;
+        }
+
+        const newPost: ForumPost = {
+            ...post,
+            id: `post-${generateUniqueId()}`,
+            authorId: user.id,
+            timestamp: new Date(),
+            upvotes: 0,
+            downvotes: 0,
+            status: 'approved',
+        };
+
+        setForumPosts(prev => [newPost, ...prev]);
+        alert("Post submitted and approved!");
+    };
+
+    const addForumComment = (comment: { postId: string; parentId: string | null; content: string }) => {
+        if (!user) {
+            alert("You must be logged in to comment.");
+            return;
+        }
+        const newComment: ForumComment = {
+            ...comment,
+            id: `comment-${generateUniqueId()}`,
+            authorId: user.id,
+            timestamp: new Date(),
+            upvotes: 0,
+            downvotes: 0,
+        };
+        setForumComments(prev => [...prev, newComment]);
+    };
+
+    const voteOnPost = (postId: string, voteType: 'up' | 'down') => {
+        setForumPosts(prev => prev.map(post => {
+            if (post.id === postId) {
+                return { ...post, upvotes: voteType === 'up' ? post.upvotes + 1 : post.upvotes, downvotes: voteType === 'down' ? post.downvotes + 1 : post.downvotes };
+            }
+            return post;
+        }));
+    };
+    
+    const voteOnComment = (commentId: string, voteType: 'up' | 'down') => {
+        setForumComments(prev => prev.map(comment => {
+            if (comment.id === commentId) {
+                return { ...comment, upvotes: voteType === 'up' ? comment.upvotes + 1 : comment.upvotes, downvotes: voteType === 'down' ? comment.downvotes + 1 : comment.downvotes };
+            }
+            return comment;
+        }));
+    };
+
+
+    // FIX: Add missing forum properties to the returned context object and dependency array
     return useMemo(() => ({
         user, allUsers, jobs, companies, engineers, login, loginAsSteve, logout, 
         updateEngineerProfile, updateCompanyProfile, postJob, startTrial, geminiService, 
@@ -591,6 +663,7 @@ export const useAppLogic = (): AppContextType => {
         reactivateProfile, chatSession, conversations, messages, selectedConversationId, 
         setSelectedConversationId, findUserById, findUserByProfileId, sendMessage, 
         startConversationAndNavigate, reviews, submitReview, toggleUserStatus, toggleJobStatus, 
-        notifications, markNotificationsAsRead, offerJob, acceptOffer, declineOffer
-    }), [user, allUsers, jobs, companies, engineers, applications, conversations, messages, selectedConversationId, reviews, notifications]);
+        notifications, markNotificationsAsRead, offerJob, acceptOffer, declineOffer,
+        forumPosts, forumComments, createForumPost, addForumComment, voteOnPost, voteOnComment
+    }), [user, allUsers, jobs, companies, engineers, applications, conversations, messages, selectedConversationId, reviews, notifications, forumPosts, forumComments]);
 };

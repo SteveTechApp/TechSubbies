@@ -6,6 +6,7 @@ import { ContactSection } from '../../components/ProfileManagement/ContactSectio
 import { WorkReadinessSection } from '../../components/ProfileManagement/WorkReadinessSection.tsx';
 import { SkillsAndRolesSection } from '../../components/ProfileManagement/SkillsAndRolesSection.tsx';
 import { PortfolioSection } from '../../components/ProfileManagement/PortfolioSection.tsx';
+import { NotificationSettingsSection } from '../../components/ProfileManagement/NotificationSettingsSection.tsx';
 
 interface ProfileManagementViewProps {
     profile: EngineerProfile;
@@ -18,8 +19,12 @@ export const ProfileManagementView = ({ profile, onSave, setActiveView }: Profil
     const [contactData, setContactData] = useState(profile.contact);
 
     const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: name === 'experience' ? parseInt(value, 10) : value }));
+        const { name, value, type } = e.target;
+        if (type === 'checkbox') {
+            setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: name === 'experience' ? parseInt(value, 10) : value }));
+        }
     };
 
     const handleContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,6 +79,7 @@ export const ProfileManagementView = ({ profile, onSave, setActiveView }: Profil
                 <CoreInfoSection formData={formData} onProfileChange={handleProfileChange} />
                 <ContactSection contactData={contactData} onContactChange={handleContactChange} />
                 <WorkReadinessSection complianceData={formData.compliance} onComplianceChange={handleComplianceChange} />
+                <NotificationSettingsSection profile={profile} formData={formData} onProfileChange={handleProfileChange} />
                 <SkillsAndRolesSection profile={profile} formData={formData} setFormData={setFormData} setActiveView={setActiveView} />
                 <PortfolioSection profile={profile} formData={formData} setFormData={setFormData} setActiveView={setActiveView} />
             </div>
