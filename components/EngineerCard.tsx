@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
-import { EngineerProfile } from '../types/index.ts';
+// FIX: Import ProfileTier enum for type-safe comparisons.
+import { EngineerProfile, ProfileTier } from '../types/index.ts';
 import { MapPin, Star, Rocket, Sparkles } from './Icons.tsx';
 
 interface EngineerCardProps {
@@ -21,7 +22,8 @@ export const EngineerCard = ({ profile, onClick, matchScore, isAiMatch }: Engine
     // New border logic: gold for boosted, blue for paid, transparent for free
     const borderClass = profile.isBoosted 
         ? 'border-amber-400' // Gold border
-        : profile.profileTier === 'paid' 
+        // FIX: Compare against ProfileTier enum instead of string literal.
+        : profile.profileTier !== ProfileTier.BASIC 
         ? 'border-blue-500' // Blue border
         : 'border-transparent'; // No border (transparent to maintain layout)
         
@@ -63,7 +65,8 @@ export const EngineerCard = ({ profile, onClick, matchScore, isAiMatch }: Engine
                             <Rocket size={12} className="mr-1" /> BOOSTED
                         </span>
                     )}
-                    {profile.profileTier === 'paid' && (
+                    {/* FIX: Compare against ProfileTier enum instead of string literal. */}
+                    {profile.profileTier !== ProfileTier.BASIC && (
                          <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center shadow">
                             <Star size={12} className="mr-1" /> SKILLS PROFILE
                         </span>
@@ -87,13 +90,15 @@ export const EngineerCard = ({ profile, onClick, matchScore, isAiMatch }: Engine
             <div className="mt-3 pt-3 border-t border-gray-100">
                 <div className="flex justify-between items-center">
                     <h4 className="text-xs font-bold text-gray-500 uppercase">
-                        {profile.profileTier === 'paid' ? 'Core Skills' : 'Profile Tier'}
+                        {/* FIX: Compare against ProfileTier enum instead of string literal. */}
+                        {profile.profileTier !== ProfileTier.BASIC ? 'Core Skills' : 'Profile Tier'}
                     </h4>
                     <div className="text-right">
                         <p className="text-lg font-bold text-gray-800">{profile.currency}{profile.dayRate}</p>
                     </div>
                 </div>
-                {profile.profileTier === 'paid' && profile.skills && profile.skills.length > 0 ? (
+                {/* FIX: Compare against ProfileTier enum instead of string literal. */}
+                {profile.profileTier !== ProfileTier.BASIC && profile.skills && profile.skills.length > 0 ? (
                     <div className="flex flex-wrap gap-1 mt-1">
                         {profile.skills.slice(0, 3).map(skill => (
                             <span key={skill.name} className="bg-gray-200 text-gray-800 px-2 py-1 text-xs rounded-md">{skill.name}</span>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { EngineerProfile, Compliance } from '../types/index.ts';
-import { Star, Briefcase, Award, Linkedin, Mail, Users, Calendar, MapPin, ShieldCheck, CheckCircle } from './Icons.tsx';
+import { EngineerProfile, Compliance, ProfileTier } from '../types/index.ts';
+import { Star, Briefcase, Award, Linkedin, Mail, Users, Calendar, MapPin, ShieldCheck, CheckCircle, BarChart, Edit } from './Icons.tsx';
 
 // A simple component to render a star rating on the card
 const CardStarRating = ({ rating = 0, label }: { rating?: number, label: string }) => (
@@ -23,11 +23,21 @@ const StatRow = ({ label, value }: { label: string; value: string | number }) =>
 );
 
 
-const CardFront = ({ profile }: { profile: EngineerProfile }) => {
+const CardFront = ({ profile, isEditable, onEdit }: { profile: EngineerProfile, isEditable?: boolean, onEdit?: () => void }) => {
     const {
         name, discipline, avatar, experience, dayRate, currency,
         customerRating, peerRating, location, description, profileTier
     } = profile;
+
+    const TIER_BADGE_INFO = {
+        [ProfileTier.BASIC]: null,
+        [ProfileTier.PROFESSIONAL]: { text: "Professional", color: "bg-green-400" },
+        [ProfileTier.SKILLS]: { text: "Skills Profile", color: "bg-yellow-400" },
+        [ProfileTier.BUSINESS]: { text: "Business", color: "bg-purple-400" },
+    };
+    const tierBadge = TIER_BADGE_INFO[profileTier];
+
+    const hasPaidFeatures = profileTier !== ProfileTier.BASIC;
 
     const topSkillScore = profile.selectedJobRoles && profile.selectedJobRoles.length > 0
         ? Math.max(...profile.selectedJobRoles.map(r => r.overallScore))
@@ -44,6 +54,15 @@ const CardFront = ({ profile }: { profile: EngineerProfile }) => {
 
     return (
         <div className={`font-sans w-full h-full bg-gradient-to-br from-blue-700 to-blue-900 text-white rounded-2xl border-8 ${borderClass} shadow-2xl p-4 transform transition-all duration-300 relative`}>
+            {isEditable && (
+                <button
+                    onClick={(e) => { e.stopPropagation(); onEdit?.(); }}
+                    className="absolute top-3 right-3 z-20 flex items-center px-3 py-1.5 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 shadow-lg border border-white/30"
+                    aria-label="Edit Public Profile"
+                >
+                    <Edit size={14} className="mr-1.5" /> Edit Profile
+                </button>
+            )}
             <div className="text-center border-b-4 border-yellow-400 pb-2 mb-3">
                 <div className="flex justify-center items-center gap-3">
                     <h1 className="text-3xl font-black uppercase tracking-tighter">{name}</h1>
@@ -61,7 +80,7 @@ const CardFront = ({ profile }: { profile: EngineerProfile }) => {
             <div className="bg-blue-800/50 rounded-lg border-2 border-white/50 overflow-hidden mb-4">
                 <StatRow label="Experience" value={`${experience} YRS`} />
                 <StatRow label="Day Rate" value={`${currency}${dayRate}`} />
-                {profile.profileTier === 'paid' ? (
+                {hasPaidFeatures ? (
                     <>
                         <StatRow label="Top Skill Score" value={topSkillScore} />
                         <StatRow label="Top Skill" value={topSkillName} />
@@ -80,10 +99,10 @@ const CardFront = ({ profile }: { profile: EngineerProfile }) => {
                  <p className="text-xs text-blue-200 bg-black/20 p-2 rounded-md h-20 overflow-y-auto custom-scrollbar">{description}</p>
             </div>
             <p className="text-center text-xs text-blue-300 mt-2 opacity-70">Click to flip for more details</p>
-             {profileTier === 'paid' && (
+             {tierBadge && (
                 <div className="absolute -top-5 -right-5 transform rotate-12">
-                     <span className="bg-yellow-400 text-blue-900 text-xs font-black px-4 py-2 rounded-full uppercase shadow-lg">
-                        Skills Profile
+                     <span className={`${tierBadge.color} text-blue-900 text-xs font-black px-4 py-2 rounded-full uppercase shadow-lg`}>
+                        {tierBadge.text}
                     </span>
                 </div>
             )}
@@ -92,7 +111,7 @@ const CardFront = ({ profile }: { profile: EngineerProfile }) => {
 };
 
 const CardBack = ({ profile }: { profile: EngineerProfile }) => {
-    const hasPaidFeatures = profile.profileTier === 'paid' && profile.selectedJobRoles && profile.selectedJobRoles.length > 0;
+    const hasSkillsFeatures = profile.profileTier === ProfileTier.SKILLS || profile.profileTier === ProfileTier.BUSINESS;
 
     const readinessFlags = [
         { key: 'hasOwnTransport', label: 'Own Transport' },
@@ -141,7 +160,7 @@ const CardBack = ({ profile }: { profile: EngineerProfile }) => {
                     </div>
                 </div>
 
-                {hasPaidFeatures ? (
+                {hasSkillsFeatures && profile.selectedJobRoles && profile.selectedJobRoles.length > 0 ? (
                     <div>
                         <h3 className="font-bold text-blue-300 uppercase flex items-center mb-1"><Briefcase size={16} className="mr-2"/> Specialist Roles</h3>
                         <div className="space-y-2">
@@ -161,9 +180,15 @@ const CardBack = ({ profile }: { profile: EngineerProfile }) => {
 
                 {profile.certifications.length > 0 && (
                      <div>
-                        <h3 className="font-bold text-blue-300 uppercase flex items-center mb-1"><Award size={16} className="mr-2"/> Verified Certifications</h3>
+                        <h3 className="font-bold text-blue-300 uppercase flex items-center mb-1"><Award size={16} className="mr-2"/> Certifications</h3>
                         <ul className="list-disc list-inside bg-black/30 p-2 rounded-md">
-                            {profile.certifications.map(cert => <li key={cert.name}>{cert.name}</li>)}
+                            {profile.certifications.map(cert => 
+                                <li key={cert.name} className="flex items-center">
+                                    {cert.name} 
+                                    {/* FIX: Wrap icon in a span with a title attribute to fix prop error and provide tooltip. */}
+                                    {cert.verified && <span title="Verified"><CheckCircle size={12} className="ml-1.5 text-green-400 flex-shrink-0" /></span>}
+                                </li>
+                            )}
                         </ul>
                     </div>
                 )}
@@ -190,7 +215,7 @@ const CardBack = ({ profile }: { profile: EngineerProfile }) => {
 };
 
 
-export const TopTrumpCard = ({ profile }: { profile: EngineerProfile }) => {
+export const TopTrumpCard = ({ profile, isEditable, onEdit }: { profile: EngineerProfile, isEditable?: boolean, onEdit?: () => void }) => {
     const [isFlipped, setIsFlipped] = useState(false);
     
     if (!profile) return null;
@@ -209,7 +234,7 @@ export const TopTrumpCard = ({ profile }: { profile: EngineerProfile }) => {
         >
             <div className="flip-card-inner">
                 <div className="flip-card-front">
-                    <CardFront profile={profile} />
+                    <CardFront profile={profile} isEditable={isEditable} onEdit={onEdit} />
                 </div>
                 <div className="flip-card-back">
                     <CardBack profile={profile} />

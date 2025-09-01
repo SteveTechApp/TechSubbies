@@ -10,6 +10,7 @@ import { FindTalentView } from './CompanyDashboard/FindTalentView.tsx';
 import { EngineerProfileView } from './EngineerProfileView.tsx';
 import { MessagesView } from './MessagesView.tsx';
 import { ArrowLeft } from '../components/Icons.tsx';
+import { ContractsView } from './ContractsView.tsx';
 
 export const CompanyDashboard = () => {
     const { user, postJob, jobs, engineers, applications, updateCompanyProfile } = useAppContext();
@@ -74,6 +75,8 @@ export const CompanyDashboard = () => {
                 return <MyJobsView myJobs={myJobs} setActiveView={setActiveView} />;
             case 'Messages':
                 return <MessagesView />;
+            case 'Contracts':
+                return <ContractsView setActiveView={setActiveView} />;
             case 'Settings':
                 return <SettingsView profile={user.profile} onSave={updateCompanyProfile} />;
             default:

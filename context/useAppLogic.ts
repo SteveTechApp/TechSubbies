@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
 import { PoundSterling, DollarSign } from '../components/Icons.tsx';
-// FIX: Import ForumPost and ForumComment types to satisfy AppContextType
-import { Role, EngineerProfile, User, Job, Application, Currency, Conversation, Message, Review, CompanyProfile, ApplicationStatus, Notification, NotificationType, AppContextType, ForumPost, ForumComment } from '../types/index.ts';
-// FIX: Import mock forum data
-import { MOCK_JOBS, MOCK_ENGINEERS, MOCK_USERS, MOCK_USER_FREE_ENGINEER, ALL_MOCK_USERS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_COMPANIES, MOCK_NOTIFICATIONS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS } from '../data/mockData.ts';
+// FIX: Added Discipline to the import list to resolve a type error.
+import { Role, EngineerProfile, User, Job, Application, Currency, Conversation, Message, Review, CompanyProfile, ApplicationStatus, Notification, NotificationType, AppContextType, ForumPost, ForumComment, ProfileTier, Contract, ContractStatus, ContractType, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Compliance, IdentityVerification, Discipline } from '../types/index.ts';
+import { MOCK_JOBS, MOCK_ENGINEERS, MOCK_USERS, MOCK_USER_FREE_ENGINEER, ALL_MOCK_USERS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_COMPANIES, MOCK_NOTIFICATIONS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_CONTRACTS, MOCK_TRANSACTIONS } from '../data/mockData.ts';
 import { geminiService } from '../services/geminiService.ts';
 import type { Chat } from '@google/genai';
+import { eSignatureService } from '../services/eSignatureService.ts';
 
 // --- CONSTANTS ---
 export const APP_NAME = "TechSubbies.com";
@@ -13,6 +13,7 @@ export const CURRENCY_ICONS: { [key in Currency]: React.ComponentType<any> } = {
     [Currency.GBP]: PoundSterling,
     [Currency.USD]: DollarSign,
 };
+const PLATFORM_FEE_PERCENTAGE = 0.05; // 5%
 
 const generateUniqueId = () => Math.random().toString(36).substring(2, 9);
 
@@ -39,9 +40,13 @@ export const useAppLogic = (): AppContextType => {
     // Notification State
     const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
 
-    // FIX: Add state for forum posts and comments
+    // Forum State
     const [forumPosts, setForumPosts] = useState<ForumPost[]>(MOCK_FORUM_POSTS);
     const [forumComments, setForumComments] = useState<ForumComment[]>(MOCK_FORUM_COMMENTS);
+    // NEW: Contract & Transaction State
+    const [contracts, setContracts] = useState<Contract[]>(MOCK_CONTRACTS);
+    const [transactions, setTransactions] = useState<Transaction[]>(MOCK_TRANSACTIONS);
+
 
     const findUserById = (userId: string) => allUsers.find(u => u.id === userId);
     const findUserByProfileId = (profileId: string) => allUsers.find(u => u.profile.id === profileId);
@@ -65,13 +70,11 @@ export const useAppLogic = (): AppContextType => {
         if (userToLogin.role === Role.ENGINEER) {
             const profile = { ...(userToLogin.profile as EngineerProfile) }; // Copy profile
             
-            // This logic simulates what a server would do: check trial status and downgrade if needed.
-            if (profile.profileTier === 'paid' && profile.trialEndDate && new Date(profile.trialEndDate) < new Date()) {
+            if (profile.profileTier !== ProfileTier.BASIC && profile.trialEndDate && new Date(profile.trialEndDate) < new Date()) {
                 console.log(`Trial for ${profile.name} expired. Downgrading to free tier.`);
-                profile.profileTier = 'free'; // Downgrade the copied profile
-                userToLogin.profile = profile; // Assign the modified profile back
+                profile.profileTier = ProfileTier.BASIC; 
+                userToLogin.profile = profile; 
 
-                // Also update the main engineers list for consistency across the app
                 const engineerIndex = engineers.findIndex(e => e.id === profile.id);
                  if (engineerIndex !== -1) {
                     const updatedEngineers = [...engineers];
@@ -102,7 +105,11 @@ export const useAppLogic = (): AppContextType => {
         setUser(null);
     };
 
-    const createAndLoginEngineer = (data: any) => {
+    const createAndLoginEngineer = (data: {
+        name: string, email: string, discipline: Discipline, location: string, experience: number,
+        dayRate: number, currency: Currency, availability: string,
+        compliance: Compliance, identity: IdentityVerification
+    }) => {
         const [firstName, ...lastNameParts] = data.name.split(' ');
         const newEngineer: EngineerProfile = {
             id: `eng-${generateUniqueId()}`,
@@ -111,44 +118,38 @@ export const useAppLogic = (): AppContextType => {
             firstName: firstName,
             surname: lastNameParts.join(' ') || ' ',
             avatar: `https://i.pravatar.cc/150?u=${data.name.replace(' ', '')}`,
-            profileTier: 'free',
+            profileTier: ProfileTier.BASIC,
             certifications: [],
             caseStudies: [],
-            // From wizard
+            skills: [],
             discipline: data.discipline,
             location: data.location,
             experience: data.experience,
             currency: data.currency,
             dayRate: data.dayRate,
             availability: new Date(data.availability),
-            skills: data.skills.map((s: string) => ({ name: s, rating: 50 })), // default rating
             compliance: data.compliance,
+            identity: data.identity,
             contact: {
                 email: data.email,
                 phone: '',
                 website: '',
                 linkedin: '',
             },
-            description: `Newly joined freelance ${data.discipline} with ${data.experience} years of experience, based in ${data.location}. Ready for new opportunities starting ${new Date(data.availability).toLocaleDateString()}.`
+            description: `Newly joined freelance ${data.discipline} with ${data.experience} years of experience, based in ${data.location}. Ready for new opportunities starting ${new Date(data.availability).toLocaleDateString()}.`,
+            profileViews: 0,
+            searchAppearances: 0,
+            jobInvites: 0,
         };
 
-        // Add to main list
         setEngineers(prev => [newEngineer, ...prev]);
-
-        // Create user object and log in
-        const newUser: User = {
-            id: `user-${generateUniqueId()}`,
-            role: Role.ENGINEER,
-            profile: newEngineer,
-        };
+        const newUser: User = { id: `user-${generateUniqueId()}`, role: Role.ENGINEER, profile: newEngineer };
         setUser(newUser);
         setAllUsers(prev => [...prev, newUser]);
     };
 
     const createAndLoginCompany = (data: any) => {
-        // Mock verification
         let isVerified = false;
-        // Simple mock check: A real app would have an API call here.
         const validPrefixes = ['123', 'GB', 'VALID']; 
         if (validPrefixes.some(p => data.regNumber.toUpperCase().startsWith(p)) && data.regNumber.length > 5) {
             isVerified = true;
@@ -160,31 +161,17 @@ export const useAppLogic = (): AppContextType => {
     
         const websiteDomain = data.website.replace('https://','').replace('www.','');
         const newCompany: CompanyProfile = {
-            id: `comp-${generateUniqueId()}`,
-            name: data.companyName,
-            status: 'active',
-            // Try to get a logo from clearbit, fallback to pravatar
-            avatar: `https://logo.clearbit.com/${websiteDomain}`,
-            logo: `https://logo.clearbit.com/${websiteDomain}`,
-            website: data.website,
-            companyRegNumber: data.regNumber,
-            isVerified: isVerified,
+            id: `comp-${generateUniqueId()}`, name: data.companyName, status: 'active',
+            avatar: `https://logo.clearbit.com/${websiteDomain}`, logo: `https://logo.clearbit.com/${websiteDomain}`,
+            website: data.website, companyRegNumber: data.regNumber, isVerified: isVerified,
         };
-    
         setCompanies(prev => [newCompany, ...prev]);
-    
-        const newUser: User = {
-            id: `user-${generateUniqueId()}`,
-            role: Role.COMPANY,
-            profile: newCompany,
-        };
-    
+        const newUser: User = { id: `user-${generateUniqueId()}`, role: Role.COMPANY, profile: newCompany };
         setAllUsers(prev => [...prev, newUser]);
         setUser(newUser);
     };
 
     const createAndLoginResourcingCompany = (data: any) => {
-        // Mock verification can be the same as a regular company
         let isVerified = false;
         const validPrefixes = ['123', 'GB', 'VALID'];
         if (validPrefixes.some(p => data.regNumber.toUpperCase().startsWith(p)) && data.regNumber.length > 5) {
@@ -197,37 +184,22 @@ export const useAppLogic = (): AppContextType => {
     
         const websiteDomain = data.website.replace('https://','').replace('www.','');
         const newCompany: CompanyProfile = {
-            id: `res-${generateUniqueId()}`,
-            name: data.companyName,
-            status: 'active',
-            avatar: `https://logo.clearbit.com/${websiteDomain}`,
-            logo: `https://logo.clearbit.com/${websiteDomain}`,
-            website: data.website,
-            companyRegNumber: data.regNumber,
-            isVerified: isVerified,
+            id: `res-${generateUniqueId()}`, name: data.companyName, status: 'active',
+            avatar: `https://logo.clearbit.com/${websiteDomain}`, logo: `https://logo.clearbit.com/${websiteDomain}`,
+            website: data.website, companyRegNumber: data.regNumber, isVerified: isVerified,
         };
-    
         setCompanies(prev => [newCompany, ...prev]);
-    
-        const newUser: User = {
-            id: `user-${generateUniqueId()}`,
-            role: Role.RESOURCING_COMPANY,
-            profile: newCompany,
-        };
-    
+        const newUser: User = { id: `user-${generateUniqueId()}`, role: Role.RESOURCING_COMPANY, profile: newCompany };
         setAllUsers(prev => [...prev, newUser]);
         setUser(newUser);
     };
 
 
     const updateEngineerProfile = (updatedProfile: Partial<EngineerProfile>) => {
-        if (user && user.role === Role.ENGINEER) { // Allow update even if not current user (for admin)
+        if (user && user.role === Role.ENGINEER) {
             const profileId = ('skills' in user.profile) ? user.profile.id : null;
             if (profileId) {
-                 const newUser = {
-                    ...user,
-                    profile: { ...user.profile, ...updatedProfile }
-                } as User;
+                 const newUser = { ...user, profile: { ...user.profile, ...updatedProfile } } as User;
                 setUser(newUser);
             }
         }
@@ -245,10 +217,7 @@ export const useAppLogic = (): AppContextType => {
         if (!profileId) return;
 
         if (user && user.profile.id === profileId) {
-             const newUser = {
-                ...user,
-                profile: { ...user.profile, ...updatedProfile }
-            } as User;
+             const newUser = { ...user, profile: { ...user.profile, ...updatedProfile } } as User;
             setUser(newUser);
         }
          
@@ -268,7 +237,7 @@ export const useAppLogic = (): AppContextType => {
             const subscriptionEndDate = new Date(trialEndDate);
             
             updateEngineerProfile({ 
-                profileTier: 'paid',
+                profileTier: ProfileTier.SKILLS,
                 trialEndDate: trialEndDate,
                 subscriptionEndDate: subscriptionEndDate,
                 securityNetCreditsUsed: 0,
@@ -279,13 +248,7 @@ export const useAppLogic = (): AppContextType => {
 
      const createNotification = (userId: string, type: NotificationType, text: string, link?: string) => {
         const newNotification: Notification = {
-            id: `notif-${generateUniqueId()}`,
-            userId,
-            type,
-            text,
-            link,
-            isRead: false,
-            timestamp: new Date(),
+            id: `notif-${generateUniqueId()}`, userId, type, text, link, isRead: false, timestamp: new Date(),
         };
         setNotifications(prev => [newNotification, ...prev]);
     };
@@ -293,29 +256,17 @@ export const useAppLogic = (): AppContextType => {
     const postJob = (jobData: any) => {
         if (user) {
             const newJob: Job = {
-                ...jobData,
-                id: `job-${generateUniqueId()}`,
-                companyId: user.profile?.id,
-                postedDate: new Date(),
-                startDate: jobData.startDate ? new Date(jobData.startDate) : null,
+                ...jobData, id: `job-${generateUniqueId()}`, companyId: user.profile?.id,
+                postedDate: new Date(), startDate: jobData.startDate ? new Date(jobData.startDate) : null,
                 status: 'active',
             };
             setJobs(prevJobs => [newJob, ...prevJobs]);
 
-            // MOCK AI NOTIFICATION: Notify top 3 engineers with 'paid' profiles
-            const matchingEngineers = engineers
-                .filter(e => e.profileTier === 'paid' && e.status === 'active')
-                .slice(0, 3);
-            
+            const matchingEngineers = engineers.filter(e => e.profileTier !== ProfileTier.BASIC && e.status === 'active').slice(0, 3);
             matchingEngineers.forEach(eng => {
                 const engUser = findUserByProfileId(eng.id);
                 if (engUser) {
-                    createNotification(
-                        engUser.id,
-                        NotificationType.NEW_JOB_MATCH,
-                        `A new job, '${newJob.title}', matches your skills.`,
-                        'Job Search'
-                    );
+                    createNotification(engUser.id, NotificationType.NEW_JOB_MATCH, `A new job, '${newJob.title}', matches your skills.`, 'Job Search');
                 }
             });
         }
@@ -323,8 +274,6 @@ export const useAppLogic = (): AppContextType => {
 
     const applyForJob = (jobId: string, engineerId?: string) => {
         let applyingEngineerId: string | undefined = engineerId;
-
-        // If engineerId is not provided, it's an engineer applying for themselves
         if (!applyingEngineerId) {
             if (user && user.role === Role.ENGINEER) {
                 applyingEngineerId = user.profile.id;
@@ -339,18 +288,13 @@ export const useAppLogic = (): AppContextType => {
             return;
         }
 
-        const newApplication: Application = {
-            jobId,
-            engineerId: applyingEngineerId,
-            date: new Date(),
-            status: ApplicationStatus.APPLIED,
-        };
+        const newApplication: Application = { jobId, engineerId: applyingEngineerId, date: new Date(), status: ApplicationStatus.APPLIED };
         setApplications(prev => [newApplication, ...prev]);
         alert(`Application for ${engineers.find(e => e.id === applyingEngineerId)?.name} submitted successfully!`);
     };
 
     const boostProfile = () => {
-        if (user && user.role === Role.ENGINEER && 'profileTier' in user.profile && user.profile.profileTier === 'paid') {
+        if (user && user.role === Role.ENGINEER && 'profileTier' in user.profile && user.profile.profileTier !== ProfileTier.BASIC) {
             updateEngineerProfile({ isBoosted: true });
             alert("Your profile has been boosted! You'll appear at the top of relevant searches for 12 hours.");
         } else {
@@ -358,13 +302,11 @@ export const useAppLogic = (): AppContextType => {
         }
     };
     
-    // --- Security Net Guarantee ---
     const claimSecurityNetGuarantee = () => {
         if (!user || user.role !== Role.ENGINEER || !('profileTier' in user.profile)) return;
         
         const profile = user.profile as EngineerProfile;
-
-        if (profile.profileTier !== 'paid') {
+        if (profile.profileTier === ProfileTier.BASIC) {
             alert("The Security Net Guarantee is only for paid Skills Profile subscribers.");
             return;
         }
@@ -375,7 +317,6 @@ export const useAppLogic = (): AppContextType => {
             return;
         }
 
-        // MOCK: Check for "offers" by checking conversations with companies
         const companyUserIds = new Set(allUsers.filter(u => u.role === Role.COMPANY).map(u => u.id));
         const hasCompanyConversations = conversations.some(c => 
             c.participantIds.includes(user.id) && c.participantIds.some(pId => companyUserIds.has(pId))
@@ -386,7 +327,6 @@ export const useAppLogic = (): AppContextType => {
             return;
         }
         
-        // MOCK: Check if they've been subscribed for 30 days. We'll just approve it for the demo.
         const newCreditsUsed = creditsUsed + 1;
         const currentSubEnd = profile.subscriptionEndDate ? new Date(profile.subscriptionEndDate) : new Date();
         const newSubEnd = new Date(currentSubEnd.setDate(currentSubEnd.getDate() + 30));
@@ -399,12 +339,7 @@ export const useAppLogic = (): AppContextType => {
             alertMessage += "\n\nYou have now used all available credits. To ensure companies see an active talent pool, your profile has been marked as inactive and will be hidden from search results. You can reactivate it from your dashboard at any time.";
         }
         
-        updateEngineerProfile({
-            securityNetCreditsUsed: newCreditsUsed,
-            subscriptionEndDate: newSubEnd,
-            status: newStatus,
-        });
-
+        updateEngineerProfile({ securityNetCreditsUsed: newCreditsUsed, subscriptionEndDate: newSubEnd, status: newStatus });
         alert(alertMessage);
     };
 
@@ -415,29 +350,19 @@ export const useAppLogic = (): AppContextType => {
         }
     };
 
-
-    // --- Messaging Methods ---
     const sendMessage = (conversationId: string, text: string) => {
         if (!user) return;
         const newMessage: Message = {
-            id: `msg-${generateUniqueId()}`,
-            conversationId,
-            senderId: user.id,
-            text,
-            timestamp: new Date(),
-            isRead: false,
+            id: `msg-${generateUniqueId()}`, conversationId, senderId: user.id, text,
+            timestamp: new Date(), isRead: false,
         };
         setMessages(prev => [...prev, newMessage]);
 
-        // Update the conversation's last message
         const conversation = conversations.find(c => c.id === conversationId);
         if (conversation) {
             setConversations(prev => prev.map(c => 
-                c.id === conversationId 
-                    ? { ...c, lastMessageText: text, lastMessageTimestamp: newMessage.timestamp } 
-                    : c
+                c.id === conversationId ? { ...c, lastMessageText: text, lastMessageTimestamp: newMessage.timestamp } : c
             ));
-            // Create a notification for the other participant
             const recipientId = conversation.participantIds.find(id => id !== user.id);
             if (recipientId) {
                 createNotification(recipientId, NotificationType.MESSAGE, `You have a new message from ${user.profile.name}.`, 'Messages');
@@ -450,52 +375,35 @@ export const useAppLogic = (): AppContextType => {
             alert("You must be logged in to send messages.");
             return;
         }
-
         const otherParticipant = findUserByProfileId(otherParticipantProfileId);
         if (!otherParticipant) {
             alert("Could not find user to message.");
             return;
         }
-
         if(user.id === otherParticipant.id) {
             alert("You cannot message yourself.");
             return;
         }
-
-        // Check if a conversation already exists
         let conversation = conversations.find(c =>
             c.participantIds.includes(user.id) && c.participantIds.includes(otherParticipant.id)
         );
-
-        // If not, create a new one
         if (!conversation) {
             const newConversation: Conversation = {
-                id: `convo-${generateUniqueId()}`,
-                participantIds: [user.id, otherParticipant.id],
-                lastMessageText: "Conversation started.",
-                lastMessageTimestamp: new Date(),
+                id: `convo-${generateUniqueId()}`, participantIds: [user.id, otherParticipant.id],
+                lastMessageText: "Conversation started.", lastMessageTimestamp: new Date(),
             };
             setConversations(prev => [newConversation, ...prev]);
             conversation = newConversation;
         }
-        
         setSelectedConversationId(conversation.id);
         navigateToMessages();
     };
     
-    // --- Review Methods ---
     const submitReview = (reviewData: Omit<Review, 'id' | 'date'>) => {
-        const newReview: Review = {
-            ...reviewData,
-            id: `rev-${generateUniqueId()}`,
-            date: new Date(),
-        };
-        
-        // Add review to state
+        const newReview: Review = { ...reviewData, id: `rev-${generateUniqueId()}`, date: new Date() };
         const updatedReviews = [...reviews, newReview];
         setReviews(updatedReviews);
 
-        // Recalculate engineer's average ratings
         const engineerReviews = updatedReviews.filter(r => r.engineerId === reviewData.engineerId);
         const totalPeer = engineerReviews.reduce((sum, r) => sum + r.peerRating, 0);
         const totalCustomer = engineerReviews.reduce((sum, r) => sum + r.customerRating, 0);
@@ -503,29 +411,20 @@ export const useAppLogic = (): AppContextType => {
         const newPeerRating = parseFloat((totalPeer / engineerReviews.length).toFixed(1));
         const newCustomerRating = parseFloat((totalCustomer / engineerReviews.length).toFixed(1));
 
-        updateEngineerProfile({
-            id: reviewData.engineerId,
-            peerRating: newPeerRating,
-            customerRating: newCustomerRating
-        });
-        
-        // Mark application as completed and reviewed
+        updateEngineerProfile({ id: reviewData.engineerId, peerRating: newPeerRating, customerRating: newCustomerRating });
         setApplications(prev => prev.map(app => 
             (app.jobId === reviewData.jobId && app.engineerId === reviewData.engineerId)
             ? { ...app, status: ApplicationStatus.COMPLETED, reviewed: true }
             : app
         ));
-        
         alert("Review submitted successfully!");
     };
     
-    // --- Admin Methods ---
     const toggleUserStatus = (profileId: string) => {
         const userToUpdate = allUsers.find(u => u.profile.id === profileId);
         if (!userToUpdate) return;
         
         const newStatus = userToUpdate.profile.status === 'active' ? 'suspended' : 'active';
-        
         setAllUsers(prev => prev.map(u => u.profile.id === profileId ? { ...u, profile: { ...u.profile, status: newStatus } } : u));
         
         if (userToUpdate.role === Role.ENGINEER) {
@@ -536,125 +435,204 @@ export const useAppLogic = (): AppContextType => {
     };
     
     const toggleJobStatus = (jobId: string) => {
-        setJobs(prev => prev.map(j => {
-            if (j.id === jobId) {
-                return { ...j, status: j.status === 'active' ? 'inactive' : 'active' };
-            }
-            return j;
-        }));
+        setJobs(prev => prev.map(j => (j.id === jobId) ? { ...j, status: j.status === 'active' ? 'inactive' : 'active' } : j));
     };
 
-    // --- Notification Methods ---
     const markNotificationsAsRead = (userId: string) => {
-        setNotifications(prev => 
-            prev.map(n => (n.userId === userId ? { ...n, isRead: true } : n))
-        );
+        setNotifications(prev => prev.map(n => (n.userId === userId ? { ...n, isRead: true } : n)));
     };
 
-    // --- Job Offer Workflow ---
     const offerJob = (jobId: string, engineerId: string) => {
         setApplications(prev => prev.map(app => 
-            app.jobId === jobId && app.engineerId === engineerId 
-                ? { ...app, status: ApplicationStatus.OFFERED }
-                : app
+            app.jobId === jobId && app.engineerId === engineerId ? { ...app, status: ApplicationStatus.OFFERED } : app
         ));
         
         const engineerUser = findUserByProfileId(engineerId);
         const job = jobs.find(j => j.id === jobId);
         if (engineerUser && job && user) {
-            createNotification(
-                engineerUser.id,
-                NotificationType.JOB_OFFER,
-                `${user.profile.name} has offered you the '${job.title}' job.`,
-                'My Network'
-            );
+            createNotification(engineerUser.id, NotificationType.JOB_OFFER, `${user.profile.name} has offered you the '${job.title}' job.`, 'My Network');
         }
         alert(`Offer sent to engineer for the job: ${job?.title}`);
     };
 
     const acceptOffer = (jobId: string, engineerId: string) => {
         setApplications(prev => prev.map(app => 
-            app.jobId === jobId && app.engineerId === engineerId 
-                ? { ...app, status: ApplicationStatus.ACCEPTED }
-                : app
+            app.jobId === jobId && app.engineerId === engineerId ? { ...app, status: ApplicationStatus.ACCEPTED } : app
         ));
     };
 
     const declineOffer = (jobId: string, engineerId: string) => {
          setApplications(prev => prev.map(app => 
-            app.jobId === jobId && app.engineerId === engineerId 
-                ? { ...app, status: ApplicationStatus.DECLINED }
-                : app
+            app.jobId === jobId && app.engineerId === engineerId ? { ...app, status: ApplicationStatus.DECLINED } : app
         ));
     };
 
-    // FIX: Add missing forum methods to satisfy AppContextType
     const createForumPost = async (post: { title: string; content: string; tags: string[] }) => {
-        if (!user) {
-            alert("You must be logged in to create a post.");
-            return;
-        }
-
+        if (!user) { alert("You must be logged in to create a post."); return; }
         const moderationResult = await geminiService.moderateForumPost(post);
-
         const decision = moderationResult?.decision || 'reject';
         const reason = moderationResult?.reason || 'AI moderation failed.';
-
-        if (decision === 'reject') {
-            alert(`Post rejected by AI moderator: ${reason}`);
-            return;
-        }
-
+        if (decision === 'reject') { alert(`Post rejected by AI moderator: ${reason}`); return; }
         const newPost: ForumPost = {
-            ...post,
-            id: `post-${generateUniqueId()}`,
-            authorId: user.id,
-            timestamp: new Date(),
-            upvotes: 0,
-            downvotes: 0,
-            status: 'approved',
+            ...post, id: `post-${generateUniqueId()}`, authorId: user.id,
+            timestamp: new Date(), upvotes: 0, downvotes: 0, status: 'approved',
         };
-
         setForumPosts(prev => [newPost, ...prev]);
         alert("Post submitted and approved!");
     };
 
     const addForumComment = (comment: { postId: string; parentId: string | null; content: string }) => {
-        if (!user) {
-            alert("You must be logged in to comment.");
-            return;
-        }
+        if (!user) { alert("You must be logged in to comment."); return; }
         const newComment: ForumComment = {
-            ...comment,
-            id: `comment-${generateUniqueId()}`,
-            authorId: user.id,
-            timestamp: new Date(),
-            upvotes: 0,
-            downvotes: 0,
+            ...comment, id: `comment-${generateUniqueId()}`, authorId: user.id,
+            timestamp: new Date(), upvotes: 0, downvotes: 0,
         };
         setForumComments(prev => [...prev, newComment]);
     };
 
     const voteOnPost = (postId: string, voteType: 'up' | 'down') => {
-        setForumPosts(prev => prev.map(post => {
-            if (post.id === postId) {
-                return { ...post, upvotes: voteType === 'up' ? post.upvotes + 1 : post.upvotes, downvotes: voteType === 'down' ? post.downvotes + 1 : post.downvotes };
-            }
-            return post;
-        }));
+        setForumPosts(prev => prev.map(post => 
+            post.id === postId ? { ...post, upvotes: voteType === 'up' ? post.upvotes + 1 : post.upvotes, downvotes: voteType === 'down' ? post.downvotes + 1 : post.downvotes } : post
+        ));
     };
     
     const voteOnComment = (commentId: string, voteType: 'up' | 'down') => {
-        setForumComments(prev => prev.map(comment => {
-            if (comment.id === commentId) {
-                return { ...comment, upvotes: voteType === 'up' ? comment.upvotes + 1 : comment.upvotes, downvotes: voteType === 'down' ? comment.downvotes + 1 : comment.downvotes };
+        setForumComments(prev => prev.map(comment => 
+            comment.id === commentId ? { ...comment, upvotes: voteType === 'up' ? comment.upvotes + 1 : comment.upvotes, downvotes: voteType === 'down' ? comment.downvotes + 1 : comment.downvotes } : comment
+        ));
+    };
+
+    // --- Contract & Payment Methods ---
+    const sendContractForSignature = async (contract: Contract) => {
+        if (!user) return;
+        const engineer = findUserByProfileId(contract.engineerId);
+        if (!engineer || !('contact' in engineer.profile)) return;
+        
+        const engineerProfile = engineer.profile as EngineerProfile;
+        
+        await eSignatureService.createSignatureRequest(contract.id, engineerProfile.contact.email);
+        
+        const newContract = { ...contract, status: ContractStatus.PENDING_SIGNATURE };
+        setContracts(prev => [newContract, ...prev.filter(c => c.id !== newContract.id)]);
+        
+        createNotification(engineer.id, NotificationType.APPLICATION_UPDATE, `${user.profile.name} has sent you a contract to sign for the '${contract.jobTitle}' job.`);
+        alert(`Contract sent to ${engineer.profile.name} for signature.`);
+    };
+
+    const signContract = (contractId: string, signatureName: string) => {
+        if (!user) return;
+        setContracts(prev => prev.map(c => {
+            if (c.id === contractId) {
+                const updatedContract = { ...c };
+                if (user.role === Role.ENGINEER && !c.engineerSignature) {
+                    updatedContract.engineerSignature = { name: signatureName, date: new Date() };
+                    updatedContract.status = ContractStatus.SIGNED;
+                    
+                    const companyUser = findUserByProfileId(c.companyId);
+                    if (companyUser) {
+                         createNotification(companyUser.id, NotificationType.APPLICATION_UPDATE, `${user.profile.name} has signed the contract for '${c.jobTitle}'. It is now ready for your countersignature.`);
+                    }
+
+                } else if ((user.role === Role.COMPANY || user.role === Role.ADMIN || user.role === Role.RESOURCING_COMPANY) && c.engineerSignature && !c.companySignature) {
+                    updatedContract.companySignature = { name: signatureName, date: new Date() };
+                    updatedContract.status = ContractStatus.ACTIVE;
+                    
+                    const engineerUser = findUserByProfileId(c.engineerId);
+                    if(engineerUser) {
+                        createNotification(engineerUser.id, NotificationType.APPLICATION_UPDATE, `The contract for '${c.jobTitle}' has been countersigned and is now active!`);
+                    }
+                }
+                return updatedContract;
             }
-            return comment;
+            return c;
         }));
     };
 
+    const fundMilestone = (contractId: string, milestoneId: string) => {
+        if(!user) return;
 
-    // FIX: Add missing forum properties to the returned context object and dependency array
+        let contractToUpdate: Contract | undefined;
+
+        setContracts(prev => prev.map(c => {
+            if (c.id === contractId) {
+                contractToUpdate = c;
+                return {
+                    ...c,
+                    milestones: c.milestones.map(m => m.id === milestoneId ? { ...m, status: MilestoneStatus.FUNDED_IN_PROGRESS } : m)
+                };
+            }
+            return c;
+        }));
+
+        if(contractToUpdate) {
+            const milestone = contractToUpdate.milestones.find(m => m.id === milestoneId);
+            if(milestone) {
+                 const newTransaction: Transaction = {
+                    id: `txn-${generateUniqueId()}`,
+                    userId: user.id,
+                    contractId: contractId,
+                    type: TransactionType.ESCROW_FUNDING,
+                    description: `Funded Milestone: ${milestone.description}`,
+                    amount: -milestone.amount,
+                    date: new Date()
+                };
+                setTransactions(prev => [newTransaction, ...prev]);
+            }
+        }
+    };
+
+    const submitMilestoneForApproval = (contractId: string, milestoneId: string) => {
+        setContracts(prev => prev.map(c => c.id === contractId ? {
+            ...c,
+            milestones: c.milestones.map(m => m.id === milestoneId ? { ...m, status: MilestoneStatus.SUBMITTED_FOR_APPROVAL } : m)
+        } : c));
+    };
+
+    const approveMilestonePayout = (contractId: string, milestoneId: string) => {
+         if(!user) return;
+        let contractToUpdate: Contract | undefined;
+        let engineerUser: User | undefined;
+
+         setContracts(prev => prev.map(c => {
+            if (c.id === contractId) {
+                contractToUpdate = c;
+                engineerUser = findUserByProfileId(c.engineerId);
+                return {
+                    ...c,
+                    milestones: c.milestones.map(m => m.id === milestoneId ? { ...m, status: MilestoneStatus.COMPLETED_PAID } : m)
+                };
+            }
+            return c;
+        }));
+
+        if (contractToUpdate && engineerUser) {
+            const milestone = contractToUpdate.milestones.find(m => m.id === milestoneId);
+            if (milestone) {
+                const payoutAmount = milestone.amount * (1 - PLATFORM_FEE_PERCENTAGE);
+                const feeAmount = milestone.amount * PLATFORM_FEE_PERCENTAGE;
+
+                const payoutTx: Transaction = {
+                    id: `txn-${generateUniqueId()}`, userId: engineerUser.id, contractId, type: TransactionType.PAYOUT,
+                    description: `Payout for Milestone: ${milestone.description}`, amount: payoutAmount, date: new Date()
+                };
+                const feeTx: Transaction = {
+                     id: `txn-${generateUniqueId()}`, userId: engineerUser.id, contractId, type: TransactionType.PLATFORM_FEE,
+                    description: `Platform Fee (5%) for Milestone: ${milestone.description}`, amount: -feeAmount, date: new Date()
+                };
+                setTransactions(prev => [payoutTx, feeTx, ...prev]);
+            }
+        }
+    };
+
+    const submitTimesheet = (contractId: string, timesheet: Omit<Timesheet, 'id' | 'status'>) => {
+        const newTimesheet: Timesheet = { ...timesheet, id: `ts-${generateUniqueId()}`, status: 'submitted' };
+        setContracts(prev => prev.map(c => c.id === contractId ? { ...c, timesheets: [...(c.timesheets || []), newTimesheet] } : c));
+    };
+
+    const approveTimesheet = (contractId: string, timesheetId: string) => {
+        setContracts(prev => prev.map(c => c.id === contractId ? { ...c, timesheets: c.timesheets?.map(ts => ts.id === timesheetId ? { ...ts, status: 'approved' } : ts) } : c));
+    };
+
     return useMemo(() => ({
         user, allUsers, jobs, companies, engineers, login, loginAsSteve, logout, 
         updateEngineerProfile, updateCompanyProfile, postJob, startTrial, geminiService, 
@@ -664,6 +642,9 @@ export const useAppLogic = (): AppContextType => {
         setSelectedConversationId, findUserById, findUserByProfileId, sendMessage, 
         startConversationAndNavigate, reviews, submitReview, toggleUserStatus, toggleJobStatus, 
         notifications, markNotificationsAsRead, offerJob, acceptOffer, declineOffer,
-        forumPosts, forumComments, createForumPost, addForumComment, voteOnPost, voteOnComment
-    }), [user, allUsers, jobs, companies, engineers, applications, conversations, messages, selectedConversationId, reviews, notifications, forumPosts, forumComments]);
+        forumPosts, forumComments, createForumPost, addForumComment, voteOnPost, voteOnComment,
+        contracts, sendContractForSignature, signContract,
+        transactions, fundMilestone, submitMilestoneForApproval, approveMilestonePayout,
+        submitTimesheet, approveTimesheet
+    }), [user, allUsers, jobs, companies, engineers, applications, conversations, messages, selectedConversationId, reviews, notifications, forumPosts, forumComments, contracts, transactions]);
 };

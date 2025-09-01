@@ -1,76 +1,68 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
-import { Currency, Discipline } from '../types/index.ts';
+import { Currency, Discipline, Compliance, IdentityVerification } from '../types/index.ts';
 import { Logo } from '../components/Logo.tsx';
 import { ArrowLeft } from '../components/Icons.tsx';
 import { ProgressTracker } from '../components/SignUp/ProgressTracker.tsx';
-import { StepAccount } from '../components/SignUp/StepAccount.tsx';
-import { StepDiscipline } from '../components/SignUp/StepDiscipline.tsx';
-import { StepReadiness } from '../components/SignUp/StepReadiness.tsx';
-import { StepRate } from '../components/SignUp/StepRate.tsx';
-import { StepAvailability } from '../components/SignUp/StepAvailability.tsx';
+import { StepCoreInfo } from '../components/SignUp/StepCoreInfo.tsx';
+import { StepWorkReadiness } from '../components/SignUp/StepWorkReadiness.tsx';
+import { StepIdentity } from '../components/SignUp/StepIdentity.tsx';
+import { StepRateAndAvailability } from '../components/SignUp/StepRateAndAvailability.tsx';
 
 interface EngineerSignUpWizardProps {
     onCancel: () => void;
 }
 
-const WIZARD_STEPS = 5;
+const WIZARD_STEPS = 4;
 
 export const EngineerSignUpWizard = ({ onCancel }: EngineerSignUpWizardProps) => {
     const { createAndLoginEngineer } = useAppContext();
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         name: '', email: '', discipline: Discipline.AV, location: '', experience: 5,
-        dayRate: 180, currency: Currency.GBP, skills: [], availability: new Date().toISOString().split('T')[0],
+        dayRate: 180, currency: Currency.GBP, availability: new Date().toISOString().split('T')[0],
         compliance: {
-            professionalIndemnity: false, publicLiability: false, siteSafe: false, cscsCard: false,
-            ownPPE: false, hasOwnTransport: false, hasOwnTools: false, powerToolCompetency: false,
-            accessEquipmentTrained: false, firstAidTrained: false, carriesSpares: false,
-        }
+            professionalIndemnity: { hasCoverage: false, isVerified: false, amount: 1000000 },
+            publicLiability: { hasCoverage: false, isVerified: false, amount: 2000000 },
+            siteSafe: false, cscsCard: false, ownPPE: true, hasOwnTransport: false, hasOwnTools: false,
+            powerToolCompetency: 0, accessEquipmentTrained: 0, firstAidTrained: false, carriesSpares: false,
+        } as Compliance,
+        identity: {
+            documentType: 'none', isVerified: false,
+        } as IdentityVerification,
     });
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleComplianceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, checked } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            compliance: { ...prev.compliance, [name]: checked }
-        }));
     };
 
     const nextStep = () => setStep(s => Math.min(s + 1, WIZARD_STEPS));
     const prevStep = () => setStep(s => Math.max(s - 1, 1));
     
     const handleSubmit = () => {
-        // Free profiles are created with an empty skills array
-        const finalData = { ...formData, skills: [] };
-        createAndLoginEngineer(finalData);
+        createAndLoginEngineer(formData);
     };
     
     const renderStep = () => {
         switch (step) {
-            case 1: return <StepAccount data={formData} onChange={handleChange} />;
-            case 2: return <StepDiscipline data={formData} onChange={handleChange} />;
-            case 3: return <StepReadiness data={formData.compliance} onChange={handleComplianceChange} />;
-            case 4: return <StepRate data={formData} onChange={handleChange} />;
-            case 5: return <StepAvailability data={formData} onChange={handleChange} />;
+            case 1: return <StepCoreInfo data={formData} setData={setFormData} />;
+            case 2: return <StepWorkReadiness data={formData.compliance} setData={setFormData} />;
+            case 3: return <StepIdentity data={formData.identity} setData={setFormData} />;
+            case 4: return <StepRateAndAvailability data={formData} onChange={handleChange} />;
             default: return null;
         }
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-2 sm:p-4">
              <div className="w-full max-w-2xl">
                  <button onClick={onCancel} className="flex items-center text-gray-600 hover:text-gray-900 font-semibold transition-colors mb-4">
                     <ArrowLeft size={18} className="mr-2" />
                     Back to Login
                 </button>
 
-                <div className="bg-white rounded-lg shadow-xl p-8">
+                <div className="bg-white rounded-lg shadow-xl p-6 sm:p-8">
                     <div className="mb-8">
                          <Logo className="mb-4 h-16" />
                         <h1 className="text-2xl font-bold text-gray-800">Create Your Engineer Profile</h1>

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext.tsx';
-import { EngineerProfile, Job } from '../../types/index.ts';
+// FIX: Add ProfileTier to imports for type-safe comparison.
+import { EngineerProfile, Job, ProfileTier } from '../../types/index.ts';
 import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles.ts';
 import { EngineerCard } from '../../components/EngineerCard.tsx';
 import { Search, Layers, DollarSign, Sparkles, Loader, User } from '../../components/Icons.tsx';
@@ -73,7 +74,8 @@ export const FindTalentView = ({ engineers, myJobs, onSelectEngineer }: FindTale
         if (filters.keyword.trim() !== '') {
             const keywords = filters.keyword.toLowerCase().split(' ').filter(k => k);
             let matchedKeywords = 0;
-            const searchableText = (eng.profileTier === 'paid')
+            // FIX: Compare against ProfileTier enum instead of string literal.
+            const searchableText = (eng.profileTier !== ProfileTier.BASIC)
                 ? [ eng.name, eng.discipline, ...(eng.skills?.map(s => s.name) || []), ...(eng.selectedJobRoles?.flatMap(r => r.skills.map(s => s.name)) || []) ].join(' ').toLowerCase()
                 : [ eng.name, eng.discipline, eng.description ].join(' ').toLowerCase();
 
@@ -121,7 +123,8 @@ export const FindTalentView = ({ engineers, myJobs, onSelectEngineer }: FindTale
                 
                 // Keyword filter
                 if (filters.keyword.trim() !== '') {
-                     const searchableText = (eng.profileTier === 'paid')
+                     // FIX: Compare against ProfileTier enum instead of string literal.
+                     const searchableText = (eng.profileTier !== ProfileTier.BASIC)
                         ? [ eng.name, eng.discipline, eng.description, ...(eng.skills?.map(s => s.name) || []), ...(eng.selectedJobRoles?.flatMap(r => [...r.skills.map(s => s.name), r.roleName]) || []) ].join(' ').toLowerCase()
                         : [ eng.name, eng.discipline, eng.description ].join(' ').toLowerCase();
 
@@ -141,7 +144,8 @@ export const FindTalentView = ({ engineers, myJobs, onSelectEngineer }: FindTale
                     return indexA !== -1 ? -1 : 1;
                 }
 
-                const tierSort = (b.profileTier === 'paid' ? 1 : 0) - (a.profileTier === 'paid' ? 1 : 0);
+                // FIX: Compare against ProfileTier enum instead of string literal.
+                const tierSort = (b.profileTier !== ProfileTier.BASIC ? 1 : 0) - (a.profileTier !== ProfileTier.BASIC ? 1 : 0);
                 switch (sort) {
                     case 'name-asc':
                         return a.name.localeCompare(b.name);

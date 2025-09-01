@@ -1,14 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { EngineerProfile, SelectedJobRole, Skill } from '../../types/index.ts';
+import { EngineerProfile, SelectedJobRole, Skill, ProfileTier } from '../../types/index.ts';
 import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles.ts';
 import { SectionWrapper } from './SectionWrapper.tsx';
 import { Plus, Trash2, Edit, X } from '../Icons.tsx';
 import { EditSkillProfileModal } from '../EditSkillProfileModal.tsx';
 
-const UpgradeCta = ({ onUpgradeClick }: { onUpgradeClick: () => void }) => (
+const UpgradeCta = ({ requiredTier, onUpgradeClick }: { requiredTier: string, onUpgradeClick: () => void }) => (
     <div className="text-center p-8 bg-gray-100 rounded-lg border-2 border-dashed">
         <h3 className="text-xl font-bold text-gray-800">This is a Premium Feature</h3>
-        <p className="text-gray-600 mt-2">Upgrade to a "Skills Profile" for just £15/month to add specialist roles, skills, and case studies to showcase your detailed expertise to top companies.</p>
+        <p className="text-gray-600 mt-2">Upgrade to a "{requiredTier}" profile to unlock this feature and showcase your detailed expertise to top companies.</p>
         <button type="button" onClick={onUpgradeClick} className="mt-4 bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700">Upgrade Now</button>
     </div>
 );
@@ -27,6 +27,9 @@ export const SkillsAndRolesSection = ({ profile, formData, setFormData, setActiv
 
     const skills = useMemo(() => formData.skills?.map(s => s.name) || [], [formData.skills]);
     const roles = useMemo(() => formData.selectedJobRoles || [], [formData.selectedJobRoles]);
+
+    const canUseCoreSkills = profile.profileTier !== ProfileTier.BASIC;
+    const canUseSpecialistRoles = profile.profileTier === ProfileTier.SKILLS || profile.profileTier === ProfileTier.BUSINESS;
 
     const handleAddSkill = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' && skillInput.trim()) {
@@ -76,7 +79,7 @@ export const SkillsAndRolesSection = ({ profile, formData, setFormData, setActiv
     return (
         <>
             <SectionWrapper title="Core Skills (Tags)">
-                {profile.profileTier === 'paid' ? (
+                {canUseCoreSkills ? (
                     <div>
                         <p className="text-sm text-gray-500 mb-3">Add keywords that companies can use to find you (e.g., "Crestron", "Cisco"). Press Enter to add a skill.</p>
                         <div className="flex flex-wrap gap-2 items-center p-2 border rounded-md">
@@ -89,19 +92,19 @@ export const SkillsAndRolesSection = ({ profile, formData, setFormData, setActiv
                             <input type="text" value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={handleAddSkill} placeholder="Type a skill and press Enter" className="flex-grow p-1 outline-none bg-transparent" />
                         </div>
                     </div>
-                ) : <UpgradeCta onUpgradeClick={() => setActiveView('Billing')} />}
+                ) : <UpgradeCta requiredTier="Professional" onUpgradeClick={() => setActiveView('Billing')} />}
             </SectionWrapper>
 
             <SectionWrapper title="Specialist Job Roles">
                  <div className="flex justify-between items-center mb-4">
                     <p className="text-sm text-gray-500 flex-grow">Add detailed, rated expertise for high-demand roles.</p>
-                    {profile.profileTier === 'paid' && availableRoles.length > 0 && (
+                    {canUseSpecialistRoles && availableRoles.length > 0 && (
                         <button type="button" onClick={handleOpenAddModal} className="flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700">
                             <Plus size={18} className="mr-2" /> Add Role
                         </button>
                     )}
                 </div>
-                {profile.profileTier === 'free' ? <UpgradeCta onUpgradeClick={() => setActiveView('Billing')} /> : (
+                {!canUseSpecialistRoles ? <UpgradeCta requiredTier="Skills" onUpgradeClick={() => setActiveView('Billing')} /> : (
                     <div className="space-y-4">
                         {roles.map((role, rIndex) => (
                             <div key={rIndex} className="p-4 border rounded-lg bg-gray-50/50">

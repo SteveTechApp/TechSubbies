@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
-import { EngineerProfile, Skill } from '../types/index.ts';
+import { EngineerProfile, Skill, ProfileTier } from '../types/index.ts';
 import { EngineerProfileView } from './EngineerProfileView.tsx';
 import { DashboardView } from './EngineerDashboard/DashboardView.tsx';
 import { AvailabilityView } from './EngineerDashboard/AvailabilityView.tsx';
@@ -12,6 +12,9 @@ import { AIToolsView } from './EngineerDashboard/AIToolsView.tsx';
 import { MyNetworkView } from './EngineerDashboard/MyNetworkView.tsx';
 import { MessagesView } from './MessagesView.tsx';
 import { ArrowLeft } from '../components/Icons.tsx';
+import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
+import { AnalyticsView } from './AdminDashboard/AnalyticsView.tsx'; // Re-using for placeholder
+import { ContractsView } from './ContractsView.tsx';
 
 
 export const EngineerDashboard = () => {
@@ -29,11 +32,11 @@ export const EngineerDashboard = () => {
     };
 
     const addSkillsFromAI = (newSkills: Skill[]) => {
-        const currentSkillNames = engineerProfile.skills.map((s: Skill) => s.name.toLowerCase());
+        const currentSkillNames = (engineerProfile.skills || []).map((s: Skill) => s.name.toLowerCase());
         const uniqueNewSkills = newSkills.filter(ns => !currentSkillNames.includes(ns.name.toLowerCase()));
         
         updateEngineerProfile({
-            skills: [...engineerProfile.skills, ...uniqueNewSkills]
+            skills: [...(engineerProfile.skills || []), ...uniqueNewSkills]
         });
     };
 
@@ -70,7 +73,7 @@ export const EngineerDashboard = () => {
                             <ArrowLeft size={16} className="mr-2" />
                             Back to Dashboard
                         </button>
-                        <EngineerProfileView profile={engineerProfile} isEditable={false} onEdit={() => {}} />
+                        <EngineerProfileView profile={engineerProfile} isEditable={true} onEdit={() => setActiveView('Manage Profile')} />
                     </div>
                 );
             case 'Availability':
@@ -91,6 +94,13 @@ export const EngineerDashboard = () => {
                 return <MyNetworkView setActiveView={setActiveView} />;
             case 'Messages':
                 return <MessagesView />;
+            case 'Contracts':
+                return <ContractsView setActiveView={setActiveView} />;
+            case 'Analytics':
+                 if (engineerProfile.profileTier === ProfileTier.BUSINESS) {
+                    return <AnalyticsView />;
+                }
+                return <p>Upgrade to Business to view Analytics.</p>;
             case 'Create Storyboard':
                 return <StoryboardCreatorView profile={engineerProfile} setActiveView={setActiveView} />;
             default:
@@ -104,8 +114,11 @@ export const EngineerDashboard = () => {
     };
 
     return (
-        <main className="p-8 bg-gray-50 min-h-screen">
-            {renderActiveView()}
-        </main>
+        <div className="flex h-screen overflow-hidden">
+            <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
+            <main className="flex-grow p-8 bg-gray-50 overflow-y-auto custom-scrollbar">
+                {renderActiveView()}
+            </main>
+        </div>
     );
 };

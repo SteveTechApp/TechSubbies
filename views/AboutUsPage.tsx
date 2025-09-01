@@ -17,7 +17,7 @@ export const AboutUsPage = ({ onNavigate, onHowItWorksClick }: AboutUsPageProps)
                 {/* Hero Section */}
                 <section 
                     className="relative text-white text-center min-h-[40vh] flex items-center justify-center px-4 bg-cover bg-center"
-                    style={{ backgroundImage: `url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=2084&auto=format&fit=crop')` }}
+                    style={{ backgroundImage: `url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=2084&auto=format=fit=crop')` }}
                 >
                     <div className="absolute inset-0 bg-blue-800 opacity-70"></div>
                     <div className="relative z-10 max-w-3xl">
@@ -39,8 +39,26 @@ export const AboutUsPage = ({ onNavigate, onHowItWorksClick }: AboutUsPageProps)
                 {/* Story Section */}
                 <section className="py-16 bg-white">
                     <div className="container mx-auto px-4 max-w-5xl">
-                         <h2 className="text-4xl font-bold text-center text-gray-800 mb-10">Our Story</h2>
+                         <h2 className="text-4xl font-bold text-center text-gray-800 mb-12">Our Story</h2>
                         <div className="grid md:grid-cols-2 gap-12 items-center">
-                            <div className="text-gray-700 space-y-4">
+                            <div className="text-gray-700 space-y-4 text-lg">
                                 <p>TechSubbies.com was founded by Steve Goodwin, an industry veteran with over two decades of experience in technical project management. After years of relying on outdated spreadsheets, personal networks, and expensive recruitment agencies to find specialist freelancers, Steve knew there had to be a better way.</p>
-                                <p>The traditional hiring process was broken—it was slow, inefficient, and created unnecessary barriers between skilled engineers and the companies that needed them. The vision was simple: create a
+                                <p>The traditional hiring process was broken—it was slow, inefficient, and created unnecessary barriers between skilled engineers and the companies that needed them. The vision was simple: create a platform that was purpose-built for the tech contracting industry—a tool that was fast, fair, and focused on fostering direct relationships. TechSubbies.com is the realization of that vision.</p>
+                            </div>
+                            <div>
+                                <img 
+                                    src="https://storage.googleapis.com/pai-images/5950a72c8135451298811c9c6364023c.png" 
+                                    alt="Steve Goodwin, Founder of TechSubbies.com" 
+                                    className="rounded-lg shadow-2xl w-full h-auto object-contain bg-gray-100 p-4"
+                                />
+                                <p className="text-center mt-2 text-sm text-gray-500 font-semibold">Steve Goodwin, Founder & CEO</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+            <Footer onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
+        </div>
+    );
+};

@@ -1,14 +1,14 @@
 import React from 'react';
-import { EngineerProfile, CaseStudy } from '../../types/index.ts';
+import { EngineerProfile, CaseStudy, ProfileTier } from '../../types/index.ts';
 import { SectionWrapper } from './SectionWrapper.tsx';
 import { Clapperboard, Plus, Trash2 } from '../Icons.tsx';
 
 const generateUniqueId = () => `id-${Math.random().toString(36).substring(2, 10)}`;
 
-const UpgradeCta = ({ onUpgradeClick }: { onUpgradeClick: () => void }) => (
+const UpgradeCta = ({ requiredTier, onUpgradeClick }: { requiredTier: string, onUpgradeClick: () => void }) => (
     <div className="text-center p-8 bg-gray-100 rounded-lg border-2 border-dashed">
         <h3 className="text-xl font-bold text-gray-800">This is a Premium Feature</h3>
-        <p className="text-gray-600 mt-2">Upgrade to a "Skills Profile" to add case studies and create visual storyboards of your best work.</p>
+        <p className="text-gray-600 mt-2">Upgrade to a "{requiredTier}" profile to unlock this feature.</p>
         <button type="button" onClick={onUpgradeClick} className="mt-4 bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700">Upgrade Now</button>
     </div>
 );
@@ -23,6 +23,7 @@ interface PortfolioSectionProps {
 export const PortfolioSection = ({ profile, formData, setFormData, setActiveView }: PortfolioSectionProps) => {
 
     const caseStudies = formData.caseStudies || [];
+    const canUseStoryboards = profile.profileTier === ProfileTier.SKILLS || profile.profileTier === ProfileTier.BUSINESS;
 
     const addCaseStudy = () => {
         setFormData(prev => ({...prev, caseStudies: [...(prev.caseStudies || []), { id: generateUniqueId(), name: 'Project Name', url: 'https://' }]}));
@@ -54,7 +55,7 @@ export const PortfolioSection = ({ profile, formData, setFormData, setActiveView
             </SectionWrapper>
             
             <SectionWrapper title="Visual Case Studies (Storyboards)" icon={Clapperboard}>
-                 {profile.profileTier === 'free' ? <UpgradeCta onUpgradeClick={() => setActiveView('Billing')} /> : (
+                 {!canUseStoryboards ? <UpgradeCta requiredTier="Skills" onUpgradeClick={() => setActiveView('Billing')} /> : (
                     <div>
                         <p className="text-gray-600 mb-4">Create engaging, step-by-step visual stories of your projects to impress potential clients.</p>
                         <div className="space-y-3 mb-4">

@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext.tsx';
 import { JobCard } from '../../components/JobCard.tsx';
 import { Search, MapPin, DollarSign, ArrowLeft, Briefcase, Layers } from '../../components/Icons.tsx';
-import { JobType, ExperienceLevel } from '../../types/index.ts';
+// FIX: Add ProfileTier to imports for type-safe comparison.
+import { JobType, ExperienceLevel, ProfileTier } from '../../types/index.ts';
 
 
 export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string) => void }) => {
@@ -41,7 +42,8 @@ export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string)
         });
     }, [jobs, filters]);
 
-    const isFreeTier = user && 'profileTier' in user.profile && user.profile.profileTier === 'free';
+    // FIX: Compare against ProfileTier enum instead of string literal.
+    const isFreeTier = user && 'profileTier' in user.profile && user.profile.profileTier === ProfileTier.BASIC;
     const highPayingJobs = useMemo(() => {
         return filteredJobs.filter(job => parseInt(job.dayRate) > 195);
     }, [filteredJobs]);

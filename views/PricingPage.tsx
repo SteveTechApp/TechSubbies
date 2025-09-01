@@ -1,104 +1,138 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Footer } from '../components/Footer.tsx';
 import { Header } from '../components/Header.tsx';
-import { Page, Currency } from '../types/index.ts';
-import { CheckCircle, Users, Briefcase, Rocket, ShieldCheck } from '../components/Icons.tsx';
+import { Page, ProfileTier } from '../types/index.ts';
+import { CheckCircle, Award, Star, BarChart, X } from '../components/Icons.tsx';
 
 interface PricingPageProps {
     onNavigate: (page: Page) => void;
     onHowItWorksClick: () => void;
 }
 
-const PRICING_DATA = {
-    engineer: {
-        skillsProfile: { gbp: 15 },
-        boosts: {
-            bundle: { gbp: 5, count: 3 }
+const FeatureListItem = ({ children, included = true }: { children: React.ReactNode, included?: boolean }) => (
+    <li className={`flex items-start ${included ? '' : 'text-gray-400'}`}>
+        {included 
+            ? <CheckCircle className="w-5 h-5 text-green-500 mr-3 mt-1 flex-shrink-0" />
+            : <X className="w-5 h-5 text-gray-400 mr-3 mt-1 flex-shrink-0" />
         }
-    },
-    resourcing: {
-        starter: {
-            gbp: 49,
-            engineers: 5,
-        },
-        business: {
-            gbp: 149,
-            engineers: 20,
-        }
-    }
-};
-
-const CONVERSION_RATES = {
-    [Currency.USD]: 1.25,
-    [Currency.GBP]: 1,
-};
-
-const FeatureListItem = ({ children }: { children: React.ReactNode }) => (
-    <li className="flex items-start">
-        <CheckCircle className="w-5 h-5 text-green-500 mr-3 mt-1 flex-shrink-0" />
-        <span className="text-gray-600">{children}</span>
+        <span>{children}</span>
     </li>
 );
 
-interface PricingCardProps {
+interface TierCardProps {
+    tier: ProfileTier;
     title: string;
     description: string;
     price: string;
     period?: string;
-    features: React.ReactNode[];
+    features: { text: React.ReactNode, included: boolean }[];
     ctaText: string;
     onCtaClick: () => void;
     isFeatured?: boolean;
-    popularText?: string;
-    icon?: React.ComponentType<any>;
 }
 
-const PricingCard = ({ title, description, price, period, features, ctaText, onCtaClick, isFeatured = false, popularText, icon: Icon }: PricingCardProps) => {
-    const cardBorder = isFeatured ? 'border-2 border-blue-600' : 'border border-gray-200';
-    const titleColor = isFeatured ? 'text-blue-600' : 'text-gray-800';
-
-    return (
-        <div className={`${cardBorder} rounded-lg p-8 bg-white shadow-lg relative flex flex-col`}>
-            {popularText && <span className="absolute top-0 -translate-y-1/2 bg-blue-600 text-white text-xs font-bold uppercase px-3 py-1 rounded-full">{popularText}</span>}
-            
-            <div className="flex items-center gap-3 mb-2">
-                {Icon && <Icon className="w-8 h-8 text-blue-500" />}
-                <h2 className={`text-2xl font-bold ${titleColor}`}>{title}</h2>
-            </div>
-            
-            <p className="text-gray-500 mt-2 mb-4 flex-grow">{description}</p>
-            <div className="my-6">
-                <span className="text-5xl font-extrabold">{price}</span>
-                {period && <span className="text-xl font-medium text-gray-500">{period}</span>}
-            </div>
-            <ul className="space-y-4 mb-8">
-                {features.map((feature, index) => <FeatureListItem key={index}>{feature}</FeatureListItem>)}
-            </ul>
-            <button
-                onClick={onCtaClick}
-                className={`w-full mt-auto font-bold py-3 px-6 rounded-lg transition-colors ${isFeatured ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
-            >
-                {ctaText}
-            </button>
+const TierCard = ({ title, description, price, period, features, ctaText, onCtaClick, isFeatured }: TierCardProps) => (
+    <div className={`border rounded-lg p-6 bg-white flex flex-col ${isFeatured ? 'border-2 border-blue-600 shadow-2xl' : 'border-gray-200 shadow-lg'}`}>
+        {isFeatured && <span className="absolute top-0 -translate-y-1/2 bg-blue-600 text-white text-xs font-bold uppercase px-3 py-1 rounded-full self-center">Most Popular</span>}
+        <h3 className={`text-2xl font-bold ${isFeatured ? 'text-blue-600' : 'text-gray-800'}`}>{title}</h3>
+        <p className="text-gray-500 mt-2 mb-4 flex-grow">{description}</p>
+        <div className="my-4">
+            <span className="text-5xl font-extrabold text-gray-800">{price}</span>
+            {period && <span className="text-xl font-medium text-gray-500">{period}</span>}
         </div>
-    );
-};
+        <ul className="space-y-3 mb-6 text-sm">
+            {features.map((feature, index) => <FeatureListItem key={index} included={feature.included}>{feature.text}</FeatureListItem>)}
+        </ul>
+        <button
+            onClick={onCtaClick}
+            className={`w-full mt-auto font-bold py-3 px-6 rounded-lg transition-colors ${isFeatured ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+        >
+            {ctaText}
+        </button>
+    </div>
+);
+
 
 export const PricingPage = ({ onNavigate, onHowItWorksClick }: PricingPageProps) => {
-    const [selectedCurrency, setSelectedCurrency] = useState<Currency>(Currency.GBP);
 
-    const getPrice = (gbpPrice: number) => {
-        const rate = CONVERSION_RATES[selectedCurrency];
-        const convertedPrice = Math.round(gbpPrice * rate);
-        return `${selectedCurrency}${convertedPrice}`;
-    };
-
-    const currencyButtonClass = (currency: Currency) => 
-        `px-4 py-2 rounded-md font-semibold transition-colors ${
-            selectedCurrency === currency
-            ? 'bg-blue-600 text-white shadow'
-            : 'bg-white text-gray-700 hover:bg-gray-100'
-        }`;
+    const TIERS = [
+        {
+            tier: ProfileTier.BASIC,
+            title: "Basic",
+            description: "The essential on-ramp for visibility in entry-level and support roles.",
+            price: "Free",
+            period: " / Forever",
+            ctaText: "Get Started",
+            isFeatured: false,
+            features: [
+                { text: "Public Professional Profile", included: true },
+                { text: "Appear in General Searches", included: true },
+                { text: "Set Availability Calendar", included: true },
+                { text: "Search and Apply for Jobs", included: true },
+                { text: "Core Skills (Tags)", included: false },
+                { text: "Verified Certifications", included: false },
+                { text: "Specialist Roles & Skill Ratings", included: false },
+                { text: "AI-Powered Tools", included: false },
+                { text: "Priority Search Ranking", included: false },
+                { text: "Visual Case Studies (Storyboards)", included: false },
+                { text: "Profile Analytics", included: false },
+            ]
+        },
+        {
+            tier: ProfileTier.PROFESSIONAL,
+            title: "Professional",
+            description: "For the growing professional who needs to stand out with proven credentials.",
+            price: "£7",
+            period: " / mo",
+            ctaText: "Choose Professional",
+            isFeatured: false,
+            features: [
+                { text: "Public Professional Profile", included: true },
+                { text: "Appear in General Searches", included: true },
+                { text: "Set Availability Calendar", included: true },
+                { text: "Search and Apply for Jobs", included: true },
+                { text: "Core Skills (Tags)", included: true },
+                { text: "Verified Certifications", included: true },
+                { text: "Specialist Roles & Skill Ratings", included: false },
+                { text: "AI-Powered Tools", included: false },
+                { text: "Priority Search Ranking", included: false },
+                { text: "Visual Case Studies (Storyboards)", included: false },
+                { text: "Profile Analytics", included: false },
+            ]
+        },
+        {
+            tier: ProfileTier.SKILLS,
+            title: "Skills",
+            description: "Our core offering for the established specialist who needs to showcase deep expertise and command top rates.",
+            price: "£15",
+            period: " / mo",
+            ctaText: "Start Free Trial",
+            isFeatured: true,
+            features: [
+                { text: "Everything in Professional, plus:", included: true },
+                { text: "Specialist Roles & Skill Ratings", included: true },
+                { text: "AI-Powered Tools", included: true },
+                { text: "Priority Search Ranking", included: true },
+                { text: "Visual Case Studies (Storyboards)", included: true },
+                { text: "Profile Analytics", included: false },
+            ]
+        },
+        {
+            tier: ProfileTier.BUSINESS,
+            title: "Business",
+            description: "For the elite freelancer or small business owner who needs advanced tools and maximum visibility.",
+            price: "£35",
+            period: " / mo",
+            ctaText: "Choose Business",
+            isFeatured: false,
+            features: [
+                { text: "Everything in Skills, plus:", included: true },
+                { text: "Profile Analytics", included: true },
+                { text: "Advanced Profile Customization", included: true },
+                { text: "Dedicated Support", included: true },
+            ]
+        }
+    ];
 
     return (
         <div className="bg-gray-50 flex flex-col min-h-screen">
@@ -107,144 +141,22 @@ export const PricingPage = ({ onNavigate, onHowItWorksClick }: PricingPageProps)
                 {/* Hero Section */}
                 <section className="py-12 bg-white text-center">
                     <div className="container mx-auto px-4">
-                        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-4">Simple, Transparent Pricing</h1>
-                        <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">Plans for every stage of your freelance career or business. It's always free for companies to post jobs.</p>
+                        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-4">A Plan for Every Ambition</h1>
+                        <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">From getting your foot in the door to becoming an industry leader, we have a plan that grows with your career. It's always free for companies to post jobs.</p>
                     </div>
                 </section>
 
                 {/* Pricing Section */}
                 <section className="py-16 bg-gray-50">
-                    <div className="container mx-auto px-4 max-w-6xl">
-                        
-                        {/* Currency Selector */}
-                        <div className="flex justify-center items-center gap-2 mb-12 p-2 bg-gray-200 rounded-lg max-w-xs mx-auto">
-                            <span className="text-gray-600 font-medium hidden sm:inline">Currency:</span>
-                            <button onClick={() => setSelectedCurrency(Currency.GBP)} className={currencyButtonClass(Currency.GBP)}>🇬🇧 GBP</button>
-                            <button onClick={() => setSelectedCurrency(Currency.USD)} className={currencyButtonClass(Currency.USD)}>🇺🇸 USD</button>
-                        </div>
-
-                        {/* Engineer Pricing */}
-                        <div className="text-center mb-12">
-                            <h2 className="text-3xl font-bold">For Engineers</h2>
-                            <p className="text-gray-500 mt-2">Invest in your career with tools designed for freelance success.</p>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch max-w-4xl mx-auto">
-                           <PricingCard
-                                title="Basic Profile"
-                                description="The essential free profile for junior engineers and new-starters to gain visibility for entry-level and support roles, typically under £195/day."
-                                price="FREE"
-                                period=" / Forever"
-                                features={[
-                                    "Create your public professional profile",
-                                    "Appear in general searches",
-                                    "List your core discipline & experience",
-                                    "Set your availability calendar",
-                                    "Search and apply for jobs",
-                                ]}
-                                ctaText="Get Started"
-                                onCtaClick={() => onNavigate('engineerSignUp')}
-                            />
-                             <PricingCard
-                                title="Skills Profile"
-                                description="The complete toolkit to showcase your expertise and win high-value contracts."
-                                price={getPrice(PRICING_DATA.engineer.skillsProfile.gbp)}
-                                period=" / month"
-                                features={[
-                                    <strong>Everything in Basic, plus:</strong>,
-                                    "Add specialist roles with detailed skill ratings",
-                                    "Appear higher in search results",
-                                    "Create visual case studies (Storyboards)",
-                                    <>
-                                        Unlock Profile Boosts 
-                                        (<Rocket size={14} className="inline-block mx-1"/> 
-                                        <strong>{PRICING_DATA.engineer.boosts.bundle.count} for {getPrice(PRICING_DATA.engineer.boosts.bundle.gbp)}</strong>)
-                                    </>,
-                                    <span className="flex items-center gap-1.5"><ShieldCheck size={16} className="text-blue-500"/> <strong>Security Net Guarantee</strong> for peace of mind</span>
-                                ]}
-                                ctaText="Start 30-Day Free Trial"
-                                onCtaClick={() => onNavigate('engineerSignUp')}
-                                isFeatured
-                                popularText="Most Popular"
-                            />
-                        </div>
-
-                         {/* Resourcing Company Pricing */}
-                        <div className="text-center mt-20 mb-12">
-                            <h2 className="text-3xl font-bold">For Resourcing Companies</h2>
-                            <p className="text-gray-500 mt-2">Manage your roster of engineers and find jobs for them efficiently.</p>
-                        </div>
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-                             <PricingCard
-                                icon={Users}
-                                title="Starter"
-                                description="Perfect for small agencies or those just getting started."
-                                price={getPrice(PRICING_DATA.resourcing.starter.gbp)}
-                                period=" / month"
-                                features={[
-                                    <>Manage up to <strong>{PRICING_DATA.resourcing.starter.engineers} engineers</strong></>,
-                                    "Apply for jobs on behalf of engineers",
-                                    "Unified messaging inbox",
-                                    "Basic reporting"
-                                ]}
-                                ctaText="Choose Starter"
-                                onCtaClick={() => onNavigate('login')}
-                            />
-                             <PricingCard
-                                icon={Briefcase}
-                                title="Business"
-                                description="For established firms that need more capacity and features."
-                                price={getPrice(PRICING_DATA.resourcing.business.gbp)}
-                                period=" / month"
-                                features={[
-                                    <>Manage up to <strong>{PRICING_DATA.resourcing.business.engineers} engineers</strong></>,
-                                    "Everything in Starter, plus:",
-                                    "Priority support",
-                                    "Advanced analytics"
-                                ]}
-                                ctaText="Choose Business"
-                                onCtaClick={() => onNavigate('login')}
-                                isFeatured
-                                popularText="Best Value"
-                            />
-                             <PricingCard
-                                icon={Briefcase}
-                                title="Enterprise"
-                                description="Custom solutions for large-scale resourcing operations."
-                                price="Custom"
-                                features={[
-                                    "Manage unlimited engineers",
-                                    "Dedicated account manager",
-                                    "API access for integration",
-                                    "Custom branding"
-                                ]}
-                                ctaText="Contact Sales"
-                                onCtaClick={() => window.location.href = 'mailto:sales@techsubbies.com'}
-                            />
-                        </div>
-                    </div>
-                </section>
-                
-                 {/* FAQ Section */}
-                <section className="py-16 bg-white">
-                    <div className="container mx-auto px-4 max-w-3xl">
-                        <h2 className="text-3xl font-bold text-center mb-8">Frequently Asked Questions</h2>
-                        <div className="space-y-6">
-                            <div>
-                                <h3 className="font-semibold text-lg">Is it really free for companies to post jobs?</h3>
-                                <p className="text-gray-600 mt-1">Yes, 100%. Companies can post as many jobs as they like and search the talent database for free. We believe in removing all barriers to connecting talent with opportunity.</p>
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-lg">What is the Security Net Guarantee?</h3>
-                                <p className="text-gray-600 mt-1">It's our promise to paid subscribers. If you're available for over 30 days and don't receive any offers, we'll credit you with a free month of subscription. You can claim this up to 3 times. It's our way of showing we're invested in your success.</p>
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-lg">Can I cancel my subscription at any time?</h3>
-                                <p className="text-gray-600 mt-1">Absolutely. You can manage your subscription from your billing settings and cancel at any time. You will retain your plan features until the end of your current billing period.</p>
-                            </div>
-                             <div>
-                                <h3 className="font-semibold text-lg">What happens after my 30-day free trial ends?</h3>
-                                <p className="text-gray-600 mt-1">We will notify you before your trial ends. If you've added a payment method, your paid subscription will begin. If not, your profile will automatically revert to a Basic Profile. You won't lose your core information.</p>
-                            </div>
+                    <div className="container mx-auto px-4 max-w-7xl">
+                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-stretch">
+                           {TIERS.map(tier => (
+                               <TierCard 
+                                   key={tier.title}
+                                   {...tier}
+                                   onCtaClick={() => onNavigate('engineerSignUp')}
+                               />
+                           ))}
                         </div>
                     </div>
                 </section>

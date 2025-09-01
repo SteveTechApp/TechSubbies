@@ -42,6 +42,14 @@ export enum ExperienceLevel {
     EXPERT = 'Expert',
 }
 
+export enum ProfileTier {
+    BASIC = 'BASIC',
+    PROFESSIONAL = 'PROFESSIONAL',
+    SKILLS = 'SKILLS',
+    BUSINESS = 'BUSINESS',
+}
+
+
 export interface Skill {
     name: string;
     rating: number; // 0-100 (represents general proficiency for basic skills)
@@ -94,18 +102,31 @@ export interface CaseStudy {
     url: string;
 }
 
+export interface InsuranceDetail {
+    hasCoverage: boolean;
+    amount?: number;
+    certificateUrl?: string;
+    isVerified: boolean;
+}
+
 export interface Compliance {
-    professionalIndemnity: boolean;
-    publicLiability: boolean;
+    professionalIndemnity: InsuranceDetail;
+    publicLiability: InsuranceDetail;
     siteSafe: boolean; // Site safety certifications like SSSTS
     cscsCard: boolean; // CSCS Card
     ownPPE: boolean;
     hasOwnTransport: boolean;
     hasOwnTools: boolean;
-    powerToolCompetency: boolean;
-    accessEquipmentTrained: boolean; // e.g., IPAF, PASMA
+    powerToolCompetency: number; // 0-100 rating
+    accessEquipmentTrained: number; // 0-100 rating
     firstAidTrained: boolean;
     carriesSpares: boolean; // Carries spares and consumables
+}
+
+export interface IdentityVerification {
+    documentType: 'passport' | 'drivers_license' | 'none';
+    documentUrl?: string;
+    isVerified: boolean;
 }
 
 interface BaseProfile {
@@ -127,7 +148,7 @@ export interface EngineerProfile extends BaseProfile {
     selectedJobRoles?: SelectedJobRole[]; // Detailed skills for paid tier
     certifications: Certification[];
     contact: Contact;
-    profileTier: 'free' | 'paid';
+    profileTier: ProfileTier;
     resourcingCompanyId?: string; // ID of the managing resourcing company
     trialEndDate?: Date; // NEW: For managing Skills Profile trials
     subscriptionEndDate?: Date; // NEW: For Security Net Guarantee
@@ -142,6 +163,7 @@ export interface EngineerProfile extends BaseProfile {
     socials?: SocialLink[];
     associates?: Associate[];
     compliance: Compliance;
+    identity: IdentityVerification;
     generalAvailability?: string; // e.g., 'Medium'
     customerRating?: number; // 1-5
     peerRating?: number; // 1-5
@@ -151,6 +173,9 @@ export interface EngineerProfile extends BaseProfile {
     rightColumnLinks?: { label: string, value: string, url: string }[];
     isBoosted?: boolean;
     matchScore?: number;
+    profileViews: number;
+    searchAppearances: number;
+    jobInvites: number;
 }
 
 
@@ -277,6 +302,84 @@ export interface ForumComment {
     downvotes: number;
 }
 
+// --- NEW: Contract, Milestone, Timesheet, and Transaction Types ---
+export enum ContractType {
+    SOW = 'Statement of Work',
+    DAY_RATE = 'Day Rate Agreement',
+}
+
+export enum ContractStatus {
+    DRAFT = 'Draft',
+    PENDING_SIGNATURE = 'Pending Signature',
+    SIGNED = 'Signed by Engineer',
+    ACTIVE = 'Active',
+    COMPLETED = 'Completed',
+    CANCELLED = 'Cancelled',
+}
+
+export enum MilestoneStatus {
+    AWAITING_FUNDING = 'Awaiting Funding',
+    FUNDED_IN_PROGRESS = 'Funded & In Progress',
+    SUBMITTED_FOR_APPROVAL = 'Submitted for Approval',
+    COMPLETED_PAID = 'Completed & Paid',
+}
+
+export enum TransactionType {
+    SUBSCRIPTION = 'Subscription',
+    BOOST_PURCHASE = 'Boost Purchase',
+    ESCROW_FUNDING = 'Escrow Funding',
+    PAYOUT = 'Payout',
+    PLATFORM_FEE = 'Platform Fee',
+}
+
+export interface Signature {
+    name: string;
+    date: Date;
+}
+
+export interface Milestone {
+    id: string;
+    description: string;
+    amount: number;
+    status: MilestoneStatus;
+}
+
+export interface Timesheet {
+    id: string;
+    contractId: string;
+    engineerId: string;
+    period: string; // e.g., "Week ending 2024-08-02"
+    days: number;
+    status: 'submitted' | 'approved' | 'paid';
+}
+
+export interface Contract {
+    id: string;
+    jobId: string;
+    companyId: string;
+    engineerId: string;
+    type: ContractType;
+    description: string;
+    amount: number | string;
+    currency: Currency;
+    status: ContractStatus;
+    engineerSignature: Signature | null;
+    companySignature: Signature | null;
+    milestones: Milestone[];
+    timesheets?: Timesheet[];
+    jobTitle?: string;
+}
+
+export interface Transaction {
+    id: string;
+    userId: string; // User this transaction belongs to
+    contractId?: string;
+    type: TransactionType;
+    description: string;
+    amount: number; // Positive for income, negative for expense
+    date: Date;
+}
+
 
 export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'companySignUp' | 'resourcingCompanySignUp' | 'investors' | 'aboutUs' | 'terms' | 'privacy' | 'pricing' | 'howItWorks';
 
@@ -327,4 +430,15 @@ export interface AppContextType {
     addForumComment: (comment: { postId: string; parentId: string | null; content: string }) => void;
     voteOnPost: (postId: string, voteType: 'up' | 'down') => void;
     voteOnComment: (commentId: string, voteType: 'up' | 'down') => void;
+    // NEW: Contract context
+    contracts: Contract[];
+    sendContractForSignature: (contract: Contract) => void;
+    signContract: (contractId: string, signatureName: string) => void;
+    // NEW: Milestone & Payment Context
+    transactions: Transaction[];
+    fundMilestone: (contractId: string, milestoneId: string) => void;
+    submitMilestoneForApproval: (contractId: string, milestoneId: string) => void;
+    approveMilestonePayout: (contractId: string, milestoneId: string) => void;
+    submitTimesheet: (contractId: string, timesheet: Omit<Timesheet, 'id' | 'status'>) => void;
+    approveTimesheet: (contractId: string, timesheetId: string) => void;
 }

@@ -3,6 +3,7 @@ import { useAppContext } from '../../context/AppContext.tsx';
 import { Job, EngineerProfile, Application, ApplicationStatus } from '../../types/index.ts';
 import { MapPin, ArrowLeft, User, Mail, Phone, MessageCircle, Star, Briefcase } from '../../components/Icons.tsx';
 import { ReviewModal } from '../../components/ReviewModal.tsx';
+import { CreateContractModal } from '../../components/CreateContractModal.tsx';
 
 const formatDate = (date: any): string => {
     if (!date) return 'TBD';
@@ -20,10 +21,10 @@ interface ApplicantCardProps {
     job: Job;
     onMessage: (profileId: string) => void;
     onReview: (profile: EngineerProfile) => void;
-    onOffer: (jobId: string, engineerId: string) => void;
+    onCreateContract: (job: Job, profile: EngineerProfile) => void;
 }
 
-const ApplicantCard = ({ profile, application, job, onMessage, onReview, onOffer }: ApplicantCardProps) => (
+const ApplicantCard = ({ profile, application, job, onMessage, onReview, onCreateContract }: ApplicantCardProps) => (
     <div className="p-4 bg-white rounded-lg shadow-md border flex items-start gap-4">
         <img src={profile.avatar} alt={profile.name} className="w-16 h-16 rounded-full border-2 border-gray-200" />
         <div className="flex-grow">
@@ -43,10 +44,10 @@ const ApplicantCard = ({ profile, application, job, onMessage, onReview, onOffer
              <div className="flex items-center gap-2">
                 {application.status === ApplicationStatus.APPLIED && (
                     <button 
-                        onClick={() => onOffer(job.id, profile.id)}
+                        onClick={() => onCreateContract(job, profile)}
                         className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 font-bold flex items-center"
                     >
-                        <Briefcase size={14} className="mr-1.5" /> Offer Job
+                        <Briefcase size={14} className="mr-1.5" /> Create Contract
                     </button>
                 )}
                  {application.status !== ApplicationStatus.APPLIED && (
@@ -82,9 +83,10 @@ interface MyJobsViewProps {
 }
 
 export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
-    const { applications, engineers, startConversationAndNavigate, submitReview, offerJob } = useAppContext();
+    const { applications, engineers, startConversationAndNavigate, submitReview, sendContractForSignature } = useAppContext();
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [reviewingApplicant, setReviewingApplicant] = useState<EngineerProfile | null>(null);
+    const [contractingDetails, setContractingDetails] = useState<{job: Job, engineer: EngineerProfile} | null>(null);
 
 
     const getApplicantsForJob = (jobId: string) => {
@@ -104,6 +106,10 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
     const handleReviewApplicant = (profile: EngineerProfile) => {
         setReviewingApplicant(profile);
     };
+    
+    const handleCreateContract = (job: Job, engineer: EngineerProfile) => {
+        setContractingDetails({job, engineer});
+    };
 
     if (selectedJob) {
         const applicants = getApplicantsForJob(selectedJob.id);
@@ -122,7 +128,7 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
                      {applicants.length > 0 ? (
                         <div className="space-y-4">
                             {applicants.map(({ application, engineer }) => 
-                                engineer && <ApplicantCard key={engineer.id} profile={engineer} application={application} job={selectedJob} onMessage={handleMessageApplicant} onReview={handleReviewApplicant} onOffer={offerJob} />
+                                engineer && <ApplicantCard key={engineer.id} profile={engineer} application={application} job={selectedJob} onMessage={handleMessageApplicant} onReview={handleReviewApplicant} onCreateContract={handleCreateContract} />
                             )}
                         </div>
                     ) : (
@@ -138,6 +144,15 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
                         onSubmit={submitReview}
                     />
                 )}
+                 {contractingDetails && (
+                    <CreateContractModal
+                        isOpen={!!contractingDetails}
+                        onClose={() => setContractingDetails(null)}
+                        job={contractingDetails.job}
+                        engineer={contractingDetails.engineer}
+                        onSendForSignature={sendContractForSignature}
+                    />
+                 )}
             </div>
         );
     }

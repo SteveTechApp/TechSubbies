@@ -19,23 +19,30 @@ export const AIAssistant = () => {
 
     // --- Draggable Logic ---
     const fabRef = useRef<HTMLButtonElement>(null);
-    const [position, setPosition] = useState({ x: window.innerWidth - 80, y: window.innerHeight - 80 });
+    const [position, setPosition] = useState<{x: number, y: number} | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [hasMoved, setHasMoved] = useState(false);
 
     useEffect(() => {
+        // Set initial position to bottom right only after component mounts to ensure window object is available
+        setPosition({ x: window.innerWidth - 80, y: window.innerHeight - 80 });
+
         const handleResize = () => {
-            setPosition(prev => ({
-                x: Math.min(prev.x, window.innerWidth - 80),
-                y: Math.min(prev.y, window.innerHeight - 80)
-            }));
+            setPosition(prev => {
+                if (!prev) return null;
+                return {
+                    x: Math.min(prev.x, window.innerWidth - 80),
+                    y: Math.min(prev.y, window.innerHeight - 80)
+                };
+            });
         };
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+        if (!position) return;
         setIsDragging(true);
         setHasMoved(false);
         setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
@@ -43,7 +50,7 @@ export const AIAssistant = () => {
     };
 
     const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
-        if (!isDragging) return;
+        if (!isDragging || !position) return;
 
         if (!hasMoved) {
             const dx = e.clientX - (dragStart.x + position.x);
@@ -109,6 +116,8 @@ export const AIAssistant = () => {
             setIsLoading(false);
         }
     };
+
+    if (!position) return null; // Don't render until position is calculated
 
     return (
         <>

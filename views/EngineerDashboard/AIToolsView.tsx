@@ -1,5 +1,5 @@
 import React from 'react';
-import { EngineerProfile, Skill } from '../../types/index.ts';
+import { EngineerProfile, Skill, ProfileTier } from '../../types/index.ts';
 import { AISkillDiscovery } from '../../components/AISkillDiscovery.tsx';
 import { TrainingRecommendations } from '../../components/TrainingRecommendations.tsx';
 import { BrainCircuit, ArrowLeft, Star } from '../../components/Icons.tsx';
@@ -11,7 +11,7 @@ interface AIToolsViewProps {
 }
 
 export const AIToolsView = ({ profile, onSkillsAdded, setActiveView }: AIToolsViewProps) => {
-    const isPremium = profile.profileTier === 'paid';
+    const canUseAiTools = profile.profileTier === ProfileTier.SKILLS || profile.profileTier === ProfileTier.BUSINESS;
 
     return (
         <div>
@@ -24,7 +24,7 @@ export const AIToolsView = ({ profile, onSkillsAdded, setActiveView }: AIToolsVi
             </button>
             <h1 className="text-3xl font-bold mb-4 flex items-center"><BrainCircuit size={32} className="mr-3 text-purple-600"/> AI Tools</h1>
             
-            {isPremium ? (
+            {canUseAiTools ? (
                 <>
                     <p className="text-gray-600 mb-6 max-w-3xl">Leverage the power of AI to enhance your profile, discover new skills, and identify valuable training opportunities to boost your career.</p>
                     <div className="space-y-6">

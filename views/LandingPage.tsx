@@ -36,7 +36,7 @@ const engineerPrompts = [
 // NEW: Curated list of high-quality, relevant hero images
 const HERO_IMAGES = [
     'https://images.unsplash.com/photo-1593720213428-28a5b9e94613?q=80&w=2070&auto=format&fit=crop', // Programmer at desk
-    'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1934&auto=format&fit=crop', // Server room aisle
+    'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1974&auto=format&fit=crop', // Server room aisle
     'https://images.unsplash.com/photo-1521185496955-15097b20c5fe?q=80&w=1950&auto=format&fit=crop', // Close up of code on screen
     'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop', // Network globe concept
     'https://images.unsplash.com/photo-1614113489855-474aa913b438?q=80&w=1974&auto=format&fit=crop', // Live event sound mixing desk
@@ -67,7 +67,7 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
       return () => clearInterval(roleInterval);
   }, []);
 
-  const featuredCompanies = MOCK_COMPANIES.filter(c => c.consentToFeature).slice(0, 5);
+  const featuredCompanies = MOCK_COMPANIES.filter(c => c.consentToFeature && c.logo).slice(0, 5);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -145,10 +145,16 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
           {/* Trusted By Section */}
           <section className="py-10 bg-white">
             <div className="container mx-auto px-4 text-center">
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-6">Trusted by leading integrators & managed service providers</h3>
-              <div className="flex justify-center items-center space-x-12 flex-wrap text-gray-400">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-8">Trusted by leading integrators & managed service providers</h3>
+              <div className="flex justify-center items-center flex-wrap gap-x-12 gap-y-6">
                   {featuredCompanies.map(company => (
-                      <span key={company.id} className="text-2xl font-bold">{company.name}</span>
+                      <img 
+                          key={company.id} 
+                          src={company.logo} 
+                          alt={`${company.name} logo`}
+                          className="h-10 object-contain"
+                          title={company.name}
+                      />
                   ))}
               </div>
             </div>

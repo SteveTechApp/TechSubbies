@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Footer } from '../components/Footer.tsx';
 import { Header } from '../components/Header.tsx';
-import { Page } from '../types/index.ts';
-import { CheckCircle, Briefcase, Star, Rocket, ShieldCheck, TrendingUp, DollarSign, Clapperboard, X } from '../components/Icons.tsx';
+import { Page, ProfileTier } from '../types/index.ts';
+import { CheckCircle, Briefcase, Star, Rocket, ShieldCheck, TrendingUp, DollarSign, Clapperboard, X, Award, BarChart } from '../components/Icons.tsx';
 
 interface ForEngineersPageProps {
     onNavigate: (page: Page) => void;
@@ -55,6 +55,39 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
         setHeroImage(ENGINEER_HERO_IMAGES[Math.floor(Math.random() * ENGINEER_HERO_IMAGES.length)]);
     }, []);
 
+    const TIERS = [
+        {
+            tier: ProfileTier.BASIC,
+            title: "Basic Profile",
+            price: "FREE",
+            period: " / Forever",
+            ctaText: "Get Started for Free",
+            features: [
+                "Create your public professional profile",
+                "Appear in general searches",
+                "Set your availability calendar",
+                "Search and apply for jobs",
+            ]
+        },
+        {
+            tier: ProfileTier.SKILLS,
+            title: "Skills Profile",
+            price: "£15",
+            period: " / month",
+            ctaText: "Start 30-Day Free Trial",
+            isFeatured: true,
+            features: [
+                "Everything in Basic, plus:",
+                "Add specialist roles with detailed skill ratings",
+                "Get priority ranking in company searches",
+                "Unlock 'Profile Boosts' for top placement",
+                "Create visual case studies (Storyboards)",
+                "Access AI-powered Training Recommendations",
+                "Covered by our Security Net Guarantee",
+            ]
+        },
+    ];
+
     return (
         <div className="bg-gray-50 flex flex-col min-h-screen">
             <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
@@ -106,40 +139,23 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                  {/* Profile Comparison Section */}
                 <section className="py-16 bg-white">
                     <div className="container mx-auto px-4 text-center">
-                        <h2 className="text-4xl font-bold text-gray-800 mb-10">Choose the Profile That's Right for You</h2>
+                        <h2 className="text-4xl font-bold text-gray-800 mb-4">A Plan for Every Ambition</h2>
+                         <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-10">From getting your foot in the door to becoming an industry leader, we have a plan that grows with you. <button onClick={() => onNavigate('pricing')} className="text-blue-600 font-semibold hover:underline">See full comparison</button>.</p>
                         <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                            {/* Basic Profile Card */}
-                            <div className="border border-gray-200 rounded-lg p-8 text-left flex flex-col">
-                                <h3 className="text-2xl font-bold text-gray-800">Basic Profile</h3>
-                                <p className="text-gray-500 mt-2 mb-4">The ideal starting point for junior engineers and on-site support roles. This free profile gives you visibility for entry-level positions (typically under £195/day), helping you gain valuable experience.</p>
-                                <p className="my-6"><span className="text-5xl font-extrabold">FREE</span><span className="text-xl font-medium text-gray-500"> / Forever</span></p>
-                                <ul className="space-y-4 mb-8 flex-grow">
-                                    <FeatureListItem>Create your public professional profile</FeatureListItem>
-                                    <FeatureListItem>Appear in general searches</FeatureListItem>
-                                    <FeatureListItem>List your core discipline & experience</FeatureListItem>
-                                    <FeatureListItem>Set your availability calendar</FeatureListItem>
-                                    <FeatureListItem>Search and apply for jobs</FeatureListItem>
-                                </ul>
-                                <button onClick={() => onNavigate('engineerSignUp')} className="w-full mt-auto font-bold py-3 px-6 rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors">Get Started for Free</button>
-                            </div>
-                            {/* Skills Profile Card */}
-                             <div className="border-2 border-blue-600 rounded-lg p-8 text-left relative flex flex-col shadow-2xl">
-                                <span className="absolute top-0 -translate-y-1/2 bg-blue-600 text-white text-xs font-bold uppercase px-3 py-1 rounded-full">Most Popular</span>
-                                <h3 className="text-2xl font-bold text-blue-600">Skills Profile</h3>
-                                <p className="text-gray-500 mt-2 mb-4">The complete toolkit for experienced specialists to showcase expertise, command higher day rates, and win high-value contracts.</p>
-                                <p className="my-6"><span className="text-5xl font-extrabold">£15</span><span className="text-xl font-medium text-gray-500"> / month</span></p>
-                                <ul className="space-y-4 mb-8 flex-grow">
-                                    <FeatureListItem><strong>Everything in Basic, plus:</strong></FeatureListItem>
-                                    <FeatureListItem><strong>Keep 100% of your day rate</strong> — no agency fees or commissions</FeatureListItem>
-                                    <FeatureListItem>Add specialist roles with detailed skill ratings to prove your expertise</FeatureListItem>
-                                    <FeatureListItem>Get <strong>priority ranking</strong> in company search results</FeatureListItem>
-                                    <FeatureListItem>Unlock "Profile Boosts" for top placement when you need it</FeatureListItem>
-                                    <FeatureListItem>Create visual case studies with our Storyboard tool</FeatureListItem>
-                                    <FeatureListItem>Access AI-powered Training Recommendations</FeatureListItem>
-                                    <FeatureListItem>Covered by our <strong>Security Net Guarantee</strong></FeatureListItem>
-                                </ul>
-                                <button onClick={() => onNavigate('engineerSignUp')} className="w-full mt-auto font-bold py-3 px-6 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">Start 30-Day Free Trial</button>
-                            </div>
+                            {TIERS.map(tier => (
+                                <div key={tier.title} className={`border rounded-lg p-8 text-left flex flex-col ${tier.isFeatured ? 'border-2 border-blue-600 shadow-2xl relative' : 'border-gray-200'}`}>
+                                    {tier.isFeatured && <span className="absolute top-0 -translate-y-1/2 bg-blue-600 text-white text-xs font-bold uppercase px-3 py-1 rounded-full">Most Popular</span>}
+                                    <h3 className={`text-2xl font-bold ${tier.isFeatured ? 'text-blue-600' : 'text-gray-800'}`}>{tier.title}</h3>
+                                    <div className="my-6">
+                                        <span className="text-5xl font-extrabold">{tier.price}</span>
+                                        <span className="text-xl font-medium text-gray-500">{tier.period}</span>
+                                    </div>
+                                    <ul className="space-y-4 mb-8 flex-grow">
+                                        {tier.features.map((feature, index) => <FeatureListItem key={index}>{feature}</FeatureListItem>)}
+                                    </ul>
+                                    <button onClick={() => onNavigate('engineerSignUp')} className={`w-full mt-auto font-bold py-3 px-6 rounded-lg transition-colors ${tier.isFeatured ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}>{tier.ctaText}</button>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </section>
@@ -149,15 +165,15 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                     <div className="container mx-auto px-4">
                         <div className="text-center">
                             <h2 className="text-4xl font-bold text-gray-800 mb-2">Unlock Your Full Potential</h2>
-                            <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-12">A Skills Profile gives you the professional tools to stand out and secure high-value contracts.</p>
+                            <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-12">Our premium tiers give you the professional tools to stand out and secure high-value contracts.</p>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            <FeatureDetailCard icon={Star} title="Showcase Specialist Roles">Go beyond a simple skills list. Add specific, high-demand roles like 'AV Commissioning Engineer' or 'Cloud Solutions Architect' and rate your competency on the granular skills that matter to clients.</FeatureDetailCard>
+                            <FeatureDetailCard icon={Award} title="Verified Certifications">Gain instant credibility. Our Professional tier allows you to submit your certifications for verification, adding a badge of trust to your profile that companies look for.</FeatureDetailCard>
+                            <FeatureDetailCard icon={Star} title="Showcase Specialist Roles">Go beyond a simple skills list. The Skills tier lets you add high-demand roles like 'AV Commissioning Engineer' and rate your competency on the granular skills that matter to clients.</FeatureDetailCard>
                             <FeatureDetailCard icon={TrendingUp} title="Enhanced Search Visibility">Skills Profiles are automatically ranked higher in search results, putting you in front of more project managers and increasing your chances of being contacted for top-tier contracts.</FeatureDetailCard>
-                            <FeatureDetailCard icon={DollarSign} title="Maximise Your Earnings">Say goodbye to 20-25% recruitment agency fees. With our low-cost, flat monthly subscription, you keep every penny of your day rate. This makes you more competitive and ultimately, more profitable.</FeatureDetailCard>
                             <FeatureDetailCard icon={Rocket} title="Profile Boosts">Need to fill a gap in your schedule quickly? Use a Profile Boost credit to temporarily place yourself at the very top of relevant searches for 12 hours, guaranteeing maximum visibility when it matters most.</FeatureDetailCard>
                             <FeatureDetailCard icon={Clapperboard} title="Visual Case Studies">A picture is worth a thousand words. Use our Storyboard Creator to build compelling, visual narratives of your best projects, demonstrating your process and results in a way a CV never can.</FeatureDetailCard>
-                            <FeatureDetailCard icon={ShieldCheck} title="Security Net Guarantee">We're invested in your success. If you're a subscriber who is available for 30 days and receives no offers, we'll give you the next month free. We've got your back.</FeatureDetailCard>
+                            <FeatureDetailCard icon={BarChart} title="Profile Analytics">Understand your impact. Our Business tier gives you access to detailed analytics on who is viewing your profile, your search appearances, and engagement metrics to optimize your strategy.</FeatureDetailCard>
                         </div>
                     </div>
                 </section>

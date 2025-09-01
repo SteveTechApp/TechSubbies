@@ -1,10 +1,10 @@
 import React from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
-import { Role } from '../types/index.ts';
+import { Role, ProfileTier } from '../types/index.ts';
 import { NavLink } from './NavLink.tsx';
 import { 
     LayoutDashboard, User, CalendarDays, Search, Settings, PlusCircle, Briefcase, 
-    Users, Building, BarChart2, SlidersHorizontal, Edit, BrainCircuit, CreditCard, Mail
+    Users, Building, BarChart2, SlidersHorizontal, Edit, BrainCircuit, CreditCard, Mail, BarChart
 } from './Icons.tsx';
 
 interface DashboardSidebarProps {
@@ -12,10 +12,10 @@ interface DashboardSidebarProps {
     setActiveView: (view: string) => void;
 }
 
-const getLinksForRole = (role: Role) => {
-    switch (role) {
+const getLinksForRole = (user: any) => {
+    switch (user.role) {
         case Role.ENGINEER:
-            return [
+            const engineerLinks = [
                 { label: 'Dashboard', icon: LayoutDashboard }, 
                 { label: 'Messages', icon: Mail },
                 { label: 'Manage Profile', icon: Edit },
@@ -23,9 +23,14 @@ const getLinksForRole = (role: Role) => {
                 { label: 'Availability', icon: CalendarDays }, 
                 { label: 'Job Search', icon: Search },
                 { label: 'My Network', icon: Users },
+                { label: 'Contracts', icon: Briefcase },
                 { label: 'AI Tools', icon: BrainCircuit },
                 { label: 'Billing', icon: CreditCard },
             ];
+            if (user.profile.profileTier === ProfileTier.BUSINESS) {
+                engineerLinks.push({ label: 'Analytics', icon: BarChart });
+            }
+            return engineerLinks;
         case Role.COMPANY:
             return [
                 { label: 'Dashboard', icon: LayoutDashboard }, 
@@ -33,6 +38,7 @@ const getLinksForRole = (role: Role) => {
                 { label: 'Post a Job', icon: PlusCircle }, 
                 { label: 'Find Talent', icon: Search }, 
                 { label: 'My Jobs', icon: Briefcase }, 
+                { label: 'Contracts', icon: Briefcase },
                 { label: 'Settings', icon: Settings },
             ];
         case Role.RESOURCING_COMPANY:
@@ -41,6 +47,7 @@ const getLinksForRole = (role: Role) => {
                 { label: 'Messages', icon: Mail },
                 { label: 'Manage Engineers', icon: Users }, 
                 { label: 'Find Jobs', icon: Search }, 
+                { label: 'Contracts', icon: Briefcase },
                 { label: 'Settings', icon: Settings },
             ];
         case Role.ADMIN:
@@ -57,7 +64,7 @@ export const DashboardSidebar = ({ activeView, setActiveView }: DashboardSidebar
 
     if (!user) return null;
 
-    const links = getLinksForRole(user.role);
+    const links = getLinksForRole(user);
 
     return (
         <aside className="w-64 bg-gray-100 p-4 border-r border-gray-200 flex flex-col">

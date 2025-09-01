@@ -1,8 +1,8 @@
 import React from 'react';
-import { EngineerProfile } from '../../types/index.ts';
+import { EngineerProfile, ProfileTier } from '../../types/index.ts';
 import { 
     Edit, User, CalendarDays, Search, BrainCircuit, CreditCard, 
-    Clapperboard, Rocket, Star, CheckCircle, ArrowRight, TrendingUp, Mail, ShieldCheck
+    Clapperboard, Rocket, Star, CheckCircle, ArrowRight, TrendingUp, Mail, ShieldCheck, BarChart
 } from '../../components/Icons.tsx';
 import { useAppContext } from '../../context/AppContext.tsx';
 
@@ -69,12 +69,12 @@ const ActionableInsight = ({ profile, onUpgrade, onNavigate }: { profile: Engine
         textColor: 'text-green-800'
     };
 
-    if (profile.profileTier === 'free') {
+    if (profile.profileTier === ProfileTier.BASIC) {
         insight = {
             icon: Star,
             title: "Unlock Your Potential",
-            description: "Upgrade to a Skills Profile to add specialist roles, showcase your expertise, and appear higher in searches for high-value contracts.",
-            actionText: "Upgrade to Premium",
+            description: "Upgrade to a Professional Profile to add searchable skills and get your certifications verified.",
+            actionText: "Upgrade to Professional",
             action: onUpgrade,
             bgColor: 'bg-yellow-50',
             textColor: 'text-yellow-800'
@@ -116,28 +116,42 @@ interface DashboardViewProps {
 
 export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, boostProfile }: DashboardViewProps) => {
     const { reactivateProfile, jobs } = useAppContext();
-    const isPremium = engineerProfile.profileTier === 'paid';
+    const isPremium = engineerProfile.profileTier !== ProfileTier.BASIC;
+    const canUseSkillsFeatures = engineerProfile.profileTier === ProfileTier.SKILLS || engineerProfile.profileTier === ProfileTier.BUSINESS;
     const firstName = engineerProfile.name.split(' ')[0];
 
     const calculateProfileScore = () => {
-        let score = 0;
-        if (isPremium) {
-            if (engineerProfile.description) score += 15;
-            if (engineerProfile.skills && engineerProfile.skills.length > 0) score += 10;
-            if (engineerProfile.contact.phone || engineerProfile.contact.linkedin) score += 15;
-            if (engineerProfile.selectedJobRoles && engineerProfile.selectedJobRoles.length > 0) score += 35;
-            if (engineerProfile.caseStudies && engineerProfile.caseStudies.length > 0) score += 25;
-        } else {
-            if (engineerProfile.description) score += 50;
-            if (engineerProfile.contact.phone || engineerProfile.contact.linkedin) score += 25;
-            if (engineerProfile.availability) score += 25;
-        }
+        let score = 20; // Base score
+        if (engineerProfile.description) score += 10;
+        if (engineerProfile.contact.phone || engineerProfile.contact.linkedin) score += 10;
+        
+        if (engineerProfile.profileTier === ProfileTier.PROFESSIONAL) score += 10;
+        if (engineerProfile.skills && engineerProfile.skills.length > 0) score += 15;
+        if (engineerProfile.certifications.some(c => c.verified)) score += 10;
+
+        if (engineerProfile.profileTier === ProfileTier.SKILLS) score += 15;
+        if (engineerProfile.selectedJobRoles && engineerProfile.selectedJobRoles.length > 0) score += 20;
+
+        if (engineerProfile.profileTier === ProfileTier.BUSINESS) score += 10;
+        
         return Math.min(score, 100);
     };
 
     const profileScore = calculateProfileScore();
     
     const digestJobs = jobs.filter(j => j.status === 'active').sort((a,b) => b.postedDate.getTime() - a.postedDate.getTime()).slice(0, 3);
+
+    const UpgradePanel = () => {
+        const UPGRADE_INFO = {
+            [ProfileTier.BASIC]: { title: "Upgrade to Professional", desc: "For £7/mo, add skills tags and get verified certs.", action: () => setActiveView('Billing')},
+            [ProfileTier.PROFESSIONAL]: { title: "Upgrade to Skills", desc: "For £15/mo, unlock specialist roles, AI Tools, and Storyboards.", action: () => setActiveView('Billing')},
+            [ProfileTier.SKILLS]: { title: "Upgrade to Business", desc: "For £35/mo, unlock profile analytics and dedicated support.", action: () => setActiveView('Billing')},
+            [ProfileTier.BUSINESS]: { title: "You're all set!", desc: "You have access to all features on the platform.", action: () => setActiveView('Analytics')},
+        };
+        const info = UPGRADE_INFO[engineerProfile.profileTier];
+
+        return <DashboardPanel icon={Star} title={info.title} description={info.desc} onClick={info.action} isFeatured={true} />;
+    };
 
 
     return (
@@ -166,16 +180,16 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
                     <DashboardPanel icon={User} title="View Public Profile" description="See your Stats Card as companies see it." onClick={() => setActiveView('View Public Profile')} />
                     <DashboardPanel icon={CalendarDays} title="Set Availability" description="Update your calendar to get relevant offers." onClick={() => setActiveView('Availability')} />
                     <DashboardPanel icon={Search} title="Find Work" description="Search and apply for freelance contracts." onClick={() => setActiveView('Job Search')} />
-                    <DashboardPanel icon={BrainCircuit} title="AI Tools" description="Discover skills and get training suggestions." onClick={() => setActiveView('AI Tools')} />
+                    <DashboardPanel icon={BrainCircuit} title="AI Tools" description="Discover skills and get training suggestions." onClick={() => setActiveView('AI Tools')} disabled={!canUseSkillsFeatures} />
                     <DashboardPanel icon={CreditCard} title="Billing" description="Manage subscriptions and purchase Boosts." onClick={() => setActiveView('Billing')} />
                     <div className="sm:col-span-2 md:col-span-1">
-                         <DashboardPanel icon={Clapperboard} title="Visual Case Studies" description="Create engaging stories of your projects." onClick={() => setActiveView('Create Storyboard')} disabled={!isPremium} />
+                         <DashboardPanel icon={Clapperboard} title="Visual Case Studies" description="Create engaging stories of your projects." onClick={() => setActiveView('Create Storyboard')} disabled={!canUseSkillsFeatures} />
                     </div>
                      <div className="sm:col-span-2">
                         {isPremium ? (
                             <DashboardPanel icon={Rocket} title="Boost Profile" description="Get to the top of search results for 12 hours." onClick={boostProfile} isFeatured={true} />
                         ) : (
-                            <DashboardPanel icon={Star} title="Upgrade to Premium" description="For £15/mo, unlock specialist roles, Boosts, and appear higher in searches." onClick={onUpgradeTier} isFeatured={true} />
+                            <UpgradePanel />
                         )}
                     </div>
                     {isPremium && engineerProfile.jobDigestOptIn && (
@@ -203,10 +217,10 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
                 <div className="lg:col-span-1 space-y-6">
                     <ProfileStrength score={profileScore} />
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-                        <StatBox value="142" label="Profile Views (7d)" icon={TrendingUp} />
-                        <StatBox value="3" label="Job Invites" icon={Mail} />
+                        <StatBox value={engineerProfile.profileViews.toString()} label="Profile Views (30d)" icon={TrendingUp} />
+                        <StatBox value={engineerProfile.jobInvites.toString()} label="Job Invites" icon={Mail} />
                     </div>
-                    <ActionableInsight profile={engineerProfile} onUpgrade={onUpgradeTier} onNavigate={setActiveView} />
+                    <ActionableInsight profile={engineerProfile} onUpgrade={() => setActiveView('Billing')} onNavigate={setActiveView} />
                 </div>
             </div>
         </div>

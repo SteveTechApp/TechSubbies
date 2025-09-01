@@ -1,4 +1,4 @@
-import { Application, Review, Conversation, Message, ApplicationStatus } from '../../types/index.ts';
+import { Application, Review, Conversation, Message, ApplicationStatus, Contract, ContractStatus, ContractType, Currency, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet } from '../../types/index.ts';
 
 export const MOCK_APPLICATIONS: Application[] = [
     { jobId: 'job-1', engineerId: 'eng-1', date: new Date('2024-06-20'), status: ApplicationStatus.COMPLETED, reviewed: true },
@@ -42,4 +42,50 @@ export const MOCK_MESSAGES: Message[] = [
     { id: 'msg-4', conversationId: 'convo-1', senderId: 'user-eng-eng-1', text: "Perfect, I've just sent over the revised quote. Let me know what you think.", timestamp: new Date(new Date().getHours() - 1), isRead: false },
     { id: 'msg-5', conversationId: 'convo-2', senderId: 'user-comp-res-1', text: "Hi Samantha, a new IT support role came up that looks like a great fit for you. Are you happy for us to put you forward?", timestamp: new Date(new Date(new Date().setDate(new Date().getDate() - 1)).setHours(10, 0)), isRead: true },
     { id: 'msg-6', conversationId: 'convo-2', senderId: 'user-eng-eng-2', text: "Yes, I'm available from that date. Please feel free to submit my profile.", timestamp: new Date(new Date(new Date().setDate(new Date().getDate() - 1)).setHours(11, 0)), isRead: true },
+];
+
+export const MOCK_TIMESHEETS: Timesheet[] = [
+    { id: 'ts-1', contractId: 'contract-1', engineerId: 'eng-1', period: 'Week ending 2024-08-02', days: 5, status: 'approved' }
+];
+
+export const MOCK_CONTRACTS: Contract[] = [
+    {
+        id: 'contract-1',
+        jobId: 'job-1',
+        companyId: 'comp-1',
+        engineerId: 'eng-1',
+        type: ContractType.DAY_RATE,
+        description: `This Day Rate Agreement is made between Pro AV Solutions ("the Client") and Neil Bishop ("the Contractor"). The Contractor agrees to provide services as described herein. This platform, TechSubbies.com, is a facilitator and is not a party to this agreement. Any disputes must be resolved directly between the Client and the Contractor.`,
+        amount: '550',
+        currency: Currency.GBP,
+        status: ContractStatus.ACTIVE,
+        engineerSignature: { name: 'Neil Bishop', date: new Date('2024-07-20') },
+        companySignature: { name: 'Steve Goodwin', date: new Date('2024-07-21') },
+        milestones: [],
+        timesheets: MOCK_TIMESHEETS,
+    },
+    {
+        id: 'contract-2',
+        jobId: 'gen-job-1',
+        companyId: 'comp-2',
+        engineerId: 'eng-2',
+        type: ContractType.SOW,
+        description: `This Statement of Work (SOW) is made between Starlight Events ("the Client") and Samantha Greene ("the Contractor"). The Contractor will complete the milestones as defined in this contract. Payment will be released from escrow upon successful completion and approval of each milestone.`,
+        amount: 2500,
+        currency: Currency.GBP,
+        status: ContractStatus.ACTIVE,
+        engineerSignature: { name: 'Samantha Greene', date: new Date('2024-07-25') },
+        companySignature: { name: 'Starlight Events', date: new Date('2024-07-25') },
+        milestones: [
+            { id: 'm1', description: 'Phase 1: Initial Site Survey & Report', amount: 500, status: MilestoneStatus.COMPLETED_PAID },
+            { id: 'm2', description: 'Phase 2: Pre-wire & First Fix', amount: 1000, status: MilestoneStatus.SUBMITTED_FOR_APPROVAL },
+            { id: 'm3', description: 'Phase 3: Final Installation & Handover', amount: 1000, status: MilestoneStatus.AWAITING_FUNDING },
+        ],
+    }
+];
+
+export const MOCK_TRANSACTIONS: Transaction[] = [
+    { id: 'txn-1', userId: 'user-eng-eng-1', contractId: 'contract-2', type: TransactionType.PAYOUT, description: "Payout for Milestone: Phase 1: Initial Site Survey & Report", amount: 475, date: new Date('2024-07-28') },
+    { id: 'txn-2', userId: 'user-eng-eng-1', contractId: 'contract-2', type: TransactionType.PLATFORM_FEE, description: "Platform Fee (5%) for Milestone: Phase 1", amount: -25, date: new Date('2024-07-28') },
+    { id: 'txn-3', userId: 'user-comp-comp-2', contractId: 'contract-2', type: TransactionType.ESCROW_FUNDING, description: "Funded Milestone: Phase 1: Initial Site Survey & Report", amount: -500, date: new Date('2024-07-26') },
 ];

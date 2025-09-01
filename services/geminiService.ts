@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { EngineerProfile, Job } from '../types/index.ts';
+// FIX: Add ProfileTier to imports for type-safe comparison.
+import { EngineerProfile, Job, ProfileTier } from '../types/index.ts';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -25,7 +26,8 @@ export const geminiService = {
     generateDescriptionForProfile: async (profile: EngineerProfile) => {
         let prompt: string;
 
-        if (profile.profileTier === 'paid' && profile.skills && profile.skills.length > 0) {
+        // FIX: Compare against ProfileTier enum instead of string literal.
+        if (profile.profileTier !== ProfileTier.BASIC && profile.skills && profile.skills.length > 0) {
             // Paid users get a detailed bio leveraging their listed skills
             prompt = `Generate a compelling but brief professional bio (around 50-70 words) for a freelance Tech engineer. Here are their details:\n- Name: ${profile.name}\n- Role/Discipline: ${profile.discipline}\n- Experience: ${profile.experience} years\n- Key Skills: ${profile.skills.slice(0, 5).map(s => s.name).join(', ')}\n\nWrite a professional, first-person summary highlighting their expertise based on the provided skills.`;
         } else {

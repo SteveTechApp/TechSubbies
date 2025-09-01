@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { EngineerProfile, SelectedJobRole, CaseStudy, Skill, Compliance } from '../../types/index.ts';
+import { EngineerProfile, SelectedJobRole, CaseStudy, Skill, Compliance, ProfileTier, IdentityVerification } from '../../types/index.ts';
 import { ArrowLeft } from '../../components/Icons.tsx';
 import { CoreInfoSection } from '../../components/ProfileManagement/CoreInfoSection.tsx';
 import { ContactSection } from '../../components/ProfileManagement/ContactSection.tsx';
@@ -7,6 +7,9 @@ import { WorkReadinessSection } from '../../components/ProfileManagement/WorkRea
 import { SkillsAndRolesSection } from '../../components/ProfileManagement/SkillsAndRolesSection.tsx';
 import { PortfolioSection } from '../../components/ProfileManagement/PortfolioSection.tsx';
 import { NotificationSettingsSection } from '../../components/ProfileManagement/NotificationSettingsSection.tsx';
+import { CertificationsSection } from '../../components/ProfileManagement/CertificationsSection.tsx';
+import { IdentitySection } from '../../components/ProfileManagement/IdentitySection.tsx';
+
 
 interface ProfileManagementViewProps {
     profile: EngineerProfile;
@@ -17,6 +20,8 @@ interface ProfileManagementViewProps {
 export const ProfileManagementView = ({ profile, onSave, setActiveView }: ProfileManagementViewProps) => {
     const [formData, setFormData] = useState<Partial<EngineerProfile>>(profile);
     const [contactData, setContactData] = useState(profile.contact);
+    const [complianceData, setComplianceData] = useState(profile.compliance);
+    const [identityData, setIdentityData] = useState(profile.identity);
 
     const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -31,27 +36,14 @@ export const ProfileManagementView = ({ profile, onSave, setActiveView }: Profil
         const { name, value } = e.target;
         setContactData(prev => ({ ...prev, [name]: value }));
     };
-
-    const handleComplianceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, checked } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            compliance: { ...(prev.compliance || {}), [name]: checked } as Compliance,
-        }));
-    };
     
     // --- Save Logic ---
     const handleSaveChanges = () => {
-        // This function will need to aggregate state from child components if they manage their own
-        // For now, we assume all state is managed here and passed down.
-        const skillsToSave: Skill[] | undefined = (formData as EngineerProfile).profileTier === 'paid' 
-            ? (formData.skills || []).map(s => typeof s === 'string' ? { name: s, rating: 50 } : s)
-            : undefined;
-        
         onSave({ 
             ...formData,
             contact: contactData,
-            skills: skillsToSave,
+            compliance: complianceData,
+            identity: identityData,
         });
     };
 
@@ -78,8 +70,10 @@ export const ProfileManagementView = ({ profile, onSave, setActiveView }: Profil
             <div className="space-y-6">
                 <CoreInfoSection formData={formData} onProfileChange={handleProfileChange} />
                 <ContactSection contactData={contactData} onContactChange={handleContactChange} />
-                <WorkReadinessSection complianceData={formData.compliance} onComplianceChange={handleComplianceChange} />
+                <WorkReadinessSection complianceData={complianceData} setComplianceData={setComplianceData} />
+                <IdentitySection identityData={identityData} setIdentityData={setIdentityData} />
                 <NotificationSettingsSection profile={profile} formData={formData} onProfileChange={handleProfileChange} />
+                <CertificationsSection profile={profile} formData={formData} setFormData={setFormData} setActiveView={setActiveView} />
                 <SkillsAndRolesSection profile={profile} formData={formData} setFormData={setFormData} setActiveView={setActiveView} />
                 <PortfolioSection profile={profile} formData={formData} setFormData={setFormData} setActiveView={setActiveView} />
             </div>

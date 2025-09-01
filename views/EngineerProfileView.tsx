@@ -1,6 +1,6 @@
 import React from 'react';
 import { EngineerProfile, Role } from '../types/index.ts';
-import { Edit, MessageCircle, Star } from '../components/Icons.tsx';
+import { MessageCircle, Star } from '../components/Icons.tsx';
 import { TopTrumpCard } from '../components/TopTrumpCard.tsx';
 import { ReviewCard } from '../components/ReviewCard.tsx';
 import { useAppContext } from '../context/AppContext.tsx';
@@ -31,16 +31,6 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: { profile: 
 
     return (
         <div className="relative font-sans max-w-4xl mx-auto py-4">
-            {isEditable && (
-                <button
-                    onClick={onEdit}
-                    className="absolute top-8 right-0 sm:right-4 z-20 flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 shadow-lg"
-                    aria-label="Edit Profile"
-                >
-                    <Edit size={16} className="mr-2" /> Edit
-                </button>
-            )}
-
             {canMessage && (
                  <button
                     onClick={() => startConversationAndNavigate(profile.id, handleNavigateToMessages)}
@@ -51,7 +41,7 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: { profile: 
                 </button>
             )}
            
-            <TopTrumpCard profile={profile} />
+            <TopTrumpCard profile={profile} isEditable={isEditable} onEdit={onEdit} />
 
             <div className="mt-8 bg-white p-6 rounded-lg shadow-lg">
                 <h2 className="text-2xl font-bold mb-4 flex items-center">
