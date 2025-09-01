@@ -3,11 +3,8 @@ import { useAppContext, } from '../../context/AppContext.tsx';
 import { Job, EngineerProfile } from '../../types/index.ts';
 import { ApplyAsEngineerModal } from '../../components/ApplyAsEngineerModal.tsx';
 import { Search, MapPin, Calendar, DollarSign, Clock, MessageCircle, Briefcase, Layers } from '../../components/Icons.tsx';
+import { formatDisplayDate } from '../../utils/dateFormatter.ts';
 
-const formatDate = (date: any): string => {
-    if (!date) return 'TBD';
-    return new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-};
 
 interface ResourcingJobCardProps {
     job: Job;
@@ -20,7 +17,7 @@ const ResourcingJobCard = ({ job, onApply, onMessage }: ResourcingJobCardProps) 
         <div className="flex justify-between items-start">
             <div>
                 <h3 className="text-xl font-bold text-blue-700">{job.title}</h3>
-                <p className="text-gray-500 text-sm">Posted on {formatDate(job.postedDate)}</p>
+                <p className="text-gray-500 text-sm">Posted on {formatDisplayDate(job.postedDate)}</p>
             </div>
             <div className="flex items-center gap-2">
                  <button 
@@ -44,7 +41,7 @@ const ResourcingJobCard = ({ job, onApply, onMessage }: ResourcingJobCardProps) 
             <span className="flex items-center"><MapPin size={16} className="mr-2 text-gray-400"/> {job.location}</span>
             <span className="flex items-center"><DollarSign size={16} className="mr-2 text-gray-400"/> {job.currency}{job.dayRate} / day</span>
             <span className="flex items-center"><Clock size={16} className="mr-2 text-gray-400"/> {job.duration}</span>
-            <span className="flex items-center"><Calendar size={16} className="mr-2 text-gray-400"/> Starts: {formatDate(job.startDate)}</span>
+            <span className="flex items-center"><Calendar size={16} className="mr-2 text-gray-400"/> Starts: {formatDisplayDate(job.startDate)}</span>
             <span className="flex items-center"><Briefcase size={16} className="mr-2 text-gray-400"/> {job.jobType}</span>
             <span className="flex items-center"><Layers size={16} className="mr-2 text-gray-400"/> {job.experienceLevel}</span>
         </div>

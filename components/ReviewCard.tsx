@@ -1,6 +1,7 @@
 import React from 'react';
 import { Review, UserProfile } from '../types/index.ts';
 import { Star } from './Icons.tsx';
+import { formatDisplayDate } from '../utils/dateFormatter.ts';
 
 interface ReviewCardProps {
     review: Review;
@@ -27,7 +28,7 @@ export const ReviewCard = ({ review, company }: ReviewCardProps) => {
                     <div className="flex justify-between items-start">
                         <div>
                             <h4 className="font-bold text-gray-800">{company?.name || 'A Company'}</h4>
-                            <p className="text-xs text-gray-500">{new Date(review.date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                            <p className="text-xs text-gray-500">{formatDisplayDate(review.date)}</p>
                         </div>
                         <div className="flex flex-col items-end">
                             <StarRatingDisplay rating={review.peerRating} label="Technical Skill & Professionalism" />

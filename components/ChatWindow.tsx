@@ -7,7 +7,7 @@ interface ChatWindowProps {
 }
 
 export const ChatWindow = ({ conversation }: ChatWindowProps) => {
-    const { user, messages, sendMessage, findUserById } = useAppContext();
+    const { user, messages, sendMessage, findUserById, isAiReplying } = useAppContext();
     const [newMessage, setNewMessage] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -20,11 +20,14 @@ export const ChatWindow = ({ conversation }: ChatWindowProps) => {
     
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [conversationMessages.length, conversation.id]);
+    }, [conversationMessages.length, conversation.id, isAiReplying]);
 
-    const handleSend = (e: React.FormEvent) => {
+    const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !user) return;
+        if (!newMessage.trim() || !user || isAiReplying) return;
+        
+        // sendMessage is now async, but we don't need to await it here
+        // as we want the input cleared immediately. The context handles the AI reply.
         sendMessage(conversation.id, newMessage);
         setNewMessage('');
     };
@@ -53,6 +56,13 @@ export const ChatWindow = ({ conversation }: ChatWindowProps) => {
                         </p>
                     </div>
                 ))}
+                {isAiReplying && (
+                     <div className="self-start bg-white text-gray-800 shadow-sm p-3 rounded-lg max-w-[70%] flex items-center gap-2">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                    </div>
+                )}
                  <div ref={messagesEndRef} />
             </div>
             <form onSubmit={handleSend} className="p-4 bg-white border-t">
@@ -60,8 +70,9 @@ export const ChatWindow = ({ conversation }: ChatWindowProps) => {
                     type="text"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type a message..."
-                    className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500"
+                    placeholder={isAiReplying ? "Replying..." : "Type a message..."}
+                    disabled={isAiReplying}
+                    className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     aria-label="Chat message input"
                 />
             </form>

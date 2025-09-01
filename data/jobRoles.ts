@@ -1,31 +1,87 @@
 import { JobRoleDefinition } from '../types/index.ts';
 
-// --- Comprehensive Job Role Database ---
+// --- Comprehensive Job Role Database (Expert Level) ---
 export const JOB_ROLE_DEFINITIONS: JobRoleDefinition[] = [
     // --- AV Roles ---
-    { name: 'AV Commissioning Engineer', category: 'AV', skills: ['System Commissioning', 'Crestron Toolbox', 'Biamp Tesira', 'Q-SYS Designer', 'Dante Level 3', 'Network Troubleshooting', 'Final Handover'] },
-    { name: 'Lead AV Installer', category: 'AV', skills: ['Rack Building & Wiring', 'Reading Schematics', 'Cable Termination', 'Team Leadership', 'Health & Safety (H&S)', 'On-site Problem Solving'] },
-    { name: 'AV Service Engineer', category: 'AV', skills: ['Fault Finding', 'Preventative Maintenance', 'Client Communication', 'RMAs & Ticketing', 'Remote Diagnostics', 'Firmware Management'] },
-    { name: 'Rack Builder / Wirer', category: 'AV', skills: ['Wiring to Schematic', 'Cable Looming', 'Soldering', 'Neat Patching', 'Metalwork Fabrication', 'Rack Elevation Accuracy'] },
-    { name: 'Crestron Programmer', category: 'AV', skills: ['SIMPL Windows', 'C# (for SIMPL#)', 'Crestron HTML5 UI', 'DM NVX Configuration', 'System Architecture', 'API Integration'] },
-    { name: 'Q-SYS Programmer', category: 'AV', skills: ['Q-SYS Designer Software', 'Lua Scripting', 'UCI Design', 'Core Manager', 'AES67/Dante Integration', 'Telephony/VoIP'] },
-    { name: 'Live Events Technician', category: 'AV', skills: ['Live Sound Mixing', 'Vision Mixing (vMix/Blackmagic)', 'LED Wall Configuration', 'Power Distribution', 'Projection Mapping', 'Client Facing Skills'] },
-    { name: 'Video Conference Specialist', category: 'AV', skills: ['MS Teams Rooms', 'Zoom Rooms', 'Cisco Webex Devices', 'Poly Studio Series', 'Device Provisioning', 'End-User Training'] },
-    { name: 'AV System Designer', category: 'AV', skills: ['AutoCAD/Visio', 'System Flow Diagrams', 'Acoustic Modelling', 'Bill of Materials (BoM)', 'Product Knowledge', 'Tender Response'] },
-    { name: 'Digital Signage Specialist', category: 'AV', skills: ['CMS Platforms (e.g., BrightSign)', 'Content Scheduling', 'Player Hardware', 'Network Configuration', 'Video Wall Setup', 'API Integration'] },
+    { 
+        name: 'Lead AV Installer', 
+        category: 'AV', 
+        skillCategories: [
+            { category: 'Structured Cabling & Standards (AVIXA/CEDIA)', skills: ['Terminate Cat 6/6a to TIA 568A/B standards', 'Solder various connectors (XLR, Phoenix, D-Sub)', 'Terminate & test coaxial cable (BNC, F-Type)', 'Fibre optic termination & testing (LC, SC)', 'Cable testing & certification (Fluke DSX)', 'Rack building & lacing to CEDIA standards'] },
+            { category: 'Hardware Installation & Mounting', skills: ['Mounting large format displays & video walls', 'Installing projection systems & screens', 'Rigging and flying speakers', 'Installing ceiling microphones (e.g., Shure MXA910)', 'Precision camera mounting & alignment'] },
+            { category: 'System Integration', skills: ['Reading & interpreting AV schematics (CAD/Stardraw)', 'Basic setup of Crestron/AMX/Extron hardware', 'Connecting and testing Biamp/QSC DSPs', 'Understanding signal flow for audio, video, and control', 'Basic HDBaseT & HDMI/HDCP troubleshooting'] },
+            { category: 'On-Site Leadership', skills: ['Leading an installation team (2-5 engineers)', 'Conducting daily toolbox talks', 'Creating and managing site risk assessments (RAMS)', 'Coordinating with other trades (electrics, networking)', 'Client-facing progress reporting'] },
+        ]
+    },
+    { 
+        name: 'AV Commissioning Engineer', 
+        category: 'AV', 
+        skillCategories: [
+            { category: 'Control System Commissioning', skills: ['Control system loading & debugging (Crestron Toolbox, Biamp SageVue)', 'AMX Netlinx Studio / Extron Global Configurator', 'UI/Touchpanel functionality testing', 'Interfacing with third-party APIs'] },
+            { category: 'Audio DSP Commissioning', skills: ['DSP configuration (Gain structure, AEC, automixing)', 'Room tuning & equalization (EQ)', 'Configuring audio networking (Dante Level 3, AVB)', 'Mic programming & testing (Shure, Biamp)'] },
+            { category: 'Video Commissioning', skills: ['EDID management & resolution scaling', 'Video wall calibration (e.g., Datapath, Barco)', 'Video processing & routing configuration', 'HDCP 2.x compliance troubleshooting'] },
+            { category: 'Network & Handover', skills: ['AV-over-IP network configuration (IGMP Snooping, QoS/DSCP)', 'Network analysis for AV traffic (Wireshark basics)', 'As-built documentation creation', 'Delivering end-user & technical training'] },
+        ]
+    },
+    { 
+        name: 'Crestron Programmer', 
+        category: 'AV', 
+        skillCategories: [
+            { category: 'Core Programming Logic', skills: ['SIMPL Windows (Advanced Logic)', 'SIMPL# Pro (C#)', 'Crestron Home OS Extensions', 'Object-Oriented Programming principles', 'Debugging with Crestron Toolbox'] },
+            { category: 'User Interface Development', skills: ['Crestron HTML5 UI Development (HTML/CSS/JS)', 'CH5 Component Library integration', 'VT Pro-e for legacy systems', 'UI/UX best practices for AV'] },
+            { category: 'Hardware & API Integration', skills: ['DM NVX API for custom routing', 'Interfacing with BACnet/KNX for BMS', 'Third-party device control via serial/IP', 'Microsoft Teams Rooms custom development'] },
+        ]
+    },
+    { 
+        name: 'Live Events Technician', 
+        category: 'AV', 
+        skillCategories: [
+            { category: 'Live Audio Engineering', skills: ['Mixing on digital consoles (Yamaha, DiGiCo)', 'RF coordination & wireless mic management', 'PA system design & deployment (Line Array theory)', 'Dante/MADI routing for live shows'] },
+            { category: 'Live Video & Vision Mixing', skills: ['Operating production switchers (vMix, ATEM)', 'LED wall processing & pixel mapping', 'Media server operation (Resolume, Disguise)', 'Multi-camera PTZ & broadcast camera operation'] },
+            { category: 'Lighting & Stagecraft', skills: ['Basic lighting programming (MA, Avolites)', 'Power distribution & distro management', 'Rigging safety principles', 'Show calling & stage management'] },
+        ]
+    },
     
     // --- IT Roles ---
-    { name: 'Network Engineer', category: 'IT', skills: ['Cisco iOS/NX-OS', 'Routing (BGP/OSPF)', 'Switching (VLANs/STP)', 'Firewall Management', 'Network Monitoring', 'Wi-Fi Surveys'] },
-    { name: 'IT Support Engineer', category: 'IT', skills: ['Active Directory', 'Microsoft 365 Admin', 'Hardware Troubleshooting', 'Windows/macOS Support', 'Basic Networking', 'Ticketing Systems'] },
-    { name: 'Cloud Engineer (AWS/Azure)', category: 'IT', skills: ['AWS EC2/Azure VMs', 'VPC/VNet Networking', 'IAM/Azure AD', 'CloudFormation/Terraform', 'Serverless Functions', 'Cloud Monitoring'] },
-    { name: 'Cybersecurity Analyst', category: 'IT', skills: ['SIEM Tools (e.g., Splunk)', 'Vulnerability Scanning', 'Firewall Policy Analysis', 'Incident Response', 'Phishing Analysis', 'Penetration Testing Concepts'] },
-    { name: 'Unified Comms (UC) Engineer', category: 'IT', skills: ['MS Teams Telephony', 'Cisco CUCM', 'SBC Configuration (e.g., Ribbon/AudioCodes)', 'PowerShell', 'SIP Trunking', 'Voice Gateway Management'] },
-    { name: 'Solutions Architect', category: 'IT', skills: ['High-Level Design', 'Technical Documentation', 'Stakeholder Management', 'Cloud Architecture', 'Cost Analysis', 'Proof of Concept Dev'] },
-    { name: 'DevOps Engineer', category: 'IT', skills: ['CI/CD Pipelines (Jenkins/GitLab)', 'Docker & Kubernetes', 'Infrastructure as Code (IaC)', 'Scripting (Bash/Python)', 'Configuration Management', 'Monitoring & Logging'] },
-    { name: 'Database Administrator (DBA)', category: 'IT', skills: ['SQL Server/PostgreSQL', 'Backup & Recovery', 'Performance Tuning', 'Database Security', 'Query Optimization', 'High Availability Setup'] },
+    { 
+        name: 'Network Engineer', 
+        category: 'IT', 
+        skillCategories: [
+            { category: 'Routing & Switching (Cisco/Juniper)', skills: ['Cisco IOS/NX-OS & Juniper JUNOS CLI', 'Routing protocols (BGP, OSPF, EIGRP)', 'Switching (VLANs, STP, LACP, 802.1x)', 'First-hop redundancy (HSRP, VRRP)'] },
+            { category: 'Network Security', skills: ['Firewall management (Palo Alto, Fortinet, ASA)', 'VPN configuration (IPsec, SSL VPN)', 'Network Access Control (NAC - Cisco ISE, ClearPass)', 'Intrusion Prevention System (IPS) tuning'] },
+            { category: 'Wireless Networking', skills: ['Wireless LAN controller (WLC) management', 'Wi-Fi site surveys & RF analysis (Ekahau)', 'Wireless security (WPA3-Enterprise, RADIUS)', 'AP deployment and configuration'] },
+            { category: 'Network Services & Automation', skills: ['DNS, DHCP, and IPAM management', 'QoS configuration (DSCP, CoS)', 'Network monitoring (PRTG, SolarWinds, Zabbix)', 'Python/Ansible for network automation'] }
+        ]
+    },
+    { 
+        name: 'IT Support Engineer', 
+        category: 'IT', 
+        skillCategories: [
+            { category: 'Endpoint & User Management', skills: ['Active Directory & Entra ID (Azure AD) administration', 'Microsoft Intune / MDM policy management', 'Advanced Windows/macOS troubleshooting', 'Software packaging & deployment (SCCM/Intune)'] },
+            { category: 'Infrastructure Support', skills: ['Server hardware troubleshooting (Dell/HPE)', 'Virtualization management (VMware vSphere, Hyper-V)', 'Backup & disaster recovery operations', 'Basic network device configuration'] },
+            { category: 'Scripting & Automation', skills: ['PowerShell scripting for automation', 'Managing Microsoft 365 services (Exchange Online, SharePoint)', 'IT service management (ITSM) tools (ServiceNow, Jira)', 'Endpoint security management (Antivirus, EDR)'] },
+        ]
+    },
+    { 
+        name: 'Cloud Engineer (AWS/Azure)', 
+        category: 'IT', 
+        skillCategories: [
+            { category: 'Infrastructure as Code (IaC)', skills: ['Terraform or CloudFormation scripting', 'Azure Resource Manager (ARM) templates', 'Configuration management (Ansible, Puppet)', 'Building reusable modules'] },
+            { category: 'Compute & Containers', skills: ['Managing EC2/Azure VMs at scale', 'Containerization (Docker, Kubernetes - EKS/AKS)', 'Serverless computing (Lambda, Azure Functions)', 'Auto-scaling and load balancing'] },
+            { category: 'Cloud Networking & Security', skills: ['VPC / VNet design and peering', 'Cloud security (IAM, Security Groups, WAF)', 'Cloud monitoring & logging (CloudWatch, Azure Monitor)', 'Cost optimization strategies'] },
+            { category: 'CI/CD Pipelines', skills: ['Building pipelines (Jenkins, Azure DevOps, GitLab CI)', 'Automated testing and deployment', 'Git-based workflows (GitFlow)'] },
+        ]
+    },
 
     // --- Management Roles ---
-    { name: 'AV Project Manager', category: 'Management', skills: ['Project Scoping', 'Gantt Charts (MS Project)', 'Budget Management', 'Client Communication', 'Risk Assessment', 'Change Order Management'] },
-    { name: 'IT Project Manager', category: 'Management', skills: ['Agile/Scrum Methodology', 'Jira/Confluence', 'Resource Planning', 'Vendor Management', 'Status Reporting', 'Risk Mitigation'] },
-    { name: 'Technical Sales / Pre-Sales', category: 'Management', skills: ['Requirement Gathering', 'Solution Demonstration', 'Proposal Writing', 'Client Relationship', 'Technical Presentations', 'Competitive Analysis'] },
+    { 
+        name: 'AV Project Manager', 
+        category: 'Management', 
+        skillCategories: [
+            { category: 'Project Planning & Methodology', skills: ['Project methodologies (Agile, Waterfall)', 'Scope of Work (SoW) creation', 'Work Breakdown Structure (WBS) development', 'Resource planning & scheduling'] },
+            { category: 'Financial Management', skills: ['Budgeting, forecasting, and WIP reports', 'Change order management', 'Procurement and vendor negotiation', 'Margin analysis'] },
+            { category: 'Execution & Control', skills: ['Risk management & mitigation (RAID logs)', 'Stakeholder communication & reporting', 'Contract management (NEC/JCT basics)', 'Quality assurance (QA) processes'] },
+            { category: 'Software Proficiency', skills: ['MS Project or similar Gantt software', 'Collaboration tools (Asana, Jira, Trello)', 'Financial management software', 'Documentation tools (Confluence)'] },
+        ]
+    }
 ];

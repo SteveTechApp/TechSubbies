@@ -1,6 +1,5 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-// FIX: Add ProfileTier to imports for type-safe comparison.
-import { EngineerProfile, Job, ProfileTier } from '../types/index.ts';
+import { EngineerProfile, Job, ProfileTier, User, Message, CompanyProfile, JobSkillRequirement } from '../types/index.ts';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -26,7 +25,6 @@ export const geminiService = {
     generateDescriptionForProfile: async (profile: EngineerProfile) => {
         let prompt: string;
 
-        // FIX: Compare against ProfileTier enum instead of string literal.
         if (profile.profileTier !== ProfileTier.BASIC && profile.skills && profile.skills.length > 0) {
             // Paid users get a detailed bio leveraging their listed skills
             prompt = `Generate a compelling but brief professional bio (around 50-70 words) for a freelance Tech engineer. Here are their details:\n- Name: ${profile.name}\n- Role/Discipline: ${profile.discipline}\n- Experience: ${profile.experience} years\n- Key Skills: ${profile.skills.slice(0, 5).map(s => s.name).join(', ')}\n\nWrite a professional, first-person summary highlighting their expertise based on the provided skills.`;
@@ -166,38 +164,39 @@ export const geminiService = {
             return null;
         }
     },
-    findBestMatchesForJob: async (job: Job, engineers: EngineerProfile[]) => {
-        const summarizedEngineers = engineers.map(eng => ({
-            id: eng.id,
-            profileTier: eng.profileTier,
-            discipline: eng.discipline,
-            experience: eng.experience,
-            dayRate: eng.dayRate,
-            skills: eng.skills?.map(s => s.name) || [],
-            specialist_roles: eng.selectedJobRoles?.map(r => r.roleName) || [],
-        }));
-    
-        const prompt = `As an expert technical recruiter, your task is to find the best freelance engineers for a specific job.
-        
-        Here is the job description:
-        ---
-        Title: ${job.title}
-        Description: ${job.description}
-        Location: ${job.location}
-        Target Day Rate: ${job.currency}${job.dayRate}
-        ---
-    
-        Here is a list of available engineers:
-        ---
+     findBestMatchesForJob: async (job: Job, engineers: EngineerProfile[]) => {
+        const summarizedEngineers = engineers
+            .filter(eng => eng.profileTier !== ProfileTier.BASIC && eng.selectedJobRoles && eng.selectedJobRoles.length > 0)
+            .map(eng => ({
+                id: eng.id,
+                experience: eng.experience,
+                dayRate: eng.dayRate,
+                rated_skills: eng.selectedJobRoles?.flatMap(role => role.skills) || [],
+            }));
+
+        const essentialSkills = job.skillRequirements?.filter(s => s.importance === 'essential').map(s => s.name) || [];
+        const desirableSkills = job.skillRequirements?.filter(s => s.importance === 'desirable').map(s => s.name) || [];
+
+        const prompt = `You are an AI-powered talent matching engine for TechSubbies.com. Your task is to analyze a job's specific skill requirements and compare them against a list of freelance engineers to generate a match score for each.
+
+        Job Requirement Profile:
+        - Title: ${job.title}
+        - Required Experience Level: ${job.experienceLevel}
+        - Essential Skills: ${JSON.stringify(essentialSkills)}
+        - Desirable Skills: ${JSON.stringify(desirableSkills)}
+
+        Available Engineers (only premium profiles with rated skills are provided):
         ${JSON.stringify(summarizedEngineers, null, 2)}
-        ---
-    
-        Analyze the job description and the list of engineers. Identify the top 5 most suitable candidates. 
-        Consider their discipline, years of experience, key skills, specialist roles, and how their day rate compares to the target. 
-        Give strong preference to engineers with a 'paid' profileTier, as they have a premium 'Skills Profile' with more detailed information. Free profiles are generally for more junior roles.
-        Return a ranked list of their IDs, from best match to worst.
-        `;
-    
+
+        Analysis Rules:
+        1.  Calculate a 'match_score' (0-100) for each engineer.
+        2.  Essential Skills are critical. An engineer's score should be heavily penalized if their self-rated score for any essential skill is below 75. Give a significant bonus if all essential skills are rated 85+.
+        3.  Desirable Skills add to the score. For each desirable skill an engineer has, add points proportional to their self-rated score.
+        4.  Factor in experience. An engineer's experience should be appropriate for the role's required level.
+        5.  Return a ranked list of ALL provided engineers, from best match to worst.
+
+        Provide the output in JSON format.`;
+
         try {
             const response = await ai.models.generateContent({
                 model: "gemini-2.5-flash", 
@@ -207,13 +206,19 @@ export const geminiService = {
                     responseSchema: {
                         type: Type.OBJECT,
                         properties: {
-                            best_matches: {
+                            matches: {
                                 type: Type.ARRAY,
-                                items: { type: Type.STRING },
-                                description: "A ranked array of the top 5 engineer IDs, from best match to least."
+                                items: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        id: { type: Type.STRING },
+                                        match_score: { type: Type.NUMBER },
+                                    },
+                                    required: ["id", "match_score"]
+                                }
                             }
                         },
-                        required: ["best_matches"]
+                        required: ["matches"]
                     },
                 },
             });
@@ -296,6 +301,47 @@ export const geminiService = {
         } catch (error) {
             console.error("Error suggesting day rate:", error);
             return null;
+        }
+    },
+    // NEW: AI Chat Responder
+    generateChatResponse: async (
+        conversationHistory: Message[],
+        currentUser: User,
+        otherParticipant: User
+    ): Promise<string> => {
+        const otherUserProfile = otherParticipant.profile;
+        
+        let personaInstruction = `You are impersonating ${otherUserProfile.name}. Your role is ${otherParticipant.role}.`;
+        if ('discipline' in otherUserProfile) {
+            const engineerProfile = otherUserProfile as EngineerProfile;
+            personaInstruction += ` You are a freelance ${engineerProfile.discipline} with ${engineerProfile.experience} years of experience.`;
+            if (engineerProfile.skills && engineerProfile.skills.length > 0) {
+                 personaInstruction += ` Your key skills are: ${engineerProfile.skills.map(s => s.name).join(', ')}.`;
+            }
+        } else {
+            const companyProfile = otherUserProfile as CompanyProfile;
+            personaInstruction += ` You represent the company ${companyProfile.name}.`;
+        }
+        personaInstruction += ` Keep your responses concise, professional, and relevant to a tech subcontracting platform called TechSubbies.com. The current user's name is ${currentUser.profile.name}.`;
+
+        const contents = conversationHistory.map(msg => ({
+            role: msg.senderId === otherParticipant.id ? 'model' as const : 'user' as const,
+            parts: [{ text: msg.text }]
+        }));
+
+        try {
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents,
+                config: {
+                    systemInstruction: personaInstruction,
+                },
+            });
+            return String(response.text).trim();
+
+        } catch (error) {
+            console.error("Error generating chat response:", error);
+            return "Sorry, I'm having trouble responding right now. Please try again later.";
         }
     },
 };

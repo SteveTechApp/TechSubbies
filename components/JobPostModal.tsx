@@ -1,153 +1,225 @@
-import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Currency, JobType, ExperienceLevel } from '../types/index.ts';
-import { X, Lightbulb, Loader } from './Icons.tsx';
+import React, { useState, useEffect } from 'react';
+import { Currency, JobType, ExperienceLevel, JobRoleDefinition, JobSkillRequirement, SkillImportance, Job } from '../types/index.ts';
+import { X, ArrowRight, Save } from './Icons.tsx';
+import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles.ts';
 
 interface JobPostModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onPostJob: (jobData: any) => void;
-}
-
-interface SuggestedTeamMember {
-    role: string;
-    skills: string[];
+    onPostJob: (jobData: Omit<Job, 'id' | 'companyId' | 'postedDate' | 'status'>) => void;
 }
 
 export const JobPostModal = ({ isOpen, onClose, onPostJob }: JobPostModalProps) => {
-  const [jobDetails, setJobDetails] = useState({
-    title: '', description: '', location: '', dayRate: '500', duration: '4 weeks', currency: Currency.GBP, startDate: '',
-    jobType: JobType.CONTRACT, experienceLevel: ExperienceLevel.MID_LEVEL,
-  });
-  const [suggestedTeam, setSuggestedTeam] = useState<SuggestedTeamMember[] | null>(null);
-  const [isSuggestingTeam, setIsSuggestingTeam] = useState(false);
-  const [isSuggestingRate, setIsSuggestingRate] = useState(false);
-  const [suggestedRate, setSuggestedRate] = useState<{min_rate: number, max_rate: number, reasoning: string} | null>(null);
-  const { geminiService } = useAppContext();
+    const [step, setStep] = useState(1);
+    const [jobDetails, setJobDetails] = useState({
+        title: '',
+        description: '',
+        location: 'London, UK',
+        dayRate: '500',
+        duration: '4 weeks',
+        currency: Currency.GBP,
+        startDate: new Date().toISOString().split('T')[0],
+        jobType: JobType.CONTRACT,
+        experienceLevel: ExperienceLevel.MID_LEVEL,
+        jobRole: ''
+    });
+    const [skillRequirements, setSkillRequirements] = useState<JobSkillRequirement[]>([]);
+    const [selectedRoleDef, setSelectedRoleDef] = useState<JobRoleDefinition | null>(null);
 
-  if (!isOpen) return null;
+    // Effect to dynamically load and configure skills based on the selected role, experience level, and job type.
+    useEffect(() => {
+        if (!isOpen || !jobDetails.jobRole) {
+            setSkillRequirements([]);
+            setSelectedRoleDef(null);
+            return;
+        }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setJobDetails(prev => ({ ...prev, [name]: value }));
-  };
+        const roleDef = JOB_ROLE_DEFINITIONS.find(r => r.name === jobDetails.jobRole);
+        if (roleDef) {
+            setSelectedRoleDef(roleDef);
 
-  const handleSubmit = () => {
-    onPostJob(jobDetails);
-    onClose();
-  };
+            const experience = jobDetails.experienceLevel;
+            const isFullTime = jobDetails.jobType === JobType.FULL_TIME;
+            const expertThreshold = isFullTime ? 0.6 : 0.4; // More essentials for full-time
+            const seniorThreshold = isFullTime ? 3 : 2; // More essentials for full-time
 
-  const handleSuggestTeam = async () => {
-    if (!jobDetails.description) return;
-    setIsSuggestingTeam(true);
-    const result = await geminiService.suggestTeamForProject(jobDetails.description);
-    setSuggestedTeam(result?.team || null);
-    setIsSuggestingTeam(false);
-  };
-  
-  const handleSuggestRate = async () => {
-    if (!jobDetails.title && !jobDetails.description) return;
-    setIsSuggestingRate(true);
-    setSuggestedRate(null);
-    const result = await geminiService.suggestDayRate(jobDetails.title, jobDetails.description);
-    setSuggestedRate(result);
-    setIsSuggestingRate(false);
-};
+            let newReqs: JobSkillRequirement[] = [];
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-      <div className="bg-white rounded-lg p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Post a New Job</h2>
-          <button onClick={onClose}><X className="text-gray-500" /></button>
-        </div>
-        <div className="space-y-4">
-          <div> 
-            <label className="block text-sm font-medium text-gray-700">Job Title</label>
-            <input name="title" placeholder="e.g., Lead AV Engineer" onChange={handleChange} className="w-full border p-2 rounded" />
-          </div>
-          <div> 
-            <label className="block text-sm font-medium text-gray-700">Job Description</label>
-            <textarea name="description" placeholder="Describe the project, responsibilities, and required skills..." onChange={handleChange} rows={6} className="w-full border p-2 rounded" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Location</label>
-              <input name="location" placeholder="e.g., London, UK" onChange={handleChange} className="w-full border p-2 rounded" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Duration</label>
-              <input name="duration" placeholder="e.g., 6 weeks" onChange={handleChange} className="w-full border p-2 rounded" />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label className="block text-sm font-medium text-gray-700">Job Type</label>
-                <select name="jobType" value={jobDetails.jobType} onChange={handleChange} className="w-full border p-2 rounded bg-white h-[42px]">
-                    {Object.values(JobType).map(type => <option key={type} value={type}>{type}</option>)}
-                </select>
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-gray-700">Experience Level</label>
-                <select name="experienceLevel" value={jobDetails.experienceLevel} onChange={handleChange} className="w-full border p-2 rounded bg-white h-[42px]">
-                    {Object.values(ExperienceLevel).map(level => <option key={level} value={level}>{level}</option>)}
-                </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Currency</label>
-              <select name="currency" onChange={handleChange} className="w-full border p-2 rounded bg-white h-[42px]">
-                <option value={Currency.GBP}>GBP (£)</option>
-                <option value={Currency.USD}>USD ($)</option>
-              </select>
-            </div>
-            <div>
-                <div className="flex justify-between items-center">
-                    <label className="block text-sm font-medium text-gray-700">Day Rate</label>
-                    <button type="button" onClick={handleSuggestRate} disabled={isSuggestingRate} className="text-xs flex items-center gap-1 text-blue-600 hover:underline disabled:text-gray-400">
-                        {isSuggestingRate ? <Loader className="animate-spin w-4 h-4"/> : <Lightbulb className="w-4 h-4"/>}
-                        {isSuggestingRate ? 'Analyzing...' : 'AI Suggestion'}
-                    </button>
-                </div>
-                <input type="number" name="dayRate" placeholder="e.g., 550" onChange={handleChange} className="w-full border p-2 rounded" />
-                 {suggestedRate && (
-                    <div className="mt-2 p-2 bg-blue-50 border border-blue-200 text-blue-800 rounded-md text-xs">
-                        <strong>Suggestion:</strong> £{suggestedRate.min_rate} - £{suggestedRate.max_rate}. {suggestedRate.reasoning}
+            roleDef.skillCategories.forEach(category => {
+                let skillsForCategory = [...category.skills];
+
+                // For juniors, we only present a subset of the most fundamental skills.
+                if (experience === ExperienceLevel.JUNIOR) {
+                    skillsForCategory = skillsForCategory.slice(0, Math.ceil(skillsForCategory.length * 0.6));
+                }
+                
+                // Set default importance based on experience and job type.
+                const categoryReqs = skillsForCategory.map((skillName, index) => {
+                    let importance: SkillImportance = 'desirable';
+                    if (experience === ExperienceLevel.SENIOR && index < seniorThreshold) {
+                        importance = 'essential';
+                    } else if (experience === ExperienceLevel.EXPERT && index < Math.ceil(skillsForCategory.length * expertThreshold)) {
+                        importance = 'essential';
+                    }
+                    return { name: skillName, importance };
+                });
+
+                newReqs.push(...categoryReqs);
+            });
+
+            setSkillRequirements(newReqs);
+        }
+    }, [isOpen, jobDetails.jobRole, jobDetails.experienceLevel, jobDetails.jobType]);
+
+
+    // Reset state when modal is closed for a clean slate
+    useEffect(() => {
+        if (!isOpen) {
+            setTimeout(() => {
+                setStep(1);
+                setJobDetails({
+                    title: '', description: '', location: 'London, UK', dayRate: '500', duration: '4 weeks', currency: Currency.GBP,
+                    startDate: new Date().toISOString().split('T')[0], jobType: JobType.CONTRACT, experienceLevel: ExperienceLevel.MID_LEVEL, jobRole: ''
+                });
+            }, 300);
+        }
+    }, [isOpen]);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setJobDetails(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleRoleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const roleName = e.target.value;
+        setJobDetails(prev => ({ ...prev, jobRole: roleName, title: roleName }));
+    };
+
+    const handleNextStep = () => {
+        if (jobDetails.jobRole) {
+            setStep(2);
+        } else {
+            alert("Please select a Specialist Role to continue.");
+        }
+    };
+    
+    const handleImportanceToggle = (skillName: string) => {
+        setSkillRequirements(prev => prev.map(skill => 
+            skill.name === skillName
+            ? { ...skill, importance: skill.importance === 'desirable' ? 'essential' : 'desirable' }
+            : skill
+        ));
+    };
+
+    const handleSubmit = () => {
+        onPostJob({
+            ...jobDetails,
+            skillRequirements,
+            startDate: jobDetails.startDate ? new Date(jobDetails.startDate) : null,
+        });
+        onClose();
+    };
+    
+    if (!isOpen) return null;
+
+    const renderStepOne = () => (
+        <>
+            <h2 className="text-2xl font-bold mb-4">Step 1: Basic Job Details</h2>
+            <div className="space-y-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Specialist Role</label>
+                        <select name="jobRole" value={jobDetails.jobRole} onChange={handleRoleSelect} className="w-full border p-2 rounded bg-white h-[42px]">
+                            <option value="" disabled>-- Select a role to define skills --</option>
+                            {JOB_ROLE_DEFINITIONS.map(def => <option key={def.name} value={def.name}>{def.name}</option>)}
+                        </select>
                     </div>
-                )}
-            </div>
-             <div>
-              <label className="block text-sm font-medium text-gray-700">Start Date</label>
-              <input type="date" name="startDate" value={jobDetails.startDate} onChange={handleChange} className="w-full border p-2 rounded h-[42px]" />
-            </div>
-          </div>
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
-            <h3 className="font-bold text-blue-800 mb-2 flex items-center"><Lightbulb className="w-5 h-5 mr-2" /> AI Team Suggestion</h3>
-            <p className="text-sm text-gray-600 mb-3">Based on your job description, let AI suggest the roles you might need to hire.</p>
-            <button onClick={handleSuggestTeam} disabled={isSuggestingTeam || !jobDetails.description} className="px-4 py-2 text-sm bg-blue-600 text-white rounded disabled:bg-blue-300"> 
-              {isSuggestingTeam ? 'Thinking...' : 'Suggest Roles'}
-            </button>
-            {suggestedTeam && (
-                <div className="mt-4">
-                    <h4 className="font-semibold">Suggested Team Structure:</h4>
-                    <ul className="list-disc pl-5 mt-2"> 
-                        {suggestedTeam.map(member => (
-                            <li key={member.role}> 
-                                <strong>{member.role}: </strong>
-                                {member.skills.join(', ')}
-                            </li>
-                        ))}
-                    </ul>
+                     <div>
+                        <label className="block text-sm font-medium text-gray-700">Experience Level</label>
+                        <select name="experienceLevel" value={jobDetails.experienceLevel} onChange={handleChange} className="w-full border p-2 rounded bg-white h-[42px]">
+                            {Object.values(ExperienceLevel).map(level => <option key={level} value={level}>{level}</option>)}
+                        </select>
+                    </div>
                 </div>
-            )}
-          </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">Job Title</label>
+                    <input name="title" value={jobDetails.title} placeholder="e.g., Lead AV Engineer" onChange={handleChange} className="w-full border p-2 rounded" />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">Job Description</label>
+                    <textarea name="description" value={jobDetails.description} placeholder="Describe the project, responsibilities, etc..." onChange={handleChange} rows={4} className="w-full border p-2 rounded" />
+                </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Location</label>
+                        <input name="location" value={jobDetails.location} onChange={handleChange} className="w-full border p-2 rounded" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Job Type</label>
+                        <select name="jobType" value={jobDetails.jobType} onChange={handleChange} className="w-full border p-2 rounded bg-white h-[42px]">
+                            {Object.values(JobType).map(type => <option key={type} value={type}>{type}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Day Rate ({jobDetails.currency})</label>
+                        <input type="number" name="dayRate" value={jobDetails.dayRate} onChange={handleChange} className="w-full border p-2 rounded" />
+                    </div>
+                     <div>
+                        <label className="block text-sm font-medium text-gray-700">Start Date</label>
+                        <input type="date" name="startDate" value={jobDetails.startDate} onChange={handleChange} className="w-full border p-2 rounded" />
+                    </div>
+                </div>
+            </div>
+             <div className="flex justify-end mt-6">
+                <button onClick={handleNextStep} disabled={!jobDetails.jobRole} className="flex items-center px-6 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 disabled:bg-blue-300">
+                    Next: Define Skills <ArrowRight size={18} className="ml-2" />
+                </button>
+            </div>
+        </>
+    );
+
+    const renderStepTwo = () => (
+        <>
+            <h2 className="text-2xl font-bold mb-2">Step 2: Define Skill Importance</h2>
+            <p className="text-gray-500 mb-4">Mark skills as 'Essential' or 'Desirable'. This will power the AI matching.</p>
+            <div className="space-y-4 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2">
+                {selectedRoleDef?.skillCategories.map(category => (
+                    <div key={category.category} className="p-4 bg-gray-50 rounded-lg border">
+                        <h3 className="font-bold text-lg text-blue-700 mb-3 border-b pb-2">{category.category}</h3>
+                        <div className="space-y-2">
+                            {skillRequirements.filter(skillReq => category.skills.includes(skillReq.name)).map(skill => {
+                                const isEssential = skill.importance === 'essential';
+                                return (
+                                    <div key={skill.name} className="flex items-center justify-between p-2 bg-white rounded-md">
+                                        <span className="font-medium text-gray-700 text-sm">{skill.name}</span>
+                                        <div className="flex items-center gap-2">
+                                            <button type="button" onClick={() => handleImportanceToggle(skill.name)} className={`px-3 py-1 text-xs font-bold rounded-full ${!isEssential ? 'bg-blue-200 text-blue-800' : 'bg-gray-200 text-gray-600'}`}>Desirable</button>
+                                            <button type="button" onClick={() => handleImportanceToggle(skill.name)} className={`px-3 py-1 text-xs font-bold rounded-full ${isEssential ? 'bg-yellow-400 text-yellow-900' : 'bg-gray-200 text-gray-600'}`}>Essential</button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                ))}
+            </div>
+             <div className="flex justify-between items-center mt-6 pt-4 border-t">
+                <button onClick={() => setStep(1)} className="px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Back</button>
+                <button onClick={handleSubmit} className="flex items-center px-6 py-2 bg-green-600 text-white font-bold rounded-md hover:bg-green-700">
+                    <Save size={18} className="mr-2" />
+                    Post Job
+                </button>
+            </div>
+        </>
+    );
+
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
+            <div className="bg-white rounded-lg p-8 max-w-3xl w-full relative transform transition-all duration-300 flex flex-col" onClick={e => e.stopPropagation()}>
+                <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"><X /></button>
+                {step === 1 ? renderStepOne() : renderStepTwo()}
+            </div>
         </div>
-        <div className="flex justify-end space-x-4 mt-6">
-          <button onClick={onClose} className="px-6 py-2 bg-gray-200 rounded">Cancel</button>
-          <button onClick={handleSubmit} className="px-6 py-2 bg-blue-600 text-white rounded">Post Job</button>
-        </div>
-      </div>
-    </div>
-  );
+    );
 };

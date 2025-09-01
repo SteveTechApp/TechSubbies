@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
 import { Role, Page } from '../types/index.ts';
 import { Logo } from '../components/Logo.tsx';
@@ -13,11 +13,40 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
     const [activeTab, setActiveTab] = useState('signin');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        const rememberedEmail = localStorage.getItem('rememberedEmail');
+        if (rememberedEmail) {
+            setEmail(rememberedEmail);
+            setRememberMe(true);
+        }
+    }, []);
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+
+        const validEmails = [
+            'steve.goodwin@techsubbies.com',
+            'neil.bishop@example.com',
+            'emily.carter@example.com',
+            'sam.greene@example.com',
+            'contact@proav.com',
+            'contact@avplacements.com',
+            'stevegoodwin1972@gmail.com'
+        ];
+
+        const isLoginValid = validEmails.includes(email.toLowerCase());
+
+        if (isLoginValid) {
+            if (rememberMe) {
+                localStorage.setItem('rememberedEmail', email);
+            } else {
+                localStorage.removeItem('rememberedEmail');
+            }
+        }
         
         // This is a mock authentication system based on email.
         // In a real app, you would send email and password to a server.
@@ -57,7 +86,7 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
         }`;
 
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 antialiased" style={{backgroundImage: "url('https://images.unsplash.com/photo-1554672408-758865e23218?q=80&w=2070&auto=format=fit=crop')", backgroundSize: 'cover'}}>
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 antialiased" style={{backgroundImage: "url('https://images.unsplash.com/photo-1554672408-758865e23218?q=80&w=2070&auto.format=fit=crop')", backgroundSize: 'cover'}}>
             <div className="w-full max-w-md">
                  <button onClick={() => onNavigate('landing')} className="block mx-auto mb-6">
                     <Logo className="h-16"/>
@@ -99,7 +128,24 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
                                         className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2" 
                                     />
                                 </div>
+                                <div className="flex items-center justify-between">
+                                    <label className="flex items-center text-sm text-gray-600 cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={rememberMe}
+                                            onChange={(e) => setRememberMe(e.target.checked)}
+                                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                        <span className="ml-2">Remember me</span>
+                                    </label>
+                                    <a href="#" className="text-sm font-medium text-blue-600 hover:underline">
+                                        Forgot password?
+                                    </a>
+                                </div>
                                 {error && <p className="text-sm text-red-600">{error}</p>}
+                                <button type="submit" className="w-full py-3 px-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors">
+                                    Sign In
+                                </button>
                                 <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-md">
                                     <strong>Demo Logins:</strong>
                                     <ul className="list-disc pl-4 mt-1">
@@ -112,9 +158,6 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
                                     </ul>
                                     <p className="mt-1">Password can be anything.</p>
                                 </div>
-                                <button type="submit" className="w-full py-3 px-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors">
-                                    Sign In
-                                </button>
                             </form>
                         )}
                         

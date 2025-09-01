@@ -3,6 +3,7 @@ import { Footer } from '../components/Footer.tsx';
 import { Header } from '../components/Header.tsx';
 import { Page } from '../types/index.ts';
 import { Users, Briefcase, Zap } from '../components/Icons.tsx';
+import { useAppContext } from '../context/AppContext.tsx';
 
 interface AboutUsPageProps {
     onNavigate: (page: Page) => void;
@@ -10,6 +11,9 @@ interface AboutUsPageProps {
 }
 
 export const AboutUsPage = ({ onNavigate, onHowItWorksClick }: AboutUsPageProps) => {
+    const { allUsers } = useAppContext();
+    const founder = allUsers.find(u => u.profile.id === 'eng-steve');
+    
     return (
         <div className="bg-white flex flex-col min-h-screen">
             <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
@@ -42,16 +46,21 @@ export const AboutUsPage = ({ onNavigate, onHowItWorksClick }: AboutUsPageProps)
                          <h2 className="text-4xl font-bold text-center text-gray-800 mb-12">Our Story</h2>
                         <div className="grid md:grid-cols-2 gap-12 items-center">
                             <div className="text-gray-700 space-y-4 text-lg">
-                                <p>TechSubbies.com was founded by Steve Goodwin, an industry veteran with over two decades of experience in technical project management. After years of relying on outdated spreadsheets, personal networks, and expensive recruitment agencies to find specialist freelancers, Steve knew there had to be a better way.</p>
-                                <p>The traditional hiring process was broken—it was slow, inefficient, and created unnecessary barriers between skilled engineers and the companies that needed them. The vision was simple: create a platform that was purpose-built for the tech contracting industry—a tool that was fast, fair, and focused on fostering direct relationships. TechSubbies.com is the realization of that vision.</p>
+                                <p>Finding the right tech freelancer shouldn't feel like searching for a needle in a haystack. Yet for years, that's exactly what it was: a frantic scramble through old contacts and a costly reliance on slow-moving recruitment agencies. The system was broken.</p>
+                                <p>After three decades designing and consulting on major tech projects, our founder, Steve Goodwin, knew there had to be a better way. He saw brilliant engineers sidelined and projects delayed simply because the right connections weren't being made efficiently. System integrators need to scale up for big projects and scale down when they're done—a dynamic that the old way of hiring just couldn't support.</p>
+                                <p>Our vision is simple: build a smarter connection. TechSubbies.com is a purpose-built platform that cuts through the noise. It’s a fast, fair, and focused tool that fosters direct relationships between skilled engineers and the companies that need them most. We're not just a job board; we're the new digital backbone for the freelance tech industry.</p>
                             </div>
                             <div>
-                                <img 
-                                    src="https://storage.googleapis.com/pai-images/5950a72c8135451298811c9c6364023c.png" 
-                                    alt="Steve Goodwin, Founder of TechSubbies.com" 
-                                    className="rounded-lg shadow-2xl w-full h-auto object-contain bg-gray-100 p-4"
-                                />
-                                <p className="text-center mt-2 text-sm text-gray-500 font-semibold">Steve Goodwin, Founder & CEO</p>
+                                {founder && (
+                                    <>
+                                        <img 
+                                            src={founder.profile.avatar}
+                                            alt={`${founder.profile.name}, Founder of TechSubbies.com`}
+                                            className="rounded-lg shadow-2xl w-full h-auto object-contain bg-gray-100 p-4"
+                                        />
+                                        <p className="text-center mt-2 text-sm text-gray-500 font-semibold">{founder.profile.name}, Founder & CEO</p>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>

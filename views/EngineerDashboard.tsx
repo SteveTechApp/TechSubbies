@@ -28,7 +28,6 @@ export const EngineerDashboard = () => {
 
     const handleProfileSave = (updatedProfile: Partial<EngineerProfile>) => {
         updateEngineerProfile(updatedProfile);
-        alert("Profile updated successfully!");
     };
 
     const addSkillsFromAI = (newSkills: Skill[]) => {

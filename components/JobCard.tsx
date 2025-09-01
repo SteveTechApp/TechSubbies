@@ -2,21 +2,12 @@ import React from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
 import { Job, Role } from '../types/index.ts';
 import { MapPin, Calendar, DollarSign, Clock, MessageCircle, Briefcase, Layers } from './Icons.tsx';
+import { formatDisplayDate } from '../utils/dateFormatter.ts';
 
 interface JobCardProps {
     job: Job;
     setActiveView?: (view: string) => void;
 }
-
-const formatDate = (date: any): string => {
-    if (!date) return 'TBD';
-    try {
-        const d = new Date(date);
-        return isNaN(d.getTime()) ? 'Invalid Date' : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    } catch (e) {
-        return 'Invalid Date';
-    }
-};
 
 export const JobCard = ({ job, setActiveView }: JobCardProps) => {
     const { user, applyForJob, startConversationAndNavigate } = useAppContext();
@@ -32,7 +23,7 @@ export const JobCard = ({ job, setActiveView }: JobCardProps) => {
             <div className="flex justify-between items-start">
                 <div>
                     <h3 className="text-xl font-bold text-blue-700">{job.title}</h3>
-                    <p className="text-gray-500">Posted on {formatDate(job.postedDate)}</p>
+                    <p className="text-gray-500">Posted on {formatDisplayDate(job.postedDate)}</p>
                 </div>
                 <div className="flex flex-col items-end gap-2 flex-shrink-0">
                     <button 
@@ -58,7 +49,7 @@ export const JobCard = ({ job, setActiveView }: JobCardProps) => {
                 <span className="flex items-center"><MapPin size={16} className="mr-2 text-gray-400"/> {job.location}</span>
                 <span className="flex items-center"><DollarSign size={16} className="mr-2 text-gray-400"/> {job.currency}{job.dayRate} / day</span>
                 <span className="flex items-center"><Clock size={16} className="mr-2 text-gray-400"/> {job.duration}</span>
-                <span className="flex items-center"><Calendar size={16} className="mr-2 text-gray-400"/> Starts: {formatDate(job.startDate)}</span>
+                <span className="flex items-center"><Calendar size={16} className="mr-2 text-gray-400"/> Starts: {formatDisplayDate(job.startDate)}</span>
                 <span className="flex items-center"><Briefcase size={16} className="mr-2 text-gray-400"/> {job.jobType}</span>
                 <span className="flex items-center"><Layers size={16} className="mr-2 text-gray-400"/> {job.experienceLevel}</span>
             </div>

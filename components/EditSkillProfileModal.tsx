@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SelectedJobRole, JobRoleDefinition } from '../types/index.ts';
+import { SelectedJobRole, JobRoleDefinition, RatedSkill } from '../types/index.ts';
 import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles.ts';
 import { X, Save } from './Icons.tsx';
 
@@ -37,25 +37,31 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
         const roleDef = JOB_ROLE_DEFINITIONS.find(r => r.name === roleName);
         if (roleDef) {
             setSelectedRoleDef(roleDef);
+            const allSkills = roleDef.skillCategories.flatMap(category => category.skills);
             const newRole: SelectedJobRole = {
                 roleName: roleDef.name,
-                skills: roleDef.skills.map(skillName => ({ name: skillName, rating: 50 })),
+                skills: allSkills.map(skillName => ({ name: skillName, rating: 50 })), // Default rating 50
                 overallScore: 50
             };
             setCurrentRole(newRole);
         }
     };
     
-    const handleSkillChange = (skillIndex: number, value: string) => {
+    const handleSkillChange = (skillName: string, value: string) => {
         if (!currentRole) return;
-        const newRole = { ...currentRole };
-        const rating = parseInt(value, 10);
-        newRole.skills[skillIndex].rating = rating;
-        
-        const totalScore = newRole.skills.reduce((acc, skill) => acc + skill.rating, 0);
-        newRole.overallScore = Math.round(totalScore / newRole.skills.length);
-        
-        setCurrentRole(newRole);
+
+        const newSkills = currentRole.skills.map(skill => 
+            skill.name === skillName ? { ...skill, rating: parseInt(value, 10) } : skill
+        );
+
+        const totalScore = newSkills.reduce((acc, skill) => acc + skill.rating, 0);
+        const newOverallScore = newSkills.length > 0 ? Math.round(totalScore / newSkills.length) : 0;
+
+        setCurrentRole({
+            ...currentRole,
+            skills: newSkills,
+            overallScore: newOverallScore,
+        });
     };
 
     const handleSave = () => {
@@ -69,50 +75,65 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
     
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={onClose}>
-            <div className="bg-white rounded-lg p-6 m-4 max-w-2xl w-full relative transform transition-all duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar" onClick={e => e.stopPropagation()}>
+            <div className="bg-white rounded-lg p-6 m-4 max-w-4xl w-full relative transform transition-all duration-300 max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
                     <X size={24} />
                 </button>
-                <h2 className="text-2xl font-bold mb-4">{initialRole ? `Edit Role: ${initialRole.roleName}` : 'Add a Specialist Role'}</h2>
+                <h2 className="text-2xl font-bold mb-4 flex-shrink-0">{initialRole ? `Edit Role: ${initialRole.roleName}` : 'Add a Specialist Role'}</h2>
                 
-                {!initialRole && !currentRole && (
-                    <div className="fade-in-up">
-                        <label className="block font-medium mb-2">1. Select a role from the list:</label>
-                        <select
-                            onChange={(e) => handleRoleSelect(e.target.value)}
-                            value=""
-                            className="w-full border p-2 rounded bg-white focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="" disabled>-- Choose a Specialist Role --</option>
-                            {availableRoles.map(def => (
-                                <option key={def.name} value={def.name}>{def.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                )}
-                
-                {currentRole && (
-                    <div className="fade-in-up space-y-4">
-                         {!initialRole && <p className="font-medium">2. Rate your competency for each skill:</p>}
-                         <div className="p-4 bg-gray-50 rounded-lg space-y-3">
-                            {currentRole.skills.map((skill, sIndex) => (
-                                <div key={sIndex} className="grid grid-cols-12 items-center gap-4">
-                                    <label className="col-span-12 sm:col-span-4 font-medium text-gray-700">{skill.name}</label>
-                                    <input 
-                                        type="range" 
-                                        min="1" max="100" 
-                                        value={skill.rating} 
-                                        onChange={e => handleSkillChange(sIndex, e.target.value)} 
-                                        className="col-span-10 sm:col-span-7 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                    />
-                                    <span className="col-span-2 sm:col-span-1 text-center font-semibold text-blue-600 w-12">{skill.rating}</span>
-                                </div>
-                            ))}
+                <div className="flex-grow overflow-y-auto custom-scrollbar pr-4 -mr-4">
+                    {!initialRole && !currentRole && (
+                        <div className="fade-in-up">
+                            <label className="block font-medium mb-2">1. Select a role from the list:</label>
+                            <select
+                                onChange={(e) => handleRoleSelect(e.target.value)}
+                                value=""
+                                className="w-full border p-2 rounded bg-white focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="" disabled>-- Choose a Specialist Role --</option>
+                                {availableRoles.map(def => (
+                                    <option key={def.name} value={def.name}>{def.name}</option>
+                                ))}
+                            </select>
                         </div>
-                    </div>
-                )}
+                    )}
+                    
+                    {currentRole && selectedRoleDef && (
+                        <div className="fade-in-up space-y-4">
+                            {!initialRole && <p className="font-medium">2. Rate your competency for each skill:</p>}
+                            
+                            <div className="space-y-4">
+                                {selectedRoleDef.skillCategories.map(category => (
+                                    <div key={category.category} className="p-4 bg-gray-50 rounded-lg border">
+                                        <h3 className="font-bold text-lg text-blue-700 mb-3 border-b pb-2">{category.category}</h3>
+                                        <div className="space-y-3">
+                                            {category.skills.map(skillName => {
+                                                const skill = currentRole.skills.find(s => s.name === skillName);
+                                                if (!skill) return null;
+                                                
+                                                return (
+                                                    <div key={skill.name} className="grid grid-cols-12 items-center gap-4">
+                                                        <label className="col-span-12 sm:col-span-4 font-medium text-gray-700 text-sm">{skill.name}</label>
+                                                        <input 
+                                                            type="range" 
+                                                            min="1" max="100" 
+                                                            value={skill.rating} 
+                                                            onChange={e => handleSkillChange(skill.name, e.target.value)} 
+                                                            className="col-span-10 sm:col-span-7 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                                        />
+                                                        <span className="col-span-2 sm:col-span-1 text-center font-semibold text-blue-600 w-12">{skill.rating}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
                 
-                <div className="flex justify-end space-x-4 mt-6 pt-4 border-t">
+                <div className="flex-shrink-0 flex justify-end space-x-4 mt-6 pt-4 border-t">
                     <button onClick={onClose} className="px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
                     <button 
                         onClick={handleSave}

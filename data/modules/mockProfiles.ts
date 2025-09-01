@@ -43,6 +43,7 @@ const MOCK_ENGINEER_STEVE: EngineerProfile = {
     identity: { documentType: 'passport', isVerified: true, documentUrl: 'id.pdf' },
     customerRating: 5, peerRating: 5,
     profileViews: 543, searchAppearances: 2109, jobInvites: 12,
+    calendarSyncUrl: 'https://api.techsubbies.com/calendar/eng-steve.ics',
 };
 
 const MOCK_ENGINEER_1: EngineerProfile = {
@@ -72,6 +73,7 @@ const MOCK_ENGINEER_1: EngineerProfile = {
     generalAvailability: 'Medium', caseStudies: [ { id: 'cs-1', name: 'Corporate HQ Audiovisual Integration', url: 'https://example.com/case-study-1' }, { id: 'cs-2', name: 'Luxury Residential Smart Home System', url: 'https://example.com/case-study-2' } ],
     isBoosted: true, customerRating: 5, peerRating: 5,
     profileViews: 142, searchAppearances: 980, jobInvites: 3,
+    calendarSyncUrl: 'https://api.techsubbies.com/calendar/eng-1.ics',
 };
 
 const MOCK_ENGINEER_2: EngineerProfile = {
@@ -93,6 +95,7 @@ const MOCK_ENGINEER_2: EngineerProfile = {
     generalAvailability: 'High', caseStudies: [ { id: 'cs-3', name: 'SME Office 365 Migration', url: 'https://example.com/case-study-3'} ],
     customerRating: 4, peerRating: 5, googleCalendarLink: '#',
     profileViews: 45, searchAppearances: 312, jobInvites: 1,
+    calendarSyncUrl: 'https://api.techsubbies.com/calendar/eng-2.ics',
 };
 
 const MOCK_ENGINEER_3: EngineerProfile = {
@@ -118,6 +121,7 @@ const MOCK_ENGINEER_3: EngineerProfile = {
     identity: { documentType: 'passport', isVerified: true },
     caseStudies: [],
     profileViews: 310, searchAppearances: 1500, jobInvites: 8,
+    calendarSyncUrl: 'https://api.techsubbies.com/calendar/eng-3.ics',
 };
 
 export const MOCK_FREE_ENGINEER: EngineerProfile = {
@@ -132,6 +136,7 @@ export const MOCK_FREE_ENGINEER: EngineerProfile = {
     },
     identity: { documentType: 'none', isVerified: false },
     profileViews: 12, searchAppearances: 88, jobInvites: 0,
+    calendarSyncUrl: 'https://api.techsubbies.com/calendar/eng-free.ics',
 };
 
 
@@ -148,6 +153,7 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
         else profileTier = ProfileTier.BUSINESS; // 2%
 
         const jobRoleDef = getRandom(JOB_ROLE_DEFINITIONS);
+        const allSkillsForRole = jobRoleDef.skillCategories.flatMap(category => category.skills);
         const isMale = Math.random() > 0.5;
         const firstName = isMale ? getRandom(MALE_FIRST_NAMES) : getRandom(FEMALE_FIRST_NAMES);
         const name = `${firstName} ${getRandom(LAST_NAMES)}`;
@@ -180,16 +186,17 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
             profileViews: getRandomInt(0, 500),
             searchAppearances: getRandomInt(0, 3000),
             jobInvites: getRandomInt(0, 10),
+            calendarSyncUrl: `https://api.techsubbies.com/calendar/gen-eng-${i}.ics`,
         };
 
         if (profileTier !== ProfileTier.BASIC) {
-            engineer.skills = jobRoleDef.skills.slice(0, 3).map(skillName => ({ name: skillName, rating: getRandomInt(70, 98) }));
+            engineer.skills = allSkillsForRole.slice(0, 3).map(skillName => ({ name: skillName, rating: getRandomInt(70, 98) }));
             engineer.subscriptionEndDate = new Date(new Date().setDate(new Date().getDate() + getRandomInt(1, 30)));
             engineer.securityNetCreditsUsed = 0;
             engineer.jobDigestOptIn = true;
 
             if (profileTier === ProfileTier.SKILLS || profileTier === ProfileTier.BUSINESS) {
-                 const ratedSkills: RatedSkill[] = jobRoleDef.skills.map(skillName => ({ name: skillName, rating: getRandomInt(65, 99) }));
+                 const ratedSkills: RatedSkill[] = allSkillsForRole.map(skillName => ({ name: skillName, rating: getRandomInt(65, 99) }));
                 engineer.selectedJobRoles = [{ roleName: jobRoleDef.name, skills: ratedSkills, overallScore: Math.round(ratedSkills.reduce((acc, s) => acc + s.rating, 0) / ratedSkills.length) }];
                 if (Math.random() < 0.2) engineer.isBoosted = true;
             }

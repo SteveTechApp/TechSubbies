@@ -185,7 +185,6 @@ const CardBack = ({ profile }: { profile: EngineerProfile }) => {
                             {profile.certifications.map(cert => 
                                 <li key={cert.name} className="flex items-center">
                                     {cert.name} 
-                                    {/* FIX: Wrap icon in a span with a title attribute to fix prop error and provide tooltip. */}
                                     {cert.verified && <span title="Verified"><CheckCircle size={12} className="ml-1.5 text-green-400 flex-shrink-0" /></span>}
                                 </li>
                             )}

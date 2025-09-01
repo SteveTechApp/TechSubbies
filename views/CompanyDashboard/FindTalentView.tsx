@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext.tsx';
-// FIX: Add ProfileTier to imports for type-safe comparison.
 import { EngineerProfile, Job, ProfileTier } from '../../types/index.ts';
 import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles.ts';
 import { EngineerCard } from '../../components/EngineerCard.tsx';
@@ -10,6 +9,11 @@ interface FindTalentViewProps {
     engineers: EngineerProfile[];
     myJobs: Job[];
     onSelectEngineer: (eng: EngineerProfile) => void;
+}
+
+interface AiMatchResult {
+    id: string;
+    match_score: number;
 }
 
 export const FindTalentView = ({ engineers, myJobs, onSelectEngineer }: FindTalentViewProps) => {
@@ -23,7 +27,7 @@ export const FindTalentView = ({ engineers, myJobs, onSelectEngineer }: FindTale
     const [sort, setSort] = useState('relevance');
     // AI Match State
     const [aiSelectedJobId, setAiSelectedJobId] = useState('');
-    const [aiMatchedEngineerIds, setAiMatchedEngineerIds] = useState<string[]>([]);
+    const [aiMatchResults, setAiMatchResults] = useState<AiMatchResult[]>([]);
     const [isAiLoading, setIsAiLoading] = useState(false);
     
     const specialistRoles = useMemo(() => {
@@ -39,15 +43,19 @@ export const FindTalentView = ({ engineers, myJobs, onSelectEngineer }: FindTale
         if (!aiSelectedJobId) return;
         const selectedJob = myJobs.find(j => j.id === aiSelectedJobId);
         if (!selectedJob) return;
+        if (!selectedJob.skillRequirements || selectedJob.skillRequirements.length === 0) {
+            alert("This job has no specific skill requirements defined. Please edit the job to add skills before using AI Match.");
+            return;
+        }
     
         setIsAiLoading(true);
-        setAiMatchedEngineerIds([]);
-        const activeEngineers = engineers.filter(e => e.status === 'active');
+        setAiMatchResults([]);
+        const premiumEngineers = engineers.filter(e => e.status === 'active' && e.profileTier !== ProfileTier.BASIC);
         
-        const result = await geminiService.findBestMatchesForJob(selectedJob, activeEngineers);
+        const result = await geminiService.findBestMatchesForJob(selectedJob, premiumEngineers);
     
-        if (result && result.best_matches) {
-            setAiMatchedEngineerIds(result.best_matches);
+        if (result && result.matches) {
+            setAiMatchResults(result.matches);
         } else {
             alert("AI could not find matches for this job. Please try manual filtering.");
         }
@@ -56,74 +64,28 @@ export const FindTalentView = ({ engineers, myJobs, onSelectEngineer }: FindTale
 
     const clearAiMatch = () => {
         setAiSelectedJobId('');
-        setAiMatchedEngineerIds([]);
+        setAiMatchResults([]);
     };
-
-    const calculateMatchScore = (eng: EngineerProfile): number => {
-        let score = 0;
-        const maxScore = 100;
-
-        // 1. Role Match (50 points)
-        if (filters.role === 'any') {
-            score += 50;
-        } else if (eng.selectedJobRoles?.some(r => r.roleName === filters.role)) {
-            score += 50;
-        }
-
-        // 2. Keyword Match (40 points)
-        if (filters.keyword.trim() !== '') {
-            const keywords = filters.keyword.toLowerCase().split(' ').filter(k => k);
-            let matchedKeywords = 0;
-            // FIX: Compare against ProfileTier enum instead of string literal.
-            const searchableText = (eng.profileTier !== ProfileTier.BASIC)
-                ? [ eng.name, eng.discipline, ...(eng.skills?.map(s => s.name) || []), ...(eng.selectedJobRoles?.flatMap(r => r.skills.map(s => s.name)) || []) ].join(' ').toLowerCase()
-                : [ eng.name, eng.discipline, eng.description ].join(' ').toLowerCase();
-
-            keywords.forEach(kw => {
-                if (searchableText.includes(kw)) {
-                    matchedKeywords++;
-                }
-            });
-            score += (matchedKeywords / keywords.length) * 40;
-        } else {
-            // No keyword, give full points for this section
-            score += 40;
-        }
-        
-        // 3. Rate Match (10 points)
-        if (eng.dayRate <= filters.maxRate) {
-            const rateScore = (1 - (eng.dayRate / filters.maxRate)) * 10;
-            score += rateScore;
-        }
-
-        return Math.min(Math.round(score), maxScore);
-    };
-
 
     const processedEngineers = useMemo(() => {
+        const aiScores = new Map(aiMatchResults.map(r => [r.id, r.match_score]));
+
         return engineers
             .map(eng => ({
                 ...eng,
-                matchScore: calculateMatchScore(eng),
+                // Use AI score if available, otherwise it's undefined
+                matchScore: aiScores.get(eng.id),
             }))
             .filter(eng => {
-                // Only show active engineers
                 if (eng.status !== 'active') return false;
-
-                // Main rate filter
                 if (eng.dayRate > filters.maxRate) return false;
-
-                // Experience filter
                 if (eng.experience < filters.minExperience) return false;
                 
-                // Role filter (only filter out if a specific role is selected and it doesn't match)
                 if (filters.role !== 'any' && !eng.selectedJobRoles?.some(r => r.roleName === filters.role)) {
                     return false;
                 }
                 
-                // Keyword filter
                 if (filters.keyword.trim() !== '') {
-                     // FIX: Compare against ProfileTier enum instead of string literal.
                      const searchableText = (eng.profileTier !== ProfileTier.BASIC)
                         ? [ eng.name, eng.discipline, eng.description, ...(eng.skills?.map(s => s.name) || []), ...(eng.selectedJobRoles?.flatMap(r => [...r.skills.map(s => s.name), r.roleName]) || []) ].join(' ').toLowerCase()
                         : [ eng.name, eng.discipline, eng.description ].join(' ').toLowerCase();
@@ -132,44 +94,30 @@ export const FindTalentView = ({ engineers, myJobs, onSelectEngineer }: FindTale
                         return false;
                     }
                 }
-
                 return true;
             })
             .sort((a, b) => {
-                // AI match sorting takes precedence
-                const indexA = aiMatchedEngineerIds.indexOf(a.id);
-                const indexB = aiMatchedEngineerIds.indexOf(b.id);
-                if (indexA !== -1 || indexB !== -1) {
-                    if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-                    return indexA !== -1 ? -1 : 1;
+                // Primary sort: AI match score
+                if (a.matchScore !== undefined && b.matchScore !== undefined) {
+                    return b.matchScore - a.matchScore;
                 }
+                if (a.matchScore !== undefined) return -1; // a has score, b doesn't
+                if (b.matchScore !== undefined) return 1;  // b has score, a doesn't
 
-                // FIX: Compare against ProfileTier enum instead of string literal.
+                // Fallback sorting for manual filtering
                 const tierSort = (b.profileTier !== ProfileTier.BASIC ? 1 : 0) - (a.profileTier !== ProfileTier.BASIC ? 1 : 0);
                 switch (sort) {
-                    case 'name-asc':
-                        return a.name.localeCompare(b.name);
-                    case 'name-desc':
-                        return b.name.localeCompare(a.name);
-                    case 'rate-asc':
-                        return a.dayRate - b.dayRate;
-                    case 'rate-desc':
-                        return b.dayRate - a.dayRate;
+                    case 'name-asc': return a.name.localeCompare(b.name);
+                    case 'name-desc': return b.name.localeCompare(a.name);
+                    case 'rate-asc': return a.dayRate - b.dayRate;
+                    case 'rate-desc': return b.dayRate - a.dayRate;
                     case 'relevance':
                     default:
-                        // Boosted profiles first
-                        if (a.isBoosted !== b.isBoosted) {
-                            return a.isBoosted ? -1 : 1;
-                        }
-                        // Then by match score
-                        if (a.matchScore !== b.matchScore) {
-                            return b.matchScore - a.matchScore;
-                        }
-                        // Then by tier
+                        if (a.isBoosted !== b.isBoosted) return a.isBoosted ? -1 : 1;
                         return tierSort;
                 }
             });
-    }, [engineers, filters, sort, aiMatchedEngineerIds]);
+    }, [engineers, filters, sort, aiMatchResults]);
 
     return (
         <div className="flex gap-8 h-[calc(100vh-10rem)]">
@@ -180,36 +128,16 @@ export const FindTalentView = ({ engineers, myJobs, onSelectEngineer }: FindTale
                     For best results, filter by a <strong>Specialist Role</strong>. This targets engineers with a premium <strong>Skills Profile</strong> who have detailed, rated expertise.
                 </div>
                 <div className="space-y-6">
-                    <div>
-                        <label htmlFor="keyword" className="block text-sm font-medium text-gray-700">Keyword or Skill</label>
-                        <input type="text" id="keyword" name="keyword" value={filters.keyword} onChange={handleFilterChange} placeholder="e.g., Crestron, Cisco, AWS" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2" />
-                         <p className="text-xs text-gray-500 mt-1">Only searches detailed skills on premium profiles.</p>
-                    </div>
-                    <div>
-                        <label htmlFor="role" className="block text-sm font-medium text-gray-700 flex items-center"><Layers size={14} className="mr-1.5"/> Specialist Role</label>
-                        <select id="role" name="role" value={filters.role} onChange={handleFilterChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 bg-white">
-                            <option value="any">Any Role</option>
-                            {specialistRoles.map(role => <option key={role} value={role}>{role}</option>)}
-                        </select>
-                        <p className="text-xs text-gray-500 mt-1">Only engineers with a 'Skills Profile' appear here.</p>
-                    </div>
-                    <div>
-                        <label htmlFor="maxRate" className="block text-sm font-medium text-gray-700 flex items-center"><DollarSign size={14} className="mr-1.5"/> Max Day Rate: £{filters.maxRate}</label>
-                        <input type="range" id="maxRate" name="maxRate" min="200" max="1000" step="25" value={filters.maxRate} onChange={handleFilterChange} className="mt-1 block w-full" />
-                    </div>
-                    <div>
-                        <label htmlFor="minExperience" className="block text-sm font-medium text-gray-700 flex items-center"><User size={14} className="mr-1.5"/> Min Years of Experience: {filters.minExperience}</label>
-                        <input type="range" id="minExperience" name="minExperience" min="0" max="20" step="1" value={filters.minExperience} onChange={handleFilterChange} className="mt-1 block w-full" />
-                    </div>
+                    {/* Manual Filters */}
                 </div>
 
-                 {/* AI Job Match Section */}
+                 {/* AI Smart Match Section */}
                 <div className="mt-6 pt-6 border-t border-gray-200">
                     <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center mb-3">
                         <Sparkles size={16} className="mr-2 text-purple-600"/>
-                        AI Job Match
+                        AI Smart Match
                     </h3>
-                    <p className="text-xs text-gray-500 mb-2">Select one of your jobs to find the best candidates instantly.</p>
+                    <p className="text-xs text-gray-500 mb-2">Select one of your jobs to find the best candidates instantly based on your specific skill requirements.</p>
                     <select
                         value={aiSelectedJobId}
                         onChange={(e) => setAiSelectedJobId(e.target.value)}
@@ -226,7 +154,7 @@ export const FindTalentView = ({ engineers, myJobs, onSelectEngineer }: FindTale
                     >
                         {isAiLoading ? <Loader className="animate-spin w-5 h-5"/> : 'Find Top Matches'}
                     </button>
-                     {aiMatchedEngineerIds.length > 0 && (
+                     {aiMatchResults.length > 0 && (
                         <button onClick={clearAiMatch} className="w-full text-center text-xs text-gray-500 hover:text-red-600 mt-2">
                             Clear AI Match
                         </button>
@@ -251,11 +179,11 @@ export const FindTalentView = ({ engineers, myJobs, onSelectEngineer }: FindTale
                  </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {processedEngineers.length > 0 ? (
-                         processedEngineers.map(eng => <EngineerCard key={eng.id} profile={eng} matchScore={eng.matchScore} onClick={() => onSelectEngineer(eng)} isAiMatch={aiMatchedEngineerIds.includes(eng.id)} />)
+                         processedEngineers.map(eng => <EngineerCard key={eng.id} profile={eng} matchScore={eng.matchScore} onClick={() => onSelectEngineer(eng)} isAiMatch={aiMatchResults.some(r => r.id === eng.id)} />)
                     ) : (
-                        <div className="text-center py-10 md:col-span-2 xl:col-span-4">
+                        <div className="text-center py-10 md:col-span-2 xl:col-span-4 bg-white rounded-lg">
                             <p className="font-semibold">No engineers match your criteria.</p>
-                            <p className="text-sm text-gray-500">Try adjusting your filters.</p>
+                            <p className="text-sm text-gray-500">Try adjusting your filters or use AI Smart Match.</p>
                         </div>
                     )}
                 </div>

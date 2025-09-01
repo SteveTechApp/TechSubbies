@@ -1,15 +1,6 @@
 import type { Chat } from '@google/genai';
 import type { Dispatch, SetStateAction } from 'react';
 
-// --- SIMULATED PRE-AUTHENTICATION ---
-// In a real application, this would come from an authentication service (e.g., Firebase Auth, Auth0)
-// *before* the user reaches the role selection screen. For this demo, we mock the signed-in user.
-export const PRE_AUTH_USER = {
-    email: 'SteveGoodwin1972@gmail.com',
-    name: 'Steve Goodwin',
-};
-
-
 // --- Enums and Interfaces ---
 export enum Role {
     ENGINEER = 'engineer',
@@ -69,7 +60,10 @@ export interface SelectedJobRole {
 export interface JobRoleDefinition {
   name: string;
   category: 'AV' | 'IT' | 'Management';
-  skills: string[];
+  skillCategories: {
+    category: string;
+    skills: string[];
+  }[];
 }
 
 export interface Certification {
@@ -176,6 +170,7 @@ export interface EngineerProfile extends BaseProfile {
     profileViews: number;
     searchAppearances: number;
     jobInvites: number;
+    calendarSyncUrl?: string;
 }
 
 
@@ -195,6 +190,13 @@ export interface User {
     profile: UserProfile;
 }
 
+export type SkillImportance = 'desirable' | 'essential';
+
+export interface JobSkillRequirement {
+    name: string;
+    importance: SkillImportance;
+}
+
 export interface Job {
     id:string;
     companyId: string; // This is a profile ID
@@ -209,6 +211,8 @@ export interface Job {
     status: 'active' | 'inactive';
     jobType: JobType;
     experienceLevel: ExperienceLevel;
+    jobRole: string; // The selected JobRoleDefinition name
+    skillRequirements?: JobSkillRequirement[];
 }
 
 export enum ApplicationStatus {
@@ -394,7 +398,7 @@ export interface AppContextType {
     logout: () => void;
     updateEngineerProfile: (updatedProfile: Partial<EngineerProfile>) => void;
     updateCompanyProfile: (updatedProfile: Partial<CompanyProfile>) => void;
-    postJob: (jobData: any) => void;
+    postJob: (jobData: Omit<Job, 'id' | 'companyId' | 'postedDate' | 'status'>) => void;
     startTrial: () => void;
     geminiService: any;
     applications: Application[];
@@ -423,6 +427,7 @@ export interface AppContextType {
     offerJob: (jobId: string, engineerId: string) => void;
     acceptOffer: (jobId: string, engineerId: string) => void;
     declineOffer: (jobId: string, engineerId: string) => void;
+    isAiReplying: boolean;
     // NEW: Forum context
     forumPosts: ForumPost[];
     forumComments: ForumComment[];

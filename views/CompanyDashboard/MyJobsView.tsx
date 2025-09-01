@@ -4,16 +4,7 @@ import { Job, EngineerProfile, Application, ApplicationStatus } from '../../type
 import { MapPin, ArrowLeft, User, Mail, Phone, MessageCircle, Star, Briefcase } from '../../components/Icons.tsx';
 import { ReviewModal } from '../../components/ReviewModal.tsx';
 import { CreateContractModal } from '../../components/CreateContractModal.tsx';
-
-const formatDate = (date: any): string => {
-    if (!date) return 'TBD';
-    try {
-        const d = new Date(date);
-        return isNaN(d.getTime()) ? 'Invalid Date' : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    } catch (e) {
-        return 'Invalid Date';
-    }
-};
+import { formatDisplayDate } from '../../utils/dateFormatter.ts';
 
 interface ApplicantCardProps {
     profile: EngineerProfile;
@@ -177,8 +168,8 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
                             <p className="text-sm text-gray-500">Applicants</p>
                         </div>
                         <div className="text-right text-gray-500 text-sm">
-                            <p>Posted: {formatDate(job.postedDate)}</p>
-                            <p>Starts: {formatDate(job.startDate)}</p>
+                            <p>Posted: {formatDisplayDate(job.postedDate)}</p>
+                            <p>Starts: {formatDisplayDate(job.startDate)}</p>
                         </div>
                     </button>
                 )}

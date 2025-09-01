@@ -22,6 +22,15 @@ const MOCK_JOB_1: Job = {
     status: 'active',
     jobType: JobType.CONTRACT,
     experienceLevel: ExperienceLevel.SENIOR,
+    jobRole: 'AV Commissioning Engineer',
+    skillRequirements: [
+        { name: 'Control system loading & debugging (Crestron Toolbox, Biamp SageVue)', importance: 'essential' },
+        { name: 'DSP configuration (Gain structure, AEC, automixing)', importance: 'essential' },
+        { name: 'Configuring audio networking (Dante Level 3, AVB)', importance: 'essential' },
+        { name: 'AV-over-IP network configuration (IGMP Snooping, QoS/DSCP)', importance: 'essential' },
+        { name: 'EDID management & resolution scaling', importance: 'desirable' },
+        { name: 'As-built documentation creation', importance: 'desirable' },
+    ],
 };
 
 const generateMockJobs = (count: number, companies: CompanyProfile[]): Job[] => {
@@ -29,11 +38,12 @@ const generateMockJobs = (count: number, companies: CompanyProfile[]): Job[] => 
     return Array.from({ length: count }, (_, i) => {
         const roleDef = getRandom(JOB_ROLE_DEFINITIONS);
         const company = getRandom(companies);
+        const allSkillsForRole = roleDef.skillCategories.flatMap(category => category.skills);
         return {
             id: `gen-job-${i}`,
             companyId: company.id,
             title: roleDef.name,
-            description: `We are looking for a skilled ${roleDef.name} for an upcoming project. The ideal candidate will have strong experience in ${roleDef.skills.slice(0, 3).join(', ')}. This is a contract role with potential for extension.`,
+            description: `We are looking for a skilled ${roleDef.name} for an upcoming project. The ideal candidate will have strong experience in ${allSkillsForRole.slice(0, 3).join(', ')}. This is a contract role with potential for extension.`,
             location: Math.random() > 0.2 ? `${getRandom(LOCATIONS)}, UK` : 'Remote',
             dayRate: String(getRandomInt(13, 30) * 25),
             currency: Currency.GBP,
@@ -43,6 +53,11 @@ const generateMockJobs = (count: number, companies: CompanyProfile[]): Job[] => 
             status: 'active',
             jobType: getRandom(JOB_TYPES),
             experienceLevel: getRandom(EXP_LEVELS),
+            jobRole: roleDef.name,
+            skillRequirements: allSkillsForRole.slice(0, 5).map((skill, index) => ({
+                name: skill,
+                importance: index < 2 ? 'essential' : 'desirable', // Make first 2 essential
+            })),
         };
     });
 };

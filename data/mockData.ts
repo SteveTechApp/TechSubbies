@@ -1,9 +1,17 @@
 import { User, Role } from '../types/index.ts';
 import { MOCK_ENGINEERS, MOCK_COMPANIES, MOCK_RESOURCING_COMPANY_1, MOCK_ADMIN_PROFILE, MOCK_FREE_ENGINEER } from './modules/mockProfiles.ts';
 import { MOCK_JOBS } from './modules/mockJobs.ts';
-// FIX: Import MOCK_CONTRACTS and MOCK_TRANSACTIONS to export them
 import { MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_CONTRACTS, MOCK_TRANSACTIONS } from './modules/mockInteractions.ts';
 import { MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_NOTIFICATIONS } from './modules/mockForum.ts';
+
+
+// --- SIMULATED PRE-AUTHENTICATION ---
+// In a real application, this would come from an authentication service (e.g., Firebase Auth, Auth0)
+// *before* the user reaches the role selection screen. For this demo, we mock the signed-in user.
+export const PRE_AUTH_USER = {
+    email: 'SteveGoodwin1972@gmail.com',
+    name: 'Steve Goodwin',
+};
 
 
 // Re-export all the mock data for use throughout the application.

@@ -1,5 +1,4 @@
 import React from 'react';
-// FIX: Add ProfileTier to imports for type-safe comparison.
 import { EngineerProfile, ProfileTier } from '../../types/index.ts';
 import { SectionWrapper } from './SectionWrapper.tsx';
 import { Mail } from '../Icons.tsx';
@@ -13,7 +12,6 @@ interface NotificationSettingsSectionProps {
 
 export const NotificationSettingsSection = ({ profile, formData, onProfileChange }: NotificationSettingsSectionProps) => (
     <SectionWrapper title="Notification Settings" icon={Mail}>
-        {/* FIX: Compare against ProfileTier enum instead of string literal. */}
         {profile.profileTier !== ProfileTier.BASIC ? (
             <div>
                 <CheckboxInput

@@ -1,7 +1,6 @@
 import React from 'react';
 import { useAppContext } from '../../context/AppContext.tsx';
 import { Users, User, Building, Briefcase, Star, BarChart2 } from '../../components/Icons.tsx';
-// FIX: Add ProfileTier to imports for type-safe comparison.
 import { ProfileTier } from '../../types/index.ts';
 
 const StatCard = ({ icon: Icon, value, label, colorClass }: { icon: React.ComponentType<any>, value: string | number, label:string, colorClass: string }) => (
@@ -23,7 +22,6 @@ export const DashboardView = () => {
     const totalCompanies = allUsers.filter(u => u.role === 'company' || u.role === 'resourcing_company').length;
     const totalEngineers = engineers.length;
     const totalUsers = totalCompanies + totalEngineers;
-    // FIX: Compare against ProfileTier enum instead of string literal.
     const premiumEngineers = engineers.filter(e => e.profileTier !== ProfileTier.BASIC).length;
 
     return (

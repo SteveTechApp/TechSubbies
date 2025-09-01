@@ -1,16 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext.tsx';
 import { Search, MapPin, Calendar, DollarSign, Home, ArrowUp } from '../../components/Icons.tsx';
-
-const formatDate = (date: any): string => {
-    if (!date) return 'TBD';
-    try {
-        const d = new Date(date);
-        return isNaN(d.getTime()) ? 'Invalid Date' : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    } catch (e) {
-        return 'Invalid Date';
-    }
-};
+import { formatDisplayDate } from '../../utils/dateFormatter.ts';
 
 interface JobManagementViewProps {
     setActiveView: (view: string) => void;
@@ -81,7 +72,7 @@ export const JobManagementView = ({ setActiveView }: JobManagementViewProps) => 
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     <div className="flex items-center"><DollarSign size={14} className="mr-1" />{job.currency}{job.dayRate}/day</div>
-                                    <div className="flex items-center mt-1"><Calendar size={14} className="mr-1" />Starts: {formatDate(job.startDate)}</div>
+                                    <div className="flex items-center mt-1"><Calendar size={14} className="mr-1" />Starts: {formatDisplayDate(job.startDate)}</div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${job.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>

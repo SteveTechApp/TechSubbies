@@ -1,6 +1,5 @@
 import React from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
-// FIX: Import ProfileTier enum for type-safe comparisons.
 import { EngineerProfile, ProfileTier } from '../types/index.ts';
 import { MapPin, Star, Rocket, Sparkles } from './Icons.tsx';
 
@@ -14,18 +13,15 @@ interface EngineerCardProps {
 export const EngineerCard = ({ profile, onClick, matchScore, isAiMatch }: EngineerCardProps) => {
     const { companies } = useAppContext();
 
-    // Find resourcing company if it exists
     const resourcingCompany = profile.resourcingCompanyId 
         ? companies.find(c => c.id === profile.resourcingCompanyId) 
         : null;
 
-    // New border logic: gold for boosted, blue for paid, transparent for free
     const borderClass = profile.isBoosted 
-        ? 'border-amber-400' // Gold border
-        // FIX: Compare against ProfileTier enum instead of string literal.
+        ? 'border-amber-400'
         : profile.profileTier !== ProfileTier.BASIC 
-        ? 'border-blue-500' // Blue border
-        : 'border-transparent'; // No border (transparent to maintain layout)
+        ? 'border-blue-500'
+        : 'border-transparent';
         
     return (
         <button 
@@ -37,7 +33,6 @@ export const EngineerCard = ({ profile, onClick, matchScore, isAiMatch }: Engine
                     <img src={profile.avatar} alt={profile.name} className="w-24 h-24 rounded-full border-4 border-white shadow-md" />
                 </div>
                 
-                {/* NEW: Resourcing Company Logo */}
                 {resourcingCompany && resourcingCompany.logo && (
                     <div 
                         className="absolute bottom-0 right-0 transform translate-x-1/4 translate-y-1/4 bg-white p-1 rounded-full shadow-lg"
@@ -51,21 +46,19 @@ export const EngineerCard = ({ profile, onClick, matchScore, isAiMatch }: Engine
                     </div>
                 )}
                 
-                {/* Match Score Badge */}
                 {matchScore !== undefined && (
-                    <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-sm text-white text-xs font-bold px-2 py-1 rounded-full flex items-center shadow-lg">
+                    <div className="absolute top-2 left-2 bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center shadow-lg">
+                        <Sparkles size={12} className="mr-1.5" />
                         {Math.round(matchScore)}% Match
                     </div>
                 )}
                 
-                {/* Status Badges */}
                 <div className="absolute top-2 right-2 flex flex-col items-end gap-1.5">
                     {profile.isBoosted && (
                          <span className="bg-amber-400 text-black text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center shadow-lg">
                             <Rocket size={12} className="mr-1" /> BOOSTED
                         </span>
                     )}
-                    {/* FIX: Compare against ProfileTier enum instead of string literal. */}
                     {profile.profileTier !== ProfileTier.BASIC && (
                          <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center shadow">
                             <Star size={12} className="mr-1" /> SKILLS PROFILE
@@ -77,11 +70,6 @@ export const EngineerCard = ({ profile, onClick, matchScore, isAiMatch }: Engine
             <div className="flex-grow">
                 <div className="flex items-center gap-2 mb-1">
                     <h3 className="text-lg font-bold text-gray-800 truncate">{profile.name}</h3>
-                    {isAiMatch && (
-                        <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-0.5 rounded-full flex items-center shadow-sm flex-shrink-0">
-                            <Sparkles size={12} className="mr-1" /> AI Recommended
-                        </span>
-                    )}
                 </div>
                 <p className="text-blue-600 font-semibold text-sm">{profile.discipline}</p>
                 <p className="text-sm text-gray-500 flex items-center mt-1"><MapPin size={14} className="mr-1"/> {profile.location}</p>
@@ -90,14 +78,12 @@ export const EngineerCard = ({ profile, onClick, matchScore, isAiMatch }: Engine
             <div className="mt-3 pt-3 border-t border-gray-100">
                 <div className="flex justify-between items-center">
                     <h4 className="text-xs font-bold text-gray-500 uppercase">
-                        {/* FIX: Compare against ProfileTier enum instead of string literal. */}
                         {profile.profileTier !== ProfileTier.BASIC ? 'Core Skills' : 'Profile Tier'}
                     </h4>
                     <div className="text-right">
                         <p className="text-lg font-bold text-gray-800">{profile.currency}{profile.dayRate}</p>
                     </div>
                 </div>
-                {/* FIX: Compare against ProfileTier enum instead of string literal. */}
                 {profile.profileTier !== ProfileTier.BASIC && profile.skills && profile.skills.length > 0 ? (
                     <div className="flex flex-wrap gap-1 mt-1">
                         {profile.skills.slice(0, 3).map(skill => (

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { EngineerProfile } from '../../types/index.ts';
-import { ChevronLeft, ChevronRight, Download, CalendarPlus, ArrowLeft } from '../../components/Icons.tsx';
+import { ChevronLeft, ChevronRight, ArrowLeft, Link as LinkIcon, Copy, CheckCircle } from '../../components/Icons.tsx';
 
 interface AvailabilityViewProps {
     profile: EngineerProfile;
@@ -21,9 +21,24 @@ export const AvailabilityView = ({ profile, onUpdateAvailability, setActiveView 
     const [newDateStr, setNewDateStr] = useState(getInitialDateString());
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+    const [copySuccess, setCopySuccess] = useState('');
+
 
     const handleUpdate = () => {
         onUpdateAvailability(new Date(newDateStr));
+        alert('Availability updated!');
+    };
+    
+    const handleCopyUrl = () => {
+        if (profile.calendarSyncUrl) {
+            navigator.clipboard.writeText(profile.calendarSyncUrl).then(() => {
+                setCopySuccess('Copied!');
+                setTimeout(() => setCopySuccess(''), 2000);
+            }, () => {
+                setCopySuccess('Failed to copy.');
+                setTimeout(() => setCopySuccess(''), 2000);
+            });
+        }
     };
 
     const { monthName, blanks, days } = useMemo(() => {
@@ -43,7 +58,7 @@ export const AvailabilityView = ({ profile, onUpdateAvailability, setActiveView 
 
     const nextMonth = () => {
         setCurrentMonth(m => m === 11 ? 0 : m + 1);
-        if (currentMonth === 11) setCurrentYear(y => y + 1);
+        if (currentMonth === 11) setCurrentYear(y => y - 1);
     };
 
     const isSameDay = (d1: Date, d2: Date) =>
@@ -52,45 +67,6 @@ export const AvailabilityView = ({ profile, onUpdateAvailability, setActiveView 
         d1.getDate() === d2.getDate();
         
     const availabilityDate = new Date(profile.availability);
-    
-    const formatDateForCalendar = (date: Date) => {
-        const year = date.getUTCFullYear();
-        const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
-        const day = date.getUTCDate().toString().padStart(2, '0');
-        return `${year}${month}${day}`;
-    };
-
-    const handleGoogleCalendarClick = () => {
-        if (isNaN(availabilityDate.getTime())) return;
-        const startDate = formatDateForCalendar(availabilityDate);
-        const tempEndDate = new Date(availabilityDate);
-        tempEndDate.setUTCDate(tempEndDate.getUTCDate() + 1);
-        const endDate = formatDateForCalendar(tempEndDate);
-        const eventDetails = `This marks the start of my availability for new freelance contracts on TechSubbies.com.`;
-        const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=Available+for+New+Projects&dates=${startDate}/${endDate}&details=${encodeURIComponent(eventDetails)}&location=${encodeURIComponent(profile.location)}`;
-        window.open(url, '_blank', 'noopener,noreferrer');
-    };
-
-    const handleIcsDownloadClick = () => {
-        if (isNaN(availabilityDate.getTime())) return;
-        const calDate = formatDateForCalendar(availabilityDate);
-        const timestamp = new Date().toISOString().replace(/[-:.]/g, "") + "Z";
-        const icsContent = [
-            'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//TechSubbies.com//EN', 'BEGIN:VEVENT',
-            `UID:${profile.id}-${calDate}@techsubbies.com`, `DTSTAMP:${timestamp}`,
-            `DTSTART;VALUE=DATE:${calDate}`, 'SUMMARY:Available for New Projects',
-            `DESCRIPTION:This marks the start of my availability for new freelance contracts on TechSubbies.com for ${profile.name}.`,
-            `LOCATION:${profile.location}`, 'END:VEVENT', 'END:VCALENDAR'
-        ].join('\r\n');
-        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'techsubbies_availability.ics';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-    };
 
     return (
         <div>
@@ -121,20 +97,25 @@ export const AvailabilityView = ({ profile, onUpdateAvailability, setActiveView 
                             Update Availability
                         </button>
                         <div className="mt-5 pt-5 border-t border-gray-200">
-                            <h3 className="text-lg font-semibold mb-3">Calendar Integration</h3>
-                            <p className="text-gray-600 mb-4 text-sm">Add your availability start date to your personal calendar to keep track of your schedule.</p>
-                            <div className="space-y-3">
+                            <h3 className="text-lg font-semibold mb-3 flex items-center">
+                                <LinkIcon size={18} className="mr-2"/> Calendar Sync
+                            </h3>
+                            <p className="text-gray-600 mb-4 text-sm">
+                                Subscribe to this URL in your calendar app (Outlook, Google, iCal) to automatically sync your TechSubbies availability and project dates.
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    readOnly
+                                    value={profile.calendarSyncUrl || 'No sync URL available.'}
+                                    className="w-full border p-2 rounded bg-gray-100 text-gray-600 text-sm"
+                                />
                                 <button
-                                    onClick={handleGoogleCalendarClick}
-                                    className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors font-medium"
+                                    onClick={handleCopyUrl}
+                                    className="flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100 transition-colors font-medium flex-shrink-0"
                                 >
-                                    <CalendarPlus className="w-5 h-5 mr-2" /> Add to Google Calendar
-                                </button>
-                                <button
-                                    onClick={handleIcsDownloadClick}
-                                    className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors font-medium"
-                                >
-                                    <Download className="w-5 h-5 mr-2" /> Download for Outlook / iCal
+                                    {copySuccess ? <CheckCircle size={18} className="text-green-500"/> : <Copy size={18} />}
+                                    <span className="ml-2 w-16 text-center">{copySuccess || 'Copy'}</span>
                                 </button>
                             </div>
                         </div>

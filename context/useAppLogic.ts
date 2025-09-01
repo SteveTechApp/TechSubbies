@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { PoundSterling, DollarSign } from '../components/Icons.tsx';
-// FIX: Added Discipline to the import list to resolve a type error.
-import { Role, EngineerProfile, User, Job, Application, Currency, Conversation, Message, Review, CompanyProfile, ApplicationStatus, Notification, NotificationType, AppContextType, ForumPost, ForumComment, ProfileTier, Contract, ContractStatus, ContractType, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Compliance, IdentityVerification, Discipline } from '../types/index.ts';
+import { Role, EngineerProfile, User, Job, Application, Currency, Conversation, Message, Review, CompanyProfile, ApplicationStatus, Notification, NotificationType, AppContextType, ForumPost, ForumComment, ProfileTier, Contract, ContractStatus, ContractType, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Compliance, IdentityVerification, Discipline, JobSkillRequirement } from '../types/index.ts';
 import { MOCK_JOBS, MOCK_ENGINEERS, MOCK_USERS, MOCK_USER_FREE_ENGINEER, ALL_MOCK_USERS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_COMPANIES, MOCK_NOTIFICATIONS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_CONTRACTS, MOCK_TRANSACTIONS } from '../data/mockData.ts';
 import { geminiService } from '../services/geminiService.ts';
 import type { Chat } from '@google/genai';
@@ -23,6 +22,7 @@ const generateUniqueId = () => Math.random().toString(36).substring(2, 9);
  * This centralizes state management and actions, cleaning up the AppProvider component.
  */
 export const useAppLogic = (): AppContextType => {
+    // --- STATE MANAGEMENT ---
     const [user, setUser] = useState<User | null>(null);
     const [allUsers, setAllUsers] = useState<User[]>(ALL_MOCK_USERS);
     const [jobs, setJobs] = useState<Job[]>(MOCK_JOBS);
@@ -31,26 +31,33 @@ export const useAppLogic = (): AppContextType => {
     const [applications, setApplications] = useState<Application[]>(MOCK_APPLICATIONS);
     const [reviews, setReviews] = useState<Review[]>(MOCK_REVIEWS);
     const [chatSession, setChatSession] = useState<Chat | null>(() => geminiService.startChat());
-    
-    // Messaging State
     const [conversations, setConversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
     const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
     const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-
-    // Notification State
+    const [isAiReplying, setIsAiReplying] = useState(false);
     const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
-
-    // Forum State
     const [forumPosts, setForumPosts] = useState<ForumPost[]>(MOCK_FORUM_POSTS);
     const [forumComments, setForumComments] = useState<ForumComment[]>(MOCK_FORUM_COMMENTS);
-    // NEW: Contract & Transaction State
     const [contracts, setContracts] = useState<Contract[]>(MOCK_CONTRACTS);
     const [transactions, setTransactions] = useState<Transaction[]>(MOCK_TRANSACTIONS);
 
-
+    // --- UTILITY FUNCTIONS ---
     const findUserById = (userId: string) => allUsers.find(u => u.id === userId);
     const findUserByProfileId = (profileId: string) => allUsers.find(u => u.profile.id === profileId);
+    
+    // --- NOTIFICATION LOGIC ---
+    const createNotification = (userId: string, type: NotificationType, text: string, link?: string) => {
+        const newNotification: Notification = {
+            id: `notif-${generateUniqueId()}`, userId, type, text, link, isRead: false, timestamp: new Date(),
+        };
+        setNotifications(prev => [newNotification, ...prev]);
+    };
 
+    const markNotificationsAsRead = (userId: string) => {
+        setNotifications(prev => prev.map(n => (n.userId === userId ? { ...n, isRead: true } : n)));
+    };
+
+    // --- AUTH LOGIC ---
     const login = (role: Role, isFreeTier: boolean = false) => {
         let userToLogin: User;
         if (isFreeTier && role === Role.ENGINEER) {
@@ -99,7 +106,6 @@ export const useAppLogic = (): AppContextType => {
             alert("Could not find Steve's engineer profile.");
         }
     };
-
 
     const logout = () => {
         setUser(null);
@@ -194,7 +200,7 @@ export const useAppLogic = (): AppContextType => {
         setUser(newUser);
     };
 
-
+    // --- PROFILE & USER MANAGEMENT ---
     const updateEngineerProfile = (updatedProfile: Partial<EngineerProfile>) => {
         if (user && user.role === Role.ENGINEER) {
             const profileId = ('skills' in user.profile) ? user.profile.id : null;
@@ -229,7 +235,6 @@ export const useAppLogic = (): AppContextType => {
         }
     };
 
-
     const startTrial = () => {
         if (user && 'skills' in user.profile) {
             const trialEndDate = new Date();
@@ -244,53 +249,6 @@ export const useAppLogic = (): AppContextType => {
             });
             alert("30-Day Skills Profile trial started! You now have access to all premium features.");
         }
-    };
-
-     const createNotification = (userId: string, type: NotificationType, text: string, link?: string) => {
-        const newNotification: Notification = {
-            id: `notif-${generateUniqueId()}`, userId, type, text, link, isRead: false, timestamp: new Date(),
-        };
-        setNotifications(prev => [newNotification, ...prev]);
-    };
-
-    const postJob = (jobData: any) => {
-        if (user) {
-            const newJob: Job = {
-                ...jobData, id: `job-${generateUniqueId()}`, companyId: user.profile?.id,
-                postedDate: new Date(), startDate: jobData.startDate ? new Date(jobData.startDate) : null,
-                status: 'active',
-            };
-            setJobs(prevJobs => [newJob, ...prevJobs]);
-
-            const matchingEngineers = engineers.filter(e => e.profileTier !== ProfileTier.BASIC && e.status === 'active').slice(0, 3);
-            matchingEngineers.forEach(eng => {
-                const engUser = findUserByProfileId(eng.id);
-                if (engUser) {
-                    createNotification(engUser.id, NotificationType.NEW_JOB_MATCH, `A new job, '${newJob.title}', matches your skills.`, 'Job Search');
-                }
-            });
-        }
-    };
-
-    const applyForJob = (jobId: string, engineerId?: string) => {
-        let applyingEngineerId: string | undefined = engineerId;
-        if (!applyingEngineerId) {
-            if (user && user.role === Role.ENGINEER) {
-                applyingEngineerId = user.profile.id;
-            } else {
-                alert("No engineer specified for application.");
-                return;
-            }
-        }
-
-        if (applications.some(app => app.jobId === jobId && app.engineerId === applyingEngineerId)) {
-            alert("This engineer has already applied for this job.");
-            return;
-        }
-
-        const newApplication: Application = { jobId, engineerId: applyingEngineerId, date: new Date(), status: ApplicationStatus.APPLIED };
-        setApplications(prev => [newApplication, ...prev]);
-        alert(`Application for ${engineers.find(e => e.id === applyingEngineerId)?.name} submitted successfully!`);
     };
 
     const boostProfile = () => {
@@ -349,24 +307,170 @@ export const useAppLogic = (): AppContextType => {
             alert("Your profile has been reactivated and is now visible in search results.");
         }
     };
+    
+    const toggleUserStatus = (profileId: string) => {
+        const userToUpdate = allUsers.find(u => u.profile.id === profileId);
+        if (!userToUpdate) return;
+        
+        const newStatus = userToUpdate.profile.status === 'active' ? 'suspended' : 'active';
+        setAllUsers(prev => prev.map(u => u.profile.id === profileId ? { ...u, profile: { ...u.profile, status: newStatus } } : u));
+        
+        if (userToUpdate.role === Role.ENGINEER) {
+            setEngineers(prev => prev.map(e => e.id === profileId ? { ...e, status: newStatus } : e));
+        } else if (userToUpdate.role === Role.COMPANY || userToUpdate.role === Role.RESOURCING_COMPANY) {
+            setCompanies(prev => prev.map(c => c.id === profileId ? { ...c, status: newStatus } : c));
+        }
+    };
+    
+    // --- JOB & APPLICATION LOGIC ---
+    const postJob = (jobData: Omit<Job, 'id' | 'companyId' | 'postedDate' | 'status'>) => {
+        if (user && user.profile) {
+            const newJob: Job = {
+                ...jobData,
+                id: `job-${generateUniqueId()}`,
+                companyId: user.profile.id,
+                postedDate: new Date(),
+                startDate: jobData.startDate ? new Date(jobData.startDate) : null,
+                status: 'active',
+            };
+            setJobs(prevJobs => [newJob, ...prevJobs]);
 
-    const sendMessage = (conversationId: string, text: string) => {
-        if (!user) return;
+            const matchingEngineers = engineers.filter(e => e.profileTier !== ProfileTier.BASIC && e.status === 'active').slice(0, 3);
+            matchingEngineers.forEach(eng => {
+                const engUser = findUserByProfileId(eng.id);
+                if (engUser) {
+                    createNotification(engUser.id, NotificationType.NEW_JOB_MATCH, `A new job, '${newJob.title}', matches your skills.`, 'Job Search');
+                }
+            });
+        }
+    };
+
+    const applyForJob = (jobId: string, engineerId?: string) => {
+        let applyingEngineerId: string | undefined = engineerId;
+        if (!applyingEngineerId) {
+            if (user && user.role === Role.ENGINEER) {
+                applyingEngineerId = user.profile.id;
+            } else {
+                alert("No engineer specified for application.");
+                return;
+            }
+        }
+
+        if (applications.some(app => app.jobId === jobId && app.engineerId === applyingEngineerId)) {
+            alert("This engineer has already applied for this job.");
+            return;
+        }
+
+        const newApplication: Application = { jobId, engineerId: applyingEngineerId, date: new Date(), status: ApplicationStatus.APPLIED };
+        setApplications(prev => [newApplication, ...prev]);
+        alert(`Application for ${engineers.find(e => e.id === applyingEngineerId)?.name} submitted successfully!`);
+    };
+    
+    const offerJob = (jobId: string, engineerId: string) => {
+        setApplications(prev => prev.map(app => 
+            app.jobId === jobId && app.engineerId === engineerId ? { ...app, status: ApplicationStatus.OFFERED } : app
+        ));
+        
+        const engineerUser = findUserByProfileId(engineerId);
+        const job = jobs.find(j => j.id === jobId);
+        if (engineerUser && job && user) {
+            createNotification(engineerUser.id, NotificationType.JOB_OFFER, `${user.profile.name} has offered you the '${job.title}' job.`, 'My Network');
+        }
+        alert(`Offer sent to engineer for the job: ${job?.title}`);
+    };
+
+    const acceptOffer = (jobId: string, engineerId: string) => {
+        setApplications(prev => prev.map(app => 
+            app.jobId === jobId && app.engineerId === engineerId ? { ...app, status: ApplicationStatus.ACCEPTED } : app
+        ));
+    };
+
+    const declineOffer = (jobId: string, engineerId: string) => {
+         setApplications(prev => prev.map(app => 
+            app.jobId === jobId && app.engineerId === engineerId ? { ...app, status: ApplicationStatus.DECLINED } : app
+        ));
+    };
+    
+    const toggleJobStatus = (jobId: string) => {
+        setJobs(prev => prev.map(j => (j.id === jobId) ? { ...j, status: j.status === 'active' ? 'inactive' : 'active' } : j));
+    };
+
+    const submitReview = (reviewData: Omit<Review, 'id' | 'date'>) => {
+        const newReview: Review = { ...reviewData, id: `rev-${generateUniqueId()}`, date: new Date() };
+        const updatedReviews = [...reviews, newReview];
+        setReviews(updatedReviews);
+
+        const engineerReviews = updatedReviews.filter(r => r.engineerId === reviewData.engineerId);
+        const totalPeer = engineerReviews.reduce((sum, r) => sum + r.peerRating, 0);
+        const totalCustomer = engineerReviews.reduce((sum, r) => sum + r.customerRating, 0);
+        
+        const newPeerRating = parseFloat((totalPeer / engineerReviews.length).toFixed(1));
+        const newCustomerRating = parseFloat((totalCustomer / engineerReviews.length).toFixed(1));
+
+        updateEngineerProfile({ id: reviewData.engineerId, peerRating: newPeerRating, customerRating: newCustomerRating });
+        setApplications(prev => prev.map(app => 
+            (app.jobId === reviewData.jobId && app.engineerId === reviewData.engineerId)
+            ? { ...app, status: ApplicationStatus.COMPLETED, reviewed: true }
+            : app
+        ));
+        alert("Review submitted successfully!");
+    };
+    
+    // --- MESSAGING LOGIC ---
+    const sendMessage = async (conversationId: string, text: string) => {
+        if (!user || isAiReplying) return;
+
         const newMessage: Message = {
             id: `msg-${generateUniqueId()}`, conversationId, senderId: user.id, text,
-            timestamp: new Date(), isRead: false,
+            timestamp: new Date(), isRead: true, // User's own message is read by them
         };
-        setMessages(prev => [...prev, newMessage]);
+        
+        const updatedMessagesWithUser = [...messages, newMessage];
+        setMessages(updatedMessagesWithUser);
 
         const conversation = conversations.find(c => c.id === conversationId);
-        if (conversation) {
-            setConversations(prev => prev.map(c => 
-                c.id === conversationId ? { ...c, lastMessageText: text, lastMessageTimestamp: newMessage.timestamp } : c
-            ));
+        if (!conversation) return;
+
+        setConversations(prev => prev.map(c => 
+            c.id === conversationId ? { ...c, lastMessageText: text, lastMessageTimestamp: newMessage.timestamp } : c
+        ));
+        
+        setIsAiReplying(true);
+
+        try {
             const recipientId = conversation.participantIds.find(id => id !== user.id);
             if (recipientId) {
-                createNotification(recipientId, NotificationType.MESSAGE, `You have a new message from ${user.profile.name}.`, 'Messages');
+                const otherParticipant = findUserById(recipientId);
+                if (otherParticipant) {
+                    await new Promise(resolve => setTimeout(resolve, 1200 + Math.random() * 800));
+                    
+                    const conversationHistory = updatedMessagesWithUser.filter(m => m.conversationId === conversationId);
+                    const aiResponseText = await geminiService.generateChatResponse(conversationHistory, user, otherParticipant);
+                    
+                    const aiMessage: Message = {
+                        id: `msg-${generateUniqueId()}`, conversationId, senderId: otherParticipant.id,
+                        text: aiResponseText, timestamp: new Date(), isRead: false,
+                    };
+                    
+                    setMessages(prev => [...prev, aiMessage]);
+                    setConversations(prev => prev.map(c => 
+                        c.id === conversationId ? { ...c, lastMessageText: aiResponseText, lastMessageTimestamp: aiMessage.timestamp } : c
+                    ));
+
+                    createNotification(user.id, NotificationType.MESSAGE, `You have a new message from ${otherParticipant.profile.name}.`, 'Messages');
+                }
             }
+        } catch (error) {
+            console.error("Error generating AI response:", error);
+            const aiErrorMessage: Message = {
+                id: `msg-${generateUniqueId()}`, conversationId,
+                senderId: conversation.participantIds.find(id => id !== user.id)!,
+                text: "Sorry, I encountered an error and cannot respond right now.",
+                timestamp: new Date(), isRead: false,
+            };
+            setMessages(prev => [...prev, aiErrorMessage]);
+        } finally {
+            setIsAiReplying(false);
         }
     };
 
@@ -399,74 +503,7 @@ export const useAppLogic = (): AppContextType => {
         navigateToMessages();
     };
     
-    const submitReview = (reviewData: Omit<Review, 'id' | 'date'>) => {
-        const newReview: Review = { ...reviewData, id: `rev-${generateUniqueId()}`, date: new Date() };
-        const updatedReviews = [...reviews, newReview];
-        setReviews(updatedReviews);
-
-        const engineerReviews = updatedReviews.filter(r => r.engineerId === reviewData.engineerId);
-        const totalPeer = engineerReviews.reduce((sum, r) => sum + r.peerRating, 0);
-        const totalCustomer = engineerReviews.reduce((sum, r) => sum + r.customerRating, 0);
-        
-        const newPeerRating = parseFloat((totalPeer / engineerReviews.length).toFixed(1));
-        const newCustomerRating = parseFloat((totalCustomer / engineerReviews.length).toFixed(1));
-
-        updateEngineerProfile({ id: reviewData.engineerId, peerRating: newPeerRating, customerRating: newCustomerRating });
-        setApplications(prev => prev.map(app => 
-            (app.jobId === reviewData.jobId && app.engineerId === reviewData.engineerId)
-            ? { ...app, status: ApplicationStatus.COMPLETED, reviewed: true }
-            : app
-        ));
-        alert("Review submitted successfully!");
-    };
-    
-    const toggleUserStatus = (profileId: string) => {
-        const userToUpdate = allUsers.find(u => u.profile.id === profileId);
-        if (!userToUpdate) return;
-        
-        const newStatus = userToUpdate.profile.status === 'active' ? 'suspended' : 'active';
-        setAllUsers(prev => prev.map(u => u.profile.id === profileId ? { ...u, profile: { ...u.profile, status: newStatus } } : u));
-        
-        if (userToUpdate.role === Role.ENGINEER) {
-            setEngineers(prev => prev.map(e => e.id === profileId ? { ...e, status: newStatus } : e));
-        } else if (userToUpdate.role === Role.COMPANY || userToUpdate.role === Role.RESOURCING_COMPANY) {
-            setCompanies(prev => prev.map(c => c.id === profileId ? { ...c, status: newStatus } : c));
-        }
-    };
-    
-    const toggleJobStatus = (jobId: string) => {
-        setJobs(prev => prev.map(j => (j.id === jobId) ? { ...j, status: j.status === 'active' ? 'inactive' : 'active' } : j));
-    };
-
-    const markNotificationsAsRead = (userId: string) => {
-        setNotifications(prev => prev.map(n => (n.userId === userId ? { ...n, isRead: true } : n)));
-    };
-
-    const offerJob = (jobId: string, engineerId: string) => {
-        setApplications(prev => prev.map(app => 
-            app.jobId === jobId && app.engineerId === engineerId ? { ...app, status: ApplicationStatus.OFFERED } : app
-        ));
-        
-        const engineerUser = findUserByProfileId(engineerId);
-        const job = jobs.find(j => j.id === jobId);
-        if (engineerUser && job && user) {
-            createNotification(engineerUser.id, NotificationType.JOB_OFFER, `${user.profile.name} has offered you the '${job.title}' job.`, 'My Network');
-        }
-        alert(`Offer sent to engineer for the job: ${job?.title}`);
-    };
-
-    const acceptOffer = (jobId: string, engineerId: string) => {
-        setApplications(prev => prev.map(app => 
-            app.jobId === jobId && app.engineerId === engineerId ? { ...app, status: ApplicationStatus.ACCEPTED } : app
-        ));
-    };
-
-    const declineOffer = (jobId: string, engineerId: string) => {
-         setApplications(prev => prev.map(app => 
-            app.jobId === jobId && app.engineerId === engineerId ? { ...app, status: ApplicationStatus.DECLINED } : app
-        ));
-    };
-
+    // --- FORUM LOGIC ---
     const createForumPost = async (post: { title: string; content: string; tags: string[] }) => {
         if (!user) { alert("You must be logged in to create a post."); return; }
         const moderationResult = await geminiService.moderateForumPost(post);
@@ -502,7 +539,7 @@ export const useAppLogic = (): AppContextType => {
         ));
     };
 
-    // --- Contract & Payment Methods ---
+    // --- CONTRACT & PAYMENT LOGIC ---
     const sendContractForSignature = async (contract: Contract) => {
         if (!user) return;
         const engineer = findUserByProfileId(contract.engineerId);
@@ -633,6 +670,7 @@ export const useAppLogic = (): AppContextType => {
         setContracts(prev => prev.map(c => c.id === contractId ? { ...c, timesheets: c.timesheets?.map(ts => ts.id === timesheetId ? { ...ts, status: 'approved' } : ts) } : c));
     };
 
+    // --- CONTEXT EXPORT ---
     return useMemo(() => ({
         user, allUsers, jobs, companies, engineers, login, loginAsSteve, logout, 
         updateEngineerProfile, updateCompanyProfile, postJob, startTrial, geminiService, 
@@ -642,9 +680,10 @@ export const useAppLogic = (): AppContextType => {
         setSelectedConversationId, findUserById, findUserByProfileId, sendMessage, 
         startConversationAndNavigate, reviews, submitReview, toggleUserStatus, toggleJobStatus, 
         notifications, markNotificationsAsRead, offerJob, acceptOffer, declineOffer,
+        isAiReplying,
         forumPosts, forumComments, createForumPost, addForumComment, voteOnPost, voteOnComment,
         contracts, sendContractForSignature, signContract,
         transactions, fundMilestone, submitMilestoneForApproval, approveMilestonePayout,
         submitTimesheet, approveTimesheet
-    }), [user, allUsers, jobs, companies, engineers, applications, conversations, messages, selectedConversationId, reviews, notifications, forumPosts, forumComments, contracts, transactions]);
+    }), [user, allUsers, jobs, companies, engineers, applications, conversations, messages, selectedConversationId, reviews, notifications, isAiReplying, forumPosts, forumComments, contracts, transactions]);
 };

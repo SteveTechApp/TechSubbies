@@ -2,14 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { EngineerProfile } from '../../types/index.ts';
 import { MapPin, Calendar, DollarSign, PlusCircle, Search, MessageCircle } from '../../components/Icons.tsx';
 import { useAppContext } from '../../context/AppContext.tsx';
-
-const formatDate = (date: Date): string => {
-    try {
-        return new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    } catch {
-        return 'N/A';
-    }
-};
+import { formatDisplayDate } from '../../utils/dateFormatter.ts';
 
 const ManagedEngineerCard = ({ profile, onMessage }: { profile: EngineerProfile, onMessage: (profileId: string) => void }) => (
     <div className="bg-white p-4 rounded-lg shadow-md border flex flex-col h-full">
@@ -24,7 +17,7 @@ const ManagedEngineerCard = ({ profile, onMessage }: { profile: EngineerProfile,
         <div className="flex-grow space-y-2 text-sm text-gray-600 pt-2">
              <div className="flex justify-between">
                 <p className="flex items-center text-gray-500"><Calendar size={14} className="mr-1.5"/> Available From</p>
-                <p className="font-semibold">{formatDate(profile.availability)}</p>
+                <p className="font-semibold">{formatDisplayDate(profile.availability)}</p>
             </div>
             <div className="flex justify-between">
                 <p className="flex items-center text-gray-500"><DollarSign size={14} className="mr-1.5"/> Day Rate</p>
