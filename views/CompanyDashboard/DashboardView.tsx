@@ -12,7 +12,7 @@ interface DashboardViewProps {
 }
 
 const QuickActionButton = ({ icon: Icon, label, description, onClick }: { icon: React.ComponentType<any>, label: string, description: string, onClick: () => void }) => (
-    <button onClick={onClick} className="text-left p-4 bg-gray-50 rounded-lg hover:bg-blue-100 hover:shadow-lg transition-all border border-gray-200 flex items-start gap-4">
+    <button onClick={onClick} className="text-left p-4 bg-gray-50 rounded-lg hover:bg-blue-100 hover:shadow-lg transition-all border border-gray-200 flex items-start gap-4 h-full">
         <div className="p-3 bg-white rounded-full shadow-sm">
             <Icon size={24} className="text-blue-600" />
         </div>
@@ -20,6 +20,13 @@ const QuickActionButton = ({ icon: Icon, label, description, onClick }: { icon: 
             <h3 className="font-bold text-gray-800">{label}</h3>
             <p className="text-sm text-gray-500">{description}</p>
         </div>
+    </button>
+);
+
+const StatCard = ({ label, value, onClick }: { label: string, value: number, onClick: () => void }) => (
+    <button onClick={onClick} className="w-full bg-white p-5 rounded-lg shadow text-left hover:shadow-lg hover:-translate-y-1 transition-all">
+        <h2 className="font-bold text-xl">{label}</h2>
+        <p className="text-4xl font-extrabold text-blue-600">{value}</p>
     </button>
 );
 
@@ -62,15 +69,10 @@ export const DashboardView = ({ user, myJobs, engineers, applications, setActive
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-5 rounded-lg shadow col-span-1 lg:col-span-1">
-                <h2 className="font-bold text-xl">Active Jobs</h2>
-                <p className="text-4xl font-extrabold text-blue-600">{myJobs.length}</p>
-            </div>
-             <div className="bg-white p-5 rounded-lg shadow col-span-1 lg:col-span-1">
-                <h2 className="font-bold text-xl">Total Applicants</h2>
-                <p className="text-4xl font-extrabold text-yellow-600">{applications.filter(app => myJobIds.has(app.jobId)).length}</p>
-            </div>
-            <div className="bg-white p-5 rounded-lg shadow col-span-2 lg:col-span-2">
+            <StatCard label="Active Jobs" value={myJobs.length} onClick={() => setActiveView('My Jobs')} />
+            <StatCard label="Total Applicants" value={applications.filter(app => myJobIds.has(app.jobId)).length} onClick={() => setActiveView('My Jobs')} />
+            
+            <div className="bg-white p-5 rounded-lg shadow col-span-2">
                 <h2 className="font-bold text-xl mb-2">Quick Actions</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <QuickActionButton icon={PlusCircle} label="Post New Job" description="Get your role in front of engineers." onClick={() => setActiveView('Post a Job')} />

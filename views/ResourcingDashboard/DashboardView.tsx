@@ -1,13 +1,16 @@
 import React from 'react';
-import { EngineerProfile, Application } from '../../types/index.ts';
+import { EngineerProfile, Application, Contract } from '../../types/index.ts';
 import { Users, UserCheck, Briefcase } from '../../components/Icons.tsx';
+import { StatCard } from '../../components/StatCard.tsx';
 
 interface DashboardViewProps {
     managedEngineers: EngineerProfile[];
     applications: Application[];
+    activePlacements: Contract[];
+    setActiveView: (view: string) => void;
 }
 
-export const DashboardView = ({ managedEngineers, applications }: DashboardViewProps) => {
+export const DashboardView = ({ managedEngineers, applications, activePlacements, setActiveView }: DashboardViewProps) => {
     const managedEngineerIds = new Set(managedEngineers.map(e => e.id));
     const applicationsByManaged = applications.filter(app => managedEngineerIds.has(app.engineerId));
 
@@ -16,34 +19,28 @@ export const DashboardView = ({ managedEngineers, applications }: DashboardViewP
     return (
         <div>
             <h1 className="text-3xl font-bold mb-4">Resourcing Dashboard</h1>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div className="bg-white p-5 rounded-lg shadow flex items-start">
-                    <div className="p-3 bg-blue-100 rounded-full mr-4">
-                        <Users className="w-8 h-8 text-blue-500" />
-                    </div>
-                    <div>
-                        <h2 className="font-bold text-xl text-gray-600">Managed Engineers</h2>
-                        <p className="text-4xl font-extrabold text-blue-600">{managedEngineers.length}</p>
-                    </div>
-                </div>
-                <div className="bg-white p-5 rounded-lg shadow flex items-start">
-                    <div className="p-3 bg-green-100 rounded-full mr-4">
-                        <UserCheck className="w-8 h-8 text-green-500" />
-                    </div>
-                    <div>
-                        <h2 className="font-bold text-xl text-gray-600">Currently Available</h2>
-                        <p className="text-4xl font-extrabold text-green-600">{availableEngineers.length}</p>
-                    </div>
-                </div>
-                <div className="bg-white p-5 rounded-lg shadow flex items-start">
-                    <div className="p-3 bg-yellow-100 rounded-full mr-4">
-                        <Briefcase className="w-8 h-8 text-yellow-500" />
-                    </div>
-                    <div>
-                        <h2 className="font-bold text-xl text-gray-600">Jobs Applied To</h2>
-                        <p className="text-4xl font-extrabold text-yellow-600">{applicationsByManaged.length}</p>
-                    </div>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <StatCard 
+                    icon={Users} 
+                    value={managedEngineers.length} 
+                    label="Managed Engineers" 
+                    colorClass="bg-blue-500" 
+                    onClick={() => setActiveView('Manage Engineers')} 
+                />
+                <StatCard 
+                    icon={UserCheck} 
+                    value={availableEngineers.length} 
+                    label="Currently Available" 
+                    colorClass="bg-green-500" 
+                    onClick={() => setActiveView('Manage Engineers')} 
+                />
+                <StatCard 
+                    icon={Briefcase} 
+                    value={activePlacements.length} 
+                    label="Active Placements" 
+                    colorClass="bg-indigo-500" 
+                    onClick={() => setActiveView('Contracts')} 
+                />
             </div>
             <div className="bg-white p-5 rounded-lg shadow">
                 <h2 className="text-xl font-bold mb-4">Activity Feed</h2>

@@ -38,7 +38,6 @@ const ApplicantCard = ({ profile, application, job, onMessage, onReview, onCreat
         </div>
         <div className="text-right flex-shrink-0 flex flex-col items-end gap-2">
             <div>
-                {/* FIX: EngineerProfile has minDayRate and maxDayRate, not a single dayRate. Displaying the range instead. */}
                 <p className="text-lg font-bold">{profile.currency}{profile.minDayRate} - {profile.maxDayRate}</p>
                 <p className="text-sm text-gray-500">Day Rate</p>
             </div>

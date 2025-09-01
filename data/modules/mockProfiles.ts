@@ -22,11 +22,11 @@ const DEFAULT_COMPLIANCE: Compliance = {
 
 // --- Key Static Profiles ---
 export const MOCK_RESOURCING_COMPANY_1: CompanyProfile = { id: 'res-1', name: 'AV Placements', avatar: 'https://i.pravatar.cc/150?u=avplacements', status: 'active', logo: 'https://i.imgur.com/2yF5t1x.png', companyRegNumber: 'VALID-RES-01', isVerified: true };
-export const MOCK_ADMIN_PROFILE: CompanyProfile = { id: 'admin-1', name: 'Steve Goodwin', avatar: 'https://storage.googleapis.com/pai-images/5950a72c8135451298811c9c6364023c.png', status: 'active', logo: 'https://i.imgur.com/2yF5t1x.png', companyRegNumber: 'N/A', isVerified: true };
+export const MOCK_ADMIN_PROFILE: CompanyProfile = { id: 'admin-1', name: 'Steve Goodwin', avatar: 'https://i.imgur.com/L45aA6d.jpg', status: 'active', logo: 'https://i.imgur.com/2yF5t1x.png', companyRegNumber: 'N/A', isVerified: true };
 
 const MOCK_ENGINEER_STEVE: EngineerProfile = {
     id: 'eng-steve', name: 'Steve Goodwin', firstName: 'Steve', surname: 'Goodwin', status: 'active',
-    discipline: Discipline.AV, avatar: 'https://storage.googleapis.com/pai-images/5950a72c8135451298811c9c6364023c.png', location: 'London, UK',
+    discipline: Discipline.AV, avatar: 'https://i.imgur.com/L45aA6d.jpg', location: 'London, UK',
     currency: Currency.GBP, minDayRate: 700, maxDayRate: 800, experience: 20, availability: new Date('2024-09-01'),
     description: "Industry veteran with over 20 years of experience in technical project management and system design. Founder of TechSubbies.com, passionate about connecting expertise with opportunity.",
     profileTier: ProfileTier.BUSINESS,

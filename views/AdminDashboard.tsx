@@ -11,7 +11,7 @@ export const AdminDashboard = () => {
     const renderActiveView = () => {
         switch(activeView) {
             case 'Dashboard':
-                return <DashboardView />;
+                return <DashboardView setActiveView={setActiveView} />;
             case 'Manage Users':
                 return <UserManagementView />;
             case 'Manage Jobs':

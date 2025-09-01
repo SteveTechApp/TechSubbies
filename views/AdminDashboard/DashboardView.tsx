@@ -2,21 +2,13 @@ import React from 'react';
 import { useAppContext } from '../../context/AppContext.tsx';
 import { Users, User, Building, Briefcase, Star, BarChart2 } from '../../components/Icons.tsx';
 import { ProfileTier } from '../../types/index.ts';
+import { StatCard } from '../../components/StatCard.tsx';
 
-const StatCard = ({ icon: Icon, value, label, colorClass }: { icon: React.ComponentType<any>, value: string | number, label:string, colorClass: string }) => (
-    <div className="bg-white p-6 rounded-lg shadow flex items-start">
-        <div className={`p-3 rounded-full mr-4 ${colorClass}`}>
-            <Icon className="w-8 h-8 text-white" />
-        </div>
-        <div>
-            <p className="text-4xl font-extrabold text-gray-800">{value}</p>
-            <h2 className="font-bold text-lg text-gray-500">{label}</h2>
-        </div>
-    </div>
-);
+interface DashboardViewProps {
+    setActiveView: (view: string) => void;
+}
 
-
-export const DashboardView = () => {
+export const DashboardView = ({ setActiveView }: DashboardViewProps) => {
     const { allUsers, engineers, jobs } = useAppContext();
 
     const totalCompanies = allUsers.filter(u => u.role === 'company' || u.role === 'resourcing_company').length;
@@ -31,11 +23,11 @@ export const DashboardView = () => {
                 Platform Analytics
             </h1>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <StatCard icon={Users} value={totalUsers} label="Total Users" colorClass="bg-blue-500" />
-                <StatCard icon={User} value={totalEngineers} label="Engineers" colorClass="bg-green-500" />
-                <StatCard icon={Building} value={totalCompanies} label="Companies" colorClass="bg-indigo-500" />
-                <StatCard icon={Briefcase} value={jobs.length} label="Jobs Posted" colorClass="bg-sky-500" />
-                <StatCard icon={Star} value={premiumEngineers} label="Premium Subscriptions" colorClass="bg-yellow-500" />
+                <StatCard icon={Users} value={totalUsers} label="Total Users" colorClass="bg-blue-500" onClick={() => setActiveView('Manage Users')} />
+                <StatCard icon={User} value={totalEngineers} label="Engineers" colorClass="bg-green-500" onClick={() => setActiveView('Manage Users')} />
+                <StatCard icon={Building} value={totalCompanies} label="Companies" colorClass="bg-indigo-500" onClick={() => setActiveView('Manage Users')} />
+                <StatCard icon={Briefcase} value={jobs.length} label="Jobs Posted" colorClass="bg-sky-500" onClick={() => setActiveView('Manage Jobs')} />
+                <StatCard icon={Star} value={premiumEngineers} label="Premium Subscriptions" colorClass="bg-yellow-500" onClick={() => setActiveView('Manage Users')} />
             </div>
 
             <div className="mt-8 bg-white p-6 rounded-lg shadow">

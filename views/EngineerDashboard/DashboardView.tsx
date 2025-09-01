@@ -48,15 +48,31 @@ const ProfileStrength = ({ score }: { score: number }) => (
     </div>
 );
 
-const StatBox = ({ value, label, icon: Icon }: { value: string, label: string, icon: React.ComponentType<any> }) => (
-    <div className="bg-white p-4 rounded-lg shadow flex items-center gap-4">
-        <Icon size={24} className="text-blue-500" />
-        <div>
-            <p className="text-2xl font-bold">{value}</p>
-            <p className="text-sm text-gray-500">{label}</p>
+const StatBox = ({ value, label, icon: Icon, onClick }: { value: string, label: string, icon: React.ComponentType<any>, onClick?: () => void }) => {
+    const content = (
+         <div className="flex items-center gap-4">
+            <Icon size={24} className="text-blue-500" />
+            <div>
+                <p className="text-2xl font-bold">{value}</p>
+                <p className="text-sm text-gray-500">{label}</p>
+            </div>
         </div>
-    </div>
-);
+    );
+    
+    if(onClick) {
+        return (
+            <button onClick={onClick} className="w-full bg-white p-4 rounded-lg shadow text-left hover:shadow-lg hover:-translate-y-1 transition-all">
+                {content}
+            </button>
+        )
+    }
+
+    return (
+        <div className="bg-white p-4 rounded-lg shadow">
+            {content}
+        </div>
+    );
+};
 
 const ActionableInsight = ({ profile, onUpgrade, onNavigate }: { profile: EngineerProfile, onUpgrade: () => void, onNavigate: (view: string) => void }) => {
     let insight = {
@@ -217,8 +233,8 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
                 <div className="lg:col-span-1 space-y-6">
                     <ProfileStrength score={profileScore} />
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-                        <StatBox value={engineerProfile.profileViews.toString()} label="Profile Views (30d)" icon={TrendingUp} />
-                        <StatBox value={engineerProfile.jobInvites.toString()} label="Job Invites" icon={Mail} />
+                        <StatBox value={engineerProfile.profileViews.toString()} label="Profile Views (30d)" icon={TrendingUp} onClick={() => setActiveView('Analytics')} />
+                        <StatBox value={engineerProfile.jobInvites.toString()} label="Job Invites" icon={Mail} onClick={() => setActiveView('My Network')} />
                     </div>
                     <ActionableInsight profile={engineerProfile} onUpgrade={() => setActiveView('Billing')} onNavigate={setActiveView} />
                 </div>

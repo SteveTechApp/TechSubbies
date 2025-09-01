@@ -5,31 +5,39 @@ import { DashboardView } from './ResourcingDashboard/DashboardView.tsx';
 import { ManageEngineersView } from './ResourcingDashboard/ManageEngineersView.tsx';
 import { FindJobsView } from './ResourcingDashboard/FindJobsView.tsx';
 import { MessagesView } from './MessagesView.tsx';
+import { PlacementsView } from './ResourcingDashboard/PlacementsView.tsx';
 
 export const ResourcingDashboard = () => {
-    const { user, engineers, applications } = useAppContext();
+    const { user, engineers, applications, contracts } = useAppContext();
     const [activeView, setActiveView] = useState('Dashboard');
 
     const managedEngineers = useMemo(() => {
         if (!user) return [];
         return engineers.filter(e => e.resourcingCompanyId === user.profile.id);
     }, [user, engineers]);
+    
+    const managedContracts = useMemo(() => {
+        if (!user) return [];
+        const managedIds = new Set(managedEngineers.map(e => e.id));
+        return contracts.filter(c => managedIds.has(c.engineerId));
+    }, [user, managedEngineers, contracts]);
+
 
     const renderActiveView = () => {
         if (!user) return <div>Loading...</div>;
 
         switch (activeView) {
             case 'Dashboard':
-                return <DashboardView managedEngineers={managedEngineers} applications={applications} />;
+                return <DashboardView managedEngineers={managedEngineers} applications={applications} activePlacements={managedContracts} setActiveView={setActiveView} />;
             case 'Manage Engineers':
                 return <ManageEngineersView managedEngineers={managedEngineers} setActiveView={setActiveView} />;
             case 'Find Jobs':
                 return <FindJobsView managedEngineers={managedEngineers} setActiveView={setActiveView} />;
+            case 'Contracts':
+                return <PlacementsView managedContracts={managedContracts} setActiveView={setActiveView} />;
             case 'Messages':
                 return <MessagesView />;
             case 'Settings':
-                 // In a real app, this would be a dedicated settings view for the resourcing company.
-                 // We can show a placeholder or a simplified view for now.
                  return (
                     <div>
                         <h1 className="text-3xl font-bold mb-6">Settings</h1>
