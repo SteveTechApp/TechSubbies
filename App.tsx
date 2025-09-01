@@ -76,6 +76,8 @@ const App = () => {
                 return <LegalPage documentType="terms" {...pageProps} />;
             case 'privacy':
                 return <LegalPage documentType="privacy" {...pageProps} />;
+            case 'security':
+                return <LegalPage documentType="security" {...pageProps} />;
             case 'pricing':
                 return <PricingPage {...pageProps} />;
             case 'userGuide':

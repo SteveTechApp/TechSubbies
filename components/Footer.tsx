@@ -65,6 +65,7 @@ export const Footer = ({ onNavigate, onHowItWorksClick }: FooterProps) => {
                              <DropdownMenu triggerText="Legal" direction="up">
                                 <button onClick={() => onNavigate('terms')} className={dropdownItemClass}>Terms of Service</button>
                                 <button onClick={() => onNavigate('privacy')} className={dropdownItemClass}>Privacy Policy</button>
+                                <button onClick={() => onNavigate('security')} className={dropdownItemClass}>Data Security</button>
                             </DropdownMenu>
                         </div>
                     </nav>
