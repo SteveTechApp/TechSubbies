@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
-import { MOCK_COMPANIES } from '../data/mockData.ts';
 import { Page } from '../types/index.ts';
 import { Header } from '../components/Header.tsx';
 import { Footer } from '../components/Footer.tsx';
@@ -45,7 +44,7 @@ const HERO_IMAGES = [
 
 
 export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps) => {
-  const { engineers, jobs } = useAppContext();
+  const { engineers, jobs, companies } = useAppContext();
   const [heroImage, setHeroImage] = useState('');
 
   // State for headline animation
@@ -67,7 +66,7 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
       return () => clearInterval(roleInterval);
   }, []);
 
-  const featuredCompanies = MOCK_COMPANIES.filter(c => c.consentToFeature && c.logo).slice(0, 5);
+  const featuredCompanies = companies.filter(c => c.consentToFeature && c.logo).slice(0, 5);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -112,9 +111,9 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
           {/* Stats Section */}
           <section className="py-10">
               <div className="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
-                  <StatCard icon={Users} value={`${engineers.length}+`} label="Skilled Tech Engineers" />
-                  <StatCard icon={Building} value={`${MOCK_COMPANIES.length}+`} label="Active Companies" />
-                  <StatCard icon={ClipboardList} value={`${jobs.length}+`} label="Jobs Posted" />
+                  <StatCard icon={Users} value={engineers.length} label="Skilled Tech Engineers" />
+                  <StatCard icon={Building} value={companies.length} label="Active Companies" />
+                  <StatCard icon={ClipboardList} value={jobs.length} label="Jobs Posted" />
               </div>
           </section>
           

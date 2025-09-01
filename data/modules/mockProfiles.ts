@@ -27,7 +27,7 @@ export const MOCK_ADMIN_PROFILE: CompanyProfile = { id: 'admin-1', name: 'Steve 
 const MOCK_ENGINEER_STEVE: EngineerProfile = {
     id: 'eng-steve', name: 'Steve Goodwin', firstName: 'Steve', surname: 'Goodwin', status: 'active',
     discipline: Discipline.AV, avatar: 'https://storage.googleapis.com/pai-images/5950a72c8135451298811c9c6364023c.png', location: 'London, UK',
-    currency: Currency.GBP, dayRate: 750, experience: 20, availability: new Date('2024-09-01'),
+    currency: Currency.GBP, minDayRate: 700, maxDayRate: 800, experience: 20, availability: new Date('2024-09-01'),
     description: "Industry veteran with over 20 years of experience in technical project management and system design. Founder of TechSubbies.com, passionate about connecting expertise with opportunity.",
     profileTier: ProfileTier.BUSINESS,
     jobDigestOptIn: true,
@@ -49,7 +49,7 @@ const MOCK_ENGINEER_STEVE: EngineerProfile = {
 const MOCK_ENGINEER_1: EngineerProfile = {
     id: 'eng-1', name: 'Neil Bishop', firstName: 'Neil', middleName: 'John', surname: 'Bishop', title: 'Mr', status: 'active',
     discipline: Discipline.AV, avatar: 'https://xsgames.co/randomusers/assets/avatars/male/74.jpg', location: 'London, UK',
-    currency: Currency.GBP, dayRate: 550, experience: 15, availability: new Date('2024-08-01'),
+    currency: Currency.GBP, minDayRate: 500, maxDayRate: 600, experience: 15, availability: new Date('2024-08-01'),
     description: "Senior AV commissioning engineer with 15+ years' experience specializing in corporate and residential projects. Expert in Crestron, Biamp, and Q-SYS ecosystems, ensuring flawless system integration and performance.",
     companyName: 'AV Innovations', travelRadius: '< 500 miles', profileTier: ProfileTier.SKILLS,
     subscriptionEndDate: new Date(new Date().setDate(new Date().getDate() + 20)), securityNetCreditsUsed: 0,
@@ -79,7 +79,7 @@ const MOCK_ENGINEER_1: EngineerProfile = {
 const MOCK_ENGINEER_2: EngineerProfile = {
     id: 'eng-2', name: 'Samantha Greene', firstName: 'Samantha', surname: 'Greene', title: 'Ms', status: 'active',
     discipline: Discipline.IT, avatar: 'https://xsgames.co/randomusers/assets/avatars/female/10.jpg', location: 'Manchester, UK',
-    currency: Currency.GBP, dayRate: 180, experience: 8, availability: new Date('2024-07-20'),
+    currency: Currency.GBP, minDayRate: 160, maxDayRate: 180, experience: 8, availability: new Date('2024-07-20'),
     description: "Microsoft Certified support specialist focusing on SME infrastructure, Office 35, and user support. Eager to take on new challenges and contribute to successful project outcomes.",
     companyName: 'Greene IT Solutions', travelRadius: '< 100 miles', profileTier: ProfileTier.BASIC,
     resourcingCompanyId: 'res-1', certifications: [ { name: 'Microsoft 365 Certified: Modern Desktop Administrator Associate', verified: false } ],
@@ -101,7 +101,7 @@ const MOCK_ENGINEER_2: EngineerProfile = {
 const MOCK_ENGINEER_3: EngineerProfile = {
     id: 'eng-3', name: 'David Chen', firstName: 'David', surname: 'Chen', status: 'active',
     discipline: Discipline.IT, avatar: 'https://xsgames.co/randomusers/assets/avatars/male/15.jpg', location: 'Birmingham, UK',
-    currency: Currency.GBP, dayRate: 600, experience: 10, availability: new Date('2024-09-15'),
+    currency: Currency.GBP, minDayRate: 550, maxDayRate: 650, experience: 10, availability: new Date('2024-09-15'),
     description: "AWS Certified Solutions Architect with a deep background in Cisco networking. Specializes in designing and implementing scalable, secure cloud infrastructure and hybrid networks.",
     profileTier: ProfileTier.BUSINESS, subscriptionEndDate: new Date(new Date().setDate(new Date().getDate() + 15)), securityNetCreditsUsed: 1, resourcingCompanyId: 'res-1',
     jobDigestOptIn: true,
@@ -126,7 +126,7 @@ const MOCK_ENGINEER_3: EngineerProfile = {
 
 export const MOCK_FREE_ENGINEER: EngineerProfile = {
     ...MOCK_ENGINEER_2, id: 'eng-free', name: 'Emily Carter', firstName: 'Emily', surname: 'Carter', status: 'active',
-    avatar: 'https://xsgames.co/randomusers/assets/avatars/female/20.jpg', profileTier: ProfileTier.BASIC, dayRate: 190, skills: undefined,
+    avatar: 'https://xsgames.co/randomusers/assets/avatars/female/20.jpg', profileTier: ProfileTier.BASIC, minDayRate: 170, maxDayRate: 190, skills: undefined,
     resourcingCompanyId: undefined, contact: { ...MOCK_ENGINEER_2.contact, email: 'emily.carter@example.com' },
     compliance: { 
         ...DEFAULT_COMPLIANCE,
@@ -158,12 +158,22 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
         const firstName = isMale ? getRandom(MALE_FIRST_NAMES) : getRandom(FEMALE_FIRST_NAMES);
         const name = `${firstName} ${getRandom(LAST_NAMES)}`;
         
+        let minDayRate, maxDayRate;
+        if (profileTier === ProfileTier.BASIC) {
+            maxDayRate = getRandomInt(150, 195);
+            minDayRate = Math.max(120, maxDayRate - getRandomInt(20, 40));
+        } else {
+            minDayRate = getRandomInt(10, 30) * 25;
+            maxDayRate = minDayRate + getRandomInt(2, 10) * 25;
+        }
+
         const engineer: EngineerProfile = {
             id: `gen-eng-${i}`, name, firstName, surname: name.split(' ')[1], status: 'active',
             discipline: getRandom([Discipline.AV, Discipline.IT, Discipline.BOTH]),
             avatar: `https://xsgames.co/randomusers/assets/avatars/${isMale ? 'male' : 'female'}/${getRandomInt(0, 78)}.jpg`,
             location: `${getRandom(LOCATIONS)}, UK`, currency: Currency.GBP,
-            dayRate: profileTier === ProfileTier.BASIC ? getRandomInt(6, 7) * 25 : getRandomInt(10, 30) * 25,
+            minDayRate,
+            maxDayRate,
             experience: getRandomInt(3, 20), availability: new Date(new Date().getTime() + getRandomInt(1, 90) * 24 * 60 * 60 * 1000),
             description: `A skilled ${name.split(' ')[1]} with ${name.length % 10 + 5} years of experience.`,
             profileTier, certifications: [], caseStudies: [],

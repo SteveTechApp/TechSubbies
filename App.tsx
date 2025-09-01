@@ -16,6 +16,7 @@ import { InvestorRelationsPage } from './views/InvestorRelationsPage.tsx';
 import { AboutUsPage } from './views/AboutUsPage.tsx';
 import { LegalPage } from './views/LegalPage.tsx';
 import { PricingPage } from './views/PricingPage.tsx';
+import { UserGuidePage } from './views/UserGuidePage.tsx';
 import { AIAssistant } from './components/AIAssistant.tsx';
 import { HowItWorksModal } from './components/HowItWorksModal.tsx';
 
@@ -77,6 +78,8 @@ const App = () => {
                 return <LegalPage documentType="privacy" {...pageProps} />;
             case 'pricing':
                 return <PricingPage {...pageProps} />;
+            case 'userGuide':
+                return <UserGuidePage {...pageProps} />;
             case 'landing':
             default:
                 return <LandingPage {...pageProps} />;

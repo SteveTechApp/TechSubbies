@@ -7,10 +7,22 @@ interface EngineerCardProps {
     profile: EngineerProfile;
     onClick: () => void;
     matchScore?: number;
-    isAiMatch?: boolean;
 }
 
-export const EngineerCard = ({ profile, onClick, matchScore, isAiMatch }: EngineerCardProps) => {
+const getMatchScoreBadgeClass = (score: number) => {
+    if (score >= 85) {
+        return 'bg-green-600 text-white'; // Excellent
+    }
+    if (score >= 70) {
+        return 'bg-blue-600 text-white'; // Good
+    }
+    if (score >= 50) {
+        return 'bg-yellow-500 text-black'; // Okay
+    }
+    return 'bg-gray-500 text-white'; // Consider
+};
+
+export const EngineerCard = ({ profile, onClick, matchScore }: EngineerCardProps) => {
     const { companies } = useAppContext();
 
     const resourcingCompany = profile.resourcingCompanyId 
@@ -47,7 +59,7 @@ export const EngineerCard = ({ profile, onClick, matchScore, isAiMatch }: Engine
                 )}
                 
                 {matchScore !== undefined && (
-                    <div className="absolute top-2 left-2 bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center shadow-lg">
+                    <div className={`absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded-full flex items-center shadow-lg ${getMatchScoreBadgeClass(matchScore)}`}>
                         <Sparkles size={12} className="mr-1.5" />
                         {Math.round(matchScore)}% Match
                     </div>
@@ -78,10 +90,10 @@ export const EngineerCard = ({ profile, onClick, matchScore, isAiMatch }: Engine
             <div className="mt-3 pt-3 border-t border-gray-100">
                 <div className="flex justify-between items-center">
                     <h4 className="text-xs font-bold text-gray-500 uppercase">
-                        {profile.profileTier !== ProfileTier.BASIC ? 'Core Skills' : 'Profile Tier'}
+                        {profile.profileTier !== ProfileTier.BASIC ? 'Core Skills' : 'Day Rate'}
                     </h4>
                     <div className="text-right">
-                        <p className="text-lg font-bold text-gray-800">{profile.currency}{profile.dayRate}</p>
+                        <p className="text-lg font-bold text-gray-800">{profile.currency}{profile.minDayRate} - {profile.maxDayRate}</p>
                     </div>
                 </div>
                 {profile.profileTier !== ProfileTier.BASIC && profile.skills && profile.skills.length > 0 ? (

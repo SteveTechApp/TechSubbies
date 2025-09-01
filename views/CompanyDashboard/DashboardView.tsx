@@ -8,6 +8,7 @@ interface DashboardViewProps {
     myJobs: Job[];
     engineers: EngineerProfile[];
     applications: Application[];
+    setActiveView: (view: string) => void;
 }
 
 const QuickActionButton = ({ icon: Icon, label, description, onClick }: { icon: React.ComponentType<any>, label: string, description: string, onClick: () => void }) => (
@@ -32,7 +33,7 @@ const ActivityItem = ({ icon: Icon, text, time }: { icon: React.ComponentType<an
     </div>
 );
 
-export const DashboardView = ({ user, myJobs, engineers, applications }: DashboardViewProps) => {
+export const DashboardView = ({ user, myJobs, engineers, applications, setActiveView }: DashboardViewProps) => {
     // Find recent applications for jobs posted by the current company
     const myJobIds = new Set(myJobs.map(j => j.id));
     const recentApplications = applications
@@ -72,8 +73,8 @@ export const DashboardView = ({ user, myJobs, engineers, applications }: Dashboa
             <div className="bg-white p-5 rounded-lg shadow col-span-2 lg:col-span-2">
                 <h2 className="font-bold text-xl mb-2">Quick Actions</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <QuickActionButton icon={PlusCircle} label="Post New Job" description="Get your role in front of engineers." onClick={() => { /* This should navigate */ }} />
-                    <QuickActionButton icon={Users} label="Find Talent" description="Search the engineer database." onClick={() => { /* This should navigate */ }}/>
+                    <QuickActionButton icon={PlusCircle} label="Post New Job" description="Get your role in front of engineers." onClick={() => setActiveView('Post a Job')} />
+                    <QuickActionButton icon={Users} label="Find Talent" description="Search the engineer database." onClick={() => setActiveView('Find Talent')}/>
                 </div>
             </div>
         </div>

@@ -113,7 +113,7 @@ export const useAppLogic = (): AppContextType => {
 
     const createAndLoginEngineer = (data: {
         name: string, email: string, discipline: Discipline, location: string, experience: number,
-        dayRate: number, currency: Currency, availability: string,
+        minDayRate: number, maxDayRate: number, currency: Currency, availability: string,
         compliance: Compliance, identity: IdentityVerification
     }) => {
         const [firstName, ...lastNameParts] = data.name.split(' ');
@@ -132,7 +132,8 @@ export const useAppLogic = (): AppContextType => {
             location: data.location,
             experience: data.experience,
             currency: data.currency,
-            dayRate: data.dayRate,
+            minDayRate: data.minDayRate,
+            maxDayRate: data.maxDayRate,
             availability: new Date(data.availability),
             compliance: data.compliance,
             identity: data.identity,

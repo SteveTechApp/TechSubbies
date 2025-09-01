@@ -51,7 +51,7 @@ export const AIEngineerCostAnalysis = ({ job, engineer }: AIEngineerCostAnalysis
         AI Cost-Effectiveness Analysis
       </h4>
       <p className="text-sm text-gray-600 mb-4"> 
-        Is {engineer.name}'s day rate of {engineer.currency}{engineer.dayRate} a good value for this job? Let our AI analyze the match.
+        Is {engineer.name}'s day rate range of {engineer.currency}{engineer.minDayRate} - {engineer.maxDayRate} a good value for this job? Let our AI analyze the match.
       </p>
       
       {!analysisResult && (

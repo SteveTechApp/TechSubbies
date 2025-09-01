@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { EngineerProfile, Job, ProfileTier, User, Message, CompanyProfile, JobSkillRequirement } from '../types/index.ts';
+import { EngineerProfile, Job, ProfileTier, User, Message, CompanyProfile, JobSkillRequirement, JobType } from '../types/index.ts';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -85,7 +85,7 @@ export const geminiService = {
         Engineer Profile:
         - Role: ${engineerProfile.discipline}
         - Experience: ${engineerProfile.experience} years
-        - Day Rate: ${engineerProfile.currency}${engineerProfile.dayRate}
+        - Day Rate Range: ${engineerProfile.currency}${engineerProfile.minDayRate} - ${engineerProfile.maxDayRate}
         - Key Skills: ${engineerProfile.skills?.map(s => `${s.name} (rated ${s.rating}/100)`).join(', ') || 'Not specified'}
         Provide a JSON response with:
         1. "skill_match_assessment" (string): A brief sentence on how well their skills match the project.
@@ -170,17 +170,18 @@ export const geminiService = {
             .map(eng => ({
                 id: eng.id,
                 experience: eng.experience,
-                dayRate: eng.dayRate,
+                dayRateRange: `${eng.minDayRate}-${eng.maxDayRate}`,
                 rated_skills: eng.selectedJobRoles?.flatMap(role => role.skills) || [],
             }));
 
         const essentialSkills = job.skillRequirements?.filter(s => s.importance === 'essential').map(s => s.name) || [];
         const desirableSkills = job.skillRequirements?.filter(s => s.importance === 'desirable').map(s => s.name) || [];
 
-        const prompt = `You are an AI-powered talent matching engine for TechSubbies.com. Your task is to analyze a job's specific skill requirements and compare them against a list of freelance engineers to generate a match score for each.
+        const prompt = `You are an AI-powered talent matching engine for TechSubbies.com. Your task is to analyze a job's specific requirements and compare them against a list of freelance engineers to generate a match score for each.
 
         Job Requirement Profile:
         - Title: ${job.title}
+        - Job Type: ${job.jobType}
         - Required Experience Level: ${job.experienceLevel}
         - Essential Skills: ${JSON.stringify(essentialSkills)}
         - Desirable Skills: ${JSON.stringify(desirableSkills)}
@@ -189,10 +190,14 @@ export const geminiService = {
         ${JSON.stringify(summarizedEngineers, null, 2)}
 
         Analysis Rules:
-        1.  Calculate a 'match_score' (0-100) for each engineer.
-        2.  Essential Skills are critical. An engineer's score should be heavily penalized if their self-rated score for any essential skill is below 75. Give a significant bonus if all essential skills are rated 85+.
-        3.  Desirable Skills add to the score. For each desirable skill an engineer has, add points proportional to their self-rated score.
-        4.  Factor in experience. An engineer's experience should be appropriate for the role's required level.
+        1.  Calculate a 'match_score' (0-100) for each engineer based on a weighted analysis.
+        2.  **Skill Match (60% weight):**
+            -   Essential Skills are critical. An engineer's score should be heavily penalized if their self-rated score for any essential skill is below 75. Give a significant bonus if all essential skills are rated 85+.
+            -   Desirable Skills add to the score. For each desirable skill an engineer has, add points proportional to their self-rated score.
+        3.  **Experience Match (30% weight):**
+            -   Compare the engineer's years of experience with the 'Required Experience Level'. An engineer with significantly less experience than required should be scored lower, while someone within or above the expected range should score highly.
+        4.  **Job Type Fit (10% weight):**
+            -   Consider the 'Job Type'. For a '${JobType.CONTRACT}' role, prioritize engineers with high ratings in essential skills, indicating they can start immediately. For a '${JobType.FULL_TIME}' role, you can slightly favor a candidate with strong desirable skills and experience, even if one essential skill is slightly lower, as there's room for growth.
         5.  Return a ranked list of ALL provided engineers, from best match to worst.
 
         Provide the output in JSON format.`;

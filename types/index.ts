@@ -134,7 +134,8 @@ export interface EngineerProfile extends BaseProfile {
     discipline: Discipline;
     location: string;
     currency: Currency;
-    dayRate: number;
+    minDayRate: number;
+    maxDayRate: number;
     experience: number; // years
     availability: Date;
     description: string;
@@ -166,11 +167,11 @@ export interface EngineerProfile extends BaseProfile {
     otherLinks?: SocialLink[];
     rightColumnLinks?: { label: string, value: string, url: string }[];
     isBoosted?: boolean;
-    matchScore?: number;
     profileViews: number;
     searchAppearances: number;
     jobInvites: number;
     calendarSyncUrl?: string;
+    matchScore?: number;
 }
 
 
@@ -385,7 +386,7 @@ export interface Transaction {
 }
 
 
-export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'companySignUp' | 'resourcingCompanySignUp' | 'investors' | 'aboutUs' | 'terms' | 'privacy' | 'pricing' | 'howItWorks';
+export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'companySignUp' | 'resourcingCompanySignUp' | 'investors' | 'aboutUs' | 'terms' | 'privacy' | 'pricing' | 'howItWorks' | 'userGuide';
 
 export interface AppContextType {
     user: User | null;

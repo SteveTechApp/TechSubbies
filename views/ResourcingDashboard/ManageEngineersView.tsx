@@ -21,7 +21,7 @@ const ManagedEngineerCard = ({ profile, onMessage }: { profile: EngineerProfile,
             </div>
             <div className="flex justify-between">
                 <p className="flex items-center text-gray-500"><DollarSign size={14} className="mr-1.5"/> Day Rate</p>
-                <p className="font-semibold">{profile.currency}{profile.dayRate}</p>
+                <p className="font-semibold">{profile.currency}{profile.minDayRate} - {profile.maxDayRate}</p>
             </div>
         </div>
         <div className="mt-4 pt-4 border-t flex flex-col gap-2">

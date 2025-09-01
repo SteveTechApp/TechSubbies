@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { EngineerProfile } from '../../types/index.ts';
-import { ArrowLeft, Save, Loader, CheckCircle } from '../../components/Icons.tsx';
+import { EngineerProfile, Currency, ProfileTier } from '../../types/index.ts';
+import { ArrowLeft, Save, Loader, CheckCircle, PoundSterling } from '../../components/Icons.tsx';
 import { CoreInfoSection } from '../../components/ProfileManagement/CoreInfoSection.tsx';
 import { ContactSection } from '../../components/ProfileManagement/ContactSection.tsx';
 import { WorkReadinessSection } from '../../components/ProfileManagement/WorkReadinessSection.tsx';
@@ -9,6 +9,7 @@ import { PortfolioSection } from '../../components/ProfileManagement/PortfolioSe
 import { NotificationSettingsSection } from '../../components/ProfileManagement/NotificationSettingsSection.tsx';
 import { CertificationsSection } from '../../components/ProfileManagement/CertificationsSection.tsx';
 import { IdentitySection } from '../../components/ProfileManagement/IdentitySection.tsx';
+import { SectionWrapper } from '../../components/ProfileManagement/SectionWrapper.tsx';
 
 interface ProfileManagementViewProps {
     profile: EngineerProfile;
@@ -43,11 +44,18 @@ export const ProfileManagementView = ({ profile, onSave, setActiveView }: Profil
 
     const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
+        
+        let processedValue: any = value;
         if (type === 'checkbox') {
-            setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
-        } else {
-            setFormData(prev => ({ ...prev, [name]: name === 'experience' ? parseInt(value, 10) : value }));
+            processedValue = (e.target as HTMLInputElement).checked;
+        } else if (['experience', 'minDayRate', 'maxDayRate'].includes(name)) {
+            processedValue = parseInt(value, 10) || 0;
+            if (name === 'maxDayRate' && profile.profileTier === ProfileTier.BASIC && processedValue > 195) {
+                processedValue = 195;
+            }
         }
+        
+        setFormData(prev => ({ ...prev, [name]: processedValue }));
     };
 
     const handleContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,6 +135,30 @@ export const ProfileManagementView = ({ profile, onSave, setActiveView }: Profil
             <div className="space-y-6">
                 <CoreInfoSection formData={formData} onProfileChange={handleProfileChange} />
                 <ContactSection contactData={contactData} onContactChange={handleContactChange} />
+                 <SectionWrapper title="Day Rate" icon={PoundSterling}>
+                    <div className="flex gap-4">
+                        <div className="w-1/3">
+                            <label className="block text-sm font-medium text-gray-500">Currency</label>
+                            <select name="currency" value={formData.currency} onChange={handleProfileChange} className="w-full border p-2 rounded bg-white h-[42px]">
+                                <option value={Currency.GBP}>GBP (£)</option>
+                                <option value={Currency.USD}>USD ($)</option>
+                            </select>
+                        </div>
+                        <div className="w-1/3">
+                            <label className="block text-sm font-medium text-gray-500">Minimum</label>
+                            <input type="number" name="minDayRate" value={formData.minDayRate || ''} step="5" onChange={handleProfileChange} className="w-full border p-2 rounded" />
+                        </div>
+                        <div className="w-1/3">
+                            <label className="block text-sm font-medium text-gray-500">Maximum</label>
+                            <input type="number" name="maxDayRate" value={formData.maxDayRate || ''} step="5" onChange={handleProfileChange} max={profile.profileTier === ProfileTier.BASIC ? 195 : undefined} className="w-full border p-2 rounded" />
+                        </div>
+                    </div>
+                    {profile.profileTier === ProfileTier.BASIC && (
+                        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded-md text-sm">
+                            As a Basic Profile user, your maximum day rate is capped at £195. <button type="button" onClick={() => setActiveView('Billing')} className="font-bold underline hover:text-blue-900">Upgrade your profile</button> to set a higher rate.
+                        </div>
+                    )}
+                </SectionWrapper>
                 <WorkReadinessSection complianceData={complianceData} setComplianceData={setComplianceData} />
                 <IdentitySection identityData={identityData} setIdentityData={setIdentityData} />
                 <NotificationSettingsSection profile={profile} formData={formData} onProfileChange={handleProfileChange} />

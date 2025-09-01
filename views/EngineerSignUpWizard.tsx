@@ -20,7 +20,7 @@ export const EngineerSignUpWizard = ({ onCancel }: EngineerSignUpWizardProps) =>
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         name: '', email: '', discipline: Discipline.AV, location: '', experience: 5,
-        dayRate: 180, currency: Currency.GBP, availability: new Date().toISOString().split('T')[0],
+        minDayRate: 150, maxDayRate: 180, currency: Currency.GBP, availability: new Date().toISOString().split('T')[0],
         compliance: {
             professionalIndemnity: { hasCoverage: false, isVerified: false, amount: 1000000 },
             publicLiability: { hasCoverage: false, isVerified: false, amount: 2000000 },
@@ -34,7 +34,8 @@ export const EngineerSignUpWizard = ({ onCancel }: EngineerSignUpWizardProps) =>
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        const isNumberField = ['experience', 'minDayRate', 'maxDayRate'].includes(name);
+        setFormData(prev => ({ ...prev, [name]: isNumberField ? parseInt(value, 10) || 0 : value }));
     };
 
     const nextStep = () => setStep(s => Math.min(s + 1, WIZARD_STEPS));

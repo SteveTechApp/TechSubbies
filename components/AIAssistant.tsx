@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
 import { MessageCircle, X, Loader } from './Icons.tsx';
 
@@ -24,7 +24,7 @@ export const AIAssistant = () => {
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [hasMoved, setHasMoved] = useState(false);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         // Set initial position to bottom right only after component mounts to ensure window object is available
         setPosition({ x: window.innerWidth - 80, y: window.innerHeight - 80 });
 
@@ -85,7 +85,7 @@ export const AIAssistant = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    useEffect(scrollToBottom, [messages]);
+    useLayoutEffect(scrollToBottom, [messages]);
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();

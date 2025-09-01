@@ -25,7 +25,7 @@ const StatRow = ({ label, value }: { label: string; value: string | number }) =>
 
 const CardFront = ({ profile, isEditable, onEdit }: { profile: EngineerProfile, isEditable?: boolean, onEdit?: () => void }) => {
     const {
-        name, discipline, avatar, experience, dayRate, currency,
+        name, discipline, avatar, experience, minDayRate, maxDayRate, currency,
         customerRating, peerRating, location, description, profileTier
     } = profile;
 
@@ -79,7 +79,7 @@ const CardFront = ({ profile, isEditable, onEdit }: { profile: EngineerProfile, 
             </div>
             <div className="bg-blue-800/50 rounded-lg border-2 border-white/50 overflow-hidden mb-4">
                 <StatRow label="Experience" value={`${experience} YRS`} />
-                <StatRow label="Day Rate" value={`${currency}${dayRate}`} />
+                <StatRow label="Day Rate" value={`${currency}${minDayRate}-${maxDayRate}`} />
                 {hasPaidFeatures ? (
                     <>
                         <StatRow label="Top Skill Score" value={topSkillScore} />

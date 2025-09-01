@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../../context/AppContext.tsx';
-import { Job, EngineerProfile, Application, ApplicationStatus } from '../../types/index.ts';
-import { MapPin, ArrowLeft, User, Mail, Phone, MessageCircle, Star, Briefcase } from '../../components/Icons.tsx';
+import { Job, EngineerProfile, Application, ApplicationStatus, ProfileTier } from '../../types/index.ts';
+import { MapPin, ArrowLeft, User, Mail, Phone, MessageCircle, Star, Briefcase, Sparkles, Loader } from '../../components/Icons.tsx';
 import { ReviewModal } from '../../components/ReviewModal.tsx';
 import { CreateContractModal } from '../../components/CreateContractModal.tsx';
 import { formatDisplayDate } from '../../utils/dateFormatter.ts';
@@ -13,13 +13,22 @@ interface ApplicantCardProps {
     onMessage: (profileId: string) => void;
     onReview: (profile: EngineerProfile) => void;
     onCreateContract: (job: Job, profile: EngineerProfile) => void;
+    matchScore?: number;
 }
 
-const ApplicantCard = ({ profile, application, job, onMessage, onReview, onCreateContract }: ApplicantCardProps) => (
+const ApplicantCard = ({ profile, application, job, onMessage, onReview, onCreateContract, matchScore }: ApplicantCardProps) => (
     <div className="p-4 bg-white rounded-lg shadow-md border flex items-start gap-4">
         <img src={profile.avatar} alt={profile.name} className="w-16 h-16 rounded-full border-2 border-gray-200" />
         <div className="flex-grow">
-            <h4 className="text-lg font-bold text-gray-800">{profile.name}</h4>
+            <div className="flex items-center gap-3">
+                <h4 className="text-lg font-bold text-gray-800">{profile.name}</h4>
+                {matchScore !== undefined && (
+                     <div className="bg-purple-100 text-purple-800 text-xs font-bold px-2.5 py-1 rounded-full flex items-center">
+                        <Sparkles size={12} className="mr-1.5" />
+                        {Math.round(matchScore)}% Match
+                    </div>
+                )}
+            </div>
             <p className="text-blue-600 font-semibold">{profile.discipline}</p>
             <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
                 <span className="flex items-center"><User size={14} className="mr-1.5"/> {profile.experience} years exp.</span>
@@ -29,7 +38,8 @@ const ApplicantCard = ({ profile, application, job, onMessage, onReview, onCreat
         </div>
         <div className="text-right flex-shrink-0 flex flex-col items-end gap-2">
             <div>
-                <p className="text-lg font-bold">{profile.currency}{profile.dayRate}</p>
+                {/* FIX: EngineerProfile has minDayRate and maxDayRate, not a single dayRate. Displaying the range instead. */}
+                <p className="text-lg font-bold">{profile.currency}{profile.minDayRate} - {profile.maxDayRate}</p>
                 <p className="text-sm text-gray-500">Day Rate</p>
             </div>
              <div className="flex items-center gap-2">
@@ -74,21 +84,72 @@ interface MyJobsViewProps {
 }
 
 export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
-    const { applications, engineers, startConversationAndNavigate, submitReview, sendContractForSignature } = useAppContext();
+    const { applications, engineers, startConversationAndNavigate, submitReview, sendContractForSignature, geminiService } = useAppContext();
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [reviewingApplicant, setReviewingApplicant] = useState<EngineerProfile | null>(null);
     const [contractingDetails, setContractingDetails] = useState<{job: Job, engineer: EngineerProfile} | null>(null);
+    const [isMatching, setIsMatching] = useState(false);
+    const [matchScores, setMatchScores] = useState<Map<string, number>>(new Map());
 
 
-    const getApplicantsForJob = (jobId: string) => {
+    const getApplicantsForJob = useMemo(() => (jobId: string) => {
         return applications
             .filter(app => app.jobId === jobId)
             .map(app => {
                 const engineer = engineers.find(eng => eng.id === app.engineerId);
                 return { application: app, engineer };
             })
-            .filter(item => item.engineer); // Filter out any cases where engineer wasn't found
-    };
+            .filter((item): item is { application: Application; engineer: EngineerProfile } => !!item.engineer);
+    }, [applications, engineers]);
+    
+    useEffect(() => {
+        if (!selectedJob) return;
+
+        const fetchMatchScores = async () => {
+            setIsMatching(true);
+            setMatchScores(new Map()); // Clear old scores
+
+            // We can only score premium engineers with detailed skill profiles
+            const premiumApplicants = getApplicantsForJob(selectedJob.id)
+                .map(item => item.engineer)
+                .filter(eng => 
+                    eng.profileTier !== ProfileTier.BASIC && !!eng.selectedJobRoles && eng.selectedJobRoles.length > 0
+                );
+
+            if (premiumApplicants.length > 0) {
+                const results = await geminiService.findBestMatchesForJob(selectedJob, premiumApplicants);
+                if (results && results.matches) {
+                    const scoresMap = new Map<string, number>();
+                    results.matches.forEach((match: { id: string; match_score: number }) => {
+                        scoresMap.set(match.id, match.match_score);
+                    });
+                    setMatchScores(scoresMap);
+                }
+            }
+            setIsMatching(false);
+        };
+
+        fetchMatchScores();
+    }, [selectedJob, geminiService, getApplicantsForJob]);
+    
+    const applicantsForSelectedJob = useMemo(() => {
+        if (!selectedJob) return [];
+        
+        return getApplicantsForJob(selectedJob.id)
+            .map(item => ({
+                ...item,
+                matchScore: matchScores.get(item.engineer.id)
+            }))
+            .sort((a, b) => {
+                // Sort by match score (desc), then by application date (desc)
+                if (a.matchScore !== undefined && b.matchScore !== undefined) {
+                    return b.matchScore - a.matchScore;
+                }
+                if (a.matchScore !== undefined) return -1;
+                if (b.matchScore !== undefined) return 1;
+                return b.application.date.getTime() - a.application.date.getTime();
+            });
+    }, [selectedJob, getApplicantsForJob, matchScores]);
     
     const handleMessageApplicant = (profileId: string) => {
         startConversationAndNavigate(profileId, () => setActiveView('Messages'));
@@ -103,7 +164,6 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
     };
 
     if (selectedJob) {
-        const applicants = getApplicantsForJob(selectedJob.id);
         return (
             <div>
                  <button 
@@ -115,11 +175,26 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
                 </button>
                 <div className="bg-white p-5 rounded-lg shadow">
                     <h2 className="text-2xl font-bold mb-1">Applicants for "{selectedJob.title}"</h2>
-                    <p className="text-gray-600 mb-6">You have {applicants.length} applicant(s) for this role.</p>
-                     {applicants.length > 0 ? (
+                    <p className="text-gray-600 mb-6">You have {applicantsForSelectedJob.length} applicant(s) for this role.</p>
+                     {isMatching && (
+                        <div className="flex items-center justify-center p-4 bg-blue-50 rounded-md my-4">
+                            <Loader className="animate-spin w-5 h-5 mr-3 text-blue-600" />
+                            <p className="text-blue-700 font-semibold">Calculating AI match scores for premium applicants...</p>
+                        </div>
+                    )}
+                     {applicantsForSelectedJob.length > 0 ? (
                         <div className="space-y-4">
-                            {applicants.map(({ application, engineer }) => 
-                                engineer && <ApplicantCard key={engineer.id} profile={engineer} application={application} job={selectedJob} onMessage={handleMessageApplicant} onReview={handleReviewApplicant} onCreateContract={handleCreateContract} />
+                            {applicantsForSelectedJob.map(({ application, engineer, matchScore }) => 
+                                <ApplicantCard 
+                                    key={engineer.id} 
+                                    profile={engineer} 
+                                    application={application} 
+                                    job={selectedJob} 
+                                    onMessage={handleMessageApplicant} 
+                                    onReview={handleReviewApplicant} 
+                                    onCreateContract={handleCreateContract} 
+                                    matchScore={matchScore}
+                                />
                             )}
                         </div>
                     ) : (

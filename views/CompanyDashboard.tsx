@@ -53,7 +53,7 @@ export const CompanyDashboard = () => {
         if (!user) return null;
         switch(activeView) {
             case 'Dashboard':
-                return <DashboardView user={user} myJobs={myJobs} engineers={engineers} applications={applications} />;
+                return <DashboardView user={user} myJobs={myJobs} engineers={engineers} applications={applications} setActiveView={setActiveView} />;
             case 'Find Talent':
                  if (talentView === 'profile' && selectedEngineer) {
                     return (

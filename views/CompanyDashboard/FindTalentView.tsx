@@ -78,7 +78,7 @@ export const FindTalentView = ({ engineers, myJobs, onSelectEngineer }: FindTale
             }))
             .filter(eng => {
                 if (eng.status !== 'active') return false;
-                if (eng.dayRate > filters.maxRate) return false;
+                if (eng.minDayRate > filters.maxRate) return false;
                 if (eng.experience < filters.minExperience) return false;
                 
                 if (filters.role !== 'any' && !eng.selectedJobRoles?.some(r => r.roleName === filters.role)) {
@@ -109,8 +109,8 @@ export const FindTalentView = ({ engineers, myJobs, onSelectEngineer }: FindTale
                 switch (sort) {
                     case 'name-asc': return a.name.localeCompare(b.name);
                     case 'name-desc': return b.name.localeCompare(a.name);
-                    case 'rate-asc': return a.dayRate - b.dayRate;
-                    case 'rate-desc': return b.dayRate - a.dayRate;
+                    case 'rate-asc': return a.minDayRate - b.minDayRate;
+                    case 'rate-desc': return b.minDayRate - a.minDayRate;
                     case 'relevance':
                     default:
                         if (a.isBoosted !== b.isBoosted) return a.isBoosted ? -1 : 1;
@@ -179,7 +179,7 @@ export const FindTalentView = ({ engineers, myJobs, onSelectEngineer }: FindTale
                  </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {processedEngineers.length > 0 ? (
-                         processedEngineers.map(eng => <EngineerCard key={eng.id} profile={eng} matchScore={eng.matchScore} onClick={() => onSelectEngineer(eng)} isAiMatch={aiMatchResults.some(r => r.id === eng.id)} />)
+                         processedEngineers.map(eng => <EngineerCard key={eng.id} profile={eng} matchScore={eng.matchScore} onClick={() => onSelectEngineer(eng)} />)
                     ) : (
                         <div className="text-center py-10 md:col-span-2 xl:col-span-4 bg-white rounded-lg">
                             <p className="font-semibold">No engineers match your criteria.</p>
