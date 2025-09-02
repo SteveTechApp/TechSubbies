@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { EngineerProfile, ProfileTier, Transaction } from '../../types/index.ts';
 import { CreditCard, Download, Star, Rocket, ArrowLeft, ShieldCheck } from '../../components/Icons.tsx';
 import { useAppContext } from '../../context/AppContext.tsx';
+import { PaymentModal } from '../../components/PaymentModal.tsx';
 
 interface PaymentsViewProps {
     profile: EngineerProfile;
@@ -28,16 +29,18 @@ const TransactionHistoryItem = ({ transaction }: { transaction: Transaction }) =
 };
 
 export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
-    const { user, claimSecurityNetGuarantee, transactions } = useAppContext();
+    const { user, claimSecurityNetGuarantee, transactions, upgradeSubscription } = useAppContext();
     const creditsUsed = profile.securityNetCreditsUsed ?? 0;
+
+    const [paymentDetails, setPaymentDetails] = useState<{ tier: ProfileTier; price: number } | null>(null);
 
     const myTransactions = transactions.filter(t => t.userId === user?.id);
 
     const TIER_INFO = {
         [ProfileTier.BASIC]: { name: "Basic Profile (Free)", color: "" },
-        [ProfileTier.PROFESSIONAL]: { name: "Professional Profile", color: "text-green-700" },
-        [ProfileTier.SKILLS]: { name: "Skills Profile", color: "text-blue-700" },
-        [ProfileTier.BUSINESS]: { name: "Business Profile", color: "text-purple-700" },
+        [ProfileTier.PROFESSIONAL]: { name: "Professional Profile (£7/mo)", color: "text-green-700", price: 7 },
+        [ProfileTier.SKILLS]: { name: "Skills Profile (£15/mo)", color: "text-blue-700", price: 15 },
+        [ProfileTier.BUSINESS]: { name: "Business Profile (£35/mo)", color: "text-purple-700", price: 35 },
     };
     
     const currentTierInfo = TIER_INFO[profile.profileTier];
@@ -45,20 +48,36 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
     const getUpgradeAction = () => {
         switch (profile.profileTier) {
             case ProfileTier.BASIC:
-                return { text: "Upgrade to Professional", action: () => setActiveView('Billing') };
+                return { text: "Upgrade to Professional", action: () => setPaymentDetails({ tier: ProfileTier.PROFESSIONAL, price: TIER_INFO[ProfileTier.PROFESSIONAL].price }) };
             case ProfileTier.PROFESSIONAL:
-                return { text: "Upgrade to Skills", action: () => setActiveView('Billing') };
+                return { text: "Upgrade to Skills", action: () => setPaymentDetails({ tier: ProfileTier.SKILLS, price: TIER_INFO[ProfileTier.SKILLS].price }) };
             case ProfileTier.SKILLS:
-                return { text: "Upgrade to Business", action: () => setActiveView('Billing') };
+                return { text: "Upgrade to Business", action: () => setPaymentDetails({ tier: ProfileTier.BUSINESS, price: TIER_INFO[ProfileTier.BUSINESS].price }) };
             default:
                 return null;
         }
     };
     const upgradeAction = getUpgradeAction();
 
+    const handlePaymentSuccess = () => {
+        if (paymentDetails) {
+            upgradeSubscription(profile.id, paymentDetails.tier);
+            setPaymentDetails(null);
+        }
+    };
 
     return (
         <div>
+            {paymentDetails && (
+                <PaymentModal
+                    isOpen={!!paymentDetails}
+                    onClose={() => setPaymentDetails(null)}
+                    onSuccess={handlePaymentSuccess}
+                    amount={paymentDetails.price}
+                    currency="GBP"
+                    paymentDescription={`Subscription to ${paymentDetails.tier} Profile`}
+                />
+            )}
             <button 
                 onClick={() => setActiveView('Dashboard')} 
                 className="flex items-center mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
@@ -79,7 +98,7 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
                         </h2>
                         <div>
                             <p className="text-gray-600">You are on the <span className={`font-bold ${currentTierInfo.color}`}>{currentTierInfo.name}</span> plan.</p>
-                            {profile.subscriptionEndDate && (
+                            {profile.subscriptionEndDate && profile.profileTier !== ProfileTier.BASIC && (
                                 <p className="text-sm text-gray-500 mt-2">
                                     Renews on: {new Date(profile.subscriptionEndDate).toLocaleDateString()}
                                 </p>
@@ -92,7 +111,7 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
                             )}
 
                              {profile.profileTier !== ProfileTier.BASIC && (
-                                <button onClick={() => alert("Redirecting to subscription management portal...")} className="mt-2 w-full text-center px-4 py-2 bg-red-100 text-red-700 text-sm font-semibold rounded-md hover:bg-red-200">
+                                <button onClick={() => alert("This would redirect to a Stripe/payment provider portal.")} className="mt-2 w-full text-center px-4 py-2 bg-red-100 text-red-700 text-sm font-semibold rounded-md hover:bg-red-200">
                                     Manage Subscription
                                 </button>
                              )}
@@ -156,7 +175,7 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
                             <Star size={32} className="mx-auto text-yellow-500 mb-4" />
                             <h2 className="text-2xl font-bold">Unlock Your Financial Dashboard</h2>
                             <p className="text-gray-600 mt-2">Upgrade to a Professional Profile to manage your subscriptions, track payouts from projects, and access premium features like the Security Net Guarantee.</p>
-                            <button onClick={() => setActiveView('Billing')} className="mt-6 bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700">
+                            <button onClick={upgradeAction?.action} className="mt-6 bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700">
                                 Upgrade My Profile
                             </button>
                         </div>

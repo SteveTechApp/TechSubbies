@@ -54,14 +54,15 @@ export const JobPostModal = ({ isOpen, onClose, onPostJob }: JobPostModalProps) 
                 }
                 
                 // Set default importance based on experience and job type.
-                const categoryReqs = skillsForCategory.map((skillName, index) => {
+                const categoryReqs = skillsForCategory.map((skillDef, index) => {
                     let importance: SkillImportance = 'desirable';
                     if (experience === ExperienceLevel.SENIOR && index < seniorThreshold) {
                         importance = 'essential';
                     } else if (experience === ExperienceLevel.EXPERT && index < Math.ceil(skillsForCategory.length * expertThreshold)) {
                         importance = 'essential';
                     }
-                    return { name: skillName, importance };
+                    // FIX: The skill object contains name and description. We only need the name for the requirement.
+                    return { name: skillDef.name, importance };
                 });
 
                 newReqs.push(...categoryReqs);
@@ -187,7 +188,8 @@ export const JobPostModal = ({ isOpen, onClose, onPostJob }: JobPostModalProps) 
                     <div key={category.category} className="p-4 bg-gray-50 rounded-lg border">
                         <h3 className="font-bold text-lg text-blue-700 mb-3 border-b pb-2">{category.category}</h3>
                         <div className="space-y-2">
-                            {skillRequirements.filter(skillReq => category.skills.includes(skillReq.name)).map(skill => {
+                            {/* FIX: Check for skill name within the skill definition object array. */}
+                            {skillRequirements.filter(skillReq => category.skills.some(skillDef => skillDef.name === skillReq.name)).map(skill => {
                                 const isEssential = skill.importance === 'essential';
                                 return (
                                     <div key={skill.name} className="flex items-center justify-between p-2 bg-white rounded-md">

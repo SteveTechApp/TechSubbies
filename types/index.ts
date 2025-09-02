@@ -59,10 +59,16 @@ export interface SelectedJobRole {
 
 export interface JobRoleDefinition {
   name: string;
-  category: 'AV' | 'IT' | 'Management';
+  // FIX: Updated the category union type to match the new comprehensive skills matrix
+  category: 'Audio Visual & Media Technology' | 
+    'Software Development' |
+    'Networking & Infrastructure' |
+    'Cybersecurity' |
+    'Database Administration' |
+    'Project Management & Leadership';
   skillCategories: {
     category: string;
-    skills: string[];
+    skills: { name: string; description: string; }[];
   }[];
 }
 
@@ -447,4 +453,5 @@ export interface AppContextType {
     approveMilestonePayout: (contractId: string, milestoneId: string) => void;
     submitTimesheet: (contractId: string, timesheet: Omit<Timesheet, 'id' | 'status'>) => void;
     approveTimesheet: (contractId: string, timesheetId: string) => void;
+    upgradeSubscription: (profileId: string, toTier: ProfileTier) => void;
 }

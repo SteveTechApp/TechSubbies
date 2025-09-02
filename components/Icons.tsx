@@ -73,12 +73,15 @@ export const ChevronDown = createIcon(<path d="m6 9 6 6 6-6"/>);
 export const ArrowLeft = createIcon(<path d="m15 18-6-6 6-6"/>);
 export const ArrowRight = createIcon(<path d="m9 18 6-6-6-6"/>);
 export const ArrowUp = createIcon(<><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></>);
+export const ArrowDown = createIcon(<><path d="m5 12 7 7 7-7"/><path d="M12 5v14"/></>);
 export const Save = createIcon(<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></>);
+export const Send = createIcon(<><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></>);
 export const Image = createIcon(<><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></>);
 export const Upload = createIcon(<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></>);
 export const Clapperboard = createIcon(<><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3L20.2 6Z" /><path d="m3.3 11.2 13.5-4" /><path d="m16.5 12.3-1.8-5.8" /><path d="m11.5 15.3-1.8-5.8" /><path d="m6.5 18.3-1.8-5.8" /><path d="M21 12c-1.9 0-3.5-1-4.5-2.5s-1-3.5-1-3.5-2 2-4.5 2.5-4.5 1-4.5 1L1 22h22l-2-10Z" /></>);
 export const CreditCard = createIcon(<><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></>);
 export const MessageCircle = createIcon(<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />);
+export const MessageSquare = createIcon(<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />);
 export const Menu = createIcon(<><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></>);
 export const Instagram = createIcon(<><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></>);
 export const Facebook = createIcon(<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>);
@@ -88,3 +91,19 @@ export const FileText = createIcon(<><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0
 export const Copy = createIcon(<><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></>);
 export const Link = createIcon(<><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72" /></>);
 export const MousePointer = createIcon(<path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="m13 13 6 6"/>);
+export const StripeLogo = ({ className }: { className?: string }) => (
+    <svg
+        width="48"
+        height="20"
+        viewBox="0 0 48 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className={className}
+    >
+        <path
+            d="M42.666 4.398H38.56C38.09 2.08 36.195 0.43 33.84 0.43c-2.484 0-4.493 1.83-4.493 4.148 0 .43.056.86.168 1.29h-5.46c-.112-.43-.168-.86-.168-1.29 0-2.318-2.01-4.148-4.494-4.148s-4.494 1.83-4.494 4.148c0 .43.056.86.168 1.29h-4.816C10.08 2.08 8.185.43 5.83.43c-2.677 0-4.844 2.17-4.844 4.844 0 2.562 1.957 4.664 4.494 4.816v.112H10.19c.47 2.318 2.366 3.968 4.72 3.968 2.484 0 4.494-1.83 4.494-4.148 0-.43-.056-.86-.168-1.29h5.46c.112.43.168.86.168 1.29 0 2.318 2.01 4.148 4.494 4.148 2.355 0 4.25-1.65 4.72-3.968h4.606v-.112c2.537-.152 4.494-2.254 4.494-4.816 0-2.674-2.167-4.844-4.844-4.844z"
+            fill="#635BFF"
+        ></path>
+    </svg>
+);
+export const Trophy = createIcon(<><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.87 18.75 7 20.24 7 22" /><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.13 18.75 17 20.24 17 22" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" /></>);

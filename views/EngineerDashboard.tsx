@@ -15,6 +15,7 @@ import { ArrowLeft } from '../components/Icons.tsx';
 import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
 import { AnalyticsView } from './AdminDashboard/AnalyticsView.tsx'; // Re-using for placeholder
 import { ContractsView } from './ContractsView.tsx';
+import { ForumView } from './ForumView.tsx';
 
 
 export const EngineerDashboard = () => {
@@ -95,6 +96,8 @@ export const EngineerDashboard = () => {
                 return <MessagesView />;
             case 'Contracts':
                 return <ContractsView setActiveView={setActiveView} />;
+            case 'Forum':
+                return <ForumView setActiveView={setActiveView} />;
             case 'Analytics':
                  if (engineerProfile.profileTier === ProfileTier.BUSINESS) {
                     return <AnalyticsView />;

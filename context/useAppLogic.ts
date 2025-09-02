@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { PoundSterling, DollarSign } from '../components/Icons.tsx';
 import { Role, EngineerProfile, User, Job, Application, Currency, Conversation, Message, Review, CompanyProfile, ApplicationStatus, Notification, NotificationType, AppContextType, ForumPost, ForumComment, ProfileTier, Contract, ContractStatus, ContractType, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Compliance, IdentityVerification, Discipline, JobSkillRequirement } from '../types/index.ts';
 import { MOCK_JOBS, MOCK_ENGINEERS, MOCK_USERS, MOCK_USER_FREE_ENGINEER, ALL_MOCK_USERS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_COMPANIES, MOCK_NOTIFICATIONS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_CONTRACTS, MOCK_TRANSACTIONS } from '../data/mockData.ts';
@@ -13,6 +13,12 @@ export const CURRENCY_ICONS: { [key in Currency]: React.ComponentType<any> } = {
     [Currency.USD]: DollarSign,
 };
 const PLATFORM_FEE_PERCENTAGE = 0.05; // 5%
+
+const TIER_PRICES: { [key in ProfileTier]?: number } = {
+    [ProfileTier.PROFESSIONAL]: 7.00,
+    [ProfileTier.SKILLS]: 15.00,
+    [ProfileTier.BUSINESS]: 35.00,
+};
 
 const generateUniqueId = () => Math.random().toString(36).substring(2, 9);
 
@@ -52,6 +58,23 @@ export const useAppLogic = (): AppContextType => {
         };
         setNotifications(prev => [newNotification, ...prev]);
     };
+
+    // --- SIMULATED REAL-TIME NOTIFICATIONS ---
+    useEffect(() => {
+        if (!user) return;
+
+        const interval = setInterval(() => {
+            const mockNotifs = [
+                { type: NotificationType.NEW_JOB_MATCH, text: "A new job, 'Senior Cloud Engineer', matches your skills." },
+                { type: NotificationType.MESSAGE, text: "You have a new message from Starlight Events." },
+            ];
+            const randomNotif = mockNotifs[Math.floor(Math.random() * mockNotifs.length)];
+            createNotification(user.id, randomNotif.type, randomNotif.text);
+        }, 25000); // every 25 seconds
+
+        return () => clearInterval(interval);
+    }, [user]);
+
 
     const markNotificationsAsRead = (userId: string) => {
         setNotifications(prev => prev.map(n => (n.userId === userId ? { ...n, isRead: true } : n)));
@@ -671,6 +694,34 @@ export const useAppLogic = (): AppContextType => {
         setContracts(prev => prev.map(c => c.id === contractId ? { ...c, timesheets: c.timesheets?.map(ts => ts.id === timesheetId ? { ...ts, status: 'approved' } : ts) } : c));
     };
 
+    const upgradeSubscription = (profileId: string, toTier: ProfileTier) => {
+        if (!user || user.role !== Role.ENGINEER) return;
+
+        const price = TIER_PRICES[toTier];
+        if (price === undefined) return;
+
+        const subscriptionEndDate = new Date();
+        subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
+
+        updateEngineerProfile({
+            id: profileId,
+            profileTier: toTier,
+            subscriptionEndDate,
+            trialEndDate: undefined // Clear trial if upgrading
+        });
+        
+        const newTransaction: Transaction = {
+            id: `txn-${generateUniqueId()}`,
+            userId: user.id,
+            type: TransactionType.SUBSCRIPTION,
+            description: `Subscription to ${toTier} tier`,
+            amount: -price,
+            date: new Date(),
+        };
+        setTransactions(prev => [newTransaction, ...prev]);
+        alert(`Successfully upgraded to ${toTier} Profile!`);
+    };
+
     // --- CONTEXT EXPORT ---
     return useMemo(() => ({
         user, allUsers, jobs, companies, engineers, login, loginAsSteve, logout, 
@@ -685,6 +736,6 @@ export const useAppLogic = (): AppContextType => {
         forumPosts, forumComments, createForumPost, addForumComment, voteOnPost, voteOnComment,
         contracts, sendContractForSignature, signContract,
         transactions, fundMilestone, submitMilestoneForApproval, approveMilestonePayout,
-        submitTimesheet, approveTimesheet
+        submitTimesheet, approveTimesheet, upgradeSubscription
     }), [user, allUsers, jobs, companies, engineers, applications, conversations, messages, selectedConversationId, reviews, notifications, isAiReplying, forumPosts, forumComments, contracts, transactions]);
 };

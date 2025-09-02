@@ -57,7 +57,7 @@ export const geminiService = {
             return JSON.parse(String(response.text));
         } catch (error) {
             console.error("Error generating skills:", error);
-            return null;
+            return { error: "Failed to generate skills. The AI service may be busy or unavailable. Please try again." };
         }
     },
     suggestTeamForProject: async (description: string) => {
@@ -76,7 +76,7 @@ export const geminiService = {
             return JSON.parse(String(response.text));
         } catch (error) {
             console.error("Error suggesting team:", error);
-            return null;
+            return { error: "Failed to suggest a team. The AI service may be busy or unavailable. Please try again." };
         }
     },
     analyzeEngineerCost: async (jobDescription: string, engineerProfile: EngineerProfile) => {
@@ -111,7 +111,7 @@ export const geminiService = {
             return JSON.parse(String(response.text));
         } catch (error) {
             console.error("Error analyzing cost:", error);
-            return null;
+            return { error: "Failed to perform analysis. The AI service may be busy or unavailable. Please try again." };
         }
     },
     getTrainingRecommendations: async (profile: EngineerProfile) => {
@@ -161,7 +161,7 @@ export const geminiService = {
             return JSON.parse(String(response.text));
         } catch (error) {
             console.error("Error getting training recommendations:", error);
-            return null;
+            return { error: "Failed to get recommendations. The AI service may be busy or unavailable. Please try again." };
         }
     },
      findBestMatchesForJob: async (job: Job, engineers: EngineerProfile[]) => {
@@ -230,7 +230,7 @@ export const geminiService = {
             return JSON.parse(String(response.text));
         } catch (error) {
             console.error("Error finding best matches:", error);
-            return null;
+            return { error: "Failed to find matches. The AI service may be busy or unavailable. Please try again." };
         }
     },
     // NEW: AI Forum Moderator
@@ -305,7 +305,7 @@ export const geminiService = {
             return JSON.parse(String(response.text));
         } catch (error) {
             console.error("Error suggesting day rate:", error);
-            return null;
+            return { error: "Failed to suggest a day rate. The AI service may be busy or unavailable. Please try again." };
         }
     },
     // NEW: AI Chat Responder

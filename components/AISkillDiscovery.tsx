@@ -16,29 +16,35 @@ export const AISkillDiscovery = ({ onSkillsAdded }: AISkillDiscoveryProps) => {
     const { geminiService } = useAppContext();
 
     const groupedRoles = useMemo(() => {
-        return JOB_ROLE_DEFINITIONS.reduce((acc, role) => {
-            if (!acc[role.category]) {
-                acc[role.category] = [];
+        return JOB_ROLE_DEFINITIONS.reduce((acc, roleDef) => {
+            if (!acc[roleDef.category]) {
+                acc[roleDef.category] = [];
             }
-            acc[role.category].push(role);
+            acc[roleDef.category].push(roleDef);
             return acc;
         }, {} as Record<string, typeof JOB_ROLE_DEFINITIONS>);
     }, []);
 
-    const handleDiscover = async () => {
-        if (!role.trim()) {
-            setError('Please select a role from the list.');
+    const handleRoleSelect = async (selectedRole: string) => {
+        if (!selectedRole.trim() || isLoading) {
             return;
         }
+        
+        setRole(selectedRole);
         setIsLoading(true);
         setError('');
         setDiscoveredSkills(null);
-        const result = await geminiService.generateSkillsForRole(role);
+
+        const result = await geminiService.generateSkillsForRole(selectedRole);
+        
         setIsLoading(false);
-        if (result && result.skills) {
+
+        if (result.error) {
+            setError(result.error);
+        } else if (result && result.skills) {
             setDiscoveredSkills(result.skills);
         } else {
-            setError('Could not discover skills for this role. Please try another.');
+            setError('Could not discover skills for this role. An unexpected error occurred.');
         }
     };
 
@@ -49,8 +55,6 @@ export const AISkillDiscovery = ({ onSkillsAdded }: AISkillDiscoveryProps) => {
         setDiscoveredSkills(null);
         setRole('');
     };
-    
-    const buttonContent = isLoading ? <Loader className="animate-spin w-5 h-5" /> : 'Discover';
 
     return (
         <div className="bg-blue-50 border-2 border-dashed border-blue-200 rounded-lg p-6 my-6">
@@ -59,13 +63,15 @@ export const AISkillDiscovery = ({ onSkillsAdded }: AISkillDiscoveryProps) => {
                 <h3 className="text-xl font-bold text-blue-800">AI Skill Discovery</h3>
             </div>
             <p className="text-gray-600 mb-4">Don't want to add skills manually? Select a job role from our list and let our AI suggest relevant skills for you.</p>
+            
             <div className="flex items-center space-x-2">
                 <select
                     value={role}
-                    onChange={(e) => { setRole(e.target.value); setError(''); setDiscoveredSkills(null); }}
-                    className="w-full border p-2 rounded-md focus:ring-2 focus:ring-blue-500 bg-white"
+                    onChange={(e) => handleRoleSelect(e.target.value)}
+                    disabled={isLoading}
+                    className="w-full border p-2 rounded-md focus:ring-2 focus:ring-blue-500 bg-white disabled:bg-gray-100"
                 >
-                    <option value="" disabled>-- Select a Job Role --</option>
+                    <option value="" disabled>-- Select a Job Role for AI suggestions --</option>
                     {Object.entries(groupedRoles).map(([category, roles]) => (
                         <optgroup label={category} key={category}>
                             {roles.map(roleDef => (
@@ -74,15 +80,11 @@ export const AISkillDiscovery = ({ onSkillsAdded }: AISkillDiscoveryProps) => {
                         </optgroup>
                     ))}
                 </select>
-                <button
-                    onClick={handleDiscover}
-                    disabled={isLoading || !role}
-                    className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 disabled:bg-gray-400 flex items-center justify-center w-28"
-                >
-                    {buttonContent}
-                </button>
+                {isLoading && <Loader className="animate-spin w-5 h-5 text-blue-600 flex-shrink-0" />}
             </div>
+            
             {error && <p className="text-red-500 mt-2">{error}</p>}
+
             {discoveredSkills && (
                 <div className="mt-4 animate-fade-in-up">
                     <h4 className="font-bold">Suggested Skills:</h4>

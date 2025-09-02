@@ -54,10 +54,12 @@ export const FindTalentView = ({ engineers, myJobs, onSelectEngineer }: FindTale
         
         const result = await geminiService.findBestMatchesForJob(selectedJob, premiumEngineers);
     
-        if (result && result.matches) {
+        if (result.error) {
+            alert(result.error);
+        } else if (result && result.matches) {
             setAiMatchResults(result.matches);
         } else {
-            alert("AI could not find matches for this job. Please try manual filtering.");
+            alert("AI could not find matches for this job. An unexpected error occurred.");
         }
         setIsAiLoading(false);
     };

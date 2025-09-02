@@ -27,10 +27,10 @@ export const AIEngineerCostAnalysis = ({ job, engineer }: AIEngineerCostAnalysis
     setError('');
     setAnalysisResult(null);
     const result = await geminiService.analyzeEngineerCost(job.description, engineer);
-    if (result) {
-      setAnalysisResult(result);
+    if (result.error) {
+      setError(result.error);
     } else {
-      setError('Could not perform analysis. The AI service may be unavailable.');
+      setAnalysisResult(result as AnalysisResult);
     }
     setIsLoading(false);
   };

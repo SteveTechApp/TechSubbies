@@ -4,6 +4,7 @@ import { useAppContext } from '../context/AppContext.tsx';
 import { FileText, User as UserIcon, Building, Calendar, CheckCircle, Clock, DollarSign, Loader } from '../components/Icons.tsx';
 import { SignContractModal } from '../components/SignContractModal.tsx';
 import { formatDisplayDate } from '../utils/dateFormatter.ts';
+import { PaymentModal } from '../components/PaymentModal.tsx';
 
 interface ContractDetailsViewProps {
     contract: Contract;
@@ -32,24 +33,23 @@ const StatusBadge = ({ status, className }: { status: string, className?: string
 };
 
 
-const MilestoneRow = ({ milestone, contract, userRole }: { milestone: Milestone, contract: Contract, userRole: Role }) => {
-    const { fundMilestone, submitMilestoneForApproval, approveMilestonePayout } = useAppContext();
+const MilestoneRow = ({ milestone, contract, onFund, onAction, userRole }: { milestone: Milestone, contract: Contract, onFund: () => void, onAction: (action: Function) => void, userRole: Role }) => {
+    const { submitMilestoneForApproval, approveMilestonePayout } = useAppContext();
     const [isLoading, setIsLoading] = useState(false);
 
     const handleAction = async (action: Function) => {
         setIsLoading(true);
-        // Simulate async action
         await new Promise(resolve => setTimeout(resolve, 500));
-        action(contract.id, milestone.id);
+        onAction(action);
         setIsLoading(false);
     };
-
-    const renderAction = () => {
+    
+     const renderAction = () => {
         if (isLoading) return <Loader className="animate-spin w-5 h-5 text-gray-500"/>;
 
-        if (userRole === Role.COMPANY) {
+        if (userRole === Role.COMPANY || userRole === Role.ADMIN) {
             if (milestone.status === MilestoneStatus.AWAITING_FUNDING) {
-                return <button onClick={() => handleAction(fundMilestone)} className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Fund Milestone</button>;
+                return <button onClick={onFund} className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Fund Milestone</button>;
             }
             if (milestone.status === MilestoneStatus.SUBMITTED_FOR_APPROVAL) {
                 return <button onClick={() => handleAction(approveMilestonePayout)} className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700">Approve & Release Payment</button>;
@@ -65,6 +65,7 @@ const MilestoneRow = ({ milestone, contract, userRole }: { milestone: Milestone,
         <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md border">
             <div>
                 <p className="font-semibold">{milestone.description}</p>
+                {/* FIX: Pass contract as a prop to MilestoneRow to access currency. */}
                 <p className="text-sm font-bold text-green-700">{contract.currency}{milestone.amount}</p>
             </div>
             <div className="flex items-center gap-4">
@@ -76,8 +77,9 @@ const MilestoneRow = ({ milestone, contract, userRole }: { milestone: Milestone,
 };
 
 export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
-    const { user, findUserByProfileId, signContract } = useAppContext();
+    const { user, findUserByProfileId, signContract, fundMilestone, submitMilestoneForApproval, approveMilestonePayout } = useAppContext();
     const [isSignModalOpen, setIsSignModalOpen] = useState(false);
+    const [fundingMilestone, setFundingMilestone] = useState<Milestone | null>(null);
 
     const engineerUser = findUserByProfileId(contract.engineerId);
     const companyUser = findUserByProfileId(contract.companyId);
@@ -89,7 +91,7 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
     if (!engineer || !company || !user) return <div>Loading contract parties...</div>;
     
     const canEngineerSign = user.profile.id === engineer.id && contract.status === ContractStatus.PENDING_SIGNATURE && !contract.engineerSignature;
-    const canCompanySign = user.profile.id === company.id && contract.status === ContractStatus.SIGNED && !contract.companySignature;
+    const canCompanySign = (user.profile.id === company.id || user.role === Role.ADMIN) && contract.status === ContractStatus.SIGNED && !contract.companySignature;
 
 
     const handleSign = (signatureName: string) => {
@@ -97,8 +99,29 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
         setIsSignModalOpen(false);
     };
 
+    const handlePaymentSuccess = () => {
+        if (fundingMilestone) {
+            fundMilestone(contract.id, fundingMilestone.id);
+            setFundingMilestone(null);
+        }
+    };
+    
+    const handleMilestoneAction = (action: Function) => (contractId: string, milestoneId: string) => {
+        action(contractId, milestoneId);
+    };
+
     return (
         <>
+             {fundingMilestone && (
+                <PaymentModal
+                    isOpen={!!fundingMilestone}
+                    onClose={() => setFundingMilestone(null)}
+                    onSuccess={handlePaymentSuccess}
+                    amount={fundingMilestone.amount}
+                    currency={contract.currency}
+                    paymentDescription={`Fund Milestone: ${fundingMilestone.description}`}
+                />
+            )}
             <div className="bg-white p-6 rounded-lg shadow">
                 <div className="flex justify-between items-start mb-4 pb-4 border-b">
                     <div>
@@ -129,7 +152,16 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
                      <div className="mt-4">
                         <h3 className="font-bold text-lg mb-2">Project Milestones</h3>
                         <div className="space-y-2">
-                            {contract.milestones.map(m => <MilestoneRow key={m.id} milestone={m} contract={contract} userRole={user.role} />)}
+                            {contract.milestones.map(m => 
+                                <MilestoneRow 
+                                    key={m.id} 
+                                    milestone={m} 
+                                    contract={contract}
+                                    onFund={() => setFundingMilestone(m)} 
+                                    onAction={(action) => action(contract.id, m.id)}
+                                    userRole={user.role} 
+                                />
+                            )}
                         </div>
                     </div>
                 )}

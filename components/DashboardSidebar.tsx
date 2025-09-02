@@ -4,7 +4,7 @@ import { Role, ProfileTier } from '../types/index.ts';
 import { NavLink } from './NavLink.tsx';
 import { 
     LayoutDashboard, User, CalendarDays, Search, Settings, PlusCircle, Briefcase, 
-    Users, Building, BarChart2, SlidersHorizontal, Edit, BrainCircuit, CreditCard, Mail, BarChart
+    Users, Building, BarChart2, SlidersHorizontal, Edit, BrainCircuit, CreditCard, Mail, BarChart, MessageSquare
 } from './Icons.tsx';
 
 interface DashboardSidebarProps {
@@ -24,6 +24,7 @@ const getLinksForRole = (user: any) => {
                 { label: 'Job Search', icon: Search },
                 { label: 'My Network', icon: Users },
                 { label: 'Contracts', icon: Briefcase },
+                { label: 'Forum', icon: MessageSquare },
                 { label: 'AI Tools', icon: BrainCircuit },
                 { label: 'Billing', icon: CreditCard },
             ];

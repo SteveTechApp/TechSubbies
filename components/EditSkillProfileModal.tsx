@@ -13,6 +13,17 @@ interface EditSkillProfileModalProps {
     initialRole?: SelectedJobRole;
 }
 
+// --- START: UI Enhancement Helpers ---
+// This new helper provides a comprehensive style object for the rating.
+const getRatingStyles = (rating: number): { bg: string; text: string; accent: string; descriptor: string } => {
+    if (rating < 25) return { bg: 'bg-gray-100', text: 'text-gray-700', accent: 'accent-gray-500', descriptor: 'Novice' };
+    if (rating < 50) return { bg: 'bg-yellow-100', text: 'text-yellow-800', accent: 'accent-yellow-500', descriptor: 'Competent' };
+    if (rating < 75) return { bg: 'bg-blue-100', text: 'text-blue-800', accent: 'accent-blue-500', descriptor: 'Proficient' };
+    return { bg: 'bg-green-100', text: 'text-green-800', accent: 'accent-green-500', descriptor: 'Expert' };
+};
+// --- END: UI Enhancement Helpers ---
+
+
 export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles, initialRole }: EditSkillProfileModalProps) => {
     const [selectedRoleDef, setSelectedRoleDef] = useState<JobRoleDefinition | null>(null);
     const [currentRole, setCurrentRole] = useState<SelectedJobRole | null>(initialRole || null);
@@ -40,7 +51,7 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
             const allSkills = roleDef.skillCategories.flatMap(category => category.skills);
             const newRole: SelectedJobRole = {
                 roleName: roleDef.name,
-                skills: allSkills.map(skillName => ({ name: skillName, rating: 50 })), // Default rating 50
+                skills: allSkills.map(skill => ({ name: skill.name, rating: 50 })), // Default rating 50
                 overallScore: 50
             };
             setCurrentRole(newRole);
@@ -100,28 +111,41 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
                     
                     {currentRole && selectedRoleDef && (
                         <div className="fade-in-up space-y-4">
-                            {!initialRole && <p className="font-medium">2. Rate your competency for each skill:</p>}
+                            {!initialRole && <p className="font-medium">2. Rate your competency for each skill (hover for info):</p>}
                             
                             <div className="space-y-4">
                                 {selectedRoleDef.skillCategories.map(category => (
                                     <div key={category.category} className="p-4 bg-gray-50 rounded-lg border">
                                         <h3 className="font-bold text-lg text-blue-700 mb-3 border-b pb-2">{category.category}</h3>
-                                        <div className="space-y-3">
-                                            {category.skills.map(skillName => {
-                                                const skill = currentRole.skills.find(s => s.name === skillName);
+                                        <div className="divide-y divide-gray-200">
+                                            {category.skills.map(skillDef => {
+                                                const skill = currentRole.skills.find(s => s.name === skillDef.name);
                                                 if (!skill) return null;
+                                                const ratingStyles = getRatingStyles(skill.rating);
                                                 
                                                 return (
-                                                    <div key={skill.name} className="grid grid-cols-12 items-center gap-4">
-                                                        <label className="col-span-12 sm:col-span-4 font-medium text-gray-700 text-sm">{skill.name}</label>
-                                                        <input 
-                                                            type="range" 
-                                                            min="1" max="100" 
-                                                            value={skill.rating} 
-                                                            onChange={e => handleSkillChange(skill.name, e.target.value)} 
-                                                            className="col-span-10 sm:col-span-7 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                                        />
-                                                        <span className="col-span-2 sm:col-span-1 text-center font-semibold text-blue-600 w-12">{skill.rating}</span>
+                                                    <div key={skillDef.name} className="py-3">
+                                                        <div className="flex justify-between items-baseline mb-1">
+                                                            <div className="block font-medium text-gray-700 text-sm">
+                                                                <div className="tooltip-container">
+                                                                    {skillDef.name}
+                                                                    <span className="tooltip-text">{skillDef.description}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className={`flex items-baseline gap-2 flex-shrink-0 px-2.5 py-1 rounded-full transition-colors duration-200 ${ratingStyles.bg}`}>
+                                                                <span className={`text-lg font-bold ${ratingStyles.text}`}>{skill.rating}</span>
+                                                                <span className={`text-xs font-semibold ${ratingStyles.text}`}>{ratingStyles.descriptor}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center">
+                                                            <input 
+                                                                type="range" 
+                                                                min="1" max="100" 
+                                                                value={skill.rating} 
+                                                                onChange={e => handleSkillChange(skill.name, e.target.value)} 
+                                                                className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer ${ratingStyles.accent}`}
+                                                            />
+                                                        </div>
                                                     </div>
                                                 );
                                             })}
