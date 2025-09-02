@@ -131,6 +131,25 @@ export const FindTalentView = ({ engineers, myJobs, onSelectEngineer }: FindTale
                 </div>
                 <div className="space-y-6">
                     {/* Manual Filters */}
+                    <div>
+                        <label htmlFor="keyword" className="block text-sm font-medium text-gray-700">Keyword</label>
+                        <input type="text" id="keyword" name="keyword" value={filters.keyword} onChange={handleFilterChange} placeholder="e.g., Crestron, Cisco" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2" />
+                    </div>
+                    <div>
+                        <label htmlFor="role" className="block text-sm font-medium text-gray-700">Specialist Role</label>
+                        <select name="role" id="role" value={filters.role} onChange={handleFilterChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 bg-white">
+                            <option value="any">Any Role</option>
+                            {specialistRoles.map(r => <option key={r} value={r}>{r}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label htmlFor="maxRate" className="block text-sm font-medium text-gray-700">Max Day Rate: {filters.maxRate}</label>
+                        <input type="range" id="maxRate" name="maxRate" min="200" max="1200" step="25" value={filters.maxRate} onChange={handleFilterChange} className="mt-1 block w-full" />
+                    </div>
+                     <div>
+                        <label htmlFor="minExperience" className="block text-sm font-medium text-gray-700">Min Experience (Yrs)</label>
+                        <input type="number" id="minExperience" name="minExperience" value={filters.minExperience} onChange={handleFilterChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2" />
+                    </div>
                 </div>
 
                  {/* AI Smart Match Section */}

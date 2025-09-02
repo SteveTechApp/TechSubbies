@@ -4,7 +4,8 @@ import { Role, ProfileTier } from '../types/index.ts';
 import { NavLink } from './NavLink.tsx';
 import { 
     LayoutDashboard, User, CalendarDays, Search, Settings, PlusCircle, Briefcase, 
-    Users, Building, BarChart2, SlidersHorizontal, Edit, BrainCircuit, CreditCard, Mail, BarChart, MessageSquare
+    Users, Building, BarChart2, SlidersHorizontal, Edit, BrainCircuit, CreditCard, Mail, BarChart, MessageSquare,
+    KanbanSquare
 } from './Icons.tsx';
 
 interface DashboardSidebarProps {
@@ -38,7 +39,8 @@ const getLinksForRole = (user: any) => {
                 { label: 'Messages', icon: Mail },
                 { label: 'Post a Job', icon: PlusCircle }, 
                 { label: 'Find Talent', icon: Search }, 
-                { label: 'My Jobs', icon: Briefcase }, 
+                { label: 'My Jobs', icon: Briefcase },
+                { label: 'Project Planner', icon: KanbanSquare },
                 { label: 'Contracts', icon: Briefcase },
                 { label: 'Settings', icon: Settings },
             ];

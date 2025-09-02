@@ -93,7 +93,7 @@ export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string)
                 <main className="flex-1 bg-gray-50 overflow-y-auto custom-scrollbar pr-2">
                      {isFreeTier && highPayingJobs.length > 0 && (
                         <div className="p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md mb-4 text-sm">
-                            <strong>Heads up!</strong> {highPayingJobs.length} job(s) in your search offer a day rate above £195. To be more competitive for these high-value roles, consider upgrading to a <button onClick={() => setActiveView('Billing')} className="font-bold underline hover:text-yellow-900">Skills Profile</button>.
+                            <strong>Heads up!</strong> {highPayingJobs.length} job(s) in your search offer a day rate above £195. To be more competitive for these high-value roles, consider upgrading to a <button onClick={() => setActiveView('Billing')} className="font-bold underline hover:text-yellow-900">Gold Profile</button>.
                         </div>
                     )}
                     <p className="text-sm text-gray-600 mb-4">Showing {filteredJobs.length} of {jobs.filter(j => j.status === 'active').length} available jobs.</p>

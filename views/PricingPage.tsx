@@ -19,6 +19,15 @@ const FeatureListItem = ({ children, included = true }: { children: React.ReactN
     </li>
 );
 
+interface TierStyle {
+    border: string;
+    titleText: string;
+    buttonBg: string;
+    buttonHoverBg: string;
+    badgeBg: string;
+    shadow?: string;
+}
+
 interface TierCardProps {
     tier: ProfileTier;
     title: string;
@@ -29,12 +38,13 @@ interface TierCardProps {
     ctaText: string;
     onCtaClick: () => void;
     isFeatured?: boolean;
+    styles: TierStyle;
 }
 
-const TierCard = ({ title, description, price, period, features, ctaText, onCtaClick, isFeatured }: TierCardProps) => (
-    <div className={`border rounded-lg p-6 bg-white flex flex-col ${isFeatured ? 'border-2 border-blue-600 shadow-2xl' : 'border-gray-200 shadow-lg'}`}>
-        {isFeatured && <span className="absolute top-0 -translate-y-1/2 bg-blue-600 text-white text-xs font-bold uppercase px-3 py-1 rounded-full self-center">Most Popular</span>}
-        <h3 className={`text-2xl font-bold ${isFeatured ? 'text-blue-600' : 'text-gray-800'}`}>{title}</h3>
+const TierCard = ({ title, description, price, period, features, ctaText, onCtaClick, isFeatured, styles }: TierCardProps) => (
+    <div className={`border-2 rounded-lg p-6 bg-white flex flex-col relative transition-all duration-300 ${isFeatured ? `${styles.border} ${styles.shadow || 'shadow-2xl'} transform scale-105` : `border-gray-200 shadow-lg ${styles.border}`}`}>
+        {isFeatured && <span className={`absolute top-0 -translate-y-1/2 ${styles.badgeBg} text-white text-xs font-bold uppercase px-3 py-1 rounded-full self-center`}>Most Popular</span>}
+        <h3 className={`text-2xl font-bold ${styles.titleText}`}>{title}</h3>
         <p className="text-gray-500 mt-2 mb-4 flex-grow">{description}</p>
         <div className="my-4">
             <span className="text-5xl font-extrabold text-gray-800">{price}</span>
@@ -45,7 +55,7 @@ const TierCard = ({ title, description, price, period, features, ctaText, onCtaC
         </ul>
         <button
             onClick={onCtaClick}
-            className={`w-full mt-auto font-bold py-3 px-6 rounded-lg transition-colors ${isFeatured ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+            className={`w-full mt-auto font-bold py-3 px-6 rounded-lg text-white transition-colors ${styles.buttonBg} ${styles.buttonHoverBg}`}
         >
             {ctaText}
         </button>
@@ -55,15 +65,23 @@ const TierCard = ({ title, description, price, period, features, ctaText, onCtaC
 
 export const PricingPage = ({ onNavigate, onHowItWorksClick }: PricingPageProps) => {
 
-    const TIERS = [
+    const TIER_STYLES: Record<string, TierStyle> = {
+        [ProfileTier.BASIC]: { border: 'border-amber-700', titleText: 'text-amber-800', buttonBg: 'bg-amber-700', buttonHoverBg: 'hover:bg-amber-800', badgeBg: 'bg-amber-700' },
+        [ProfileTier.PROFESSIONAL]: { border: 'border-slate-400', titleText: 'text-slate-600', buttonBg: 'bg-slate-500', buttonHoverBg: 'hover:bg-slate-600', badgeBg: 'bg-slate-500' },
+        [ProfileTier.SKILLS]: { border: 'border-yellow-500', titleText: 'text-yellow-600', buttonBg: 'bg-yellow-500', buttonHoverBg: 'hover:bg-yellow-600', badgeBg: 'bg-yellow-500', shadow: 'shadow-yellow-300/50 shadow-2xl' },
+        [ProfileTier.BUSINESS]: { border: 'border-indigo-700', titleText: 'text-indigo-800', buttonBg: 'bg-indigo-700', buttonHoverBg: 'hover:bg-indigo-800', badgeBg: 'bg-indigo-700' }
+    };
+
+    const TIERS: TierCardProps[] = [
         {
             tier: ProfileTier.BASIC,
-            title: "Basic",
+            title: "Bronze",
             description: "The essential on-ramp for visibility in entry-level and support roles.",
             price: "Free",
             period: " / Forever",
             ctaText: "Get Started",
-            isFeatured: false,
+            onCtaClick: () => onNavigate('engineerSignUp'),
+            styles: TIER_STYLES[ProfileTier.BASIC],
             features: [
                 { text: "Public Professional Profile", included: true },
                 { text: "Appear in General Searches", included: true },
@@ -71,7 +89,7 @@ export const PricingPage = ({ onNavigate, onHowItWorksClick }: PricingPageProps)
                 { text: "Search and Apply for Jobs", included: true },
                 { text: "Core Skills (Tags)", included: false },
                 { text: "Verified Certifications", included: false },
-                { text: "Specialist Roles & Skill Ratings", included: false },
+                { text: "Specialist Roles", included: false },
                 { text: "AI-Powered Tools", included: false },
                 { text: "Priority Search Ranking", included: false },
                 { text: "Visual Case Studies (Storyboards)", included: false },
@@ -80,37 +98,18 @@ export const PricingPage = ({ onNavigate, onHowItWorksClick }: PricingPageProps)
         },
         {
             tier: ProfileTier.PROFESSIONAL,
-            title: "Professional",
-            description: "For the growing professional who needs to stand out with proven credentials.",
+            title: "Silver",
+            description: "For the growing professional who needs to stand out with proven credentials and access powerful tools.",
             price: "£7",
             period: " / mo",
-            ctaText: "Choose Professional",
-            isFeatured: false,
+            ctaText: "Choose Silver",
+            onCtaClick: () => onNavigate('engineerSignUp'),
+            styles: TIER_STYLES[ProfileTier.PROFESSIONAL],
             features: [
-                { text: "Public Professional Profile", included: true },
-                { text: "Appear in General Searches", included: true },
-                { text: "Set Availability Calendar", included: true },
-                { text: "Search and Apply for Jobs", included: true },
+                { text: "Everything in Bronze, plus:", included: true },
                 { text: "Core Skills (Tags)", included: true },
                 { text: "Verified Certifications", included: true },
-                { text: "Specialist Roles & Skill Ratings", included: false },
-                { text: "AI-Powered Tools", included: false },
-                { text: "Priority Search Ranking", included: false },
-                { text: "Visual Case Studies (Storyboards)", included: false },
-                { text: "Profile Analytics", included: false },
-            ]
-        },
-        {
-            tier: ProfileTier.SKILLS,
-            title: "Skills",
-            description: "Our core offering for the established specialist who needs to showcase deep expertise and command top rates.",
-            price: "£15",
-            period: " / mo",
-            ctaText: "Start Free Trial",
-            isFeatured: true,
-            features: [
-                { text: "Everything in Professional, plus:", included: true },
-                { text: "Specialist Roles & Skill Ratings", included: true },
+                { text: <strong>1 Specialist Role</strong>, included: true },
                 { text: "AI-Powered Tools", included: true },
                 { text: "Priority Search Ranking", included: true },
                 { text: "Visual Case Studies (Storyboards)", included: true },
@@ -118,15 +117,34 @@ export const PricingPage = ({ onNavigate, onHowItWorksClick }: PricingPageProps)
             ]
         },
         {
+            tier: ProfileTier.SKILLS,
+            title: "Gold",
+            description: "For the established specialist who needs to showcase a diverse range of deep expertise.",
+            price: "£15",
+            period: " / mo",
+            ctaText: "Start Free Trial",
+            isFeatured: true,
+            onCtaClick: () => onNavigate('engineerSignUp'),
+            styles: TIER_STYLES[ProfileTier.SKILLS],
+            features: [
+                { text: "Everything in Silver, plus:", included: true },
+                { text: <strong>Up to 3 Specialist Roles</strong>, included: true },
+                { text: "Enhanced Search Visibility", included: true },
+                { text: "Profile Analytics", included: false },
+            ]
+        },
+        {
             tier: ProfileTier.BUSINESS,
-            title: "Business",
+            title: "Platinum",
             description: "For the elite freelancer or small business owner who needs advanced tools and maximum visibility.",
             price: "£35",
             period: " / mo",
-            ctaText: "Choose Business",
-            isFeatured: false,
+            ctaText: "Choose Platinum",
+            onCtaClick: () => onNavigate('engineerSignUp'),
+            styles: TIER_STYLES[ProfileTier.BUSINESS],
             features: [
-                { text: "Everything in Skills, plus:", included: true },
+                { text: "Everything in Gold, plus:", included: true },
+                { text: <strong>Up to 5 Specialist Roles</strong>, included: true },
                 { text: "Profile Analytics", included: true },
                 { text: "Advanced Profile Customization", included: true },
                 { text: "Dedicated Support", included: true },
@@ -147,14 +165,13 @@ export const PricingPage = ({ onNavigate, onHowItWorksClick }: PricingPageProps)
                 </section>
 
                 {/* Pricing Section */}
-                <section className="py-16 bg-gray-50">
+                <section className="py-16 checker-plate-background">
                     <div className="container mx-auto px-4 max-w-7xl">
-                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-stretch">
+                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-end">
                            {TIERS.map(tier => (
                                <TierCard 
                                    key={tier.title}
                                    {...tier}
-                                   onCtaClick={() => onNavigate('engineerSignUp')}
                                />
                            ))}
                         </div>

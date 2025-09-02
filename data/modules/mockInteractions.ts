@@ -1,4 +1,4 @@
-import { Application, Review, Conversation, Message, ApplicationStatus, Contract, ContractStatus, ContractType, Currency, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet } from '../../types/index.ts';
+import { Application, Review, Conversation, Message, ApplicationStatus, Contract, ContractStatus, ContractType, Currency, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Project, Discipline } from '../../types/index.ts';
 
 export const MOCK_APPLICATIONS: Application[] = [
     { jobId: 'job-1', engineerId: 'eng-1', date: new Date('2024-06-20'), status: ApplicationStatus.COMPLETED, reviewed: true },
@@ -88,4 +88,22 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     { id: 'txn-1', userId: 'user-eng-eng-1', contractId: 'contract-2', type: TransactionType.PAYOUT, description: "Payout for Milestone: Phase 1: Initial Site Survey & Report", amount: 475, date: new Date('2024-07-28') },
     { id: 'txn-2', userId: 'user-eng-eng-1', contractId: 'contract-2', type: TransactionType.PLATFORM_FEE, description: "Platform Fee (5%) for Milestone: Phase 1", amount: -25, date: new Date('2024-07-28') },
     { id: 'txn-3', userId: 'user-comp-comp-2', contractId: 'contract-2', type: TransactionType.ESCROW_FUNDING, description: "Funded Milestone: Phase 1: Initial Site Survey & Report", amount: -500, date: new Date('2024-07-26') },
+];
+
+
+export const MOCK_PROJECTS: Project[] = [
+    {
+        id: 'proj-1',
+        companyId: 'comp-1',
+        name: 'Project Alpha: Corporate HQ Fit-Out',
+        description: 'Full audiovisual and network infrastructure installation for a new 5-floor corporate headquarters in Canary Wharf.',
+        status: 'planning',
+        roles: [
+            { id: 'role-1', title: 'AV Systems Designer', discipline: Discipline.AV, startDate: new Date('2024-08-01'), endDate: new Date('2024-08-30'), assignedEngineerId: null },
+            { id: 'role-2', title: 'Lead Network Engineer', discipline: Discipline.IT, startDate: new Date('2024-08-15'), endDate: new Date('2024-10-15'), assignedEngineerId: 'eng-3' },
+            { id: 'role-3', title: 'Crestron Programmer', discipline: Discipline.AV, startDate: new Date('2024-09-01'), endDate: new Date('2024-11-01'), assignedEngineerId: null },
+            { id: 'role-4', title: 'AV Commissioning Engineer', discipline: Discipline.AV, startDate: new Date('2024-10-15'), endDate: new Date('2024-11-30'), assignedEngineerId: 'eng-1' },
+            { id: 'role-5', title: 'On-site IT Support', discipline: Discipline.IT, startDate: new Date('2024-11-15'), endDate: new Date('2024-12-15'), assignedEngineerId: 'eng-2' },
+        ],
+    },
 ];

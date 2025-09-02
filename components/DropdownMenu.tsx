@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ChevronDown } from './Icons.tsx';
 
 interface DropdownMenuProps {
@@ -10,6 +10,21 @@ interface DropdownMenuProps {
 
 export const DropdownMenu = ({ triggerText, children, isLanding = false, direction = 'down' }: DropdownMenuProps) => {
     const [isOpen, setIsOpen] = useState(false);
+    const timeoutRef = useRef<number | null>(null);
+
+    const handleMouseEnter = () => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
+        setIsOpen(true);
+    };
+
+    const handleMouseLeave = () => {
+        timeoutRef.current = window.setTimeout(() => {
+            setIsOpen(false);
+        }, 200); // 200ms delay before closing
+    };
 
     const menuClasses = 'bg-white shadow-lg border border-gray-200';
     const triggerColor = 'text-gray-700 hover:text-blue-600';
@@ -21,8 +36,8 @@ export const DropdownMenu = ({ triggerText, children, isLanding = false, directi
     return (
         <div 
             className="relative" 
-            onMouseEnter={() => setIsOpen(true)} 
-            onMouseLeave={() => setIsOpen(false)}
+            onMouseEnter={handleMouseEnter} 
+            onMouseLeave={handleMouseLeave}
         >
             <button className={`flex items-center px-4 py-2 transition-colors font-medium text-xs text-center ${triggerColor}`}>
                 {triggerText}

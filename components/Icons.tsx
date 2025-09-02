@@ -91,6 +91,7 @@ export const FileText = createIcon(<><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0
 export const Copy = createIcon(<><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></>);
 export const Link = createIcon(<><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72" /></>);
 export const MousePointer = createIcon(<path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="m13 13 6 6"/>);
+export const KanbanSquare = createIcon(<><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M8 7v4" /><path d="M12 7v7" /><path d="M16 7v10" /></>);
 export const StripeLogo = ({ className }: { className?: string }) => (
     <svg
         width="48"
@@ -107,3 +108,6 @@ export const StripeLogo = ({ className }: { className?: string }) => (
     </svg>
 );
 export const Trophy = createIcon(<><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.87 18.75 7 20.24 7 22" /><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.13 18.75 17 20.24 17 22" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" /></>);
+export const Bed = createIcon(<><path d="M2 4v16" /><path d="M2 10h20" /><path d="M6 4v16" /><path d="M14 4h8" /><path d="M14 8h8" /><path d="M14 12h8" /><path d="M14 16h8" /></>);
+export const Plane = createIcon(<><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8l-8.2 1.8a.5.5 0 0 0-.3.9l3 3L3 17l3 3 5.3-5.3 3 3a.5.5 0 0 0 .9-.3z" /></>);
+export const UtensilsCrossed = createIcon(<><path d="m16 2-2.3 2.3a3 3 0 0 0 0 4.2l1.8 1.8a3 3 0 0 0 4.2 0L22 8" /><path d="M15 15 3.3 3.3a4.2 4.2 0 0 0 0 6l7.3 7.3c.7.7 1.8.7 2.5 0l7.3-7.3a4.2 4.2 0 0 0-6-6L15 15Z" /></>);

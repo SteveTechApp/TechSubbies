@@ -89,8 +89,8 @@ const ActionableInsight = ({ profile, onUpgrade, onNavigate }: { profile: Engine
         insight = {
             icon: Star,
             title: "Unlock Your Potential",
-            description: "Upgrade to a Professional Profile to add searchable skills and get your certifications verified.",
-            actionText: "Upgrade to Professional",
+            description: "Upgrade to a Silver Profile to add searchable skills and get your certifications verified.",
+            actionText: "Upgrade to Silver",
             action: onUpgrade,
             bgColor: 'bg-yellow-50',
             textColor: 'text-yellow-800'
@@ -133,7 +133,7 @@ interface DashboardViewProps {
 export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, boostProfile }: DashboardViewProps) => {
     const { reactivateProfile, jobs } = useAppContext();
     const isPremium = engineerProfile.profileTier !== ProfileTier.BASIC;
-    const canUseSkillsFeatures = engineerProfile.profileTier === ProfileTier.SKILLS || engineerProfile.profileTier === ProfileTier.BUSINESS;
+    const canUsePremiumFeatures = engineerProfile.profileTier !== ProfileTier.BASIC;
     const firstName = engineerProfile.name.split(' ')[0];
 
     const calculateProfileScore = () => {
@@ -159,9 +159,9 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
 
     const UpgradePanel = () => {
         const UPGRADE_INFO = {
-            [ProfileTier.BASIC]: { title: "Upgrade to Professional", desc: "For £7/mo, add skills tags and get verified certs.", action: () => setActiveView('Billing')},
-            [ProfileTier.PROFESSIONAL]: { title: "Upgrade to Skills", desc: "For £15/mo, unlock specialist roles, AI Tools, and Storyboards.", action: () => setActiveView('Billing')},
-            [ProfileTier.SKILLS]: { title: "Upgrade to Business", desc: "For £35/mo, unlock profile analytics and dedicated support.", action: () => setActiveView('Billing')},
+            [ProfileTier.BASIC]: { title: "Upgrade to Silver", desc: "For £7/mo, add skills, unlock AI tools & more.", action: () => setActiveView('Billing')},
+            [ProfileTier.PROFESSIONAL]: { title: "Upgrade to Gold", desc: "For £15/mo, add up to 3 specialist roles.", action: () => setActiveView('Billing')},
+            [ProfileTier.SKILLS]: { title: "Upgrade to Platinum", desc: "For £35/mo, add up to 5 roles & unlock analytics.", action: () => setActiveView('Billing')},
             [ProfileTier.BUSINESS]: { title: "You're all set!", desc: "You have access to all features on the platform.", action: () => setActiveView('Analytics')},
         };
         const info = UPGRADE_INFO[engineerProfile.profileTier];
@@ -196,10 +196,10 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
                     <DashboardPanel icon={User} title="View Public Profile" description="See your Stats Card as companies see it." onClick={() => setActiveView('View Public Profile')} />
                     <DashboardPanel icon={CalendarDays} title="Set Availability" description="Update your calendar to get relevant offers." onClick={() => setActiveView('Availability')} />
                     <DashboardPanel icon={Search} title="Find Work" description="Search and apply for freelance contracts." onClick={() => setActiveView('Job Search')} />
-                    <DashboardPanel icon={BrainCircuit} title="AI Tools" description="Discover skills and get training suggestions." onClick={() => setActiveView('AI Tools')} disabled={!canUseSkillsFeatures} />
+                    <DashboardPanel icon={BrainCircuit} title="AI Tools" description="Discover skills and get training suggestions." onClick={() => setActiveView('AI Tools')} disabled={!canUsePremiumFeatures} />
                     <DashboardPanel icon={CreditCard} title="Billing" description="Manage subscriptions and purchase Boosts." onClick={() => setActiveView('Billing')} />
                     <div className="sm:col-span-2 md:col-span-1">
-                         <DashboardPanel icon={Clapperboard} title="Visual Case Studies" description="Create engaging stories of your projects." onClick={() => setActiveView('Create Storyboard')} disabled={!canUseSkillsFeatures} />
+                         <DashboardPanel icon={Clapperboard} title="Visual Case Studies" description="Create engaging stories of your projects." onClick={() => setActiveView('Create Storyboard')} disabled={!canUsePremiumFeatures} />
                     </div>
                      <div className="sm:col-span-2">
                         {isPremium ? (
@@ -236,7 +236,7 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
                         <StatBox value={engineerProfile.profileViews.toString()} label="Profile Views (30d)" icon={TrendingUp} onClick={() => setActiveView('Analytics')} />
                         <StatBox value={engineerProfile.jobInvites.toString()} label="Job Invites" icon={Mail} onClick={() => setActiveView('My Network')} />
                     </div>
-                    <ActionableInsight profile={engineerProfile} onUpgrade={() => setActiveView('Billing')} onNavigate={setActiveView} />
+                    <ActionableInsight profile={engineerProfile} onUpgrade={onUpgradeTier} onNavigate={setActiveView} />
                 </div>
             </div>
         </div>

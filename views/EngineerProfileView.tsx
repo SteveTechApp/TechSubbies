@@ -1,9 +1,10 @@
 import React from 'react';
 import { EngineerProfile, Role } from '../types/index.ts';
-import { MessageCircle, Star } from '../components/Icons.tsx';
+import { MessageCircle, Star, Trophy } from '../components/Icons.tsx';
 import { TopTrumpCard } from '../components/TopTrumpCard.tsx';
 import { ReviewCard } from '../components/ReviewCard.tsx';
 import { useAppContext } from '../context/AppContext.tsx';
+import { BadgeDisplay } from '../components/BadgeDisplay.tsx';
 
 export const EngineerProfileView = ({ profile, isEditable, onEdit }: { profile: EngineerProfile | null, isEditable: boolean, onEdit: () => void }) => {
     const { user, startConversationAndNavigate, reviews, allUsers } = useAppContext();
@@ -42,6 +43,20 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: { profile: 
             )}
            
             <TopTrumpCard profile={profile} isEditable={isEditable} onEdit={onEdit} />
+
+            {profile.badges.length > 0 && (
+                <div className="mt-8 bg-white p-6 rounded-lg shadow-lg">
+                    <h2 className="text-2xl font-bold mb-4 flex items-center">
+                        <Trophy size={22} className="mr-2 text-yellow-500" />
+                        Achievements
+                    </h2>
+                    <div className="flex flex-wrap gap-4">
+                        {profile.badges.map(badge => (
+                            <BadgeDisplay key={badge.id} badge={badge} />
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="mt-8 bg-white p-6 rounded-lg shadow-lg">
                 <h2 className="text-2xl font-bold mb-4 flex items-center">

@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import { PoundSterling, DollarSign } from '../components/Icons.tsx';
-import { Role, EngineerProfile, User, Job, Application, Currency, Conversation, Message, Review, CompanyProfile, ApplicationStatus, Notification, NotificationType, AppContextType, ForumPost, ForumComment, ProfileTier, Contract, ContractStatus, ContractType, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Compliance, IdentityVerification, Discipline, JobSkillRequirement } from '../types/index.ts';
-import { MOCK_JOBS, MOCK_ENGINEERS, MOCK_USERS, MOCK_USER_FREE_ENGINEER, ALL_MOCK_USERS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_COMPANIES, MOCK_NOTIFICATIONS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_CONTRACTS, MOCK_TRANSACTIONS } from '../data/mockData.ts';
+import { Role, EngineerProfile, User, Job, Application, Currency, Conversation, Message, Review, CompanyProfile, ApplicationStatus, Notification, NotificationType, AppContextType, ForumPost, ForumComment, ProfileTier, Contract, ContractStatus, ContractType, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Compliance, IdentityVerification, Discipline, JobSkillRequirement, Badge, Project, ProjectRole } from '../types/index.ts';
+import { MOCK_JOBS, MOCK_ENGINEERS, MOCK_USERS, MOCK_USER_FREE_ENGINEER, ALL_MOCK_USERS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_COMPANIES, MOCK_NOTIFICATIONS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_CONTRACTS, MOCK_TRANSACTIONS, MOCK_PROJECTS } from '../data/mockData.ts';
 import { geminiService } from '../services/geminiService.ts';
 import type { Chat } from '@google/genai';
 import { eSignatureService } from '../services/eSignatureService.ts';
+import { BADGES } from '../data/badges.ts';
 
 // --- CONSTANTS ---
 export const APP_NAME = "TechSubbies.com";
@@ -46,6 +47,8 @@ export const useAppLogic = (): AppContextType => {
     const [forumComments, setForumComments] = useState<ForumComment[]>(MOCK_FORUM_COMMENTS);
     const [contracts, setContracts] = useState<Contract[]>(MOCK_CONTRACTS);
     const [transactions, setTransactions] = useState<Transaction[]>(MOCK_TRANSACTIONS);
+    const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
+
 
     // --- UTILITY FUNCTIONS ---
     const findUserById = (userId: string) => allUsers.find(u => u.id === userId);
@@ -75,24 +78,57 @@ export const useAppLogic = (): AppContextType => {
         return () => clearInterval(interval);
     }, [user]);
 
+    // --- DYNAMIC BADGE CALCULATION ---
+     useEffect(() => {
+        const calculateBadges = () => {
+            setEngineers(currentEngineers => {
+                return currentEngineers.map(engineer => {
+                    const engineerUser = allUsers.find(u => u.profile.id === engineer.id);
+                    const completedContracts = contracts.filter(c => c.engineerId === engineer.id && c.status === ContractStatus.COMPLETED).length;
+                    const engineerPosts = forumPosts.filter(p => p.authorId === engineerUser?.id);
+                    const engineerComments = forumComments.filter(c => c.authorId === engineerUser?.id);
+                    const forumScore = (engineerPosts.length * 5) + engineerComments.length + engineerPosts.reduce((sum, p) => sum + p.upvotes, 0);
+
+                    const earnedBadges: Badge[] = [];
+                    BADGES.forEach(badge => {
+                        if (badge.condition(engineer, { completedContracts, forumScore })) {
+                            earnedBadges.push(badge);
+                        }
+                    });
+                    return { ...engineer, badges: earnedBadges };
+                });
+            });
+        };
+        const intervalId = setInterval(calculateBadges, 15000); // Recalculate every 15 seconds
+        return () => clearInterval(intervalId);
+    }, [contracts, forumPosts, forumComments, allUsers]);
+
+
     // --- SIMULATED PROFILE BOOST EXPIRATION ---
     useEffect(() => {
-        const boostedEngineers = engineers.filter(e => e.isBoosted && e.boostEndDate && e.boostEndDate < new Date());
-        if (boostedEngineers.length > 0) {
-            const updatedEngineers = [...engineers];
-            boostedEngineers.forEach(eng => {
-                const index = updatedEngineers.findIndex(e => e.id === eng.id);
-                if(index !== -1) {
-                    updatedEngineers[index].isBoosted = false;
-                    updatedEngineers[index].boostEndDate = undefined;
-                    if(user?.profile.id === eng.id) {
-                         alert("Your Profile Boost has expired.");
+        const checkBoosts = () => {
+             setEngineers(currentEngineers => {
+                let wasChanged = false;
+                const updatedEngineers = currentEngineers.map(eng => {
+                    if (eng.isBoosted && eng.boostEndDate && new Date(eng.boostEndDate) < new Date()) {
+                        wasChanged = true;
+                         if (user?.profile.id === eng.id) {
+                            createNotification(user.id, NotificationType.APPLICATION_UPDATE, "Your Profile Boost has expired.");
+                        }
+                        return { ...eng, isBoosted: false, boostEndDate: undefined };
                     }
+                    return eng;
+                });
+
+                if (wasChanged) {
+                    return updatedEngineers;
                 }
+                return currentEngineers;
             });
-            setEngineers(updatedEngineers);
-        }
-    }, [user]); // Reruns when user changes, but could be interval based too
+        };
+       const intervalId = setInterval(checkBoosts, 5000);
+       return () => clearInterval(intervalId);
+    }, [user]); 
 
 
     const markNotificationsAsRead = (userId: string) => {
@@ -189,6 +225,8 @@ export const useAppLogic = (): AppContextType => {
             profileViews: 0,
             searchAppearances: 0,
             jobInvites: 0,
+            joinDate: new Date(),
+            badges: [],
         };
 
         setEngineers(prev => [newEngineer, ...prev]);
@@ -245,20 +283,17 @@ export const useAppLogic = (): AppContextType => {
 
     // --- PROFILE & USER MANAGEMENT ---
     const updateEngineerProfile = (updatedProfile: Partial<EngineerProfile>) => {
-        if (user && user.role === Role.ENGINEER) {
-            const profileId = ('skills' in user.profile) ? user.profile.id : null;
-            if (profileId) {
-                 const newUser = { ...user, profile: { ...user.profile, ...updatedProfile } } as User;
-                setUser(newUser);
-            }
+        const profileId = updatedProfile.id || user?.profile.id;
+        if (!profileId) return;
+
+        if (user && user.profile.id === profileId) {
+            const newUser = { ...user, profile: { ...user.profile, ...updatedProfile } } as User;
+            setUser(newUser);
         }
          
-        const engineerIndex = engineers.findIndex(e => e.id === (updatedProfile.id || user?.profile.id));
-        if (engineerIndex !== -1) {
-            const updatedEngineers = [...engineers];
-            updatedEngineers[engineerIndex] = { ...updatedEngineers[engineerIndex], ...updatedProfile };
-            setEngineers(updatedEngineers);
-        }
+        setEngineers(prev => prev.map(e => e.id === profileId ? { ...e, ...updatedProfile } : e));
+        
+        setAllUsers(prev => prev.map(u => u.profile.id === profileId ? { ...u, profile: { ...u.profile, ...updatedProfile } } : u));
     };
     
     const updateCompanyProfile = (updatedProfile: Partial<CompanyProfile>) => {
@@ -270,12 +305,9 @@ export const useAppLogic = (): AppContextType => {
             setUser(newUser);
         }
          
-        const companyIndex = companies.findIndex(c => c.id === profileId);
-        if (companyIndex !== -1) {
-            const updatedCompanies = [...companies];
-            updatedCompanies[companyIndex] = { ...updatedCompanies[companyIndex], ...updatedProfile };
-            setCompanies(updatedCompanies);
-        }
+        setCompanies(prev => prev.map(c => c.id === profileId ? { ...c, ...updatedProfile } : c));
+        
+        setAllUsers(prev => prev.map(u => u.profile.id === profileId ? { ...u, profile: { ...u.profile, ...updatedProfile } } : u));
     };
 
     const startTrial = () => {
@@ -285,12 +317,12 @@ export const useAppLogic = (): AppContextType => {
             const subscriptionEndDate = new Date(trialEndDate);
             
             updateEngineerProfile({ 
-                profileTier: ProfileTier.SKILLS,
+                profileTier: ProfileTier.PROFESSIONAL,
                 trialEndDate: trialEndDate,
                 subscriptionEndDate: subscriptionEndDate,
                 securityNetCreditsUsed: 0,
             });
-            alert("30-Day Skills Profile trial started! You now have access to all premium features.");
+            alert("30-Day Silver Profile trial started! You now have access to all premium features.");
         }
     };
 
@@ -299,18 +331,8 @@ export const useAppLogic = (): AppContextType => {
             const boostEndDate = new Date(Date.now() + 30000); // 30 seconds for demo
             updateEngineerProfile({ isBoosted: true, boostEndDate });
             alert("Your profile has been boosted! You'll appear at the top of relevant searches for a short period (30s for demo).");
-
-             // Simulate the boost expiring
-            setTimeout(() => {
-                updateEngineerProfile({ isBoosted: false, boostEndDate: undefined });
-                // We only alert the current user if they are still logged in and are the one who was boosted
-                if (user && 'isBoosted' in user.profile && user.profile.id === (user.profile as EngineerProfile).id) {
-                     alert("Your Profile Boost has expired.");
-                }
-            }, 30000);
-
         } else {
-            alert("Profile Boost is a premium feature. Please upgrade to a Skills Profile first.");
+            alert("Profile Boost is a premium feature. Please upgrade to a premium profile first.");
         }
     };
     
@@ -319,7 +341,7 @@ export const useAppLogic = (): AppContextType => {
         
         const profile = user.profile as EngineerProfile;
         if (profile.profileTier === ProfileTier.BASIC) {
-            alert("The Security Net Guarantee is only for paid Skills Profile subscribers.");
+            alert("The Security Net Guarantee is only for paid subscribers.");
             return;
         }
 
@@ -367,17 +389,12 @@ export const useAppLogic = (): AppContextType => {
         if (!userToUpdate) return;
         
         const newStatus = userToUpdate.profile.status === 'active' ? 'suspended' : 'active';
-        setAllUsers(prev => prev.map(u => u.profile.id === profileId ? { ...u, profile: { ...u.profile, status: newStatus } } : u));
-        
-        if (userToUpdate.role === Role.ENGINEER) {
-            setEngineers(prev => prev.map(e => e.id === profileId ? { ...e, status: newStatus } : e));
-        } else if (userToUpdate.role === Role.COMPANY || userToUpdate.role === Role.RESOURCING_COMPANY) {
-            setCompanies(prev => prev.map(c => c.id === profileId ? { ...c, status: newStatus } : c));
-        }
+        updateEngineerProfile({ id: profileId, status: newStatus });
+        updateCompanyProfile({ id: profileId, status: newStatus });
     };
     
     // --- JOB & APPLICATION LOGIC ---
-    const postJob = (jobData: Omit<Job, 'id' | 'companyId' | 'postedDate' | 'status'>) => {
+    const postJob = (jobData: Omit<Job, 'id' | 'companyId' | 'postedDate' | 'status'>): Job | undefined => {
         if (user && user.profile) {
             const newJob: Job = {
                 ...jobData,
@@ -396,7 +413,9 @@ export const useAppLogic = (): AppContextType => {
                     createNotification(engUser.id, NotificationType.NEW_JOB_MATCH, `A new job, '${newJob.title}', matches your skills.`, 'Job Search');
                 }
             });
+            return newJob;
         }
+        return undefined;
     };
 
     const applyForJob = (jobId: string, engineerId?: string) => {
@@ -468,6 +487,28 @@ export const useAppLogic = (): AppContextType => {
             : app
         ));
         alert("Review submitted successfully!");
+    };
+
+    const inviteEngineerToJob = (jobId: string, engineerId: string) => {
+        if (!user) return;
+    
+        const job = jobs.find(j => j.id === jobId);
+        const engineerUser = findUserByProfileId(engineerId);
+    
+        if (job && engineerUser && 'jobInvites' in engineerUser.profile) {
+            createNotification(
+                engineerUser.id,
+                NotificationType.JOB_INVITE,
+                `${user.profile.name} has invited you to apply for the '${job.title}' role.`,
+                'Job Search'
+            );
+    
+            const engineerProfile = engineerUser.profile as EngineerProfile;
+            updateEngineerProfile({ 
+                id: engineerId, 
+                jobInvites: (engineerProfile.jobInvites || 0) + 1 
+            });
+        }
     };
     
     // --- MESSAGING LOGIC ---
@@ -587,6 +628,7 @@ export const useAppLogic = (): AppContextType => {
         ));
     };
     
+    // FIX: Changed voteType from 'down' to 'up' | 'down' to allow upvoting.
     const voteOnComment = (commentId: string, voteType: 'up' | 'down') => {
         setForumComments(prev => prev.map(comment => 
             comment.id === commentId ? { ...comment, upvotes: voteType === 'up' ? comment.upvotes + 1 : comment.upvotes, downvotes: voteType === 'down' ? comment.downvotes + 1 : comment.downvotes } : comment
@@ -715,13 +757,57 @@ export const useAppLogic = (): AppContextType => {
         }
     };
 
-    const submitTimesheet = (contractId: string, timesheet: Omit<Timesheet, 'id' | 'status'>) => {
-        const newTimesheet: Timesheet = { ...timesheet, id: `ts-${generateUniqueId()}`, status: 'submitted' };
+    const submitTimesheet = (contractId: string, timesheetData: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => {
+        if (!user || user.role !== Role.ENGINEER) return;
+        const newTimesheet: Timesheet = { 
+            ...timesheetData,
+            id: `ts-${generateUniqueId()}`, 
+            contractId,
+            engineerId: user.profile.id,
+            status: 'submitted' 
+        };
         setContracts(prev => prev.map(c => c.id === contractId ? { ...c, timesheets: [...(c.timesheets || []), newTimesheet] } : c));
     };
 
     const approveTimesheet = (contractId: string, timesheetId: string) => {
-        setContracts(prev => prev.map(c => c.id === contractId ? { ...c, timesheets: c.timesheets?.map(ts => ts.id === timesheetId ? { ...ts, status: 'approved' } : ts) } : c));
+        if(!user) return;
+        let updatedTimesheet: Timesheet | undefined;
+        let contractToUpdate: Contract | undefined;
+        let engineerUser: User | undefined;
+
+        setContracts(prev => prev.map(c => {
+            if (c.id === contractId) {
+                contractToUpdate = c;
+                engineerUser = findUserByProfileId(c.engineerId);
+                const newTimesheets = c.timesheets?.map(ts => {
+                    if (ts.id === timesheetId) {
+                        updatedTimesheet = { ...ts, status: 'paid' };
+                        return updatedTimesheet;
+                    }
+                    return ts;
+                });
+                return { ...c, timesheets: newTimesheets };
+            }
+            return c;
+        }));
+        
+        if (contractToUpdate && engineerUser && updatedTimesheet) {
+            const dayRate = Number(contractToUpdate.amount);
+            const totalAmount = dayRate * updatedTimesheet.days;
+            const payoutAmount = totalAmount * (1 - PLATFORM_FEE_PERCENTAGE);
+            const feeAmount = totalAmount * PLATFORM_FEE_PERCENTAGE;
+
+            const payoutTx: Transaction = {
+                id: `txn-${generateUniqueId()}`, userId: engineerUser.id, contractId, type: TransactionType.PAYOUT,
+                description: `Payout for Timesheet: ${updatedTimesheet.period}`, amount: payoutAmount, date: new Date()
+            };
+            const feeTx: Transaction = {
+                 id: `txn-${generateUniqueId()}`, userId: user.id, contractId, type: TransactionType.PLATFORM_FEE,
+                description: `Platform Fee for Timesheet: ${updatedTimesheet.period}`, amount: -feeAmount, date: new Date()
+            };
+            setTransactions(prev => [payoutTx, feeTx, ...prev]);
+            createNotification(engineerUser.id, NotificationType.APPLICATION_UPDATE, `Your timesheet for '${updatedTimesheet.period}' has been approved and paid!`);
+        }
     };
 
     const upgradeSubscription = (profileId: string, toTier: ProfileTier) => {
@@ -752,6 +838,49 @@ export const useAppLogic = (): AppContextType => {
         alert(`Successfully upgraded to ${toTier} Profile!`);
     };
 
+    // --- PROJECT PLANNER LOGIC ---
+    const createProject = (name: string, description: string): Project => {
+        if (!user || user.role !== Role.COMPANY) {
+            throw new Error("Only companies can create projects.");
+        }
+        const newProject: Project = {
+            id: `proj-${generateUniqueId()}`,
+            companyId: user.profile.id,
+            name,
+            description,
+            roles: [],
+            status: 'planning',
+        };
+        setProjects(prev => [newProject, ...prev]);
+        return newProject;
+    };
+
+    const addRoleToProject = (projectId: string, roleData: Omit<ProjectRole, 'id' | 'assignedEngineerId'>) => {
+        const newRole: ProjectRole = {
+            ...roleData,
+            id: `role-${generateUniqueId()}`,
+            assignedEngineerId: null,
+        };
+        setProjects(prev => prev.map(p => 
+            p.id === projectId ? { ...p, roles: [...p.roles, newRole] } : p
+        ));
+    };
+
+    const assignEngineerToRole = (projectId: string, roleId: string, engineerId: string) => {
+        setProjects(prev => prev.map(p => {
+            if (p.id === projectId) {
+                return {
+                    ...p,
+                    roles: p.roles.map(r => 
+                        r.id === roleId ? { ...r, assignedEngineerId: engineerId } : r
+                    ),
+                };
+            }
+            return p;
+        }));
+    };
+
+
     // --- CONTEXT EXPORT ---
     return useMemo(() => ({
         user, allUsers, jobs, companies, engineers, login, loginAsSteve, logout, 
@@ -761,11 +890,12 @@ export const useAppLogic = (): AppContextType => {
         reactivateProfile, chatSession, conversations, messages, selectedConversationId, 
         setSelectedConversationId, findUserById, findUserByProfileId, sendMessage, 
         startConversationAndNavigate, reviews, submitReview, toggleUserStatus, toggleJobStatus, 
-        notifications, markNotificationsAsRead, offerJob, acceptOffer, declineOffer,
+        notifications, markNotificationsAsRead, offerJob, acceptOffer, declineOffer, inviteEngineerToJob,
         isAiReplying,
         forumPosts, forumComments, createForumPost, addForumComment, voteOnPost, voteOnComment,
         contracts, sendContractForSignature, signContract,
         transactions, fundMilestone, submitMilestoneForApproval, approveMilestonePayout,
-        submitTimesheet, approveTimesheet, upgradeSubscription
-    }), [user, allUsers, jobs, companies, engineers, applications, conversations, messages, selectedConversationId, reviews, notifications, isAiReplying, forumPosts, forumComments, contracts, transactions]);
+        submitTimesheet, approveTimesheet, upgradeSubscription,
+        projects, createProject, addRoleToProject, assignEngineerToRole
+    }), [user, allUsers, jobs, companies, engineers, applications, conversations, messages, selectedConversationId, reviews, notifications, isAiReplying, forumPosts, forumComments, contracts, transactions, projects]);
 };

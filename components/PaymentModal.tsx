@@ -23,6 +23,10 @@ export const PaymentModal = ({ isOpen, onClose, onSuccess, amount, currency, pay
         setIsProcessing(false);
         onSuccess();
     };
+    
+    const formatCurrency = (value: number, curr: string) => {
+        return new Intl.NumberFormat('en-GB', { style: 'currency', currency: curr }).format(value);
+    }
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={onClose}>
@@ -37,7 +41,7 @@ export const PaymentModal = ({ isOpen, onClose, onSuccess, amount, currency, pay
                     <StripeLogo className="mx-auto mb-3" />
                     <h2 className="text-lg font-medium text-gray-800">{paymentDescription}</h2>
                     <p className="text-3xl font-bold text-gray-900 mt-1">
-                        {new Intl.NumberFormat('en-GB', { style: 'currency', currency }).format(amount)}
+                        {formatCurrency(amount, currency)}
                     </p>
                 </div>
 
@@ -77,7 +81,7 @@ export const PaymentModal = ({ isOpen, onClose, onSuccess, amount, currency, pay
                                     <Loader className="animate-spin w-5 h-5 mr-2" />
                                     Processing...
                                 </>
-                            ) : `Pay ${new Intl.NumberFormat('en-GB', { style: 'currency', currency }).format(amount)}`}
+                            ) : `Pay ${formatCurrency(amount, currency)}`}
                         </button>
                     </div>
                 </form>

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Contract, User, Role, ContractStatus, UserProfile, CompanyProfile, EngineerProfile, Milestone, MilestoneStatus, ContractType } from '../types/index.ts';
+import { Contract, User, Role, ContractStatus, UserProfile, CompanyProfile, EngineerProfile, Milestone, MilestoneStatus, ContractType, Timesheet } from '../types/index.ts';
 import { useAppContext } from '../context/AppContext.tsx';
 import { FileText, User as UserIcon, Building, Calendar, CheckCircle, Clock, DollarSign, Loader } from '../components/Icons.tsx';
 import { SignContractModal } from '../components/SignContractModal.tsx';
 import { formatDisplayDate } from '../utils/dateFormatter.ts';
 import { PaymentModal } from '../components/PaymentModal.tsx';
+import { TimesheetRow } from '../components/TimesheetRow.tsx';
+import { TimesheetSubmitModal } from '../components/TimesheetSubmitModal.tsx';
 
 interface ContractDetailsViewProps {
     contract: Contract;
@@ -33,15 +35,14 @@ const StatusBadge = ({ status, className }: { status: string, className?: string
 };
 
 
-const MilestoneRow = ({ milestone, contract, onFund, onAction, userRole }: { milestone: Milestone, contract: Contract, onFund: () => void, onAction: (action: Function) => void, userRole: Role }) => {
+const MilestoneRow = ({ milestone, contract, onFund, userRole }: { milestone: Milestone, contract: Contract, onFund: () => void, userRole: Role }) => {
     const { submitMilestoneForApproval, approveMilestonePayout } = useAppContext();
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleAction = async (action: Function) => {
+    const handleAction = async (action: (contractId: string, milestoneId: string) => void) => {
         setIsLoading(true);
-        // Simulate async action
         await new Promise(resolve => setTimeout(resolve, 500));
-        onAction(action);
+        action(contract.id, milestone.id);
         setIsLoading(false);
     };
 
@@ -77,9 +78,11 @@ const MilestoneRow = ({ milestone, contract, onFund, onAction, userRole }: { mil
 };
 
 export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
-    const { user, findUserByProfileId, signContract, fundMilestone } = useAppContext();
+    const { user, findUserByProfileId, signContract, fundMilestone, submitTimesheet } = useAppContext();
     const [isSignModalOpen, setIsSignModalOpen] = useState(false);
     const [fundingMilestone, setFundingMilestone] = useState<Milestone | null>(null);
+    const [isTimesheetModalOpen, setIsTimesheetModalOpen] = useState(false);
+
 
     const engineerUser = findUserByProfileId(contract.engineerId);
     const companyUser = findUserByProfileId(contract.companyId);
@@ -105,6 +108,11 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
             setFundingMilestone(null);
         }
     };
+    
+    const handleTimesheetSubmit = (timesheetData: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => {
+        submitTimesheet(contract.id, timesheetData);
+        setIsTimesheetModalOpen(false);
+    };
 
     return (
         <>
@@ -114,8 +122,16 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
                     onClose={() => setFundingMilestone(null)}
                     onSuccess={handlePaymentSuccess}
                     amount={fundingMilestone.amount}
-                    currency={contract.currency}
+                    currency={String(contract.currency)}
                     paymentDescription={`Fund Milestone: ${fundingMilestone.description}`}
+                />
+            )}
+            {isTimesheetModalOpen && (
+                <TimesheetSubmitModal 
+                    isOpen={isTimesheetModalOpen}
+                    onClose={() => setIsTimesheetModalOpen(false)}
+                    onSubmit={handleTimesheetSubmit}
+                    contract={contract}
                 />
             )}
             <div className="bg-white p-6 rounded-lg shadow">
@@ -154,9 +170,26 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
                                     milestone={m} 
                                     contract={contract}
                                     onFund={() => setFundingMilestone(m)} 
-                                    onAction={(action) => action(contract.id, m.id)}
                                     userRole={user.role} 
                                 />
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                 {contract.type === ContractType.DAY_RATE && (
+                     <div className="mt-4">
+                        <div className="flex justify-between items-center mb-2">
+                             <h3 className="font-bold text-lg">Timesheets</h3>
+                             {user.role === Role.ENGINEER && (
+                                <button onClick={() => setIsTimesheetModalOpen(true)} className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Submit Timesheet</button>
+                             )}
+                        </div>
+                        <div className="space-y-2">
+                            {contract.timesheets && contract.timesheets.length > 0 ? (
+                                contract.timesheets.map(ts => <TimesheetRow key={ts.id} timesheet={ts} contract={contract} userRole={user.role} />)
+                            ) : (
+                                <p className="text-sm text-gray-500 text-center bg-gray-50 p-3 rounded-md">No timesheets submitted yet.</p>
                             )}
                         </div>
                     </div>

@@ -31,29 +31,31 @@ const SLIDES = [
 
 export const FeatureSlideshow = () => {
     const [activeSlide, setActiveSlide] = useState(0);
-    const [isAnimating, setIsAnimating] = useState(false);
     const timerRef = useRef<number | null>(null);
-
     const SLIDE_DURATION = 8000;
 
+    const resetTimer = () => {
+        if (timerRef.current) {
+            clearInterval(timerRef.current);
+        }
+        timerRef.current = window.setInterval(() => {
+            setActiveSlide(prev => (prev + 1) % SLIDES.length);
+        }, SLIDE_DURATION);
+    };
+
     const goToSlide = (index: number) => {
-        if (isAnimating) return;
-        setIsAnimating(true);
         setActiveSlide(index);
-        setTimeout(() => setIsAnimating(false), 500);
+        resetTimer(); // Reset the timer on any manual navigation
     };
 
     useEffect(() => {
-        timerRef.current = window.setInterval(() => {
-            goToSlide((activeSlide + 1) % SLIDES.length);
-        }, SLIDE_DURATION);
-
+        resetTimer(); // Start the timer on component mount
         return () => {
             if (timerRef.current) {
                 clearInterval(timerRef.current);
             }
         };
-    }, [activeSlide, isAnimating]);
+    }, []); // Empty dependency array ensures this runs only once
 
     return (
         <div className="w-full h-full flex flex-col items-center">
@@ -62,10 +64,15 @@ export const FeatureSlideshow = () => {
                     <div
                         key={index}
                         className="absolute inset-0 transition-opacity duration-500"
-                        style={{ opacity: activeSlide === index ? 1 : 0, zIndex: activeSlide === index ? 10 : 0 }}
+                        style={{
+                            opacity: activeSlide === index ? 1 : 0,
+                            zIndex: activeSlide === index ? 10 : 0,
+                            pointerEvents: activeSlide === index ? 'auto' : 'none',
+                        }}
                     >
                         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${slide.image})` }} />
-                        {slide.animationClass && (
+                        {/* Conditionally render the cursor animation only for the active slide to ensure it restarts */}
+                        {slide.animationClass && activeSlide === index && (
                             <div className="absolute inset-0">
                                 <MousePointer size={24} className={`absolute text-yellow-300 drop-shadow-lg ${slide.animationClass}`} />
                             </div>

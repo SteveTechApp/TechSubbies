@@ -139,6 +139,22 @@ interface BaseProfile {
     status: 'active' | 'suspended' | 'inactive';
 }
 
+// FIX: Added ConditionContext type for badge logic
+export type ConditionContext = {
+    completedContracts: number;
+    forumScore: number;
+};
+
+export interface Badge {
+    id: string;
+    name: string;
+    description: string;
+    icon: React.ComponentType<any>;
+    color: string;
+    // FIX: Added condition property to Badge type
+    condition: (profile: EngineerProfile, context: ConditionContext) => boolean;
+}
+
 export interface EngineerProfile extends BaseProfile {
     discipline: Discipline;
     location: string;
@@ -182,6 +198,8 @@ export interface EngineerProfile extends BaseProfile {
     jobInvites: number;
     calendarSyncUrl?: string;
     matchScore?: number;
+    joinDate: Date;
+    badges: Badge[];
 }
 
 
@@ -281,6 +299,7 @@ export enum NotificationType {
     JOB_OFFER = 'job_offer',
     MESSAGE = 'message',
     APPLICATION_UPDATE = 'application_update',
+    JOB_INVITE = 'job_invite',
 }
 
 export interface Notification {
@@ -395,6 +414,28 @@ export interface Transaction {
     date: Date;
 }
 
+// --- NEW: Project Planner Types ---
+export interface ProjectRole {
+  id: string;
+  title: string;
+  discipline: Discipline;
+  startDate: Date;
+  endDate: Date;
+  assignedEngineerId: string | null;
+  hotelCovered?: boolean;
+  travelCovered?: boolean;
+  mealsCovered?: boolean;
+}
+
+export interface Project {
+  id: string;
+  companyId: string;
+  name: string;
+  description: string;
+  roles: ProjectRole[];
+  status: 'planning' | 'active' | 'completed';
+}
+
 
 export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'companySignUp' | 'resourcingCompanySignUp' | 'investors' | 'aboutUs' | 'terms' | 'privacy' | 'pricing' | 'howItWorks' | 'userGuide' | 'security';
 
@@ -409,7 +450,7 @@ export interface AppContextType {
     logout: () => void;
     updateEngineerProfile: (updatedProfile: Partial<EngineerProfile>) => void;
     updateCompanyProfile: (updatedProfile: Partial<CompanyProfile>) => void;
-    postJob: (jobData: Omit<Job, 'id' | 'companyId' | 'postedDate' | 'status'>) => void;
+    postJob: (jobData: Omit<Job, 'id' | 'companyId' | 'postedDate' | 'status'>) => Job | undefined;
     startTrial: () => void;
     geminiService: GeminiServiceType;
     applications: Application[];
@@ -438,6 +479,7 @@ export interface AppContextType {
     offerJob: (jobId: string, engineerId: string) => void;
     acceptOffer: (jobId: string, engineerId: string) => void;
     declineOffer: (jobId: string, engineerId: string) => void;
+    inviteEngineerToJob: (jobId: string, engineerId: string) => void;
     isAiReplying: boolean;
     // NEW: Forum context
     forumPosts: ForumPost[];
@@ -455,7 +497,12 @@ export interface AppContextType {
     fundMilestone: (contractId: string, milestoneId: string) => void;
     submitMilestoneForApproval: (contractId: string, milestoneId: string) => void;
     approveMilestonePayout: (contractId: string, milestoneId: string) => void;
-    submitTimesheet: (contractId: string, timesheet: Omit<Timesheet, 'id' | 'status'>) => void;
+    submitTimesheet: (contractId: string, timesheet: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => void;
     approveTimesheet: (contractId: string, timesheetId: string) => void;
     upgradeSubscription: (profileId: string, toTier: ProfileTier) => void;
+    // NEW: Project Planner context
+    projects: Project[];
+    createProject: (name: string, description: string) => Project;
+    addRoleToProject: (projectId: string, role: Omit<ProjectRole, 'id' | 'assignedEngineerId'>) => void;
+    assignEngineerToRole: (projectId: string, roleId: string, engineerId: string) => void;
 }

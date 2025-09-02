@@ -46,6 +46,8 @@ const MOCK_ENGINEER_STEVE: EngineerProfile = {
     customerRating: 5, peerRating: 5,
     profileViews: 543, searchAppearances: 2109, jobInvites: 12,
     calendarSyncUrl: 'https://api.techsubbies.com/calendar/eng-steve.ics',
+    joinDate: new Date('2023-01-01'),
+    badges: [],
 };
 
 const MOCK_ENGINEER_1: EngineerProfile = {
@@ -76,6 +78,8 @@ const MOCK_ENGINEER_1: EngineerProfile = {
     isBoosted: false, customerRating: 5, peerRating: 5,
     profileViews: 142, searchAppearances: 980, jobInvites: 3,
     calendarSyncUrl: 'https://api.techsubbies.com/calendar/eng-1.ics',
+    joinDate: new Date('2023-02-15'),
+    badges: [],
 };
 
 const MOCK_ENGINEER_2: EngineerProfile = {
@@ -98,6 +102,8 @@ const MOCK_ENGINEER_2: EngineerProfile = {
     customerRating: 4, peerRating: 5, googleCalendarLink: '#',
     profileViews: 45, searchAppearances: 312, jobInvites: 1,
     calendarSyncUrl: 'https://api.techsubbies.com/calendar/eng-2.ics',
+    joinDate: new Date('2023-05-10'),
+    badges: [],
 };
 
 const MOCK_ENGINEER_3: EngineerProfile = {
@@ -124,6 +130,8 @@ const MOCK_ENGINEER_3: EngineerProfile = {
     caseStudies: [],
     profileViews: 310, searchAppearances: 1500, jobInvites: 8,
     calendarSyncUrl: 'https://api.techsubbies.com/calendar/eng-3.ics',
+    joinDate: new Date('2024-01-20'),
+    badges: [],
 };
 
 export const MOCK_FREE_ENGINEER: EngineerProfile = {
@@ -139,6 +147,8 @@ export const MOCK_FREE_ENGINEER: EngineerProfile = {
     identity: { documentType: 'none', isVerified: false },
     profileViews: 12, searchAppearances: 88, jobInvites: 0,
     calendarSyncUrl: 'https://api.techsubbies.com/calendar/eng-free.ics',
+    joinDate: new Date('2024-03-01'),
+    badges: [],
 };
 
 
@@ -199,6 +209,8 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
             searchAppearances: getRandomInt(0, 3000),
             jobInvites: getRandomInt(0, 10),
             calendarSyncUrl: `https://api.techsubbies.com/calendar/gen-eng-${i}.ics`,
+            joinDate: new Date(new Date().setDate(new Date().getDate() - getRandomInt(10, 365))),
+            badges: [],
         };
 
         if (profileTier !== ProfileTier.BASIC) {

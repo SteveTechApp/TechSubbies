@@ -11,7 +11,7 @@ interface AIToolsViewProps {
 }
 
 export const AIToolsView = ({ profile, onSkillsAdded, setActiveView }: AIToolsViewProps) => {
-    const canUseAiTools = profile.profileTier === ProfileTier.SKILLS || profile.profileTier === ProfileTier.BUSINESS;
+    const canUseAiTools = profile.profileTier !== ProfileTier.BASIC;
 
     return (
         <div>
@@ -39,13 +39,13 @@ export const AIToolsView = ({ profile, onSkillsAdded, setActiveView }: AIToolsVi
                     </div>
                     <h2 className="text-2xl font-bold mb-2">Unlock AI-Powered Career Tools</h2>
                     <p className="max-w-xl mx-auto mb-6">
-                        AI Skill Discovery and Training Recommendations are premium features. Upgrade to a <strong>Skills Profile</strong> to get AI-driven insights that help you stand out, identify skill gaps, and command higher day rates.
+                        AI Skill Discovery and Training Recommendations are premium features. Upgrade to a <strong>Silver Profile</strong> to get AI-driven insights that help you stand out, identify skill gaps, and command higher day rates.
                     </p>
                     <button
                         onClick={() => setActiveView('Billing')}
                         className="bg-white text-blue-700 font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-transform transform hover:scale-105 shadow-md"
                     >
-                        Upgrade to Skills Profile Now
+                        Upgrade to Silver Profile
                     </button>
                 </div>
             )}

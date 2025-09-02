@@ -37,10 +37,10 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
     const myTransactions = transactions.filter(t => t.userId === user?.id);
 
     const TIER_INFO = {
-        [ProfileTier.BASIC]: { name: "Basic Profile (Free)", color: "" },
-        [ProfileTier.PROFESSIONAL]: { name: "Professional Profile (£7/mo)", color: "text-green-700", price: 7 },
-        [ProfileTier.SKILLS]: { name: "Skills Profile (£15/mo)", color: "text-blue-700", price: 15 },
-        [ProfileTier.BUSINESS]: { name: "Business Profile (£35/mo)", color: "text-purple-700", price: 35 },
+        [ProfileTier.BASIC]: { name: "Bronze Profile (Free)", color: "" },
+        [ProfileTier.PROFESSIONAL]: { name: "Silver Profile (£7/mo)", color: "text-green-700", price: 7 },
+        [ProfileTier.SKILLS]: { name: "Gold Profile (£15/mo)", color: "text-blue-700", price: 15 },
+        [ProfileTier.BUSINESS]: { name: "Platinum Profile (£35/mo)", color: "text-purple-700", price: 35 },
     };
     
     const currentTierInfo = TIER_INFO[profile.profileTier];
@@ -48,11 +48,11 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
     const getUpgradeAction = () => {
         switch (profile.profileTier) {
             case ProfileTier.BASIC:
-                return { text: "Upgrade to Professional", action: () => setPaymentDetails({ tier: ProfileTier.PROFESSIONAL, price: TIER_INFO[ProfileTier.PROFESSIONAL].price }) };
+                return { text: "Upgrade to Silver", action: () => setPaymentDetails({ tier: ProfileTier.PROFESSIONAL, price: TIER_INFO[ProfileTier.PROFESSIONAL].price }) };
             case ProfileTier.PROFESSIONAL:
-                return { text: "Upgrade to Skills", action: () => setPaymentDetails({ tier: ProfileTier.SKILLS, price: TIER_INFO[ProfileTier.SKILLS].price }) };
+                return { text: "Upgrade to Gold", action: () => setPaymentDetails({ tier: ProfileTier.SKILLS, price: TIER_INFO[ProfileTier.SKILLS].price }) };
             case ProfileTier.SKILLS:
-                return { text: "Upgrade to Business", action: () => setPaymentDetails({ tier: ProfileTier.BUSINESS, price: TIER_INFO[ProfileTier.BUSINESS].price }) };
+                return { text: "Upgrade to Platinum", action: () => setPaymentDetails({ tier: ProfileTier.BUSINESS, price: TIER_INFO[ProfileTier.BUSINESS].price }) };
             default:
                 return null;
         }
@@ -75,7 +75,7 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
                     onSuccess={handlePaymentSuccess}
                     amount={paymentDetails.price}
                     currency="GBP"
-                    paymentDescription={`Subscription to ${paymentDetails.tier} Profile`}
+                    paymentDescription={`Subscription to ${TIER_INFO[paymentDetails.tier].name}`}
                 />
             )}
             <button 
@@ -174,7 +174,7 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
                         <div className="bg-white p-8 rounded-lg shadow text-center">
                             <Star size={32} className="mx-auto text-yellow-500 mb-4" />
                             <h2 className="text-2xl font-bold">Unlock Your Financial Dashboard</h2>
-                            <p className="text-gray-600 mt-2">Upgrade to a Professional Profile to manage your subscriptions, track payouts from projects, and access premium features like the Security Net Guarantee.</p>
+                            <p className="text-gray-600 mt-2">Upgrade to a Silver Profile to manage your subscriptions, track payouts from projects, and access premium features like the Security Net Guarantee.</p>
                             <button onClick={upgradeAction?.action} className="mt-6 bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700">
                                 Upgrade My Profile
                             </button>

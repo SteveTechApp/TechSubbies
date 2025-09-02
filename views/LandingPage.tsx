@@ -5,7 +5,7 @@ import { Header } from '../components/Header.tsx';
 import { Footer } from '../components/Footer.tsx';
 import { StatCard } from '../components/StatCard.tsx';
 import { FeatureCard } from '../components/FeatureCard.tsx';
-import { Users, Building, ClipboardList, DollarSign, Calendar, Handshake, User, Briefcase } from '../components/Icons.tsx';
+import { Users, Building, ClipboardList, DollarSign, Calendar, Handshake, User, Briefcase, MapPin, ArrowRight } from '../components/Icons.tsx';
 import { HERO_IMAGES, COMPANY_LOGOS } from '../data/assets.ts';
 
 interface LandingPageProps {
@@ -56,7 +56,15 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
       return () => clearInterval(roleInterval);
   }, []);
 
-  const featuredCompanies = companies.filter(c => c.consentToFeature).slice(0, 5);
+  const featuredCompanies = companies.filter(c => c.consentToFeature).slice(0, 8);
+  
+  const featuredJobs = jobs
+    .filter(j => j.status === 'active' && parseInt(j.dayRate, 10) > 400)
+    .sort((a, b) => b.postedDate.getTime() - a.postedDate.getTime())
+    .slice(0, 3);
+    
+  const getCompanyName = (companyId: string) => companies.find(c => c.id === companyId)?.name || 'A Leading Company';
+
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -130,22 +138,67 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
               </div>
             </div>
           </section>
+
+          {/* Featured Contracts Section */}
+          <section className="py-16 bg-white">
+            <div className="container mx-auto px-4 text-center">
+                <h2 className="text-4xl font-bold text-gray-800 mb-4">Featured Contracts</h2>
+                <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-10">Get a glimpse of the high-value opportunities available right now on the platform.</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    {featuredJobs.map(job => (
+                        <div key={job.id} className="bg-gray-50 border border-gray-200 p-6 rounded-lg shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col text-left">
+                            <div className="flex-grow">
+                                <p className="text-sm font-semibold text-blue-600">{getCompanyName(job.companyId)}</p>
+                                <h3 className="text-xl font-bold text-gray-800 my-1">{job.title}</h3>
+                                <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
+                                    <span className="flex items-center"><MapPin size={14} className="mr-1.5"/>{job.location}</span>
+                                    <span className="flex items-center"><DollarSign size={14} className="mr-1.5"/>{job.currency}{job.dayRate} / day</span>
+                                </div>
+                                <p className="text-sm text-gray-600">{job.description.substring(0, 100)}...</p>
+                            </div>
+                            <div className="mt-6 pt-4 border-t border-gray-200">
+                                <button onClick={() => onNavigate('login')} className="w-full font-bold py-2 px-4 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+                                    View Details & Apply
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <div className="mt-12">
+                     <button onClick={() => onNavigate('login')} className="font-bold text-blue-600 hover:text-blue-800 transition-colors group">
+                        <span>View All Jobs</span>
+                        <ArrowRight className="inline-block w-5 h-5 ml-1 transition-transform group-hover:translate-x-1" />
+                    </button>
+                </div>
+            </div>
+          </section>
           
           {/* Trusted By Section */}
-            <section className="py-10 bg-white">
+            <section className="py-10 bg-gray-50">
                 <div className="container mx-auto px-4 text-center">
                     <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-8">Trusted by leading integrators & managed service providers</h3>
-                    <div className="flex justify-center items-center flex-wrap gap-x-12 gap-y-6">
+                    <div className="flex justify-center items-center flex-wrap gap-x-12 gap-y-8">
                         {featuredCompanies.map(company => {
                             const LogoComponent = COMPANY_LOGOS[company.id as keyof typeof COMPANY_LOGOS];
-                            return LogoComponent ? <LogoComponent key={company.id} className="h-10 text-gray-600" /> : null;
+                            if (!LogoComponent) return null;
+
+                            return (
+                                <button
+                                    key={company.id}
+                                    onClick={() => onNavigate('login')}
+                                    title={`View ${company.name}'s profile - Login required`}
+                                    className="opacity-70 hover:opacity-100 transition-opacity"
+                                >
+                                    <LogoComponent className="h-6 text-gray-500 transition-colors duration-300 hover:text-gray-800" />
+                                </button>
+                            );
                         })}
                     </div>
                 </div>
             </section>
           
           {/* Features Section */}
-          <section id="features" className="py-10 bg-gray-50">
+          <section id="features" className="py-10 bg-white">
               <div className="container mx-auto px-4">
                   <h2 className="text-4xl font-bold text-center mb-10">Why TechSubbies is Different</h2>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

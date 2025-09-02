@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { EngineerProfile, Compliance, ProfileTier } from '../types/index.ts';
 import { Star, Briefcase, Award, Linkedin, Mail, Users, Calendar, MapPin, ShieldCheck, CheckCircle, BarChart, Edit } from './Icons.tsx';
+import { BadgeDisplay } from './BadgeDisplay.tsx';
 
 // A simple component to render a star rating on the card
 const CardStarRating = ({ rating = 0, label }: { rating?: number, label: string }) => (
@@ -26,14 +27,14 @@ const StatRow = ({ label, value }: { label: string; value: string | number }) =>
 const CardFront = ({ profile, isEditable, onEdit }: { profile: EngineerProfile, isEditable?: boolean, onEdit?: () => void }) => {
     const {
         name, discipline, avatar, experience, minDayRate, maxDayRate, currency,
-        customerRating, peerRating, location, description, profileTier
+        customerRating, peerRating, location, description, profileTier, badges
     } = profile;
 
     const TIER_BADGE_INFO = {
         [ProfileTier.BASIC]: null,
-        [ProfileTier.PROFESSIONAL]: { text: "Professional", color: "bg-green-400" },
-        [ProfileTier.SKILLS]: { text: "Skills Profile", color: "bg-yellow-400" },
-        [ProfileTier.BUSINESS]: { text: "Business", color: "bg-purple-400" },
+        [ProfileTier.PROFESSIONAL]: { text: "Silver", color: "bg-green-400" },
+        [ProfileTier.SKILLS]: { text: "Gold", color: "bg-yellow-400" },
+        [ProfileTier.BUSINESS]: { text: "Platinum", color: "bg-purple-400" },
     };
     const tierBadge = TIER_BADGE_INFO[profileTier];
 
@@ -94,6 +95,14 @@ const CardFront = ({ profile, isEditable, onEdit }: { profile: EngineerProfile, 
                 <StatRow label="Peer Rating" value={`${peerRating || 0} / 5`} />
                 <StatRow label="Client Rating" value={`${customerRating || 0} / 5`} />
             </div>
+             {badges.length > 0 && (
+                <div className="mb-2">
+                    <h3 className="text-center font-bold uppercase text-yellow-400 tracking-wider mb-2">Achievements</h3>
+                    <div className="flex justify-center flex-wrap gap-2">
+                        {badges.slice(0, 3).map(badge => <BadgeDisplay key={badge.id} badge={badge} />)}
+                    </div>
+                </div>
+            )}
             <div>
                  <h3 className="text-center font-bold uppercase text-yellow-400 tracking-wider mb-1">Profile File</h3>
                  <p className="text-xs text-blue-200 bg-black/20 p-2 rounded-md h-20 overflow-y-auto custom-scrollbar">{description}</p>
@@ -174,7 +183,7 @@ const CardBack = ({ profile }: { profile: EngineerProfile }) => {
                     </div>
                 ) : (
                     <div className="text-center p-4 bg-black/20 rounded-md">
-                        <p>Upgrade to a "Skills Profile" to display specialist roles and detailed skill ratings.</p>
+                        <p>Upgrade to a "Gold Profile" to display specialist roles and detailed skill ratings.</p>
                     </div>
                 )}
 

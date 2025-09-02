@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
-import { EngineerProfile } from '../types/index.ts';
+import { EngineerProfile, Job } from '../types/index.ts';
 import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
 import { JobPostModal } from '../components/JobPostModal.tsx';
 import { DashboardView } from './CompanyDashboard/DashboardView.tsx';
@@ -11,15 +11,22 @@ import { EngineerProfileView } from './EngineerProfileView.tsx';
 import { MessagesView } from './MessagesView.tsx';
 import { ArrowLeft } from '../components/Icons.tsx';
 import { ContractsView } from './ContractsView.tsx';
+import { InstantInviteModal } from '../components/InstantInviteModal.tsx';
+import { ProjectPlannerView } from './CompanyDashboard/ProjectPlannerView.tsx';
+
 
 export const CompanyDashboard = () => {
-    const { user, postJob, jobs, engineers, applications, updateCompanyProfile } = useAppContext();
+    const { user, postJob, jobs, engineers, applications, updateCompanyProfile } from useAppContext();
     const [activeView, setActiveView] = useState('Dashboard');
     const [isJobModalOpen, setIsJobModalOpen] = useState(false);
     
     // State for Find Talent view
     const [talentView, setTalentView] = useState<'list' | 'profile'>('list');
     const [selectedEngineer, setSelectedEngineer] = useState<EngineerProfile | null>(null);
+    
+    // State for Instant Invite Modal
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [jobForInvite, setJobForInvite] = useState<Job | null>(null);
 
     const handleSelectEngineer = (engineer: EngineerProfile) => {
         setSelectedEngineer(engineer);
@@ -44,9 +51,12 @@ export const CompanyDashboard = () => {
     }, [activeView]);
 
     const handlePostJob = (jobData: any) => {
-        postJob(jobData);
+        const newJob = postJob(jobData);
         setIsJobModalOpen(false);
-        setActiveView('My Jobs');
+        if (newJob) {
+            setJobForInvite(newJob);
+            setIsInviteModalOpen(true);
+        }
     };
 
     const renderActiveView = () => {
@@ -73,6 +83,8 @@ export const CompanyDashboard = () => {
             case 'Post a Job': // Intentionally fall through, modal handles it
             case 'My Jobs':
                 return <MyJobsView myJobs={myJobs} setActiveView={setActiveView} />;
+            case 'Project Planner':
+                return <ProjectPlannerView />;
             case 'Messages':
                 return <MessagesView />;
             case 'Contracts':
@@ -102,6 +114,11 @@ export const CompanyDashboard = () => {
                     if (activeView === 'Post a Job') setActiveView('Dashboard');
                 }}
                 onPostJob={handlePostJob}
+            />
+             <InstantInviteModal
+                isOpen={isInviteModalOpen}
+                onClose={() => setIsInviteModalOpen(false)}
+                job={jobForInvite}
             />
         </div>
     );

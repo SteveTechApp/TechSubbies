@@ -47,13 +47,20 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
         setHeroImage(HERO_IMAGES.engineers[Math.floor(Math.random() * HERO_IMAGES.engineers.length)]);
     }, []);
 
+    const TIER_STYLES = {
+        // FIX: Added 'badgeBg' to the BASIC tier to ensure consistent object shape and fix TypeScript error.
+        [ProfileTier.BASIC]: { border: 'border-amber-700', titleText: 'text-amber-800', buttonBg: 'bg-amber-700', buttonHoverBg: 'hover:bg-amber-800', badgeBg: 'bg-amber-700' },
+        [ProfileTier.PROFESSIONAL]: { border: 'border-slate-400', titleText: 'text-slate-600', buttonBg: 'bg-slate-500', buttonHoverBg: 'hover:bg-slate-600', badgeBg: 'bg-slate-500' },
+    };
+
     const TIERS = [
         {
             tier: ProfileTier.BASIC,
-            title: "Basic Profile",
+            title: "Bronze",
             price: "FREE",
             period: " / Forever",
             ctaText: "Get Started for Free",
+            styles: TIER_STYLES[ProfileTier.BASIC],
             features: [
                 "Create your public professional profile",
                 "Appear in general searches",
@@ -62,19 +69,20 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
             ]
         },
         {
-            tier: ProfileTier.SKILLS,
-            title: "Skills Profile",
-            price: "£15",
+            tier: ProfileTier.PROFESSIONAL,
+            title: "Silver",
+            price: "£7",
             period: " / month",
             ctaText: "Start 30-Day Free Trial",
             isFeatured: true,
+            styles: TIER_STYLES[ProfileTier.PROFESSIONAL],
             features: [
-                "Everything in Basic, plus:",
-                "Add specialist roles with detailed skill ratings",
-                "Get priority ranking in company searches",
-                "Unlock 'Profile Boosts' for top placement",
+                "Everything in Bronze, plus:",
+                "Add Core Skills & Verified Certifications",
+                "Add 1 Specialist Role with rated skills",
+                "Priority ranking in company searches",
                 "Create visual case studies (Storyboards)",
-                "Access AI-powered Training Recommendations",
+                "Access all AI-powered Tools",
                 "Covered by our Security Net Guarantee",
             ]
         },
@@ -135,9 +143,9 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                          <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-10">From getting your foot in the door to becoming an industry leader, we have a plan that grows with you. <button onClick={() => onNavigate('pricing')} className="text-blue-600 font-semibold hover:underline">See full comparison</button>.</p>
                         <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                             {TIERS.map(tier => (
-                                <div key={tier.title} className={`border rounded-lg p-8 text-left flex flex-col ${tier.isFeatured ? 'border-2 border-blue-600 shadow-2xl relative' : 'border-gray-200'}`}>
-                                    {tier.isFeatured && <span className="absolute top-0 -translate-y-1/2 bg-blue-600 text-white text-xs font-bold uppercase px-3 py-1 rounded-full">Most Popular</span>}
-                                    <h3 className={`text-2xl font-bold ${tier.isFeatured ? 'text-blue-600' : 'text-gray-800'}`}>{tier.title}</h3>
+                                <div key={tier.title} className={`border-2 rounded-lg p-8 text-left flex flex-col ${tier.isFeatured ? `shadow-2xl relative ${tier.styles.border}` : tier.styles.border}`}>
+                                    {tier.isFeatured && <span className={`absolute top-0 -translate-y-1/2 ${tier.styles.badgeBg} text-white text-xs font-bold uppercase px-3 py-1 rounded-full`}>Most Popular</span>}
+                                    <h3 className={`text-2xl font-bold ${tier.styles.titleText}`}>{tier.title}</h3>
                                     <div className="my-6">
                                         <span className="text-5xl font-extrabold">{tier.price}</span>
                                         <span className="text-xl font-medium text-gray-500">{tier.period}</span>
@@ -145,7 +153,7 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                                     <ul className="space-y-4 mb-8 flex-grow">
                                         {tier.features.map((feature, index) => <FeatureListItem key={index}>{feature}</FeatureListItem>)}
                                     </ul>
-                                    <button onClick={() => onNavigate('engineerSignUp')} className={`w-full mt-auto font-bold py-3 px-6 rounded-lg transition-colors ${tier.isFeatured ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}>{tier.ctaText}</button>
+                                    <button onClick={() => onNavigate('engineerSignUp')} className={`w-full mt-auto font-bold py-3 px-6 rounded-lg transition-colors text-white ${tier.styles.buttonBg} ${tier.styles.buttonHoverBg}`}>{tier.ctaText}</button>
                                 </div>
                             ))}
                         </div>
@@ -160,12 +168,12 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                             <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-12">Our premium tiers give you the professional tools to stand out and secure high-value contracts.</p>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            <FeatureDetailCard icon={Award} title="Verified Certifications">Gain instant credibility. Our Professional tier allows you to submit your certifications for verification, adding a badge of trust to your profile that companies look for.</FeatureDetailCard>
-                            <FeatureDetailCard icon={Star} title="Showcase Specialist Roles">Go beyond a simple skills list. The Skills tier lets you add high-demand roles like 'AV Commissioning Engineer' and rate your competency on the granular skills that matter to clients.</FeatureDetailCard>
-                            <FeatureDetailCard icon={TrendingUp} title="Enhanced Search Visibility">Skills Profiles are automatically ranked higher in search results, putting you in front of more project managers and increasing your chances of being contacted for top-tier contracts.</FeatureDetailCard>
+                            <FeatureDetailCard icon={Award} title="Verified Certifications">Gain instant credibility. Our premium tiers allow you to submit your certifications for verification, adding a badge of trust to your profile that companies look for.</FeatureDetailCard>
+                            <FeatureDetailCard icon={Star} title="Showcase Specialist Roles">Go beyond a simple skills list. The Gold tier lets you add high-demand roles like 'AV Commissioning Engineer' and rate your competency on the granular skills that matter to clients.</FeatureDetailCard>
+                            <FeatureDetailCard icon={TrendingUp} title="Enhanced Search Visibility">Premium profiles are automatically ranked higher in search results, putting you in front of more project managers and increasing your chances of being contacted for top-tier contracts.</FeatureDetailCard>
                             <FeatureDetailCard icon={Rocket} title="Profile Boosts">Need to fill a gap in your schedule quickly? Use a Profile Boost credit to temporarily place yourself at the very top of relevant searches for 12 hours, guaranteeing maximum visibility when it matters most.</FeatureDetailCard>
                             <FeatureDetailCard icon={Clapperboard} title="Visual Case Studies">A picture is worth a thousand words. Use our Storyboard Creator to build compelling, visual narratives of your best projects, demonstrating your process and results in a way a CV never can.</FeatureDetailCard>
-                            <FeatureDetailCard icon={BarChart} title="Profile Analytics">Understand your impact. Our Business tier gives you access to detailed analytics on who is viewing your profile, your search appearances, and engagement metrics to optimize your strategy.</FeatureDetailCard>
+                            <FeatureDetailCard icon={BarChart} title="Profile Analytics">Understand your impact. Our Platinum tier gives you access to detailed analytics on who is viewing your profile, your search appearances, and engagement metrics to optimize your strategy.</FeatureDetailCard>
                         </div>
                     </div>
                 </section>
@@ -176,7 +184,7 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                         <h2 className="text-3xl font-bold text-center mb-16">What Our Engineers Are Saying</h2>
                         <div className="grid md:grid-cols-3 gap-12">
                             <TestimonialCard 
-                                quote="The Skills Profile was a game-changer. Being able to detail my Crestron and Biamp commissioning skills directly led to my last three contracts. Companies know exactly what they're getting."
+                                quote="The Gold Profile was a game-changer. Being able to detail my Crestron and Biamp commissioning skills directly led to my last three contracts. Companies know exactly what they're getting."
                                 name="Neil B."
                                 role="AV Commissioning Engineer"
                                 avatar="https://xsgames.co/randomusers/assets/avatars/male/74.jpg"

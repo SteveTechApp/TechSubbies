@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
 import { EngineerProfile, ProfileTier } from '../types/index.ts';
-import { MapPin, Star, Rocket, Sparkles } from './Icons.tsx';
+import { MapPin, Star, Rocket, Sparkles, Trophy } from './Icons.tsx';
 
 interface EngineerCardProps {
     profile: EngineerProfile;
@@ -34,6 +34,8 @@ export const EngineerCard = ({ profile, onClick, matchScore }: EngineerCardProps
         : profile.profileTier !== ProfileTier.BASIC 
         ? 'border-blue-500'
         : 'border-transparent';
+    
+    const isTopRated = profile.badges.some(b => b.id === 'top-contributor' || b.id === 'contracts-10');
         
     return (
         <button 
@@ -69,6 +71,11 @@ export const EngineerCard = ({ profile, onClick, matchScore }: EngineerCardProps
                     {profile.isBoosted && (
                          <span className="bg-amber-400 text-black text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center shadow-lg">
                             <Rocket size={12} className="mr-1" /> BOOSTED
+                        </span>
+                    )}
+                    {isTopRated && (
+                        <span className="bg-yellow-400 text-black text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center shadow-lg">
+                            <Trophy size={12} className="mr-1" /> TOP RATED
                         </span>
                     )}
                     {profile.profileTier !== ProfileTier.BASIC && (
