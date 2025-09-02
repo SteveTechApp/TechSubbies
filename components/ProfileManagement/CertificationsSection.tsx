@@ -1,7 +1,6 @@
 import React from 'react';
-import { EngineerProfile, Certification, ProfileTier } from '../../types/index.ts';
-import { SectionWrapper } from './SectionWrapper.tsx';
-import { Award, Plus, Trash2, CheckCircle } from '../Icons.tsx';
+import { EngineerProfile, ProfileTier } from '../../types/index.ts';
+import { Plus, Trash2, CheckCircle } from '../Icons.tsx';
 
 interface CertificationsSectionProps {
     profile: EngineerProfile;
@@ -13,7 +12,6 @@ interface CertificationsSectionProps {
 export const CertificationsSection = ({ profile, formData, setFormData, setActiveView }: CertificationsSectionProps) => {
     
     const canVerify = profile.profileTier !== ProfileTier.BASIC;
-
     const certifications = formData.certifications || [];
 
     const addCertification = () => {
@@ -29,13 +27,12 @@ export const CertificationsSection = ({ profile, formData, setFormData, setActiv
     };
 
     const handleVerifyClick = (index: number) => {
-        // In a real app, this would trigger an upload/API flow. Here we just toggle it.
         setFormData(prev => ({ ...prev, certifications: prev.certifications?.map((cert, i) => i === index ? { ...cert, verified: true } : cert) }));
     };
 
     return (
-        <SectionWrapper title="Certifications" icon={Award}>
-             {!canVerify && (
+        <div>
+            {!canVerify && (
                  <div className="text-center p-4 bg-gray-100 rounded-lg border-2 border-dashed mb-4">
                     <p className="text-gray-600">Upgrade to a "Professional" profile to get your certifications verified.</p>
                     <button type="button" onClick={() => setActiveView('Billing')} className="mt-2 text-blue-600 font-bold hover:underline">Upgrade Now</button>
@@ -72,6 +69,6 @@ export const CertificationsSection = ({ profile, formData, setFormData, setActiv
             <button type="button" onClick={addCertification} className="flex items-center text-blue-600 font-semibold hover:text-blue-800 pt-3 mt-3 border-t w-full">
                 <Plus size={18} className="mr-1" /> Add Certification
             </button>
-        </SectionWrapper>
+        </div>
     );
 };

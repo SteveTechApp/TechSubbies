@@ -75,6 +75,25 @@ export const useAppLogic = (): AppContextType => {
         return () => clearInterval(interval);
     }, [user]);
 
+    // --- SIMULATED PROFILE BOOST EXPIRATION ---
+    useEffect(() => {
+        const boostedEngineers = engineers.filter(e => e.isBoosted && e.boostEndDate && e.boostEndDate < new Date());
+        if (boostedEngineers.length > 0) {
+            const updatedEngineers = [...engineers];
+            boostedEngineers.forEach(eng => {
+                const index = updatedEngineers.findIndex(e => e.id === eng.id);
+                if(index !== -1) {
+                    updatedEngineers[index].isBoosted = false;
+                    updatedEngineers[index].boostEndDate = undefined;
+                    if(user?.profile.id === eng.id) {
+                         alert("Your Profile Boost has expired.");
+                    }
+                }
+            });
+            setEngineers(updatedEngineers);
+        }
+    }, [user]); // Reruns when user changes, but could be interval based too
+
 
     const markNotificationsAsRead = (userId: string) => {
         setNotifications(prev => prev.map(n => (n.userId === userId ? { ...n, isRead: true } : n)));
@@ -277,8 +296,19 @@ export const useAppLogic = (): AppContextType => {
 
     const boostProfile = () => {
         if (user && user.role === Role.ENGINEER && 'profileTier' in user.profile && user.profile.profileTier !== ProfileTier.BASIC) {
-            updateEngineerProfile({ isBoosted: true });
-            alert("Your profile has been boosted! You'll appear at the top of relevant searches for 12 hours.");
+            const boostEndDate = new Date(Date.now() + 30000); // 30 seconds for demo
+            updateEngineerProfile({ isBoosted: true, boostEndDate });
+            alert("Your profile has been boosted! You'll appear at the top of relevant searches for a short period (30s for demo).");
+
+             // Simulate the boost expiring
+            setTimeout(() => {
+                updateEngineerProfile({ isBoosted: false, boostEndDate: undefined });
+                // We only alert the current user if they are still logged in and are the one who was boosted
+                if (user && 'isBoosted' in user.profile && user.profile.id === (user.profile as EngineerProfile).id) {
+                     alert("Your Profile Boost has expired.");
+                }
+            }, 30000);
+
         } else {
             alert("Profile Boost is a premium feature. Please upgrade to a Skills Profile first.");
         }

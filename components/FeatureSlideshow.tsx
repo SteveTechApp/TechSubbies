@@ -1,29 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MousePointer, Star, Briefcase, Sparkles, CheckCircle } from './Icons.tsx';
+import { MousePointer } from './Icons.tsx';
+import { SLIDESHOW_ASSETS } from '../data/assets.ts';
 
 const SLIDES = [
     {
         title: "1. Showcase Your Expertise",
         description: "Engineers add a 'Specialist Role' to their premium profile and rate their competency on the granular, industry-specific skills that matter.",
-        image: "https://i.imgur.com/eB3ZTwj.png", // Mockup of skill rating UI
+        image: SLIDESHOW_ASSETS.slide1,
         animationClass: "animate-[cursor-click-path-1_5s_ease-in-out_infinite]",
     },
     {
         title: "2. Define Your Exact Needs",
         description: "Companies post jobs for free, selecting a role that auto-populates required skills. They then mark each one as 'Essential' or 'Desirable'.",
-        image: "https://i.imgur.com/8Qtm93t.png", // Mockup of job posting skill importance
+        image: SLIDESHOW_ASSETS.slide2,
         animationClass: "animate-[cursor-click-path-2_7s_ease-in-out_infinite]",
     },
     {
         title: "3. Get an Instant AI Match",
         description: "The platform's AI analyzes engineer skills against the job's requirements, instantly generating a ranked list of candidates with a precise match score.",
-        image: "https://i.imgur.com/i9u5v01.png", // Mockup of AI match results
+        image: SLIDESHOW_ASSETS.slide3,
         animationClass: "animate-[cursor-click-path-3_5s_ease-in-out_infinite]",
     },
     {
         title: "4. Connect Directly. No Middlemen.",
         description: "The result is a fast, fair, and focused connection that saves everyone time and money. It's the modern way to hire freelance tech talent.",
-        image: "https://i.imgur.com/4qL3x8s.png", // Mockup showing direct connection/message
+        image: SLIDESHOW_ASSETS.slide4,
         animationClass: "", // No animation on the final slide
     },
 ];

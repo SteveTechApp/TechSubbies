@@ -33,12 +33,39 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
         if (isOpen && !initialRole) {
             setCurrentRole(null);
             setSelectedRoleDef(null);
+            return;
         }
-        // Set state if opened for editing
+        
+        // Set state if opened for editing, and synchronize skills
         if (isOpen && initialRole) {
-            setCurrentRole(initialRole);
             const roleDef = JOB_ROLE_DEFINITIONS.find(def => def.name === initialRole.roleName);
             setSelectedRoleDef(roleDef || null);
+    
+            if (roleDef) {
+                // Synchronize the user's saved skills with the canonical list from the definition.
+                // This handles cases where new skills have been added to a role definition since the user last saved it.
+                const allCanonicalSkills = roleDef.skillCategories.flatMap(category => category.skills);
+                const userSkillsMap = new Map(initialRole.skills.map(skill => [skill.name, skill.rating]));
+    
+                const synchronizedSkills: RatedSkill[] = allCanonicalSkills.map(canonicalSkill => ({
+                    name: canonicalSkill.name,
+                    // Use the user's saved rating if it exists, otherwise default to 1 to prompt them to rate it.
+                    rating: userSkillsMap.get(canonicalSkill.name) || 1,
+                }));
+    
+                // Recalculate the overall score based on the potentially updated skill list.
+                const totalScore = synchronizedSkills.reduce((acc, skill) => acc + skill.rating, 0);
+                const newOverallScore = synchronizedSkills.length > 0 ? Math.round(totalScore / synchronizedSkills.length) : 0;
+    
+                setCurrentRole({
+                    ...initialRole,
+                    skills: synchronizedSkills,
+                    overallScore: newOverallScore,
+                });
+            } else {
+                // Fallback if the role definition is not found for some reason
+                setCurrentRole(initialRole);
+            }
         }
     }, [isOpen, initialRole]);
 
@@ -84,15 +111,20 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
     
     const canSave = currentRole && currentRole.skills.every(s => s.rating > 0);
     
+    const overallScore = currentRole?.overallScore ?? 0;
+    const overallScoreStyles = getRatingStyles(overallScore);
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={onClose}>
-            <div className="bg-white rounded-lg p-6 m-4 max-w-4xl w-full relative transform transition-all duration-300 max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-                <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
-                    <X size={24} />
-                </button>
-                <h2 className="text-2xl font-bold mb-4 flex-shrink-0">{initialRole ? `Edit Role: ${initialRole.roleName}` : 'Add a Specialist Role'}</h2>
+            <div className="bg-white rounded-lg m-4 max-w-4xl w-full relative transform transition-all duration-300 max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="flex-shrink-0 p-6 border-b">
+                    <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
+                        <X size={24} />
+                    </button>
+                    <h2 className="text-2xl font-bold">{initialRole ? `Edit Role: ${initialRole.roleName}` : 'Add a Specialist Role'}</h2>
+                </div>
                 
-                <div className="flex-grow overflow-y-auto custom-scrollbar pr-4 -mr-4">
+                <div className="flex-grow overflow-y-auto custom-scrollbar p-6">
                     {!initialRole && !currentRole && (
                         <div className="fade-in-up">
                             <label className="block font-medium mb-2">1. Select a role from the list:</label>
@@ -125,27 +157,23 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
                                                 
                                                 return (
                                                     <div key={skillDef.name} className="py-3">
-                                                        <div className="flex justify-between items-baseline mb-1">
-                                                            <div className="block font-medium text-gray-700 text-sm">
-                                                                <div className="tooltip-container">
-                                                                    {skillDef.name}
-                                                                    <span className="tooltip-text">{skillDef.description}</span>
-                                                                </div>
+                                                         <div className="flex justify-between items-center mb-1">
+                                                            <div className="block font-medium text-gray-700 text-sm tooltip-container">
+                                                                {skillDef.name}
+                                                                <span className="tooltip-text">{skillDef.description}</span>
                                                             </div>
-                                                            <div className={`flex items-baseline gap-2 flex-shrink-0 px-2.5 py-1 rounded-full transition-colors duration-200 ${ratingStyles.bg}`}>
+                                                            <div className={`flex items-baseline gap-2 flex-shrink-0 px-2.5 py-1 rounded-full transition-colors duration-200 min-w-[120px] justify-center ${ratingStyles.bg}`}>
                                                                 <span className={`text-lg font-bold ${ratingStyles.text}`}>{skill.rating}</span>
                                                                 <span className={`text-xs font-semibold ${ratingStyles.text}`}>{ratingStyles.descriptor}</span>
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center">
-                                                            <input 
-                                                                type="range" 
-                                                                min="1" max="100" 
-                                                                value={skill.rating} 
-                                                                onChange={e => handleSkillChange(skill.name, e.target.value)} 
-                                                                className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer ${ratingStyles.accent}`}
-                                                            />
-                                                        </div>
+                                                        <input 
+                                                            type="range" 
+                                                            min="1" max="100" 
+                                                            value={skill.rating} 
+                                                            onChange={e => handleSkillChange(skillDef.name, e.target.value)} 
+                                                            className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer ${ratingStyles.accent}`}
+                                                        />
                                                     </div>
                                                 );
                                             })}
@@ -157,7 +185,17 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
                     )}
                 </div>
                 
-                <div className="flex-shrink-0 flex justify-end space-x-4 mt-6 pt-4 border-t">
+                <div className="flex-shrink-0 flex justify-between items-center space-x-4 p-6 border-t bg-gray-50 rounded-b-lg">
+                    {currentRole && (
+                        <div className="flex items-center gap-3">
+                            <span className="text-sm font-semibold text-gray-600">Overall Role Score:</span>
+                            <div className={`flex items-baseline gap-2 px-3 py-1 rounded-full transition-colors duration-200 ${overallScoreStyles.bg}`}>
+                                <span className={`text-xl font-bold ${overallScoreStyles.text}`}>{overallScore}</span>
+                                <span className={`text-xs font-semibold ${overallScoreStyles.text}`}>{overallScoreStyles.descriptor}</span>
+                            </div>
+                        </div>
+                    )}
+                    <div className="flex-grow"></div>
                     <button onClick={onClose} className="px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
                     <button 
                         onClick={handleSave}

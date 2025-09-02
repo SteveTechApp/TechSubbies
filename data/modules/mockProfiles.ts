@@ -1,6 +1,8 @@
 import { EngineerProfile, CompanyProfile, Role, Discipline, Currency, Skill, RatedSkill, Compliance, ProfileTier } from '../../types/index.ts';
 import { JOB_ROLE_DEFINITIONS } from '../jobRoles.ts';
 import { MALE_FIRST_NAMES, FEMALE_FIRST_NAMES, LAST_NAMES, LOCATIONS, COMPANY_NAMES, COMPANY_SUFFIXES } from './mockConstants.ts';
+import { AVATARS } from '../assets.ts';
+
 
 // --- Default Data and Helpers ---
 const getRandom = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
@@ -21,18 +23,18 @@ const DEFAULT_COMPLIANCE: Compliance = {
 };
 
 // --- Key Static Profiles ---
-export const MOCK_RESOURCING_COMPANY_1: CompanyProfile = { id: 'res-1', name: 'AV Placements', avatar: 'https://i.pravatar.cc/150?u=avplacements', status: 'active', logo: 'https://i.imgur.com/2yF5t1x.png', companyRegNumber: 'VALID-RES-01', isVerified: true };
-export const MOCK_ADMIN_PROFILE: CompanyProfile = { id: 'admin-1', name: 'Steve Goodwin', avatar: 'https://i.imgur.com/L45aA6d.jpg', status: 'active', logo: 'https://i.imgur.com/2yF5t1x.png', companyRegNumber: 'N/A', isVerified: true };
+export const MOCK_RESOURCING_COMPANY_1: CompanyProfile = { id: 'res-1', name: 'AV Placements', avatar: AVATARS.defaultCompany, status: 'active', logo: '', companyRegNumber: 'VALID-RES-01', isVerified: true };
+export const MOCK_ADMIN_PROFILE: CompanyProfile = { id: 'admin-1', name: 'Steve Goodwin', avatar: AVATARS.steve, status: 'active', logo: '', companyRegNumber: 'N/A', isVerified: true };
 
 const MOCK_ENGINEER_STEVE: EngineerProfile = {
     id: 'eng-steve', name: 'Steve Goodwin', firstName: 'Steve', surname: 'Goodwin', status: 'active',
-    discipline: Discipline.AV, avatar: 'https://i.imgur.com/L45aA6d.jpg', location: 'London, UK',
+    discipline: Discipline.AV, avatar: AVATARS.steve, location: 'London, UK',
     currency: Currency.GBP, minDayRate: 700, maxDayRate: 800, experience: 20, availability: new Date('2024-09-01'),
     description: "Industry veteran with over 20 years of experience in technical project management and system design. Founder of TechSubbies.com, passionate about connecting expertise with opportunity.",
     profileTier: ProfileTier.BUSINESS,
     jobDigestOptIn: true,
     skills: [ { name: 'Project Management', rating: 99 }, { name: 'System Design', rating: 95 }, { name: 'Client Relations', rating: 98 } ],
-    selectedJobRoles: [ { roleName: 'AV Project Manager', skills: [ { name: 'Project Scoping', rating: 98 }, { name: 'Gantt Charts (MS Project)', rating: 92 }, { name: 'Budget Management', rating: 99 }, { name: 'Client Communication', rating: 99 }, { name: 'Risk Assessment', rating: 95 }, { name: 'Change Order Management', rating: 96 } ], overallScore: 97 } ],
+    selectedJobRoles: [ { roleName: 'IT Project Manager', skills: [ { name: 'Project Management Professional (PMP) methodologies', rating: 98 }, { name: 'Agile/Scrum framework implementation', rating: 92 }, { name: 'Budget management and cost control', rating: 99 }, { name: 'Stakeholder management and engagement', rating: 99 }, { name: 'Technology risk assessment and mitigation', rating: 95 }, { name: 'Vendor management and procurement processes', rating: 96 } ], overallScore: 97 } ],
     certifications: [{ name: 'PRINCE2® Practitioner', verified: true }],
     contact: { email: 'steve.goodwin@techsubbies.com', phone: '07000000000', website: 'www.techsubbies.com', linkedin: 'https://linkedin.com/in/steve-goodwin-tech' },
     compliance: { 
@@ -48,7 +50,7 @@ const MOCK_ENGINEER_STEVE: EngineerProfile = {
 
 const MOCK_ENGINEER_1: EngineerProfile = {
     id: 'eng-1', name: 'Neil Bishop', firstName: 'Neil', middleName: 'John', surname: 'Bishop', title: 'Mr', status: 'active',
-    discipline: Discipline.AV, avatar: 'https://xsgames.co/randomusers/assets/avatars/male/74.jpg', location: 'London, UK',
+    discipline: Discipline.AV, avatar: AVATARS.neil, location: 'London, UK',
     currency: Currency.GBP, minDayRate: 500, maxDayRate: 600, experience: 15, availability: new Date('2024-08-01'),
     description: "Senior AV commissioning engineer with 15+ years' experience specializing in corporate and residential projects. Expert in Crestron, Biamp, and Q-SYS ecosystems, ensuring flawless system integration and performance.",
     companyName: 'AV Innovations', travelRadius: '< 500 miles', profileTier: ProfileTier.SKILLS,
@@ -56,8 +58,8 @@ const MOCK_ENGINEER_1: EngineerProfile = {
     jobDigestOptIn: true,
     skills: [ { name: 'AV Commissioning', rating: 98 }, { name: 'Crestron Toolbox', rating: 95 }, { name: 'Biamp Tesira', rating: 92 }, { name: 'C# (for SIMPL#)', rating: 72 } ],
     selectedJobRoles: [
-        { roleName: 'AV Commissioning Engineer', skills: [ { name: 'System Commissioning', rating: 98 }, { name: 'Crestron Toolbox', rating: 95 }, { name: 'Biamp Tesira', rating: 92 }, { name: 'Q-SYS Designer', rating: 88 }, { name: 'Dante Level 3', rating: 96 }, { name: 'Network Troubleshooting', rating: 90 } ], overallScore: 93 },
-        { roleName: 'Crestron Programmer', skills: [ { name: 'SIMPL Windows', rating: 94 }, { name: 'C# (for SIMPL#)', rating: 72 }, { name: 'Crestron HTML5 UI', rating: 82 }, { name: 'DM NVX Configuration', rating: 95 }, { name: 'System Architecture', rating: 90 }, { name: 'API Integration', rating: 85 } ], overallScore: 87 }
+        { roleName: 'AV Systems Engineer', skills: [ { name: 'System commissioning and testing procedures', rating: 98 }, { name: 'Programming control systems', rating: 95 }, { name: 'Audio measurement software (Smaart, TEF)', rating: 92 }, { name: 'Video test pattern generators', rating: 88 }, { name: 'Network analysis tools (Wireshark, ping, traceroute)', rating: 96 }, { name: 'Troubleshooting complex AV systems', rating: 90 } ], overallScore: 93 },
+        { roleName: 'Control Systems Programmer (Crestron)', skills: [ { name: 'Crestron SIMPL Windows programming', rating: 94 }, { name: 'Crestron SIMPL# Pro (C# .NET)', rating: 72 }, { name: 'VTPro-e touch panel design', rating: 82 }, { name: 'DM switching and distribution', rating: 95 }, { name: 'Network & IT Skills', rating: 90 }, { name: 'API integration and web services', rating: 85 } ], overallScore: 87 }
     ],
     certifications: [ { name: 'Crestron Certified Programmer', verified: true }, { name: 'Biamp TesiraFORTE Certified', verified: true }, { name: 'Dante Certification Level 3', verified: true } ],
     contact: { email: 'neil.bishop@example.com', phone: '07123456789', website: 'www.neilbishop.com', linkedin: 'linkedin.com/in/nelib' },
@@ -71,14 +73,14 @@ const MOCK_ENGINEER_1: EngineerProfile = {
     },
     identity: { documentType: 'drivers_license', documentUrl: 'id.pdf', isVerified: true },
     generalAvailability: 'Medium', caseStudies: [ { id: 'cs-1', name: 'Corporate HQ Audiovisual Integration', url: 'https://example.com/case-study-1' }, { id: 'cs-2', name: 'Luxury Residential Smart Home System', url: 'https://example.com/case-study-2' } ],
-    isBoosted: true, customerRating: 5, peerRating: 5,
+    isBoosted: false, customerRating: 5, peerRating: 5,
     profileViews: 142, searchAppearances: 980, jobInvites: 3,
     calendarSyncUrl: 'https://api.techsubbies.com/calendar/eng-1.ics',
 };
 
 const MOCK_ENGINEER_2: EngineerProfile = {
     id: 'eng-2', name: 'Samantha Greene', firstName: 'Samantha', surname: 'Greene', title: 'Ms', status: 'active',
-    discipline: Discipline.IT, avatar: 'https://xsgames.co/randomusers/assets/avatars/female/10.jpg', location: 'Manchester, UK',
+    discipline: Discipline.IT, avatar: AVATARS.samantha, location: 'Manchester, UK',
     currency: Currency.GBP, minDayRate: 160, maxDayRate: 180, experience: 8, availability: new Date('2024-07-20'),
     description: "Microsoft Certified support specialist focusing on SME infrastructure, Office 35, and user support. Eager to take on new challenges and contribute to successful project outcomes.",
     companyName: 'Greene IT Solutions', travelRadius: '< 100 miles', profileTier: ProfileTier.BASIC,
@@ -100,15 +102,15 @@ const MOCK_ENGINEER_2: EngineerProfile = {
 
 const MOCK_ENGINEER_3: EngineerProfile = {
     id: 'eng-3', name: 'David Chen', firstName: 'David', surname: 'Chen', status: 'active',
-    discipline: Discipline.IT, avatar: 'https://xsgames.co/randomusers/assets/avatars/male/15.jpg', location: 'Birmingham, UK',
+    discipline: Discipline.IT, avatar: AVATARS.david, location: 'Birmingham, UK',
     currency: Currency.GBP, minDayRate: 550, maxDayRate: 650, experience: 10, availability: new Date('2024-09-15'),
     description: "AWS Certified Solutions Architect with a deep background in Cisco networking. Specializes in designing and implementing scalable, secure cloud infrastructure and hybrid networks.",
     profileTier: ProfileTier.BUSINESS, subscriptionEndDate: new Date(new Date().setDate(new Date().getDate() + 15)), securityNetCreditsUsed: 1, resourcingCompanyId: 'res-1',
     jobDigestOptIn: true,
     skills: [ { name: 'Cloud Architecture (AWS)', rating: 95 }, { name: 'Network Engineering', rating: 94 }, { name: 'Cybersecurity', rating: 88 } ],
     selectedJobRoles: [
-        { roleName: 'Cloud Engineer (AWS/Azure)', skills: [ { name: 'AWS EC2/Azure VMs', rating: 98 }, { name: 'VPC/VNet Networking', rating: 92 }, { name: 'IAM/Azure AD', rating: 94 }, { name: 'CloudFormation/Terraform', rating: 90 }, { name: 'Serverless Functions', rating: 85 }, { name: 'Cloud Monitoring', rating: 88 } ], overallScore: 91 },
-        { roleName: 'Network Engineer', skills: [ { name: 'Cisco iOS/NX-OS', rating: 96 }, { name: 'Routing (BGP/OSPF)', rating: 94 }, { name: 'Switching (VLANs/STP)', rating: 95 }, { name: 'Firewall Management', rating: 89 }, { name: 'Network Monitoring', rating: 90 }, { name: 'Wi-Fi Surveys', rating: 85 } ], overallScore: 92 }
+        { roleName: 'Cloud Architect', skills: [ { name: 'AWS architecture and services deep dive', rating: 98 }, { name: 'Azure architecture patterns and best practices', rating: 92 }, { name: 'Identity and access management (IAM)', rating: 94 }, { name: 'Infrastructure as Code implementation', rating: 90 }, { name: 'Serverless computing patterns', rating: 85 }, { name: 'Cloud cost optimization and resource governance', rating: 88 } ], overallScore: 91 },
+        { roleName: 'Network Engineer', skills: [ { name: 'Cisco router and switch configuration (IOS/IOS-XE)', rating: 96 }, { name: 'Routing protocols (OSPF, EIGRP, BGP)', rating: 94 }, { name: 'Switching technologies (VLANs, STP, LACP)', rating: 95 }, { name: 'Palo Alto Networks firewalls', rating: 89 }, { name: 'Network monitoring tools (SolarWinds, PRTG, LibreNMS)', rating: 90 }, { name: 'Wireless Network Engineer', rating: 85 } ], overallScore: 92 }
     ],
     certifications: [ { name: 'AWS Certified Solutions Architect - Professional', verified: true }, { name: 'Cisco Certified Network Professional (CCNP)', verified: true } ],
     contact: { email: 'david.chen@example.com', phone: '07111222333', website: 'https://chencloud.dev', linkedin: 'https://linkedin.com/in/davidchen' },
@@ -126,7 +128,7 @@ const MOCK_ENGINEER_3: EngineerProfile = {
 
 export const MOCK_FREE_ENGINEER: EngineerProfile = {
     ...MOCK_ENGINEER_2, id: 'eng-free', name: 'Emily Carter', firstName: 'Emily', surname: 'Carter', status: 'active',
-    avatar: 'https://xsgames.co/randomusers/assets/avatars/female/20.jpg', profileTier: ProfileTier.BASIC, minDayRate: 170, maxDayRate: 190, skills: undefined,
+    avatar: AVATARS.emily, profileTier: ProfileTier.BASIC, minDayRate: 170, maxDayRate: 190, skills: undefined,
     resourcingCompanyId: undefined, contact: { ...MOCK_ENGINEER_2.contact, email: 'emily.carter@example.com' },
     compliance: { 
         ...DEFAULT_COMPLIANCE,
@@ -153,7 +155,7 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
         else profileTier = ProfileTier.BUSINESS; // 2%
 
         const jobRoleDef = getRandom(JOB_ROLE_DEFINITIONS);
-        const allSkillsForRole = jobRoleDef.skillCategories.flatMap(category => category.skills);
+        const allSkillsForRole = jobRoleDef.skillCategories.flatMap(category => category.skills.map(s => s.name));
         const isMale = Math.random() > 0.5;
         const firstName = isMale ? getRandom(MALE_FIRST_NAMES) : getRandom(FEMALE_FIRST_NAMES);
         const name = `${firstName} ${getRandom(LAST_NAMES)}`;
@@ -170,7 +172,7 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
         const engineer: EngineerProfile = {
             id: `gen-eng-${i}`, name, firstName, surname: name.split(' ')[1], status: 'active',
             discipline: getRandom([Discipline.AV, Discipline.IT, Discipline.BOTH]),
-            avatar: `https://xsgames.co/randomusers/assets/avatars/${isMale ? 'male' : 'female'}/${getRandomInt(0, 78)}.jpg`,
+            avatar: `https://i.pravatar.cc/150?u=gen-eng-${i}`,
             location: `${getRandom(LOCATIONS)}, UK`, currency: Currency.GBP,
             minDayRate,
             maxDayRate,
@@ -208,7 +210,6 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
             if (profileTier === ProfileTier.SKILLS || profileTier === ProfileTier.BUSINESS) {
                  const ratedSkills: RatedSkill[] = allSkillsForRole.map(skillName => ({ name: skillName, rating: getRandomInt(65, 99) }));
                 engineer.selectedJobRoles = [{ roleName: jobRoleDef.name, skills: ratedSkills, overallScore: Math.round(ratedSkills.reduce((acc, s) => acc + s.rating, 0) / ratedSkills.length) }];
-                if (Math.random() < 0.2) engineer.isBoosted = true;
             }
         }
         engineers.push(engineer);
@@ -221,10 +222,10 @@ const generateMockCompanies = (count: number): CompanyProfile[] => {
         const name = `${getRandom(COMPANY_NAMES)} ${getRandom(COMPANY_SUFFIXES)}`;
         return {
             id: `gen-comp-${i}`, name, status: 'active',
-            avatar: `https://i.pravatar.cc/150?u=${name.replace(/\s/g, '')}`,
+            avatar: `https://i.pravatar.cc/150?u=gen-comp-${i}`,
             website: `www.${name.replace(/\s/g, '').toLowerCase()}.com`,
             consentToFeature: Math.random() < 0.2,
-            logo: `https://logo.clearbit.com/${name.replace(/\s/g, '').toLowerCase().replace('ltd', '')}.com?size=100`,
+            logo: '', // Let the UI handle this with the new components
             companyRegNumber: `GB${getRandomInt(10000000, 99999999)}`, isVerified: true,
         };
     });
@@ -235,9 +236,9 @@ const generateMockCompanies = (count: number): CompanyProfile[] => {
 export const MOCK_ENGINEERS = [MOCK_ENGINEER_STEVE, MOCK_ENGINEER_1, MOCK_ENGINEER_2, MOCK_ENGINEER_3, ...generateMockEngineers(20)];
 
 export const MOCK_COMPANIES: CompanyProfile[] = [
-    { id: 'comp-1', name: 'Pro AV Solutions', avatar: 'https://i.pravatar.cc/150?u=proav', consentToFeature: true, status: 'active', logo: 'https://i.imgur.com/cO0k4Sj.png', companyRegNumber: 'VALID-12345', isVerified: true },
-    { id: 'comp-2', name: 'Starlight Events', avatar: 'https://i.pravatar.cc/150?u=starlight', consentToFeature: true, status: 'active', logo: 'https://i.imgur.com/U5n41QT.png', companyRegNumber: 'VALID-67890', isVerified: true },
-    { id: 'comp-3', name: 'Nexus IT Integrators', avatar: 'https://i.pravatar.cc/150?u=nexusit', consentToFeature: true, status: 'active', logo: 'https://i.imgur.com/dJeEvD5.png', companyRegNumber: 'VALID-11223', isVerified: true },
+    { id: 'comp-1', name: 'Pro AV Solutions', avatar: AVATARS.defaultCompany, consentToFeature: true, status: 'active', logo: 'proav', companyRegNumber: 'VALID-12345', isVerified: true },
+    { id: 'comp-2', name: 'Starlight Events', avatar: AVATARS.defaultCompany, consentToFeature: true, status: 'active', logo: 'starlight', companyRegNumber: 'VALID-67890', isVerified: true },
+    { id: 'comp-3', name: 'Nexus IT Integrators', avatar: AVATARS.defaultCompany, consentToFeature: true, status: 'active', logo: 'nexus', companyRegNumber: 'VALID-11223', isVerified: true },
     MOCK_RESOURCING_COMPANY_1,
     ...generateMockCompanies(15)
 ];

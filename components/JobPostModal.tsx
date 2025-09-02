@@ -61,7 +61,6 @@ export const JobPostModal = ({ isOpen, onClose, onPostJob }: JobPostModalProps) 
                     } else if (experience === ExperienceLevel.EXPERT && index < Math.ceil(skillsForCategory.length * expertThreshold)) {
                         importance = 'essential';
                     }
-                    // FIX: The skill object contains name and description. We only need the name for the requirement.
                     return { name: skillDef.name, importance };
                 });
 
@@ -188,7 +187,6 @@ export const JobPostModal = ({ isOpen, onClose, onPostJob }: JobPostModalProps) 
                     <div key={category.category} className="p-4 bg-gray-50 rounded-lg border">
                         <h3 className="font-bold text-lg text-blue-700 mb-3 border-b pb-2">{category.category}</h3>
                         <div className="space-y-2">
-                            {/* FIX: Check for skill name within the skill definition object array. */}
                             {skillRequirements.filter(skillReq => category.skills.some(skillDef => skillDef.name === skillReq.name)).map(skill => {
                                 const isEssential = skill.importance === 'essential';
                                 return (

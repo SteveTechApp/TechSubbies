@@ -3,20 +3,12 @@ import { Footer } from '../components/Footer.tsx';
 import { Header } from '../components/Header.tsx';
 import { Page, ProfileTier } from '../types/index.ts';
 import { CheckCircle, Briefcase, Star, Rocket, ShieldCheck, TrendingUp, DollarSign, Clapperboard, X, Award, BarChart } from '../components/Icons.tsx';
+import { HERO_IMAGES } from '../data/assets.ts';
 
 interface ForEngineersPageProps {
     onNavigate: (page: Page) => void;
     onHowItWorksClick: () => void;
 }
-
-// Curated list of high-quality, relevant hero images for engineers
-const ENGINEER_HERO_IMAGES = [
-    'https://images.unsplash.com/photo-1581092921462-205273467433?q=80&w=2070&auto=format=fit=crop', // Technician working on server rack
-    'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=2070&auto=format=fit=crop', // Close up of hands on laptop with code
-    'https://images.unsplash.com/photo-1621924519390-78132692e293?q=80&w=2070&auto=format=fit=crop', // Wiring a network patch panel
-    'https://images.unsplash.com/photo-1614730321455-5c26a8d6e1a4?q=80&w=1974&auto=format=fit=crop', // Audio mixing console
-    'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?q=80&w=2074&auto=format=fit=crop', // Close up of a circuit board
-];
 
 const FeatureListItem = ({ children }: { children: React.ReactNode }) => (
     <li className="flex items-start">
@@ -52,7 +44,7 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
 
     useEffect(() => {
         // Select a random hero image on component mount
-        setHeroImage(ENGINEER_HERO_IMAGES[Math.floor(Math.random() * ENGINEER_HERO_IMAGES.length)]);
+        setHeroImage(HERO_IMAGES.engineers[Math.floor(Math.random() * HERO_IMAGES.engineers.length)]);
     }, []);
 
     const TIERS = [

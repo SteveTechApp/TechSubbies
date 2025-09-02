@@ -4,7 +4,9 @@ import { Header } from '../components/Header.tsx';
 import { Page } from '../types/index.ts';
 import { HighlightCard } from '../components/HighlightCard.tsx';
 import { RevenueCard } from '../components/RevenueCard.tsx';
-import { Zap, Layers, TrendingUp, BrainCircuit, Rocket, BarChart, Users } from '../components/Icons.tsx';
+import { Zap, Layers, TrendingUp, BrainCircuit, Rocket, BarChart, Users, Download } from '../components/Icons.tsx';
+import { PROSPECTUS_CONTENT } from '../data/prospectusContent.ts';
+
 
 interface InvestorRelationsPageProps {
     onNavigate: (page: Page) => void;
@@ -12,6 +14,18 @@ interface InvestorRelationsPageProps {
 }
 
 export const InvestorRelationsPage = ({ onNavigate, onHowItWorksClick }: InvestorRelationsPageProps) => {
+
+    const handleDownloadProspectus = () => {
+        const blob = new Blob([PROSPECTUS_CONTENT], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'TechSubbies_Investor_Prospectus.txt';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
 
     return (
         <div className="bg-gray-50 flex flex-col min-h-screen">
@@ -60,7 +74,16 @@ export const InvestorRelationsPage = ({ onNavigate, onHowItWorksClick }: Investo
                         <div className="text-center bg-blue-600 text-white p-10 rounded-lg">
                             <h3 className="text-3xl font-bold">Join Us in Building the Future</h3>
                             <p className="mt-4 mb-6 max-w-2xl mx-auto">TechSubbies.com presents a high-growth investment opportunity in a rapidly expanding global market. We are currently seeking £500,000 in seed funding to accelerate product development and user acquisition.</p>
-                            <a href="mailto:invest@techsubbies.com" className="inline-block bg-white text-blue-600 font-bold py-3 px-8 rounded-lg hover:bg-gray-200 transition-transform transform hover:scale-105">Contact Us for Investment Enquiries</a>
+                            <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+                                <a href="mailto:invest@techsubbies.com" className="inline-block w-full sm:w-auto bg-white text-blue-600 font-bold py-3 px-8 rounded-lg hover:bg-gray-200 transition-transform transform hover:scale-105">Contact Us for Investment Enquiries</a>
+                                <button
+                                    onClick={handleDownloadProspectus}
+                                    className="inline-flex items-center justify-center w-full sm:w-auto bg-white/20 backdrop-blur-sm border border-white/20 text-white font-bold py-3 px-8 rounded-lg hover:bg-white/30 transition"
+                                >
+                                    <Download size={18} className="mr-2" />
+                                    Download Prospectus
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </section>

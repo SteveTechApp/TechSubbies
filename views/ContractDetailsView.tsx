@@ -10,7 +10,7 @@ interface ContractDetailsViewProps {
     contract: Contract;
 }
 
-const formatDateWithTime = (date: Date | string | undefined) => {
+const formatDate = (date: Date | string | undefined) => {
     if (!date) return 'N/A';
     return new Date(date).toLocaleString('en-GB', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
@@ -39,12 +39,13 @@ const MilestoneRow = ({ milestone, contract, onFund, onAction, userRole }: { mil
 
     const handleAction = async (action: Function) => {
         setIsLoading(true);
+        // Simulate async action
         await new Promise(resolve => setTimeout(resolve, 500));
         onAction(action);
         setIsLoading(false);
     };
-    
-     const renderAction = () => {
+
+    const renderAction = () => {
         if (isLoading) return <Loader className="animate-spin w-5 h-5 text-gray-500"/>;
 
         if (userRole === Role.COMPANY || userRole === Role.ADMIN) {
@@ -65,7 +66,6 @@ const MilestoneRow = ({ milestone, contract, onFund, onAction, userRole }: { mil
         <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md border">
             <div>
                 <p className="font-semibold">{milestone.description}</p>
-                {/* FIX: Pass contract as a prop to MilestoneRow to access currency. */}
                 <p className="text-sm font-bold text-green-700">{contract.currency}{milestone.amount}</p>
             </div>
             <div className="flex items-center gap-4">
@@ -77,7 +77,7 @@ const MilestoneRow = ({ milestone, contract, onFund, onAction, userRole }: { mil
 };
 
 export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
-    const { user, findUserByProfileId, signContract, fundMilestone, submitMilestoneForApproval, approveMilestonePayout } = useAppContext();
+    const { user, findUserByProfileId, signContract, fundMilestone } = useAppContext();
     const [isSignModalOpen, setIsSignModalOpen] = useState(false);
     const [fundingMilestone, setFundingMilestone] = useState<Milestone | null>(null);
 
@@ -105,14 +105,10 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
             setFundingMilestone(null);
         }
     };
-    
-    const handleMilestoneAction = (action: Function) => (contractId: string, milestoneId: string) => {
-        action(contractId, milestoneId);
-    };
 
     return (
         <>
-             {fundingMilestone && (
+            {fundingMilestone && (
                 <PaymentModal
                     isOpen={!!fundingMilestone}
                     onClose={() => setFundingMilestone(null)}
@@ -174,7 +170,7 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
                             <div>
                                 <p className="font-semibold">Engineer Signature</p>
                                 {contract.engineerSignature ? (
-                                    <p className="text-sm text-green-700">Signed by {contract.engineerSignature.name} on {formatDateWithTime(contract.engineerSignature.date)}</p>
+                                    <p className="text-sm text-green-700">Signed by {contract.engineerSignature.name} on {formatDate(contract.engineerSignature.date)}</p>
                                 ) : (
                                     <p className="text-sm text-gray-500">Awaiting signature from {engineer.name}</p>
                                 )}
@@ -185,7 +181,7 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
                             <div>
                                 <p className="font-semibold">Client Signature</p>
                                 {contract.companySignature ? (
-                                     <p className="text-sm text-green-700">Signed by {contract.companySignature.name} on {formatDateWithTime(contract.companySignature.date)}</p>
+                                     <p className="text-sm text-green-700">Signed by {contract.companySignature.name} on {formatDate(contract.companySignature.date)}</p>
                                 ) : (
                                     <p className="text-sm text-gray-500">Awaiting countersignature from {company.name}</p>
                                 )}

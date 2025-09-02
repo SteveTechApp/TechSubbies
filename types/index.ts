@@ -1,5 +1,9 @@
 import type { Chat } from '@google/genai';
 import type { Dispatch, SetStateAction } from 'react';
+import { geminiService } from '../services/geminiService.ts';
+
+// --- Type definition for our AI service ---
+export type GeminiServiceType = typeof geminiService;
 
 // --- Enums and Interfaces ---
 export enum Role {
@@ -59,7 +63,6 @@ export interface SelectedJobRole {
 
 export interface JobRoleDefinition {
   name: string;
-  // FIX: Updated the category union type to match the new comprehensive skills matrix
   category: 'Audio Visual & Media Technology' | 
     'Software Development' |
     'Networking & Infrastructure' |
@@ -173,6 +176,7 @@ export interface EngineerProfile extends BaseProfile {
     otherLinks?: SocialLink[];
     rightColumnLinks?: { label: string, value: string, url: string }[];
     isBoosted?: boolean;
+    boostEndDate?: Date;
     profileViews: number;
     searchAppearances: number;
     jobInvites: number;
@@ -407,7 +411,7 @@ export interface AppContextType {
     updateCompanyProfile: (updatedProfile: Partial<CompanyProfile>) => void;
     postJob: (jobData: Omit<Job, 'id' | 'companyId' | 'postedDate' | 'status'>) => void;
     startTrial: () => void;
-    geminiService: any;
+    geminiService: GeminiServiceType;
     applications: Application[];
     applyForJob: (jobId: string, engineerId?: string) => void;
     createAndLoginEngineer: (data: any) => void;

@@ -35,10 +35,10 @@ export const Footer = ({ onNavigate, onHowItWorksClick }: FooterProps) => {
                 {/* Right Side: Socials & Navigation */}
                 <div className="flex flex-col lg:flex-row items-center gap-4">
                      <div className="flex items-center space-x-4">
-                        <a href="#" className="text-gray-500 hover:text-blue-600" aria-label="LinkedIn"><Linkedin /></a>
-                        <a href="#" className="text-gray-500 hover:text-blue-600" aria-label="X - formerly Twitter"><XIcon /></a>
-                        <a href="#" className="text-gray-500 hover:text-blue-600" aria-label="Instagram"><Instagram /></a>
-                        <a href="#" className="text-gray-500 hover:text-blue-600" aria-label="Facebook"><Facebook /></a>
+                        <a href="https://www.linkedin.com/company/techsubbies" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600" aria-label="LinkedIn"><Linkedin /></a>
+                        <a href="https://x.com/techsubbies" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600" aria-label="X - formerly Twitter"><XIcon /></a>
+                        <a href="https://instagram.com/techsubbies" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600" aria-label="Instagram"><Instagram /></a>
+                        <a href="https://facebook.com/techsubbies" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600" aria-label="Facebook"><Facebook /></a>
                     </div>
                     <nav>
                         <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-2">

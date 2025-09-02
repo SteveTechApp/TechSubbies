@@ -6,6 +6,7 @@ import { Footer } from '../components/Footer.tsx';
 import { StatCard } from '../components/StatCard.tsx';
 import { FeatureCard } from '../components/FeatureCard.tsx';
 import { Users, Building, ClipboardList, DollarSign, Calendar, Handshake, User, Briefcase } from '../components/Icons.tsx';
+import { HERO_IMAGES, COMPANY_LOGOS } from '../data/assets.ts';
 
 interface LandingPageProps {
   onNavigate: (page: Page) => void;
@@ -32,17 +33,6 @@ const engineerPrompts = [
     "Power the world's biggest shows, from festivals to corporate events.",
 ];
 
-// NEW: Curated list of high-quality, relevant hero images
-const HERO_IMAGES = [
-    'https://images.unsplash.com/photo-1593720213428-28a5b9e94613?q=80&w=2070&auto=format&fit=crop', // Programmer at desk
-    'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1974&auto=format&fit=crop', // Server room aisle
-    'https://images.unsplash.com/photo-1521185496955-15097b20c5fe?q=80&w=1950&auto=format&fit=crop', // Close up of code on screen
-    'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop', // Network globe concept
-    'https://images.unsplash.com/photo-1614113489855-474aa913b438?q=80&w=1974&auto=format&fit=crop', // Live event sound mixing desk
-    'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070&auto=format&fit=crop' // Professionals collaborating
-];
-
-
 export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps) => {
   const { engineers, jobs, companies } = useAppContext();
   const [heroImage, setHeroImage] = useState('');
@@ -53,7 +43,7 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
   
   useEffect(() => {
       // Select a random hero image on component mount
-      setHeroImage(HERO_IMAGES[Math.floor(Math.random() * HERO_IMAGES.length)]);
+      setHeroImage(HERO_IMAGES.landing[Math.floor(Math.random() * HERO_IMAGES.landing.length)]);
 
       const roleInterval = setInterval(() => {
           setTextOpacity(0); // Start fade out
@@ -66,7 +56,7 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
       return () => clearInterval(roleInterval);
   }, []);
 
-  const featuredCompanies = companies.filter(c => c.consentToFeature && c.logo).slice(0, 5);
+  const featuredCompanies = companies.filter(c => c.consentToFeature).slice(0, 5);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -142,22 +132,17 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
           </section>
           
           {/* Trusted By Section */}
-          <section className="py-10 bg-white">
-            <div className="container mx-auto px-4 text-center">
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-8">Trusted by leading integrators & managed service providers</h3>
-              <div className="flex justify-center items-center flex-wrap gap-x-12 gap-y-6">
-                  {featuredCompanies.map(company => (
-                      <img 
-                          key={company.id} 
-                          src={company.logo} 
-                          alt={`${company.name} logo`}
-                          className="h-10 object-contain"
-                          title={company.name}
-                      />
-                  ))}
-              </div>
-            </div>
-          </section>
+            <section className="py-10 bg-white">
+                <div className="container mx-auto px-4 text-center">
+                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-8">Trusted by leading integrators & managed service providers</h3>
+                    <div className="flex justify-center items-center flex-wrap gap-x-12 gap-y-6">
+                        {featuredCompanies.map(company => {
+                            const LogoComponent = COMPANY_LOGOS[company.id as keyof typeof COMPANY_LOGOS];
+                            return LogoComponent ? <LogoComponent key={company.id} className="h-10 text-gray-600" /> : null;
+                        })}
+                    </div>
+                </div>
+            </section>
           
           {/* Features Section */}
           <section id="features" className="py-10 bg-gray-50">

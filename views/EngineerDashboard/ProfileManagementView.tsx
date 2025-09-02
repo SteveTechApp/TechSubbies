@@ -1,15 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { EngineerProfile, Currency, ProfileTier } from '../../types/index.ts';
-import { ArrowLeft, Save, Loader, CheckCircle, PoundSterling } from '../../components/Icons.tsx';
-import { CoreInfoSection } from '../../components/ProfileManagement/CoreInfoSection.tsx';
-import { ContactSection } from '../../components/ProfileManagement/ContactSection.tsx';
-import { WorkReadinessSection } from '../../components/ProfileManagement/WorkReadinessSection.tsx';
-import { SkillsAndRolesSection } from '../../components/ProfileManagement/SkillsAndRolesSection.tsx';
-import { PortfolioSection } from '../../components/ProfileManagement/PortfolioSection.tsx';
-import { NotificationSettingsSection } from '../../components/ProfileManagement/NotificationSettingsSection.tsx';
-import { CertificationsSection } from '../../components/ProfileManagement/CertificationsSection.tsx';
-import { IdentitySection } from '../../components/ProfileManagement/IdentitySection.tsx';
-import { SectionWrapper } from '../../components/ProfileManagement/SectionWrapper.tsx';
+import React, { useState, useCallback } from 'react';
+import { EngineerProfile, ProfileTier } from '../../types/index.ts';
+import { ArrowLeft, User, Briefcase, ShieldCheck, Mail } from '../../components/Icons.tsx';
+import { ProfileSectionPanel } from '../../components/ProfileManagement/ProfileSectionPanel.tsx';
+import { EditProfileSectionModal } from '../../components/ProfileManagement/EditProfileSectionModal.tsx';
+import { formatDisplayDate } from '../../utils/dateFormatter.ts';
 
 interface ProfileManagementViewProps {
     profile: EngineerProfile;
@@ -17,99 +11,75 @@ interface ProfileManagementViewProps {
     setActiveView: (view: string) => void;
 }
 
-type SaveStatus = 'unsaved' | 'saving' | 'saved';
+type EditableSection = 'essentials' | 'skills' | 'compliance' | 'notifications' | null;
 
-const SaveStatusIndicator = ({ status }: { status: SaveStatus }) => {
-    switch (status) {
-        case 'saving':
-            return <div className="flex items-center text-sm text-gray-500"><Loader className="animate-spin w-4 h-4 mr-2" /> Saving...</div>;
-        case 'saved':
-            return <div className="flex items-center text-sm text-green-600"><CheckCircle className="w-4 h-4 mr-2" /> All changes saved</div>;
-        case 'unsaved':
-            return <div className="flex items-center text-sm text-yellow-600">Unsaved changes</div>;
-        default:
-            return null;
-    }
+const calculateProfileStrength = (profile: Partial<EngineerProfile>): number => {
+    let score = 10;
+    if (profile.description && profile.description.length > 50) score += 15;
+    if (profile.contact?.phone && profile.contact?.linkedin) score += 10;
+    if (profile.compliance?.professionalIndemnity?.hasCoverage && profile.compliance?.publicLiability?.hasCoverage) score += 15;
+    if (profile.identity?.isVerified) score += 10;
+    if (profile.certifications && profile.certifications.length > 0) score += 10;
+    if (profile.selectedJobRoles && profile.selectedJobRoles.length > 0) score += 20;
+    if (profile.caseStudies && profile.caseStudies.length > 0) score += 10;
+    return Math.min(100, score);
 };
 
+
 export const ProfileManagementView = ({ profile, onSave, setActiveView }: ProfileManagementViewProps) => {
-    const [formData, setFormData] = useState<Partial<EngineerProfile>>(profile);
-    const [contactData, setContactData] = useState(profile.contact);
-    const [complianceData, setComplianceData] = useState(profile.compliance);
-    const [identityData, setIdentityData] = useState(profile.identity);
-
-    const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
-    const debounceTimeout = useRef<number | null>(null);
-    const isInitialMount = useRef(true);
-
-    const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const { name, value, type } = e.target;
-        
-        let processedValue: any = value;
-        if (type === 'checkbox') {
-            processedValue = (e.target as HTMLInputElement).checked;
-        } else if (['experience', 'minDayRate', 'maxDayRate'].includes(name)) {
-            processedValue = parseInt(value, 10) || 0;
-            if (name === 'maxDayRate' && profile.profileTier === ProfileTier.BASIC && processedValue > 195) {
-                processedValue = 195;
-            }
-        }
-        
-        setFormData(prev => ({ ...prev, [name]: processedValue }));
-    };
-
-    const handleContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setContactData(prev => ({ ...prev, [name]: value }));
-    };
+    const [editingSection, setEditingSection] = useState<EditableSection>(null);
+    const [profileData, setProfileData] = useState<EngineerProfile>(profile);
     
-    const handleSaveChanges = useCallback(() => {
-        setSaveStatus('saving');
-        onSave({
-            ...formData,
-            contact: contactData,
-            compliance: complianceData,
-            identity: identityData,
-        });
-        setTimeout(() => {
-            setSaveStatus('saved');
-        }, 500);
-    }, [onSave, formData, contactData, complianceData, identityData]);
+    const profileStrength = calculateProfileStrength(profileData);
 
-    useEffect(() => {
-        if (isInitialMount.current) {
-            isInitialMount.current = false;
-            return;
+    const handleDataChange = (updatedData: Partial<EngineerProfile>) => {
+        setProfileData(prev => ({ ...prev, ...updatedData }));
+    };
+
+    const handleSaveAndClose = () => {
+        onSave(profileData);
+        setEditingSection(null);
+    };
+
+    const renderSummary = (section: EditableSection) => {
+        switch(section) {
+            case 'essentials':
+                return (
+                    <div className="text-sm text-gray-600 space-y-1">
+                        <p><strong>Name:</strong> {profileData.name}</p>
+                        <p><strong>Discipline:</strong> {profileData.discipline}</p>
+                        <p><strong>Rate:</strong> {profileData.currency}{profileData.minDayRate} - {profileData.currency}{profileData.maxDayRate}</p>
+                    </div>
+                );
+            case 'skills':
+                 return (
+                    <div className="text-sm text-gray-600 space-y-1">
+                        <p><strong>Specialist Roles:</strong> {profileData.selectedJobRoles?.length || 0}</p>
+                        <p><strong>Certifications:</strong> {profileData.certifications?.length || 0}</p>
+                        <p><strong>Portfolio Items:</strong> {profileData.caseStudies?.length || 0}</p>
+                    </div>
+                );
+            case 'compliance':
+                 return (
+                    <div className="text-sm text-gray-600 space-y-1">
+                        <p><strong>Insurance:</strong> {profileData.compliance?.professionalIndemnity?.hasCoverage && profileData.compliance?.publicLiability?.hasCoverage ? "Active" : "Incomplete"}</p>
+                        <p><strong>ID Verified:</strong> {profileData.identity?.isVerified ? "Yes" : "No"}</p>
+                    </div>
+                );
+            case 'notifications':
+                 return (
+                    <div className="text-sm text-gray-600 space-y-1">
+                        <p><strong>Weekly Digest:</strong> {profileData.jobDigestOptIn ? "Enabled" : "Disabled"}</p>
+                    </div>
+                );
+            default:
+                return null;
         }
-
-        setSaveStatus('unsaved');
-
-        if (debounceTimeout.current) {
-            clearTimeout(debounceTimeout.current);
-        }
-
-        debounceTimeout.current = window.setTimeout(() => {
-            handleSaveChanges();
-        }, 2500);
-
-        return () => {
-            if (debounceTimeout.current) {
-                clearTimeout(debounceTimeout.current);
-            }
-        };
-    }, [formData, contactData, complianceData, identityData, handleSaveChanges]);
-
-    const handleManualSave = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (debounceTimeout.current) {
-            clearTimeout(debounceTimeout.current);
-        }
-        handleSaveChanges();
     };
 
     return (
-        <form onSubmit={handleManualSave}>
-            <button 
+        <div>
+             <button 
                 type="button"
                 onClick={() => setActiveView('Dashboard')} 
                 className="flex items-center mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
@@ -117,55 +87,48 @@ export const ProfileManagementView = ({ profile, onSave, setActiveView }: Profil
                 <ArrowLeft size={16} className="mr-2" />
                 Back to Dashboard
             </button>
-            <div className="flex justify-between items-center mb-4">
-                <h1 className="text-3xl font-bold">Manage Profile Details</h1>
+            <h1 className="text-3xl font-bold mb-2">Manage Profile Hub</h1>
+            <p className="text-gray-500 mb-6">Edit each section of your profile. Your changes are saved automatically.</p>
+            
+             {/* Profile Strength Meter */}
+            <div className="mb-6 bg-white p-5 rounded-lg shadow">
+                <h3 className="font-bold text-lg mb-2">Profile Strength</h3>
                 <div className="flex items-center gap-4">
-                    <SaveStatusIndicator status={saveStatus} />
-                    <button 
-                        type="submit"
-                        className="flex items-center px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 text-lg disabled:bg-green-300"
-                        disabled={saveStatus === 'saving'}
-                    >
-                        <Save size={20} className="mr-2"/>
-                        Save All Changes
-                    </button>
+                    <div className="w-full bg-gray-200 rounded-full h-4">
+                        <div className="bg-green-500 h-4 rounded-full transition-all duration-500" style={{ width: `${profileStrength}%` }}></div>
+                    </div>
+                    <span className="font-bold text-green-600 text-lg">{profileStrength}%</span>
                 </div>
+                <p className="text-xs text-gray-500 mt-2">A complete profile attracts more high-quality job offers. Aim for 100%!</p>
+            </div>
+
+            {/* Profile Section Panels */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <ProfileSectionPanel title="Profile Essentials" icon={User} onEdit={() => setEditingSection('essentials')}>
+                    {renderSummary('essentials')}
+                </ProfileSectionPanel>
+                <ProfileSectionPanel title="Skills & Portfolio" icon={Briefcase} onEdit={() => setEditingSection('skills')}>
+                    {renderSummary('skills')}
+                </ProfileSectionPanel>
+                <ProfileSectionPanel title="Compliance & Verification" icon={ShieldCheck} onEdit={() => setEditingSection('compliance')}>
+                    {renderSummary('compliance')}
+                </ProfileSectionPanel>
+                <ProfileSectionPanel title="Notification Settings" icon={Mail} onEdit={() => setEditingSection('notifications')}>
+                    {renderSummary('notifications')}
+                </ProfileSectionPanel>
             </div>
             
-            <div className="space-y-6">
-                <CoreInfoSection formData={formData} onProfileChange={handleProfileChange} />
-                <ContactSection contactData={contactData} onContactChange={handleContactChange} />
-                 <SectionWrapper title="Day Rate" icon={PoundSterling}>
-                    <div className="flex gap-4">
-                        <div className="w-1/3">
-                            <label className="block text-sm font-medium text-gray-500">Currency</label>
-                            <select name="currency" value={formData.currency} onChange={handleProfileChange} className="w-full border p-2 rounded bg-white h-[42px]">
-                                <option value={Currency.GBP}>GBP (£)</option>
-                                <option value={Currency.USD}>USD ($)</option>
-                            </select>
-                        </div>
-                        <div className="w-1/3">
-                            <label className="block text-sm font-medium text-gray-500">Minimum</label>
-                            <input type="number" name="minDayRate" value={formData.minDayRate || ''} step="5" onChange={handleProfileChange} className="w-full border p-2 rounded" />
-                        </div>
-                        <div className="w-1/3">
-                            <label className="block text-sm font-medium text-gray-500">Maximum</label>
-                            <input type="number" name="maxDayRate" value={formData.maxDayRate || ''} step="5" onChange={handleProfileChange} max={profile.profileTier === ProfileTier.BASIC ? 195 : undefined} className="w-full border p-2 rounded" />
-                        </div>
-                    </div>
-                    {profile.profileTier === ProfileTier.BASIC && (
-                        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded-md text-sm">
-                            As a Basic Profile user, your maximum day rate is capped at £195. <button type="button" onClick={() => setActiveView('Billing')} className="font-bold underline hover:text-blue-900">Upgrade your profile</button> to set a higher rate.
-                        </div>
-                    )}
-                </SectionWrapper>
-                <WorkReadinessSection complianceData={complianceData} setComplianceData={setComplianceData} />
-                <IdentitySection identityData={identityData} setIdentityData={setIdentityData} />
-                <NotificationSettingsSection profile={profile} formData={formData} onProfileChange={handleProfileChange} />
-                <CertificationsSection profile={profile} formData={formData} setFormData={setFormData} setActiveView={setActiveView} />
-                <SkillsAndRolesSection profile={profile} formData={formData} setFormData={setFormData} setActiveView={setActiveView} />
-                <PortfolioSection profile={profile} formData={formData} setFormData={setFormData} setActiveView={setActiveView} />
-            </div>
-        </form>
+            {editingSection && (
+                <EditProfileSectionModal
+                    isOpen={!!editingSection}
+                    onClose={() => setEditingSection(null)}
+                    onSave={handleSaveAndClose}
+                    section={editingSection}
+                    profile={profileData}
+                    setProfileData={setProfileData}
+                    setActiveView={setActiveView}
+                />
+            )}
+        </div>
     );
 };

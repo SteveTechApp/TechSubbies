@@ -1,7 +1,6 @@
 import React from 'react';
-import { EngineerProfile, CaseStudy, ProfileTier } from '../../types/index.ts';
-import { SectionWrapper } from './SectionWrapper.tsx';
-import { Clapperboard, Plus, Trash2 } from '../Icons.tsx';
+import { EngineerProfile, ProfileTier } from '../../types/index.ts';
+import { Plus, Trash2 } from '../Icons.tsx';
 
 const generateUniqueId = () => `id-${Math.random().toString(36).substring(2, 10)}`;
 
@@ -38,8 +37,9 @@ export const PortfolioSection = ({ profile, formData, setFormData, setActiveView
     };
 
     return (
-        <>
-            <SectionWrapper title="Case Studies / Portfolio">
+        <div className="space-y-6">
+            <div>
+                <h3 className="text-xl font-bold mb-3">Case Studies / Portfolio</h3>
                 <div className="space-y-4">
                     {caseStudies.map(cs => (
                         <div key={cs.id} className="flex items-center gap-2">
@@ -52,9 +52,10 @@ export const PortfolioSection = ({ profile, formData, setFormData, setActiveView
                         <Plus size={18} className="mr-1" /> Add Case Study
                     </button>
                 </div>
-            </SectionWrapper>
+            </div>
             
-            <SectionWrapper title="Visual Case Studies (Storyboards)" icon={Clapperboard}>
+            <div>
+                <h3 className="text-xl font-bold mb-3">Visual Case Studies (Storyboards)</h3>
                  {!canUseStoryboards ? <UpgradeCta requiredTier="Skills" onUpgradeClick={() => setActiveView('Billing')} /> : (
                     <div>
                         <p className="text-gray-600 mb-4">Create engaging, step-by-step visual stories of your projects to impress potential clients.</p>
@@ -76,7 +77,7 @@ export const PortfolioSection = ({ profile, formData, setFormData, setActiveView
                         </button>
                     </div>
                 )}
-            </SectionWrapper>
+            </div>
         </>
     );
 };

@@ -1,7 +1,5 @@
 import React from 'react';
 import { EngineerProfile, ProfileTier } from '../../types/index.ts';
-import { SectionWrapper } from './SectionWrapper.tsx';
-import { Mail } from '../Icons.tsx';
 import { CheckboxInput } from '../SignUp/CheckboxInput.tsx';
 
 interface NotificationSettingsSectionProps {
@@ -11,7 +9,7 @@ interface NotificationSettingsSectionProps {
 }
 
 export const NotificationSettingsSection = ({ profile, formData, onProfileChange }: NotificationSettingsSectionProps) => (
-    <SectionWrapper title="Notification Settings" icon={Mail}>
+    <div>
         {profile.profileTier !== ProfileTier.BASIC ? (
             <div>
                 <CheckboxInput
@@ -25,5 +23,5 @@ export const NotificationSettingsSection = ({ profile, formData, onProfileChange
         ) : (
             <p className="text-gray-600">Upgrade to a Skills Profile to manage advanced notifications and receive personalized job digests.</p>
         )}
-    </SectionWrapper>
+    </div>
 );

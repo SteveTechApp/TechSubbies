@@ -4,27 +4,19 @@ import { Header } from '../components/Header.tsx';
 import { FeatureCard } from '../components/FeatureCard.tsx';
 import { PenSquare, Search, Handshake, DollarSign, Users, Briefcase } from '../components/Icons.tsx';
 import { Page } from '../types/index.ts';
+import { HERO_IMAGES } from '../data/assets.ts';
 
 interface ForCompaniesPageProps {
     onNavigate: (page: Page) => void;
     onHowItWorksClick: () => void;
 }
 
-// Curated list of high-quality, relevant hero images for companies
-const COMPANY_HERO_IMAGES = [
-    'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2071&auto=format&fit=crop', // Team collaborating in a modern office
-    'https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=1974&auto=format&fit=crop', // Professionals reviewing plans
-    'https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2070&auto=format&fit=crop', // A project meeting in progress
-    'https://images.unsplash.com/photo-1587440871875-191322ee64b0?q=80&w=2071&auto=format&fit=crop', // Whiteboard session with sticky notes
-    'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop', // Modern conference room with large screen
-];
-
 export const ForCompaniesPage = ({ onNavigate, onHowItWorksClick }: ForCompaniesPageProps) => {
     const [heroImage, setHeroImage] = useState('');
 
     useEffect(() => {
         // Select a random hero image on component mount
-        setHeroImage(COMPANY_HERO_IMAGES[Math.floor(Math.random() * COMPANY_HERO_IMAGES.length)]);
+        setHeroImage(HERO_IMAGES.companies[Math.floor(Math.random() * HERO_IMAGES.companies.length)]);
     }, []);
 
     return (
