@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Footer } from '../components/Footer.tsx';
 import { Header } from '../components/Header.tsx';
 import { Page } from '../types/index.ts';
-import { User, Building, Users, LayoutDashboard, Edit, Search, CalendarDays, BrainCircuit, CreditCard, Briefcase, Mail, PlusCircle } from '../components/Icons.tsx';
+import { User, Building, Users, LayoutDashboard, Edit, Search, CalendarDays, BrainCircuit, CreditCard, Briefcase, Mail, PlusCircle, FileText, DollarSign } from '../components/Icons.tsx';
 
 interface UserGuidePageProps {
     onNavigate: (page: Page) => void;
@@ -74,15 +74,21 @@ export const UserGuidePage = ({ onNavigate, onHowItWorksClick }: UserGuidePagePr
                                 <ul>
                                     <li><strong>Job Search (<Search className="inline-block" />):</strong> Use advanced filters to find the perfect job. You can filter by keywords, location, day rate, job type, and experience level.</li>
                                     <li><strong>Set Availability (<CalendarDays className="inline-block" />):</strong> Keep your calendar up-to-date. Companies filter by availability, so this is crucial for receiving relevant offers. You can also get a unique URL to sync your availability with your personal calendar (e.g., Google Calendar, Outlook).</li>
-                                    <li><strong>My Network (<Users className="inline-block" />):</strong> Track all your applications in one place. See the status of each application (Applied, Offered, Accepted) and manage offers. Once you accept an offer, you can download an <code>.ics</code> file to add it to your calendar.</li>
+                                    <li><strong>My Network & Connections (<Users className="inline-block" />):</strong> This section has two tabs. "My Applications" lets you track all your job applications and manage offers. Once a contract is complete, the company is automatically added to your "My Connections" tab, creating a permanent record of your professional network.</li>
                                 </ul>
                             </SubSection>
 
-                            <SubSection title="3. Advanced Tools & Contracts">
+                            <SubSection title="3. Contracts, Payments & Advanced Tools">
                                 <ul>
+                                    <li><strong>Contracts (<FileText className="inline-block" />):</strong> When a company hires you, a contract is generated on the platform. You'll receive a notification to review and e-sign it. All your active and past contracts are managed here.</li>
+                                    <li><strong>Secure Payments (<DollarSign className="inline-block" />):</strong> We ensure you get paid securely.
+                                        <ul>
+                                            <li><strong>For SOWs:</strong> The client funds project milestones into a secure escrow account before you start. Once you complete work, you submit the milestone for approval. Upon approval, payment is automatically released to you.</li>
+                                            <li><strong>For Day Rate:</strong> Submit your timesheets through the contract page. Once the client approves it, payment is processed.</li>
+                                        </ul>
+                                    </li>
                                     <li><strong>AI Tools (<BrainCircuit className="inline-block" />):</strong> (Skills Tier+) Leverage Gemini AI to discover relevant skills for a job role or get personalized training recommendations based on your profile to help you upskill.</li>
-                                    <li><strong>Billing & Payments (<CreditCard className="inline-block" />):</strong> Manage your subscription, purchase "Profile Boost" credits to get top placement in search results, and view your transaction history. Premium users can also claim the "Security Net Guarantee" for a free month if they don't receive offers.</li>
-                                    <li><strong>Contracts (<Briefcase className="inline-block" />):</strong> When a company hires you, a contract is generated on the platform. You can review the terms, sign it electronically, and manage project milestones or timesheets directly from the Contracts page.</li>
+                                    <li><strong>Billing (<CreditCard className="inline-block" />):</strong> Manage your subscription, purchase "Profile Boost" credits, and view your transaction history.</li>
                                     <li><strong>Messages (<Mail className="inline-block" />):</strong> Communicate directly with companies. All your professional conversations are kept securely in one place.</li>
                                 </ul>
                             </SubSection>
@@ -111,10 +117,10 @@ export const UserGuidePage = ({ onNavigate, onHowItWorksClick }: UserGuidePagePr
                              
                             <SubSection title="3. Hiring & Management">
                                 <ul>
-                                    <li><strong>My Jobs (<Briefcase className="inline-block" />):</strong> This is your hiring pipeline. Select a job to view all applicants. For premium engineers, you'll see their AI-generated Match Score next to their name. The list is automatically sorted to put the most qualified candidates at the top.</li>
-                                    <li><strong>Applicant Actions:</strong> From the applicant list, you can message an engineer, or if you're ready to hire, click "Create Contract".</li>
-                                    <li><strong>Contracts:</strong> Our system allows you to create either a Day Rate or Statement of Work (SOW) contract, send it for e-signature, and manage it through its lifecycle. For SOW contracts, you can fund milestones into an escrow account and release payments upon approval, providing security for both parties.</li>
-                                    <li><strong>Messages (<Mail className="inline-block" />):</strong> Communicate directly with potential hires and active contractors.</li>
+                                    <li><strong>My Jobs (<Briefcase className="inline-block" />):</strong> This is your hiring pipeline. Select a job to view all applicants, sorted by relevance. From an applicant's card, click "Create Contract" to start the hiring process.</li>
+                                    <li><strong>Contracts & Escrow (<FileText className="inline-block" />):</strong> Our system allows you to create either a Day Rate or Statement of Work (SOW) contract and send it for e-signature. For SOWs, you'll be prompted to fund each milestone into a secure escrow account. This provides security for both parties and ensures work begins promptly.</li>
+                                    <li><strong>Approving Payments (<DollarSign className="inline-block" />):</strong> When an engineer submits a milestone or timesheet, you'll be notified. Simply review the work and click "Approve" on the contract page to release the payment from escrow.</li>
+                                    <li><strong>Talent Pools (<Users className="inline-block" />):</strong> After a contract is completed, you can add your favorite engineers to a "Talent Pool". This creates a curated list of trusted freelancers you can message and invite directly to future projects, bypassing the public job search.</li>
                                 </ul>
                             </SubSection>
                         </GuideSection>
@@ -139,7 +145,7 @@ export const UserGuidePage = ({ onNavigate, onHowItWorksClick }: UserGuidePagePr
                              <SubSection title="3. Communication & Contracts">
                                  <ul>
                                     <li><strong>Messages (<Mail className="inline-block" />):</strong> Use the messaging system to communicate with your managed engineers or with the companies that have posted jobs.</li>
-                                     <li><strong>Contracts (<Briefcase className="inline-block" />):</strong> When a company hires one of your engineers, you can view and manage the contract details on their behalf through the platform.</li>
+                                     <li><strong>Contracts (<Briefcase className="inline-block" />):</strong> When a company hires one of your engineers, you can view and manage the contract details on their behalf through the platform, including tracking milestones and payments.</li>
                                  </ul>
                             </SubSection>
                         </GuideSection>

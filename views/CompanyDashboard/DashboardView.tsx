@@ -12,14 +12,12 @@ interface DashboardViewProps {
 }
 
 const QuickActionButton = ({ icon: Icon, label, description, onClick }: { icon: React.ComponentType<any>, label: string, description: string, onClick: () => void }) => (
-    <button onClick={onClick} className="text-left p-4 bg-gray-50 rounded-lg hover:bg-blue-100 hover:shadow-lg transition-all border border-gray-200 flex items-start gap-4 h-full">
-        <div className="p-3 bg-white rounded-full shadow-sm">
+    <button onClick={onClick} className="flex flex-col p-4 bg-white rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left h-44">
+        <div className="p-2 rounded-full inline-block mb-2 bg-blue-100">
             <Icon size={24} className="text-blue-600" />
         </div>
-        <div>
-            <h3 className="font-bold text-gray-800">{label}</h3>
-            <p className="text-sm text-gray-500">{description}</p>
-        </div>
+        <h3 className="text-lg font-bold text-gray-800">{label}</h3>
+        <p className="mt-1 text-xs text-gray-600">{description}</p>
     </button>
 );
 

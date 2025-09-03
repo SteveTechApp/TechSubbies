@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Footer } from '../components/Footer.tsx';
 import { Header } from '../components/Header.tsx';
 import { FeatureCard } from '../components/FeatureCard.tsx';
-import { PenSquare, Search, Handshake, DollarSign, Users, Briefcase } from '../components/Icons.tsx';
+import { PenSquare, Search, Handshake, DollarSign, Users, Briefcase, FileText } from '../components/Icons.tsx';
 import { Page } from '../types/index.ts';
 import { HERO_IMAGES } from '../data/assets.ts';
 
@@ -72,15 +72,18 @@ export const ForCompaniesPage = ({ onNavigate, onHowItWorksClick }: ForCompanies
                 <section className="py-12 bg-gray-50">
                     <div className="container mx-auto px-4">
                         <h2 className="text-4xl font-bold text-center mb-10">Project Resourcing, Without the Hassle</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                            <FeatureCard icon={PenSquare} title="Post Contracts in Minutes">
-                                Describe your project and requirements with our intelligent, two-step posting wizard. Define essential skills to power our AI matching.
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+                            <FeatureCard icon={Search} title="AI Smart Match">
+                                Leverage our AI to get a ranked list of the best-fit candidates instantly, saving you hours of manual vetting.
                             </FeatureCard>
-                            <FeatureCard icon={Search} title="Find Skilled Specialists">
-                                Use advanced filters for roles, day rate, and availability, or leverage our "AI Smart Match" to get a ranked list of the best-fit candidates instantly.
+                            <FeatureCard icon={FileText} title="Streamlined Contracts">
+                                Generate and send contracts for e-signature directly on the platform. No more paperwork or email chains.
                             </FeatureCard>
-                            <FeatureCard icon={Handshake} title="Engage Directly. No Fees.">
-                                Connect, negotiate, and contract directly with freelancers. We get out of the way, saving you from costly placement fees and delays.
+                            <FeatureCard icon={DollarSign} title="Secure Escrow Payments">
+                                Fund project milestones into a secure escrow account. Release payments with a click upon work approval, ensuring trust and transparency.
+                            </FeatureCard>
+                            <FeatureCard icon={Users} title="Build Your Talent Pool">
+                                After a successful project, add your best freelancers to a curated "Talent Pool" for easy direct engagement on future work.
                             </FeatureCard>
                         </div>
                     </div>

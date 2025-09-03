@@ -8,13 +8,14 @@ interface Recommendation {
     courseName: string;
     reason: string;
     keywords: string[];
+    providerName?: string;
 }
 
 interface TrainingRecommendationsProps {
     profile: EngineerProfile;
 }
 
-const findProviders = (keywords: string[]): TrainingProvider[] => {
+const findProvidersByKeywords = (keywords: string[]): TrainingProvider[] => {
     if (!keywords || keywords.length === 0) return [];
     const lowerCaseKeywords = keywords.map(k => k.toLowerCase());
     
@@ -23,7 +24,6 @@ const findProviders = (keywords: string[]): TrainingProvider[] => {
             lowerCaseKeywords.some(keyword => specialty.toLowerCase().includes(keyword))
         )
     );
-    // Return unique providers
     return [...new Map(providers.map(item => [item.name, item])).values()];
 };
 
@@ -86,14 +86,23 @@ export const TrainingRecommendations = ({ profile }: TrainingRecommendationsProp
                 <div className="mt-4 space-y-4 animate-fade-in-up">
                     <h3 className="font-bold text-lg">Your AI-Powered Recommendations:</h3>
                     {recommendations.map((rec, index) => {
-                        const providers = findProviders(rec.keywords);
+                        let providers: TrainingProvider[] = [];
+                        if (rec.providerName) {
+                            const directMatch = MOCK_TRAINING_PROVIDERS.find(p => p.name === rec.providerName);
+                            if (directMatch) providers.push(directMatch);
+                        }
+                        
+                        if (providers.length === 0) {
+                            providers = findProvidersByKeywords(rec.keywords);
+                        }
+
                         return (
                             <div key={index} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                                 <h4 className="font-bold text-blue-700">{rec.courseName}</h4>
                                 <p className="text-gray-700 my-2 text-sm">{rec.reason}</p>
                                 {providers.length > 0 && (
                                     <div>
-                                        <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Example Training Providers:</h5>
+                                        <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Recommended Training Providers:</h5>
                                         <div className="flex flex-wrap gap-2 mt-2">
                                             {providers.map(p => (
                                                 <a 
@@ -101,9 +110,14 @@ export const TrainingRecommendations = ({ profile }: TrainingRecommendationsProp
                                                     href={p.url} 
                                                     target="_blank" 
                                                     rel="noopener noreferrer" 
-                                                    className="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full hover:bg-blue-200 hover:text-blue-900 transition-colors"
+                                                    className="flex items-center text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full hover:bg-blue-200 hover:text-blue-900 transition-colors"
                                                 >
                                                     {p.name}
+                                                    {p.type === 'Sponsored' && (
+                                                        <span className="ml-2 text-xs font-bold bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded-full">
+                                                            Sponsored
+                                                        </span>
+                                                    )}
                                                 </a>
                                             ))}
                                         </div>

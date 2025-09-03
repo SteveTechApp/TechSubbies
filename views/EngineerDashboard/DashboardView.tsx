@@ -16,21 +16,19 @@ interface DashboardPanelProps {
 }
 
 const DashboardPanel = ({ icon: Icon, title, description, onClick, disabled = false, isFeatured = false }: DashboardPanelProps) => {
-    const baseClasses = "flex flex-col justify-between p-5 bg-white rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left h-full";
+    const baseClasses = "flex flex-col p-4 bg-white rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left h-44";
     const disabledClasses = "bg-gray-100 text-gray-400 cursor-not-allowed hover:shadow-md hover:-translate-y-0";
-    const featuredClasses = "bg-gradient-to-br from-yellow-300 to-orange-400 text-orange-900";
+    const featuredClasses = "bg-gradient-to-br from-yellow-300 to-orange-400 text-white";
     
     const finalClasses = `${baseClasses} ${disabled ? disabledClasses : ''} ${isFeatured ? featuredClasses : ''}`;
 
     return (
         <button onClick={onClick} disabled={disabled} className={finalClasses}>
-            <div>
-                <div className={`p-3 rounded-full inline-block mb-3 ${isFeatured ? 'bg-white/30' : 'bg-blue-100'}`}>
-                    <Icon size={28} className={isFeatured ? 'text-white' : 'text-blue-600'} />
-                </div>
-                <h3 className={`text-xl font-bold ${isFeatured ? 'text-white' : 'text-gray-800'}`}>{title}</h3>
-                <p className={`mt-1 text-sm ${isFeatured ? 'text-orange-900/80' : 'text-gray-600'}`}>{description}</p>
+            <div className={`p-2 rounded-full inline-block mb-2 ${isFeatured ? 'bg-white/30' : 'bg-blue-100'}`}>
+                <Icon size={24} className={isFeatured ? 'text-white' : 'text-blue-600'} />
             </div>
+            <h3 className={`text-lg font-bold ${isFeatured ? 'text-white' : 'text-gray-800'}`}>{title}</h3>
+            <p className={`mt-1 text-xs ${isFeatured ? 'text-yellow-100' : 'text-gray-600'}`}>{description}</p>
         </button>
     );
 };

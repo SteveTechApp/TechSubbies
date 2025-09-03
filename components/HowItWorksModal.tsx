@@ -1,7 +1,7 @@
-import React from 'react';
-import { X } from './Icons.tsx';
+import React, { useState } from 'react';
+// FIX: Imported the missing CheckCircle icon.
+import { X, User, Building, FileText, DollarSign, Search, Sparkles, Users, Handshake, CheckCircle } from './Icons.tsx';
 import { Page } from '../types/index.ts';
-import { FeatureSlideshow } from './FeatureSlideshow.tsx';
 
 interface HowItWorksModalProps {
     isOpen: boolean;
@@ -9,36 +9,78 @@ interface HowItWorksModalProps {
     onNavigate: (page: Page) => void;
 }
 
+const Step = ({ icon: Icon, title, description }: { icon: React.ComponentType<any>, title: string, description: string }) => (
+    <div className="flex items-start gap-4">
+        <div className="flex-shrink-0 bg-blue-100 p-3 rounded-full">
+            <Icon className="w-6 h-6 text-blue-600" />
+        </div>
+        <div>
+            <h4 className="font-bold text-lg text-gray-800">{title}</h4>
+            <p className="text-gray-600">{description}</p>
+        </div>
+    </div>
+);
+
 export const HowItWorksModal = ({ isOpen, onClose, onNavigate }: HowItWorksModalProps) => {
     if (!isOpen) return null;
+    const [activeTab, setActiveTab] = useState('engineers');
 
     const handleNavigate = (page: Page) => {
         onNavigate(page);
         onClose();
     };
     
+    const getTabClass = (tabName: string) => `w-1/2 py-3 text-center font-semibold border-b-2 transition-colors flex items-center justify-center gap-2 ${ activeTab === tabName ? 'border-blue-600 text-blue-600' : 'border-gray-200 text-gray-500 hover:bg-gray-100' }`;
+
     return (
         <div
             className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4"
             onClick={onClose}
         >
             <div
-                className="bg-white rounded-lg m-4 max-w-4xl w-full relative transform transition-all duration-300 flex flex-col max-h-[90vh]"
+                className="bg-white rounded-lg m-4 max-w-2xl w-full relative transform transition-all duration-300 flex flex-col max-h-[90vh]"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex-shrink-0 p-6 text-center border-b">
+                <header className="flex-shrink-0 p-6 border-b text-center relative">
                      <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800" aria-label="Close modal">
                         <X size={24} />
                     </button>
                     <h2 className="text-3xl font-bold">How It Works</h2>
-                    <p className="text-gray-500 mt-1">A smarter connection between expertise and opportunity.</p>
-                </div>
+                    <p className="text-gray-500 mt-1">The complete journey, from search to secure payment.</p>
+                </header>
                 
-                <div className="flex-grow p-4 sm:p-8 overflow-hidden">
-                    <FeatureSlideshow />
-                </div>
+                <nav className="flex-shrink-0 flex">
+                    <button onClick={() => setActiveTab('engineers')} className={getTabClass('engineers')}>
+                        <User /> For Engineers
+                    </button>
+                    <button onClick={() => setActiveTab('companies')} className={getTabClass('companies')}>
+                        <Building /> For Companies
+                    </button>
+                </nav>
 
-                <div className="flex-shrink-0 mt-auto p-6 border-t bg-gray-50 rounded-b-lg text-center">
+                <main className="flex-grow p-6 sm:p-8 overflow-y-auto custom-scrollbar">
+                    {activeTab === 'engineers' && (
+                        <div className="space-y-6 fade-in-up">
+                            <Step icon={User} title="1. Create Your Profile" description="Build a free professional profile. Upgrade to a premium 'Skills Profile' to add specialist roles and showcase your deep expertise." />
+                            <Step icon={Search} title="2. Find & Apply for Jobs" description="Search our exclusive job board and apply for contracts that match your skills and availability." />
+                            <Step icon={FileText} title="3. Sign Contracts Securely" description="Receive job offers and sign contracts directly on the platform with e-signatures. No more chasing paperwork." />
+                            <Step icon={DollarSign} title="4. Get Paid via Escrow" description="For milestone-based projects, the client funds an escrow account before you start work. Once you complete a milestone and it's approved, payment is automatically released to you." />
+                            <Step icon={Users} title="5. Build Your Network" description="Every completed contract adds a permanent connection to your 'My Connections' page, helping you build a valuable network of clients for future work." />
+                        </div>
+                    )}
+
+                     {activeTab === 'companies' && (
+                        <div className="space-y-6 fade-in-up">
+                            <Step icon={Sparkles} title="1. Find Talent Instantly" description="Post jobs for free and use our 'AI Smart Match' to get a ranked list of the best-fit engineers based on their detailed skills." />
+                            <Step icon={Handshake} title="2. Hire with Confidence" description="Send a contract directly through the platform. Choose between a milestone-based Statement of Work (SOW) or a simple Day Rate agreement." />
+                            <Step icon={DollarSign} title="3. Fund Secure Escrow" description="For SOWs, you fund project milestones into a secure escrow account. This shows the engineer the funds are ready, building trust and commitment." />
+                            <Step icon={CheckCircle} title="4. Approve Work & Pay" description="Review submitted milestones or timesheets. With a single click, approve the work and the funds are released from escrow to the engineer, minus our platform fee." />
+                            <Step icon={Users} title="5. Build Your Talent Pool" description="After a successful contract, add your best freelancers to a 'Talent Pool'. This creates a curated list of trusted experts you can directly invite to future projects." />
+                        </div>
+                    )}
+                </main>
+
+                <footer className="flex-shrink-0 mt-auto p-6 border-t bg-gray-50 rounded-b-lg text-center">
                     <h3 className="text-xl font-bold text-gray-800">Ready to Get Started?</h3>
                     <p className="text-gray-600 my-2">Join the network and take control of your freelance career today.</p>
                     <button 
@@ -47,7 +89,7 @@ export const HowItWorksModal = ({ isOpen, onClose, onNavigate }: HowItWorksModal
                     >
                         Create Your Profile Now
                     </button>
-                </div>
+                </footer>
             </div>
         </div>
     );

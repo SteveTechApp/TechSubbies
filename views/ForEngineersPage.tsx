@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Footer } from '../components/Footer.tsx';
 import { Header } from '../components/Header.tsx';
 import { Page, ProfileTier } from '../types/index.ts';
-import { CheckCircle, BarChart, Star, Rocket, Clapperboard, TrendingUp, Award } from '../components/Icons.tsx';
+import { CheckCircle, BarChart, Star, Rocket, Clapperboard, TrendingUp, Award, DollarSign, Users } from '../components/Icons.tsx';
 import { HERO_IMAGES } from '../data/assets.ts';
 
 interface ForEngineersPageProps {
@@ -61,15 +61,18 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                 <section className="py-16 bg-white">
                     <div className="container mx-auto px-4 text-center">
                          <h2 className="text-4xl font-bold text-gray-800 mb-12">How TechSubbies Works For You</h2>
-                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
                             <FeatureDetailCard icon={Star} title="Build a Skills Profile">
-                                Go beyond a simple CV. Our Skills Profile lets you add specialist roles and rate your competency on granular, industry-specific skills, from "Crestron DM NVX" to "Azure DevOps".
+                                Go beyond a simple CV. Our Skills Profile lets you add specialist roles and rate your competency on granular, industry-specific skills.
                             </FeatureDetailCard>
                             <FeatureDetailCard icon={TrendingUp} title="Get Matched, Not Lost">
-                                Stop hoping your CV gets noticed. Our AI matching engine analyzes your detailed skills against company requirements to put you at the top of the list for the right projects.
+                                Stop hoping your CV gets noticed. Our AI matching engine analyzes your detailed skills against company requirements to put you at the top of the list.
                             </FeatureDetailCard>
-                             <FeatureDetailCard icon={Award} title="Land Better Contracts">
-                                By clearly showcasing your high-value expertise, you can justify higher day rates and attract companies looking for true specialists, not just generalists.
+                             <FeatureDetailCard icon={DollarSign} title="Secure, Fast Payments">
+                                Work with confidence. Our integrated escrow system secures your payment for milestones before you even start work.
+                            </FeatureDetailCard>
+                             <FeatureDetailCard icon={Users} title="Build Your Network">
+                                Every completed contract adds the company to your "My Connections" list, creating a valuable, permanent network of clients.
                             </FeatureDetailCard>
                          </div>
                     </div>
@@ -95,7 +98,7 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                                 <strong>Direct Communication:</strong> Message companies directly to discuss project details and negotiate terms. No recruiters, no middlemen.
                             </FeatureListItem>
                             <FeatureListItem>
-                                <strong>Integrated Contracts:</strong> Manage your work agreements directly on the platform, from e-signatures to milestone management.
+                                <strong>Integrated Contracts & Escrow:</strong> Manage your work agreements directly on the platform, from e-signatures to secure, escrow-funded milestone payments.
                             </FeatureListItem>
                         </div>
                     </div>
@@ -109,7 +112,7 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                                 avatar="https://xsgames.co/randomusers/assets/avatars/male/74.jpg"
                                 name="Neil B."
                                 role="Senior AV Engineer"
-                                quote="The Skills Profile is a game-changer. I can finally show clients the difference between 'knowing Crestron' and being a certified expert. The quality of contract offers has gone way up."
+                                quote="The escrow system is a game-changer for freelancers. Knowing the funds are secured before starting a big milestone gives me total peace of mind. It's the most professional setup I've seen."
                            />
                            <TestimonialCard 
                                 avatar="https://xsgames.co/randomusers/assets/avatars/male/15.jpg"
@@ -121,7 +124,7 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                                 avatar="https://xsgames.co/randomusers/assets/avatars/female/10.jpg"
                                 name="Samantha G."
                                 role="IT Support Specialist"
-                                quote="As someone managed by a resourcing company, it's great that my agent can use this platform to find work for me. It's so much more efficient and transparent than the old way."
+                                quote="The 'My Connections' feature is brilliant. I'm not just finishing jobs; I'm building a real client list that I can see and track right on the platform. It feels like I'm building a proper business."
                            />
                         </div>
                     </div>

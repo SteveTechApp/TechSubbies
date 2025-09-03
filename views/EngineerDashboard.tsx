@@ -16,6 +16,7 @@ import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
 import { AnalyticsView } from './AdminDashboard/AnalyticsView.tsx';
 import { ContractsView } from './ContractsView.tsx';
 import { ForumView } from './ForumView.tsx';
+import { AICoachView } from './EngineerDashboard/AICoachView.tsx';
 
 
 export const EngineerDashboard = () => {
@@ -88,6 +89,8 @@ export const EngineerDashboard = () => {
                 return <JobSearchView setActiveView={setActiveView} />;
             case 'AI Tools':
                 return <AIToolsView profile={engineerProfile} onSkillsAdded={addSkillsFromAI} setActiveView={setActiveView} />;
+            case 'AI Coach':
+                return <AICoachView profile={engineerProfile} setActiveView={setActiveView} />;
             case 'Billing':
                 return <PaymentsView profile={engineerProfile} setActiveView={setActiveView} />;
             case 'My Network':

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { PoundSterling, DollarSign } from '../components/Icons.tsx';
 // FIX: Added Invoice to the type import to support the new `invoices` state.
-import { Role, EngineerProfile, User, Job, Application, Currency, Conversation, Message, Review, CompanyProfile, ApplicationStatus, Notification, NotificationType, AppContextType, ForumPost, ForumComment, ProfileTier, Contract, ContractStatus, ContractType, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Compliance, IdentityVerification, Discipline, JobSkillRequirement, Badge, Project, ProjectRole, Invoice } from '../types/index.ts';
+import { Role, EngineerProfile, User, Job, Application, Currency, Conversation, Message, Review, CompanyProfile, ApplicationStatus, Notification, NotificationType, AppContextType, ForumPost, ForumComment, ProfileTier, Contract, ContractStatus, ContractType, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Compliance, IdentityVerification, Discipline, JobSkillRequirement, Badge, Project, ProjectRole, Invoice, Insight } from '../types/index.ts';
 import { MOCK_JOBS, MOCK_ENGINEERS, MOCK_USERS, MOCK_USER_FREE_ENGINEER, ALL_MOCK_USERS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_COMPANIES, MOCK_NOTIFICATIONS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_CONTRACTS, MOCK_TRANSACTIONS, MOCK_PROJECTS } from '../data/mockData.ts';
 import { geminiService } from '../services/geminiService.ts';
 import type { Chat } from '@google/genai';
@@ -775,6 +775,29 @@ export const useAppLogic = (): AppContextType => {
         setProjects(prev => prev.map(p => p.id === projectId ? { ...p, roles: p.roles.map(r => r.id === roleId ? { ...r, assignedEngineerId: engineerId } : r) } : p));
     };
 
+    const getCareerCoaching = async (): Promise<{ insights?: Insight[]; error?: string; }> => {
+        if (!user || user.role !== Role.ENGINEER) {
+            return { error: "You must be logged in as an engineer." };
+        }
+    
+        // 1. Derive trending skills from active jobs.
+        const skillCounts: { [key: string]: number } = {};
+        jobs.filter(j => j.status === 'active' && j.skillRequirements)
+            .forEach(job => {
+                job.skillRequirements?.forEach(req => {
+                    const weight = req.importance === 'essential' ? 2 : 1;
+                    skillCounts[req.name] = (skillCounts[req.name] || 0) + weight;
+                });
+            });
+        const trendingSkills = Object.entries(skillCounts)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 15)
+            .map(([name]) => name);
+        
+        // 2. Call gemini service
+        return geminiService.getCareerCoaching(user.profile as EngineerProfile, trendingSkills);
+    };
+
     // --- CONTEXT EXPORT ---
     // FIX: Added missing properties to the returned context object to resolve the type error.
     return useMemo(() => ({
@@ -795,5 +818,6 @@ export const useAppLogic = (): AppContextType => {
         purchaseBoostCredits,
         invoices,
         isPremium,
+        getCareerCoaching,
     }), [user, allUsers, jobs, companies, engineers, applications, conversations, messages, selectedConversationId, reviews, notifications, isAiReplying, forumPosts, forumComments, contracts, transactions, projects, invoices]);
 };

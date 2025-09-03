@@ -1,16 +1,27 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { EngineerProfile, Job, ProfileTier, User, Message, CompanyProfile, JobSkillRequirement, JobType, ExperienceLevel } from '../types/index.ts';
 import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles.ts';
+import { MOCK_TRAINING_PROVIDERS } from '../data/trainingProviders.ts';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-const SYSTEM_INSTRUCTION = `You are the TechSubbies.com AI Assistant. Your role is to help users navigate the platform and answer their questions. 
+const SYSTEM_INSTRUCTION = `You are the TechSubbies.com AI Assistant. Your role is to help users navigate the platform and answer their questions.
 TechSubbies is a platform that connects freelance AV & IT engineers with companies for contract work.
+
+Key Platform Features:
 - Companies can post contracts for free.
 - Engineers can create a basic profile for free.
 - Engineers can upgrade to a paid "Skills Profile" to get more features and better visibility.
-- Be friendly, concise, and helpful. Do not make up features that don't exist.
-- If you don't know the answer, say "I'm not sure about that, but you can contact our support team at support@techsubbies.com."`;
+- The platform has an integrated contract system with e-signatures for both Statement of Work (milestone-based) and Day Rate agreements.
+- For milestone-based work, payments are secured via an escrow system. Companies fund a milestone, and the funds are released to the engineer upon approval.
+- Engineers can submit timesheets for Day Rate work.
+- Companies can create "Talent Pools" to build curated lists of their favorite freelancers.
+- Engineers have a "My Connections" page to track their professional network of companies they've worked with.
+
+Your Persona:
+- Be friendly, concise, and helpful.
+- Do not make up features that don't exist.
+- If you don't know the answer, say "I'm not sure about that, but you can find detailed information in the User Guide or contact our support team at support@techsubbies.com."`;
 
 
 export const geminiService = {
@@ -110,6 +121,8 @@ export const geminiService = {
         const lowRatedSkills = profile.skills?.filter(s => s.rating < 75).map(s => s.name).join(', ');
         const highRatedSkills = profile.skills?.filter(s => s.rating >= 75).map(s => s.name).join(', ');
 
+        const providerList = MOCK_TRAINING_PROVIDERS.map(p => p.name);
+
         const prompt = `Act as a career advisor for a freelance ${profile.discipline}.
         Their goal is to increase their day rate and get more contract offers.
         
@@ -119,9 +132,11 @@ export const geminiService = {
 
         Based on this, suggest 2 or 3 specific, actionable training courses or certifications that would provide the highest return on investment. 
         For each suggestion, provide:
-        1. "courseName" (string): The name of the certification or course (e.g., "Cisco CCNP Enterprise", "AWS Certified Solutions Architect - Associate").
+        1. "courseName" (string): The name of the certification or course (e.g., "Cisco CCNP Enterprise", "AVIXA CTS").
         2. "reason" (string): A brief, compelling reason why this is a good choice for them, explaining how it complements their existing skills or addresses a weakness.
         3. "keywords" (array of strings): A list of 2-3 keywords related to the course (e.g., ["Networking", "Routing", "Cisco"]).
+        4. "providerName" (string, optional): If the course is directly offered by one of the following official providers, include its exact name from this list. Otherwise, this field should be omitted or null.
+           Available Providers: ${JSON.stringify(providerList)}
 
         Keep the reasons concise and focused on career benefits.`;
         
@@ -141,7 +156,8 @@ export const geminiService = {
                                     properties: {
                                         courseName: { type: Type.STRING },
                                         reason: { type: Type.STRING },
-                                        keywords: { type: Type.ARRAY, items: { type: Type.STRING } }
+                                        keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
+                                        providerName: { type: Type.STRING }
                                     },
                                     required: ["courseName", "reason", "keywords"]
                                 }
@@ -154,6 +170,71 @@ export const geminiService = {
         } catch (error) {
             console.error("Error getting training recommendations:", error);
             return { error: "Failed to get recommendations. The AI service may be busy or unavailable. Please try again." };
+        }
+    },
+    
+    getCareerCoaching: async (profile: EngineerProfile, trendingSkills: string[]) => {
+        const profileSummary = `
+        - Discipline: ${profile.discipline}
+        - Experience: ${profile.experience} years
+        - Current Profile Tier: ${profile.profileTier}
+        - Specialist Roles: ${profile.selectedJobRoles?.map(r => `${r.roleName} (Score: ${r.overallScore})`).join(', ') || 'None'}
+        - Certifications: ${profile.certifications.map(c => `${c.name} (${c.verified ? 'Verified' : 'Not Verified'})`).join(', ') || 'None'}
+        `;
+
+        const prompt = `You are an expert career coach for a freelance AV/IT engineer in the UK. Your goal is to provide actionable, personalized advice to help them get more high-value contracts.
+
+        Analyze the following engineer's profile:
+        ${profileSummary}
+
+        Compare their profile against these top trending skills currently in demand on the platform:
+        ${trendingSkills.join(', ')}
+
+        Based on your analysis, provide 3 to 4 actionable insights. Each insight must be concise and categorized into one of three types: 'Upskill', 'Certification', or 'Profile Enhancement'.
+        - 'Upskill': Suggest a specific technology or skill they should learn that is in high demand but missing or underrepresented in their profile.
+        - 'Certification': Recommend a specific, valuable certification that would justify a higher day rate.
+        - 'Profile Enhancement': Suggest a way to better present their existing skills or experience on their profile.
+        
+        For each insight, also provide a call to action object with text and a target view.
+        `;
+        
+        try {
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            insights: {
+                                type: Type.ARRAY,
+                                items: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        type: { type: Type.STRING, enum: ['Upskill', 'Certification', 'Profile Enhancement'] },
+                                        suggestion: { type: Type.STRING },
+                                        callToAction: {
+                                            type: Type.OBJECT,
+                                            properties: {
+                                                text: { type: Type.STRING },
+                                                view: { type: Type.STRING }
+                                            },
+                                            required: ["text", "view"]
+                                        }
+                                    },
+                                    required: ["type", "suggestion", "callToAction"]
+                                }
+                            }
+                        },
+                        required: ["insights"]
+                    },
+                },
+            });
+            return JSON.parse(response.text);
+        } catch (error) {
+            console.error("Error getting career coaching:", error);
+            return { error: "Failed to get career insights. The AI service may be busy or unavailable. Please try again." };
         }
     },
 

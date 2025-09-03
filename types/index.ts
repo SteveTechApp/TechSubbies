@@ -277,6 +277,7 @@ export interface TrainingProvider {
     name: string;
     url: string;
     specialties: string[]; // e.g., ['Crestron', 'Cisco', 'AWS']
+    type: 'Industry Standard' | 'Manufacturer' | 'Sponsored';
 }
 
 // --- Messaging & Notifications ---
@@ -444,6 +445,15 @@ export interface Project {
 // --- App Navigation & Context ---
 export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'companySignUp' | 'resourcingCompanySignUp' | 'investors' | 'aboutUs' | 'terms' | 'privacy' | 'pricing' | 'howItWorks' | 'userGuide' | 'security';
 
+export interface Insight {
+    type: 'Upskill' | 'Certification' | 'Profile Enhancement';
+    suggestion: string;
+    callToAction: {
+        text: string;
+        view: string; // The view to navigate to, e.g., 'Manage Profile'
+    };
+}
+
 export interface AppContextType {
     user: User | null;
     allUsers: User[];
@@ -519,6 +529,7 @@ export interface AppContextType {
     assignEngineerToRole: (projectId: string, roleId: string, engineerId: string) => void;
     invoices: Invoice[];
     isPremium: (profile: EngineerProfile) => boolean;
+    getCareerCoaching: () => Promise<{ insights?: Insight[]; error?: string }>;
 }
 
 export interface InvoiceItem {
