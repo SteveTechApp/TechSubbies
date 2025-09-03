@@ -29,13 +29,12 @@ export const JobPostModal = ({ isOpen, onClose, onPostJob }: JobPostModalProps) 
     const [skillRequirements, setSkillRequirements] = useState<JobSkillRequirement[]>([]);
 
     useEffect(() => {
-        // Delay state reset until after the closing animation completes
         if (!isOpen) {
             const timer = setTimeout(() => {
                 setStep(1);
                 setJobDetails(initialJobDetails);
                 setSkillRequirements([]);
-            }, 300);
+            }, 300); // Delay reset for closing animation
             return () => clearTimeout(timer);
         }
     }, [isOpen]);

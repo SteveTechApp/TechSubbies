@@ -119,8 +119,8 @@ interface DashboardViewProps {
 }
 
 export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, boostProfile }: DashboardViewProps) => {
-    const { reactivateProfile, jobs } = useAppContext();
-    const isPremium = engineerProfile.profileTier !== ProfileTier.BASIC;
+    const { reactivateProfile, jobs, isPremium } = useAppContext();
+    const premiumAccess = isPremium(engineerProfile);
     const firstName = engineerProfile.name.split(' ')[0];
 
     const profileScore = React.useMemo(() => {
@@ -165,25 +165,24 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
             )}
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Main content */}
                 <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                     <DashboardPanel icon={Edit} title="Manage Profile" description="Update your roles, bio, and case studies." onClick={() => setActiveView('Manage Profile')} />
                     <DashboardPanel icon={User} title="View Public Profile" description="See your Stats Card as companies see it." onClick={() => setActiveView('View Public Profile')} />
                     <DashboardPanel icon={CalendarDays} title="Set Availability" description="Update your calendar to get relevant offers." onClick={() => setActiveView('Availability')} />
                     <DashboardPanel icon={Search} title="Find Work" description="Search and apply for freelance contracts." onClick={() => setActiveView('Job Search')} />
-                    <DashboardPanel icon={BrainCircuit} title="AI Tools" description="Discover skills and get training suggestions." onClick={() => setActiveView('AI Tools')} disabled={!isPremium} />
+                    <DashboardPanel icon={BrainCircuit} title="AI Tools" description="Discover skills and get training suggestions." onClick={() => setActiveView('AI Tools')} disabled={!premiumAccess} />
                     <DashboardPanel icon={CreditCard} title="Billing" description="Manage subscriptions and purchase Boosts." onClick={() => setActiveView('Billing')} />
                     <div className="sm:col-span-2 md:col-span-1">
-                         <DashboardPanel icon={Clapperboard} title="Visual Case Studies" description="Create engaging stories of your projects." onClick={() => setActiveView('Create Storyboard')} disabled={!isPremium} />
+                         <DashboardPanel icon={Clapperboard} title="Visual Case Studies" description="Create engaging stories of your projects." onClick={() => setActiveView('Create Storyboard')} disabled={!premiumAccess} />
                     </div>
                      <div className="sm:col-span-2">
-                        {isPremium ? (
-                            <DashboardPanel icon={Rocket} title="Boost Profile" description="Get to the top of search results for 12 hours." onClick={boostProfile} isFeatured={true} />
+                        {premiumAccess ? (
+                            <DashboardPanel icon={Rocket} title="Boost Profile" description="Get to the top of search results for a short time." onClick={boostProfile} isFeatured={true} />
                         ) : (
                             <DashboardPanel icon={Star} title={upgradeInfo.title} description={upgradeInfo.desc} onClick={upgradeInfo.action} isFeatured={true} />
                         )}
                     </div>
-                    {isPremium && engineerProfile.jobDigestOptIn && (
+                    {premiumAccess && engineerProfile.jobDigestOptIn && (
                         <div className="sm:col-span-2 md:col-span-3 bg-white p-5 rounded-lg shadow">
                             <h3 className="font-bold text-lg mb-2">Your Weekly Digest</h3>
                             <p className="text-sm text-gray-500 mb-4">Here are some of the latest top-matching jobs. We'll send a full summary to your email.</p>
@@ -204,7 +203,6 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
                     )}
                 </div>
 
-                {/* Sidebar */}
                 <div className="lg:col-span-1 space-y-6">
                     <ProfileStrength score={profileScore} />
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">

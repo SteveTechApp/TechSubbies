@@ -15,7 +15,6 @@ export const UserMenu = ({ user, logout }: UserMenuProps) => {
     const companyProfile = user.profile as CompanyProfile;
     const displayImage = isCompany && companyProfile.logo ? companyProfile.logo : user.profile.avatar;
     
-    // Specific styling for logos to ensure they fit well within the circular container
     const imageClass = `w-10 h-10 rounded-full border-2 border-blue-500 ${isCompany && companyProfile.logo ? 'object-contain bg-white p-0.5' : 'object-cover'}`;
 
     return (

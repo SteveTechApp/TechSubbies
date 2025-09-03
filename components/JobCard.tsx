@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
-import { Job, Role } from '../types/index.ts';
-import { MapPin, Calendar, DollarSign, Clock, MessageCircle, Briefcase, Layers } from './Icons.tsx';
+import { Job, Role, ProfileTier, EngineerProfile } from '../types/index.ts';
+import { MapPin, Calendar, DollarSign, Clock, MessageCircle, Briefcase, Layers, Sparkles } from './Icons.tsx';
 import { formatDisplayDate } from '../../utils/dateFormatter.ts';
 
 interface JobCardProps {
@@ -10,11 +10,12 @@ interface JobCardProps {
 }
 
 export const JobCard = ({ job, setActiveView }: JobCardProps) => {
-    const { user, applyForJob, startConversationAndNavigate } = useAppContext();
+    const { user, applyForJob, superchargeApplication, startConversationAndNavigate } = useAppContext();
     const canMessage = user?.role === Role.ENGINEER && setActiveView;
+    const isFreeTier = user?.role === Role.ENGINEER && (user.profile as EngineerProfile).profileTier === ProfileTier.BASIC;
 
     const handleMessageClick = (e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent the main card click if it were a button
+        e.stopPropagation(); 
         if (canMessage) {
             startConversationAndNavigate(job.companyId, () => setActiveView('Messages'));
         }
@@ -22,8 +23,8 @@ export const JobCard = ({ job, setActiveView }: JobCardProps) => {
 
     return (
         <div className="bg-white p-5 rounded-lg shadow-md border border-gray-200 flex flex-col">
-            <div className="flex justify-between items-start">
-                <div>
+            <div className="flex justify-between items-start gap-4">
+                <div className="flex-grow">
                     <h3 className="text-xl font-bold text-blue-700">{job.title}</h3>
                     <p className="text-gray-500">Posted on {formatDisplayDate(job.postedDate)}</p>
                 </div>
@@ -34,6 +35,14 @@ export const JobCard = ({ job, setActiveView }: JobCardProps) => {
                     >
                         Apply Now
                     </button>
+                    {isFreeTier && (
+                         <button 
+                            onClick={() => superchargeApplication(job)}
+                            className="bg-purple-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-purple-700 transition-transform transform hover:scale-105 whitespace-nowrap w-full flex items-center justify-center"
+                        >
+                            <Sparkles size={16} className="mr-2"/> Supercharge (£1.99)
+                        </button>
+                    )}
                     {canMessage && (
                          <button 
                             onClick={handleMessageClick}

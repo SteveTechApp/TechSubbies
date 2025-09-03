@@ -45,29 +45,99 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
         setHeroImage(HERO_IMAGES.engineers[Math.floor(Math.random() * HERO_IMAGES.engineers.length)]);
     }, []);
 
-    const TIER_STYLES = {
-        // FIX: Corrected typo in Tailwind class from text-amber-8-00 to text-amber-800
-        [ProfileTier.BASIC]: { border: 'border-amber-700', titleText: 'text-amber-800', buttonBg: 'bg-amber-700', buttonHoverBg: 'hover:bg-amber-800', badgeBg: 'bg-amber-700' },
-        [ProfileTier.PROFESSIONAL]: { border: 'border-slate-400', titleText: 'text-slate-600', buttonBg: 'bg-slate-500', buttonHoverBg: 'hover:bg-slate-600', badgeBg: 'bg-slate-500' },
-    };
-
-    const TIERS = [
-        {
-            tier: ProfileTier.BASIC, title: "Bronze", price: "FREE", period: " / Forever",
-            ctaText: "Get Started for Free", styles: TIER_STYLES[ProfileTier.BASIC],
-            features: [ "Create your public professional profile", "Appear in general searches", "Set your availability calendar", "Search and apply for jobs" ]
-        },
-        {
-            tier: ProfileTier.PROFESSIONAL, title: "Silver", price: "£7", period: " / month",
-            ctaText: "Start 30-Day Free Trial", isFeatured: true, styles: TIER_STYLES[ProfileTier.PROFESSIONAL],
-            features: [ "Everything in Bronze, plus:", "Add Core Skills & Verified Certifications", "Add 1 Specialist Role with rated skills", "Access all AI-powered Tools", "Create visual case studies (Storyboards)", "Includes 5 Role Credits", "Priority ranking in company searches", "Covered by our Security Net Guarantee" ]
-        },
-    ];
-
     return (
         <div className="bg-gray-50 flex flex-col min-h-screen">
             <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
             <main className="flex-grow pt-24">
                 <section className="relative text-white text-center min-h-[50vh] flex items-center justify-center px-4 bg-cover bg-center" style={{ backgroundImage: `url('${heroImage}')` }}>
                     <div className="absolute inset-0 bg-black opacity-60"></div>
-                    <div className="relative z-10 max-
+                    <div className="relative z-10 max-w-4xl">
+                        <h1 className="text-4xl md:text-6xl font-extrabold mb-4">Your Career, Supercharged.</h1>
+                        <p className="text-lg md:text-xl mx-auto mb-8">Showcase your specialist skills, get matched with high-value contracts, and take control of your freelance career. All on one dedicated platform.</p>
+                        <button onClick={() => onNavigate('login')} className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">Create Your Free Profile</button>
+                    </div>
+                </section>
+                
+                <section className="py-16 bg-white">
+                    <div className="container mx-auto px-4 text-center">
+                         <h2 className="text-4xl font-bold text-gray-800 mb-12">How TechSubbies Works For You</h2>
+                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                            <FeatureDetailCard icon={Star} title="Build a Skills Profile">
+                                Go beyond a simple CV. Our Skills Profile lets you add specialist roles and rate your competency on granular, industry-specific skills, from "Crestron DM NVX" to "Azure DevOps".
+                            </FeatureDetailCard>
+                            <FeatureDetailCard icon={TrendingUp} title="Get Matched, Not Lost">
+                                Stop hoping your CV gets noticed. Our AI matching engine analyzes your detailed skills against company requirements to put you at the top of the list for the right projects.
+                            </FeatureDetailCard>
+                             <FeatureDetailCard icon={Award} title="Land Better Contracts">
+                                By clearly showcasing your high-value expertise, you can justify higher day rates and attract companies looking for true specialists, not just generalists.
+                            </FeatureDetailCard>
+                         </div>
+                    </div>
+                </section>
+
+                <section className="py-12 bg-gray-50">
+                    <div className="container mx-auto px-4 max-w-4xl">
+                        <h2 className="text-3xl font-bold text-center mb-10">All The Tools You Need</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                            <FeatureListItem>
+                                <strong>Free Basic Profile:</strong> Get started with a professional profile, set your availability, and apply for jobs at no cost.
+                            </FeatureListItem>
+                             <FeatureListItem>
+                                <strong>AI-Powered Tools:</strong> (Premium) Let our AI suggest relevant skills to add to your profile or recommend high-value certifications to boost your career.
+                            </FeatureListItem>
+                             <FeatureListItem>
+                                <strong>Profile Boosts:</strong> (Premium) Get a temporary boost to the top of search results for maximum visibility when you need it most.
+                            </FeatureListItem>
+                             <FeatureListItem>
+                                <strong>Visual Case Studies:</strong> (Premium) Use our storyboard creator to build compelling visual walkthroughs of your best projects.
+                            </FeatureListItem>
+                             <FeatureListItem>
+                                <strong>Direct Communication:</strong> Message companies directly to discuss project details and negotiate terms. No recruiters, no middlemen.
+                            </FeatureListItem>
+                            <FeatureListItem>
+                                <strong>Integrated Contracts:</strong> Manage your work agreements directly on the platform, from e-signatures to milestone management.
+                            </FeatureListItem>
+                        </div>
+                    </div>
+                </section>
+                
+                <section className="py-12 bg-blue-600">
+                    <div className="container mx-auto px-4">
+                        <h2 className="text-4xl font-bold text-center text-white mb-16">Hear From Our Engineers</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                           <TestimonialCard 
+                                avatar="https://xsgames.co/randomusers/assets/avatars/male/74.jpg"
+                                name="Neil B."
+                                role="Senior AV Engineer"
+                                quote="The Skills Profile is a game-changer. I can finally show clients the difference between 'knowing Crestron' and being a certified expert. The quality of contract offers has gone way up."
+                           />
+                           <TestimonialCard 
+                                avatar="https://xsgames.co/randomusers/assets/avatars/male/15.jpg"
+                                name="David C."
+                                role="Cloud & Network Architect"
+                                quote="I used to spend hours sifting through irrelevant job boards. Now, I let the AI matching do the work. I get notified about projects that are a perfect fit for my AWS and Cisco skills."
+                           />
+                           <TestimonialCard 
+                                avatar="https://xsgames.co/randomusers/assets/avatars/female/10.jpg"
+                                name="Samantha G."
+                                role="IT Support Specialist"
+                                quote="As someone managed by a resourcing company, it's great that my agent can use this platform to find work for me. It's so much more efficient and transparent than the old way."
+                           />
+                        </div>
+                    </div>
+                </section>
+
+                <section className="py-12 bg-gray-800 text-white">
+                    <div className="container mx-auto px-4 text-center">
+                        <h2 className="text-4xl font-bold mb-4">Ready to Find Your Next Project?</h2>
+                        <p className="text-xl mb-8">Join the UK's dedicated network for freelance tech professionals.</p>
+                        <button onClick={() => onNavigate('login')} className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">
+                            Sign Up and Get Started
+                        </button>
+                    </div>
+                </section>
+            </main>
+            <Footer onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
+        </div>
+    );
+};

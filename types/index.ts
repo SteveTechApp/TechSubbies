@@ -199,6 +199,7 @@ export interface EngineerProfile extends BaseProfile {
     joinDate: Date;
     badges: Badge[];
     roleCredits?: number; // For á la carte role purchases
+    boostCredits?: number;
 }
 
 export interface CompanyProfile extends BaseProfile {
@@ -258,6 +259,7 @@ export interface Application {
     date: Date;
     status: ApplicationStatus;
     reviewed?: boolean;
+    isSupercharged?: boolean;
 }
 
 export interface Review {
@@ -365,6 +367,8 @@ export enum TransactionType {
     PAYOUT = 'Payout',
     PLATFORM_FEE = 'Platform Fee',
     ROLE_CREDIT_PURCHASE = 'Role Credit Purchase',
+    SUPERCHARGE = 'Supercharge Application',
+    AD_REVENUE = 'Ad Revenue',
 }
 
 export interface Signature {
@@ -455,7 +459,10 @@ export interface AppContextType {
     startTrial: () => void;
     geminiService: GeminiServiceType;
     applications: Application[];
-    applyForJob: (jobId: string, engineerId?: string) => void;
+    applyForJob: (jobId: string, engineerId?: string, isSupercharged?: boolean) => void;
+    // FIX: Added missing function definition for superchargeApplication.
+    superchargeApplication: (job: Job) => void;
+    purchaseDayPass: () => void;
     createAndLoginEngineer: (data: any) => void;
     createAndLoginCompany: (data: any) => void;
     createAndLoginResourcingCompany: (data: any) => void;
@@ -488,6 +495,7 @@ export interface AppContextType {
     createForumPost: (post: { title: string; content: string; tags: string[] }) => Promise<void>;
     addForumComment: (comment: { postId: string; parentId: string | null; content: string }) => void;
     voteOnPost: (postId: string, voteType: 'up' | 'down') => void;
+    // FIX: Corrected the type definition to allow 'up' votes on comments.
     voteOnComment: (commentId: string, voteType: 'up' | 'down') => void;
     // Contract context
     contracts: Contract[];
@@ -503,9 +511,26 @@ export interface AppContextType {
     upgradeSubscription: (profileId: string, toTier: ProfileTier) => void;
     purchaseRoleCredits: (userId: string, numberOfCredits: 1 | 3 | 5) => void;
     useRoleCredit: (userId: string) => void;
+    purchaseBoostCredits: (userId: string, numberOfCredits: number, price: number) => void;
     // Project Planner context
     projects: Project[];
     createProject: (name: string, description: string) => Project;
     addRoleToProject: (projectId: string, role: Omit<ProjectRole, 'id' | 'assignedEngineerId'>) => void;
     assignEngineerToRole: (projectId: string, roleId: string, engineerId: string) => void;
+    invoices: Invoice[];
+    isPremium: (profile: EngineerProfile) => boolean;
+}
+
+export interface InvoiceItem {
+    description: string;
+    amount: number;
+}
+
+export interface Invoice {
+    id: string;
+    userId: string;
+    date: Date;
+    items: InvoiceItem[];
+    total: number;
+    status: 'Paid' | 'Pending';
 }

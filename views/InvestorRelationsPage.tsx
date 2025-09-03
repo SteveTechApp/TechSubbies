@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Footer } from '../components/Footer.tsx';
 import { Header } from '../components/Header.tsx';
-import { Page } from '../types/index.ts';
+import { Page, ProfileTier } from '../types/index.ts';
 import { HighlightCard } from '../components/HighlightCard.tsx';
 import { RevenueCard } from '../components/RevenueCard.tsx';
-import { Zap, Layers, TrendingUp, BrainCircuit, Rocket, BarChart, Users, Download } from '../components/Icons.tsx';
+import { Zap, Layers, TrendingUp, BrainCircuit, Rocket, Users, Download } from '../components/Icons.tsx';
 import { PROSPECTUS_CONTENT } from '../data/prospectusContent.ts';
+import { RevenueSimulator } from '../components/RevenueSimulator.tsx';
+import { FinancialForecast } from '../components/FinancialForecast.tsx';
+import { calculateFinancials } from '../data/financialModel.ts';
 
 
 interface InvestorRelationsPageProps {
@@ -14,6 +17,24 @@ interface InvestorRelationsPageProps {
 }
 
 export const InvestorRelationsPage = ({ onNavigate, onHowItWorksClick }: InvestorRelationsPageProps) => {
+
+    const [subscriberNumbers, setSubscriberNumbers] = useState({
+        [ProfileTier.PROFESSIONAL]: 500, // Silver
+        [ProfileTier.SKILLS]: 250,       // Gold
+        [ProfileTier.BUSINESS]: 50,      // Platinum
+    });
+
+    const handleSliderChange = (tier: ProfileTier, value: number) => {
+        setSubscriberNumbers(prev => ({
+            ...prev,
+            [tier]: value,
+        }));
+    };
+    
+    const { totalRevenue, totalUsers, costs, profit } = useMemo(() => {
+        return calculateFinancials(subscriberNumbers);
+    }, [subscriberNumbers]);
+
 
     const handleDownloadProspectus = () => {
         const blob = new Blob([PROSPECTUS_CONTENT], { type: 'text/plain;charset=utf-8' });
@@ -66,9 +87,24 @@ export const InvestorRelationsPage = ({ onNavigate, onHowItWorksClick }: Investo
                             <h3 className="text-3xl font-bold text-center mb-8">Our Modern Revenue Model</h3>
                             <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-6 px-4">
                                 <RevenueCard number="1" title="Skills Profile Subscriptions">A low-cost monthly subscription for engineers unlocks a premium "Skills Profile", enabling them to showcase specialist skills and appear in detailed searches.</RevenueCard>
-                                <RevenueCard number="2" title='"Boost Profile" Credits'>A pay-per-use feature allowing engineers to purchase credits that temporarily place their profile at the top of relevant search results.</RevenueCard>
+                                <RevenueCard number="2" title="12-Hour Day Pass">A pay-per-use feature allowing free-tier engineers to purchase full premium access for 12 hours to experience the benefits and apply for top-tier jobs.</RevenueCard>
                                 <RevenueCard number="3" title="Targeted Advertising">Premium advertising slots for industry-specific manufacturers and training companies to reach their ideal audience.</RevenueCard>
                             </div>
+                        </div>
+
+                        <div className="mb-10 bg-white py-10 rounded-lg shadow-md border">
+                             <h3 className="text-3xl font-bold text-center mb-8">Interactive Financial Forecast</h3>
+                             <RevenueSimulator 
+                                subscriberNumbers={subscriberNumbers}
+                                onSliderChange={handleSliderChange}
+                                totalArr={totalRevenue.subscriptions}
+                             />
+                             <FinancialForecast 
+                                revenue={totalRevenue}
+                                users={totalUsers}
+                                costs={costs}
+                                profit={profit}
+                             />
                         </div>
 
                         <div className="text-center bg-blue-600 text-white p-10 rounded-lg">

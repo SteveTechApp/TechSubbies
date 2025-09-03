@@ -24,6 +24,7 @@ const Comment = ({ comment, onReply }: CommentProps) => {
                 <p className="mt-1">{comment.content}</p>
                 <div className="flex items-center gap-4 mt-2 text-xs">
                      <div className="flex items-center gap-1 text-gray-600">
+                        {/* FIX: Correctly call voteOnComment with 'up' as the type definition has been fixed. */}
                         <button onClick={() => voteOnComment(comment.id, 'up')} className="p-1 hover:bg-green-100 rounded-full"><ArrowUp size={14} /></button>
                         <span className="font-bold">{comment.upvotes - comment.downvotes}</span>
                         <button onClick={() => voteOnComment(comment.id, 'down')} className="p-1 hover:bg-red-100 rounded-full"><ArrowDown size={14} /></button>

@@ -2,10 +2,10 @@ import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext.tsx';
 import { JobCard } from '../../components/JobCard.tsx';
 import { Search, MapPin, DollarSign, ArrowLeft, Layers } from '../../components/Icons.tsx';
-import { ExperienceLevel, ProfileTier } from '../../types/index.ts';
+import { ExperienceLevel, ProfileTier, EngineerProfile } from '../../types/index.ts';
 
 export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string) => void }) => {
-    const { user, jobs } = useAppContext();
+    const { user, jobs, isPremium } = useAppContext();
     const [filters, setFilters] = useState({
         keyword: '',
         location: '',
@@ -40,7 +40,7 @@ export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string)
         });
     }, [jobs, filters]);
 
-    const isFreeTier = user && 'profileTier' in user.profile && user.profile.profileTier === ProfileTier.BASIC;
+    const premiumAccess = user && 'profileTier' in user.profile && isPremium(user.profile as EngineerProfile);
     
     const highPayingJobs = useMemo(() => {
         return filteredJobs.filter(job => (parseInt(job.dayRate, 10) || 0) > 195);
@@ -78,9 +78,9 @@ export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string)
                 </aside>
 
                 <main className="flex-1 bg-gray-50 overflow-y-auto custom-scrollbar pr-2">
-                     {isFreeTier && highPayingJobs.length > 0 && (
+                     {!premiumAccess && highPayingJobs.length > 0 && (
                         <div className="p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md mb-4 text-sm">
-                            <strong>Heads up!</strong> {highPayingJobs.length} job(s) in your search offer a day rate above £195. To be more competitive, consider upgrading to a <button onClick={() => setActiveView('Billing')} className="font-bold underline hover:text-yellow-900">Gold Profile</button>.
+                            <strong>Heads up!</strong> {highPayingJobs.length} job(s) in your search offer a day rate above £195. To be more competitive, consider upgrading to a <button onClick={() => setActiveView('Billing')} className="font-bold underline hover:text-yellow-900">Gold Profile</button> or get a <button onClick={() => alert('Open Payment Modal')} className="font-bold underline hover:text-yellow-900">12-Hour Premium Pass</button>.
                         </div>
                     )}
                     <p className="text-sm text-gray-600 mb-4">Showing {filteredJobs.length} of {jobs.filter(j => j.status === 'active').length} available contracts.</p>

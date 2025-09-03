@@ -21,9 +21,9 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerPro
 
     const canMessage = user && (user.role === Role.COMPANY || user.role === Role.RESOURCING_COMPANY);
     
-    // This callback is passed to the context function which then calls it after initiating the conversation.
     const handleNavigateToMessages = () => {
-        alert("Navigating to messages... (This is handled by the dashboard)");
+      // This is a placeholder; actual navigation is handled by the calling dashboard.
+      console.log("Navigating to messages...");
     };
 
     const profileReviews = reviews

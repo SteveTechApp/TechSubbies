@@ -31,7 +31,6 @@ export const GuestMenu = ({ onHowItWorksClick, onNavigate }: GuestMenuProps) => 
 
     return (
         <>
-            {/* Desktop Menu */}
             <div className="hidden lg:flex items-center space-x-1">
                  <DropdownMenu triggerText="For Engineers">
                     <button onClick={() => onNavigate('forEngineers')} className={dropdownItemClass}>Explore Features</button>
@@ -51,14 +50,12 @@ export const GuestMenu = ({ onHowItWorksClick, onNavigate }: GuestMenuProps) => 
                 </button>
             </div>
 
-            {/* Mobile Menu Button (Hamburger) */}
             <div className="lg:hidden">
                 <button onClick={() => setIsMenuOpen(true)} aria-label="Open menu">
                     <Menu className="w-8 h-8 text-gray-700" />
                 </button>
             </div>
 
-            {/* Mobile Menu Panel */}
             {isMenuOpen && (
                 <div className="fixed inset-0 bg-white z-50 p-6 flex flex-col lg:hidden fade-in-up">
                     <header className="flex justify-between items-center mb-10">

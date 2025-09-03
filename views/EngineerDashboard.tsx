@@ -13,7 +13,7 @@ import { MyNetworkView } from './EngineerDashboard/MyNetworkView.tsx';
 import { MessagesView } from './MessagesView.tsx';
 import { ArrowLeft } from '../components/Icons.tsx';
 import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
-import { AnalyticsView } from './AdminDashboard/AnalyticsView.tsx'; // Re-using for placeholder
+import { AnalyticsView } from './AdminDashboard/AnalyticsView.tsx';
 import { ContractsView } from './ContractsView.tsx';
 import { ForumView } from './ForumView.tsx';
 

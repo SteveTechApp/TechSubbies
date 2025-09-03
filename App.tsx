@@ -19,21 +19,28 @@ import { PricingPage } from './views/PricingPage.tsx';
 import { UserGuidePage } from './views/UserGuidePage.tsx';
 import { AIAssistant } from './components/AIAssistant.tsx';
 import { HowItWorksModal } from './components/HowItWorksModal.tsx';
+import { PaymentModal } from './components/PaymentModal.tsx';
 
 const App = () => {
-    const { user } = useAppContext();
+    const { user, purchaseDayPass } = useAppContext();
     const [page, setPage] = useState<Page>('landing');
     const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
     useEffect(() => {
         window.scrollTo(0, 0);
-    }, [page]);
+    }, [page, user]);
 
     const onNavigate = (targetPage: Page) => {
         setPage(targetPage);
     };
     
     const handleHowItWorksClick = () => setIsHowItWorksOpen(true);
+    
+    const handleDayPassPurchase = () => {
+        purchaseDayPass();
+        setIsPaymentModalOpen(false);
+    };
 
     const renderPage = () => {
         if (user) {
@@ -47,7 +54,6 @@ const App = () => {
                 case Role.ADMIN:
                     return <AdminDashboard />;
                 default:
-                    // Fallback for an unknown or loading role
                     return <p>Loading dashboard...</p>;
             }
         }
@@ -92,6 +98,14 @@ const App = () => {
             {renderPage()}
             <AIAssistant />
             <HowItWorksModal isOpen={isHowItWorksOpen} onClose={() => setIsHowItWorksOpen(false)} onNavigate={onNavigate} />
+            <PaymentModal
+                isOpen={isPaymentModalOpen}
+                onClose={() => setIsPaymentModalOpen(false)}
+                onSuccess={handleDayPassPurchase}
+                amount={2.99}
+                currency="GBP"
+                paymentDescription="12-Hour Premium Access Pass"
+            />
         </>
     );
 };

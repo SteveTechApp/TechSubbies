@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { PoundSterling, DollarSign } from '../components/Icons.tsx';
-import { Role, EngineerProfile, User, Job, Application, Currency, Conversation, Message, Review, CompanyProfile, ApplicationStatus, Notification, NotificationType, AppContextType, ForumPost, ForumComment, ProfileTier, Contract, ContractStatus, ContractType, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Compliance, IdentityVerification, Discipline, JobSkillRequirement, Badge, Project, ProjectRole } from '../types/index.ts';
+// FIX: Added Invoice to the type import to support the new `invoices` state.
+import { Role, EngineerProfile, User, Job, Application, Currency, Conversation, Message, Review, CompanyProfile, ApplicationStatus, Notification, NotificationType, AppContextType, ForumPost, ForumComment, ProfileTier, Contract, ContractStatus, ContractType, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Compliance, IdentityVerification, Discipline, JobSkillRequirement, Badge, Project, ProjectRole, Invoice } from '../types/index.ts';
 import { MOCK_JOBS, MOCK_ENGINEERS, MOCK_USERS, MOCK_USER_FREE_ENGINEER, ALL_MOCK_USERS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_COMPANIES, MOCK_NOTIFICATIONS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_CONTRACTS, MOCK_TRANSACTIONS, MOCK_PROJECTS } from '../data/mockData.ts';
 import { geminiService } from '../services/geminiService.ts';
 import type { Chat } from '@google/genai';
@@ -54,6 +55,8 @@ export const useAppLogic = (): AppContextType => {
     const [contracts, setContracts] = useState<Contract[]>(MOCK_CONTRACTS);
     const [transactions, setTransactions] = useState<Transaction[]>(MOCK_TRANSACTIONS);
     const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
+    // FIX: Added missing state for invoices to conform to AppContextType.
+    const [invoices, setInvoices] = useState<Invoice[]>([]);
 
 
     // --- UTILITY FUNCTIONS ---
@@ -368,7 +371,8 @@ export const useAppLogic = (): AppContextType => {
         return newJob;
     };
 
-    const applyForJob = (jobId: string, engineerId?: string) => {
+    // FIX: Updated applyForJob to handle supercharged applications and provide better feedback.
+    const applyForJob = (jobId: string, engineerId?: string, isSupercharged = false) => {
         let applyingEngineerId: string | undefined = engineerId;
         if (!applyingEngineerId) {
             if (user && user.role === Role.ENGINEER) {
@@ -380,9 +384,35 @@ export const useAppLogic = (): AppContextType => {
         if (applications.some(app => app.jobId === jobId && app.engineerId === applyingEngineerId)) {
             alert("This engineer has already applied for this job."); return;
         }
-        const newApplication: Application = { jobId, engineerId: applyingEngineerId, date: new Date(), status: ApplicationStatus.APPLIED };
+        const newApplication: Application = { jobId, engineerId: applyingEngineerId, date: new Date(), status: ApplicationStatus.APPLIED, isSupercharged };
         setApplications(prev => [newApplication, ...prev]);
-        alert(`Application for ${engineers.find(e => e.id === applyingEngineerId)?.name} submitted successfully!`);
+        const engineerName = engineers.find(e => e.id === applyingEngineerId)?.name || 'the engineer';
+        const alertMessage = isSupercharged 
+            ? `Supercharged application for ${engineerName} submitted successfully!`
+            : `Application for ${engineerName} submitted successfully!`;
+        alert(alertMessage);
+    };
+
+    // FIX: Implemented the missing 'superchargeApplication' function.
+    const superchargeApplication = (job: Job) => {
+        if (!user || user.role !== Role.ENGINEER) {
+            alert("You must be logged in as an engineer to supercharge an application.");
+            return;
+        }
+
+        // In a real app, this would trigger a payment flow.
+        // For this demo, we'll simulate the payment and create a transaction.
+        const newTransaction: Transaction = {
+            id: `txn-${generateUniqueId()}`,
+            userId: user.id,
+            type: TransactionType.SUPERCHARGE,
+            description: `Supercharge application for: ${job.title}`,
+            amount: -1.99,
+            date: new Date(),
+        };
+        setTransactions(prev => [newTransaction, ...prev]);
+        
+        applyForJob(job.id, user.profile.id, true);
     };
     
     const offerJob = (jobId: string, engineerId: string) => {
@@ -691,6 +721,40 @@ export const useAppLogic = (): AppContextType => {
         }
     };
 
+    // FIX: Added missing functions required by AppContextType.
+    const purchaseDayPass = () => {
+        if (!user) return;
+        const newTransaction: Transaction = {
+            id: `txn-${generateUniqueId()}`,
+            userId: user.id,
+            type: TransactionType.BOOST_PURCHASE, // No specific day pass type, using boost for demo
+            description: '12-Hour Premium Access Day Pass',
+            amount: -2.99,
+            date: new Date(),
+        };
+        setTransactions(prev => [newTransaction, ...prev]);
+        alert('Day Pass purchased! You have premium access for the next 12 hours.');
+    };
+
+    const purchaseBoostCredits = (userId: string, numberOfCredits: number, price: number) => {
+        const engineerUser = findUserById(userId);
+        if (!engineerUser || engineerUser.role !== Role.ENGINEER) return;
+
+        const currentCredits = (engineerUser.profile as EngineerProfile).boostCredits || 0;
+        updateEngineerProfile({ id: engineerUser.profile.id, boostCredits: currentCredits + numberOfCredits });
+
+        const newTransaction: Transaction = {
+            id: `txn-${generateUniqueId()}`, userId: userId, type: TransactionType.BOOST_PURCHASE,
+            description: `Purchased ${numberOfCredits} Profile Boost Credit(s)`, amount: -price, date: new Date(),
+        };
+        setTransactions(prev => [newTransaction, ...prev]);
+        alert(`Successfully purchased ${numberOfCredits} boost credit(s)!`);
+    };
+
+    const isPremium = (profile: EngineerProfile): boolean => {
+        return profile.profileTier !== ProfileTier.BASIC;
+    };
+
 
     // --- PROJECT PLANNER ---
     const createProject = (name: string, description: string): Project => {
@@ -712,10 +776,11 @@ export const useAppLogic = (): AppContextType => {
     };
 
     // --- CONTEXT EXPORT ---
+    // FIX: Added missing properties to the returned context object to resolve the type error.
     return useMemo(() => ({
         user, allUsers, jobs, companies, engineers, login, loginAsSteve, logout, 
         updateEngineerProfile, updateCompanyProfile, postJob, startTrial, geminiService, 
-        applications, applyForJob, createAndLoginEngineer, createAndLoginCompany, 
+        applications, applyForJob, superchargeApplication, createAndLoginEngineer, createAndLoginCompany, 
         createAndLoginResourcingCompany, boostProfile, claimSecurityNetGuarantee, 
         reactivateProfile, chatSession, conversations, messages, selectedConversationId, 
         setSelectedConversationId, findUserById, findUserByProfileId, sendMessage, 
@@ -725,6 +790,10 @@ export const useAppLogic = (): AppContextType => {
         contracts, sendContractForSignature, signContract,
         transactions, fundMilestone, submitMilestoneForApproval, approveMilestonePayout,
         submitTimesheet, approveTimesheet, upgradeSubscription, purchaseRoleCredits, useRoleCredit,
-        projects, createProject, addRoleToProject, assignEngineerToRole
-    }), [user, allUsers, jobs, companies, engineers, applications, conversations, messages, selectedConversationId, reviews, notifications, isAiReplying, forumPosts, forumComments, contracts, transactions, projects]);
+        projects, createProject, addRoleToProject, assignEngineerToRole,
+        purchaseDayPass,
+        purchaseBoostCredits,
+        invoices,
+        isPremium,
+    }), [user, allUsers, jobs, companies, engineers, applications, conversations, messages, selectedConversationId, reviews, notifications, isAiReplying, forumPosts, forumComments, contracts, transactions, projects, invoices]);
 };

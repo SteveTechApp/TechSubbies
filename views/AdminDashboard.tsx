@@ -4,6 +4,7 @@ import { DashboardView } from './AdminDashboard/DashboardView.tsx';
 import { UserManagementView } from './AdminDashboard/UserManagementView.tsx';
 import { JobManagementView } from './AdminDashboard/JobManagementView.tsx';
 import { PlatformSettingsView } from './AdminDashboard/PlatformSettingsView.tsx';
+import { MonetizationView } from './AdminDashboard/MonetizationView.tsx';
 
 export const AdminDashboard = () => {
     const [activeView, setActiveView] = useState('Dashboard');
@@ -16,6 +17,8 @@ export const AdminDashboard = () => {
                 return <UserManagementView />;
             case 'Manage Jobs':
                 return <JobManagementView setActiveView={setActiveView} />;
+            case 'Monetization':
+                return <MonetizationView />;
             case 'Platform Settings':
                 return <PlatformSettingsView />;
             default:

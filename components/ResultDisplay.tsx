@@ -8,7 +8,6 @@ interface ResultDisplayProps {
 export const ResultDisplay = ({ analysisResult }: ResultDisplayProps) => {
     if (!analysisResult) return null;
     
-    // Defensive casting ensures that even if the AI returns a non-string value, the component won't crash.
     const assessment = String(analysisResult.skill_match_assessment || '');
     const justification = String(analysisResult.rate_justification || '');
     const recommendation = String(analysisResult.overall_recommendation || '');

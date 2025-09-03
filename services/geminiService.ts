@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { EngineerProfile, Job, ProfileTier, User, Message, CompanyProfile, JobSkillRequirement, JobType } from '../types/index.ts';
+import { EngineerProfile, Job, ProfileTier, User, Message, CompanyProfile, JobSkillRequirement, JobType, ExperienceLevel } from '../types/index.ts';
+import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles.ts';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -157,6 +158,53 @@ export const geminiService = {
     },
 
     // --- JOB & TALENT MATCHING ---
+     analyzeJobDescription: async (title: string, description: string) => {
+        const roleNames = JOB_ROLE_DEFINITIONS.map(r => r.name);
+        const prompt = `You are an expert recruitment consultant for the UK's freelance AV & IT sector. Analyze the following job posting. Your goal is to standardize and enrich the post to attract top-tier talent.
+    
+        Job Title: "${title}"
+        Job Description: "${description}"
+    
+        Here is the list of standard specialist roles you must choose from: ${JSON.stringify(roleNames)}
+    
+        Based on the job details, provide a strict JSON response with:
+        1. "improved_description" (string): A revised, professional job description of about 100-150 words. It should be engaging and clear.
+        2. "suggested_job_role" (string): The single most appropriate specialist role from the provided list.
+        3. "suggested_experience_level" (enum from ['Junior', 'Mid-level', 'Senior', 'Expert']): The most appropriate experience level.
+        4. "suggested_day_rate" (object with "min_rate": number, "max_rate": number): A fair day rate range in GBP. Min rate should not be lower than 150.`;
+    
+        try {
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            improved_description: { type: Type.STRING },
+                            suggested_job_role: { type: Type.STRING, enum: roleNames },
+                            suggested_experience_level: { type: Type.STRING, enum: Object.values(ExperienceLevel) },
+                            suggested_day_rate: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    min_rate: { type: Type.NUMBER },
+                                    max_rate: { type: Type.NUMBER },
+                                },
+                                required: ["min_rate", "max_rate"],
+                            },
+                        },
+                        required: ["improved_description", "suggested_job_role", "suggested_experience_level", "suggested_day_rate"],
+                    },
+                },
+            });
+            return JSON.parse(response.text);
+        } catch (error) {
+            console.error("Error analyzing job description:", error);
+            return { error: "Failed to analyze job description. The AI service may be busy or unavailable. Please try again." };
+        }
+    },
+
     suggestTeamForProject: async (description: string) => {
         const prompt = `Based on this IT/AV project description, suggest a small team of freelance specialists that would be required. For each role, list 2-3 key skills needed.\n\nProject Description: "${description}"`;
         try {

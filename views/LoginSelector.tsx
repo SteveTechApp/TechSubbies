@@ -28,17 +28,10 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
         e.preventDefault();
         setError('');
 
-        const validEmails = [
-            'steve.goodwin@techsubbies.com', 'neil.bishop@example.com', 'emily.carter@example.com',
-            'sam.greene@example.com', 'contact@proav.com', 'contact@avplacements.com', 'stevegoodwin1972@gmail.com'
-        ];
-
-        if (validEmails.includes(email.toLowerCase())) {
-            if (rememberMe) {
-                localStorage.setItem('rememberedEmail', email);
-            } else {
-                localStorage.removeItem('rememberedEmail');
-            }
+        if (rememberMe) {
+            localStorage.setItem('rememberedEmail', email);
+        } else {
+            localStorage.removeItem('rememberedEmail');
         }
         
         // This is a mock authentication system based on email.

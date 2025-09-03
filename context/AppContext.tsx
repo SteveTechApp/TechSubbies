@@ -2,7 +2,6 @@ import React, { createContext, useContext, ReactNode } from 'react';
 import { useAppLogic } from './useAppLogic.ts';
 import type { AppContextType } from '../types/index.ts';
 
-// Create the context with an undefined initial value, to be populated by the provider.
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 /**

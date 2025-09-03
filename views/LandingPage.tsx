@@ -60,7 +60,6 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
     <div className="flex flex-col min-h-screen">
       <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
       <main className="bg-gray-50 flex-grow pt-24">
-           {/* Hero Section */}
            <section className="relative text-white text-center h-screen flex items-center justify-center px-4 overflow-hidden">
                 <div
                     className="absolute inset-0 bg-cover bg-center z-0 slow-zoom"
@@ -93,7 +92,6 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
                 </div>
             </section>
 
-          {/* Stats Section */}
           <section className="py-10">
               <div className="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
                   <StatCard icon={Users} value={engineers.length} label="Skilled Tech Engineers" />
@@ -102,8 +100,7 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
               </div>
           </section>
           
-           {/* Role-based CTA Section */}
-          <section className="py-10 bg-gray-100">
+           <section className="py-10 bg-gray-100">
             <div className="container mx-auto px-4 text-center">
               <h2 className="text-4xl font-bold text-gray-800 mb-4">Built for Your Role</h2>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-10">Whether you're looking for your next project or your next expert, TechSubbies is your dedicated platform.</p>
@@ -126,7 +123,6 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
             </div>
           </section>
 
-          {/* Featured Contracts Section */}
           <section className="py-16 bg-white">
             <div className="container mx-auto px-4 text-center">
                 <h2 className="text-4xl font-bold text-gray-800 mb-4">Featured Contracts</h2>
@@ -160,7 +156,6 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
             </div>
           </section>
           
-          {/* Trusted By Section */}
             <section className="py-10 bg-gray-50">
                 <div className="container mx-auto px-4 text-center">
                     <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-8">Trusted by leading integrators & managed service providers</h3>
@@ -184,7 +179,6 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
                 </div>
             </section>
           
-          {/* Features Section */}
           <section id="features" className="py-10 bg-white">
               <div className="container mx-auto px-4">
                   <h2 className="text-4xl font-bold text-center mb-10">Why TechSubbies is Different</h2>

@@ -26,7 +26,6 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
         if (!isOpen) return;
 
         if (initialRole) {
-            // EDIT MODE: Synchronize user's skills with the canonical role definition
             const roleDef = JOB_ROLE_DEFINITIONS.find(def => def.name === initialRole.roleName);
             setSelectedRoleDef(roleDef || null);
     
@@ -36,7 +35,7 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
     
                 const synchronizedSkills: RatedSkill[] = allCanonicalSkills.map(canonicalSkill => ({
                     name: canonicalSkill.name,
-                    rating: userSkillsMap.get(canonicalSkill.name) || 1, // Default to 1 if skill is new
+                    rating: userSkillsMap.get(canonicalSkill.name) || 1,
                 }));
     
                 const totalScore = synchronizedSkills.reduce((acc, skill) => acc + skill.rating, 0);
@@ -44,10 +43,9 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
     
                 setCurrentRole({ ...initialRole, skills: synchronizedSkills, overallScore: newOverallScore });
             } else {
-                setCurrentRole(initialRole); // Fallback
+                setCurrentRole(initialRole);
             }
         } else {
-            // ADD MODE: Reset state
             setCurrentRole(null);
             setSelectedRoleDef(null);
         }
@@ -62,7 +60,7 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
             const allSkills = roleDef.skillCategories.flatMap(category => category.skills);
             const newRole: SelectedJobRole = {
                 roleName: roleDef.name,
-                skills: allSkills.map(skill => ({ name: skill.name, rating: 50 })), // Default rating 50
+                skills: allSkills.map(skill => ({ name: skill.name, rating: 50 })),
                 overallScore: 50
             };
             setCurrentRole(newRole);

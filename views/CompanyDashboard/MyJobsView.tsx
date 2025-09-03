@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAppContext } from '../../context/AppContext.tsx';
 import { Job, EngineerProfile, Application, ApplicationStatus, ProfileTier } from '../../types/index.ts';
-import { MapPin, ArrowLeft, User, Mail, Phone, MessageCircle, Star, Briefcase, Sparkles, Loader } from '../../components/Icons.tsx';
+import { MapPin, ArrowLeft, User, Mail, Phone, MessageCircle, Star, Briefcase, Sparkles, Loader, Zap } from '../../components/Icons.tsx';
 import { ReviewModal } from '../../components/ReviewModal.tsx';
 import { CreateContractModal } from '../../components/CreateContractModal.tsx';
 import { formatDisplayDate } from '../../utils/dateFormatter.ts';
@@ -11,11 +11,17 @@ const ApplicantCard = ({ profile, application, job, onMessage, onReview, onCreat
     onMessage: (profileId: string) => void; onReview: (profile: EngineerProfile) => void;
     onCreateContract: (job: Job, profile: EngineerProfile) => void;
 }) => (
-    <div className="p-4 bg-white rounded-lg shadow-md border flex flex-col sm:flex-row items-start gap-4">
+    <div className={`p-4 bg-white rounded-lg shadow-md border flex flex-col sm:flex-row items-start gap-4 ${application.isSupercharged ? 'border-purple-500 border-2' : ''}`}>
         <img src={profile.avatar} alt={profile.name} className="w-16 h-16 rounded-full border-2 border-gray-200" />
         <div className="flex-grow">
             <div className="flex items-center gap-3">
                 <h4 className="text-lg font-bold text-gray-800">{profile.name}</h4>
+                {application.isSupercharged && (
+                    <div className="bg-purple-100 text-purple-800 text-xs font-bold px-2.5 py-1 rounded-full flex items-center">
+                        <Zap size={12} className="mr-1.5" />
+                        Supercharged
+                    </div>
+                )}
                 {matchScore !== undefined && (
                      <div className="bg-purple-100 text-purple-800 text-xs font-bold px-2.5 py-1 rounded-full flex items-center">
                         <Sparkles size={12} className="mr-1.5" />
@@ -67,11 +73,12 @@ export const MyJobsView = ({ myJobs, setActiveView }: { myJobs: Job[]; setActive
         const fetchMatchScores = async () => {
             setIsMatching(true);
             setMatchScores(new Map());
-            const premiumApplicants = getApplicantsForJob(selectedJob.id)
-                .map(item => item.engineer)
-                .filter(eng => eng.profileTier !== ProfileTier.BASIC && !!eng.selectedJobRoles && eng.selectedJobRoles.length > 0);
-            if (premiumApplicants.length > 0) {
-                const results = await geminiService.findBestMatchesForJob(selectedJob, premiumApplicants);
+             const premiumOrSuperchargedApplicants = getApplicantsForJob(selectedJob.id)
+                .filter(item => item.engineer.profileTier !== ProfileTier.BASIC || item.application.isSupercharged)
+                .map(item => item.engineer);
+                
+            if (premiumOrSuperchargedApplicants.length > 0) {
+                const results = await geminiService.findBestMatchesForJob(selectedJob, premiumOrSuperchargedApplicants);
                 if (results?.matches) {
                     const scoresMap = new Map<string, number>(results.matches.map((match: { id: string; match_score: number }) => [match.id, match.match_score]));
                     setMatchScores(scoresMap);
@@ -86,7 +93,17 @@ export const MyJobsView = ({ myJobs, setActiveView }: { myJobs: Job[]; setActive
         if (!selectedJob) return [];
         return getApplicantsForJob(selectedJob.id)
             .map(item => ({ ...item, matchScore: matchScores.get(item.engineer.id) }))
-            .sort((a, b) => (b.matchScore ?? -1) - (a.matchScore ?? -1) || b.application.date.getTime() - a.application.date.getTime());
+            .sort((a, b) => {
+                if (a.application.isSupercharged !== b.application.isSupercharged) {
+                    return a.application.isSupercharged ? -1 : 1;
+                }
+                const scoreA = a.matchScore ?? -1;
+                const scoreB = b.matchScore ?? -1;
+                if (scoreA !== scoreB) {
+                    return scoreB - scoreA;
+                }
+                return b.application.date.getTime() - a.application.date.getTime();
+            });
     }, [selectedJob, getApplicantsForJob, matchScores]);
     
     const handleMessageApplicant = (profileId: string) => startConversationAndNavigate(profileId, () => setActiveView('Messages'));
@@ -100,7 +117,7 @@ export const MyJobsView = ({ myJobs, setActiveView }: { myJobs: Job[]; setActive
                 <div className="bg-white p-5 rounded-lg shadow">
                     <h2 className="text-2xl font-bold mb-1">Applicants for "{selectedJob.title}"</h2>
                     <p className="text-gray-600 mb-6">{applicantsForSelectedJob.length} applicant(s) for this role.</p>
-                     {isMatching && <div className="flex items-center justify-center p-4 bg-blue-50 rounded-md my-4"><Loader className="animate-spin w-5 h-5 mr-3 text-blue-600" /><p className="text-blue-700 font-semibold">Calculating AI match scores...</p></div>}
+                     {isMatching && <div className="flex items-center justify-center p-4 bg-blue-50 rounded-md my-4"><Loader className="animate-spin w-5 h-5 mr-3 text-blue-600" /><p className="text-blue-700 font-semibold">Calculating AI match scores for premium & supercharged applicants...</p></div>}
                      {applicantsForSelectedJob.length > 0 ? (
                         <div className="space-y-4">
                             {applicantsForSelectedJob.map(({ application, engineer, matchScore }) => 

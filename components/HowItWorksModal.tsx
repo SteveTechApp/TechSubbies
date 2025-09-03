@@ -26,7 +26,6 @@ export const HowItWorksModal = ({ isOpen, onClose, onNavigate }: HowItWorksModal
                 className="bg-white rounded-lg m-4 max-w-4xl w-full relative transform transition-all duration-300 flex flex-col max-h-[90vh]"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Header */}
                 <div className="flex-shrink-0 p-6 text-center border-b">
                      <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800" aria-label="Close modal">
                         <X size={24} />
@@ -35,12 +34,10 @@ export const HowItWorksModal = ({ isOpen, onClose, onNavigate }: HowItWorksModal
                     <p className="text-gray-500 mt-1">A smarter connection between expertise and opportunity.</p>
                 </div>
                 
-                {/* Animated Slideshow */}
                 <div className="flex-grow p-4 sm:p-8 overflow-hidden">
                     <FeatureSlideshow />
                 </div>
 
-                {/* Sticky Footer CTA */}
                 <div className="flex-shrink-0 mt-auto p-6 border-t bg-gray-50 rounded-b-lg text-center">
                     <h3 className="text-xl font-bold text-gray-800">Ready to Get Started?</h3>
                     <p className="text-gray-600 my-2">Join the network and take control of your freelance career today.</p>

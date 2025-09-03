@@ -5,7 +5,7 @@ import { NavLink } from './NavLink.tsx';
 import { 
     LayoutDashboard, User, CalendarDays, Search, Settings, PlusCircle, Briefcase, 
     Users, Building, BarChart2, SlidersHorizontal, Edit, BrainCircuit, CreditCard, Mail, BarChart, MessageSquare,
-    KanbanSquare
+    KanbanSquare, DollarSign
 } from './Icons.tsx';
 
 interface DashboardSidebarProps {
@@ -58,6 +58,7 @@ const getLinksForRole = (user: any) => {
                 { label: 'Dashboard', icon: BarChart2 }, 
                 { label: 'Manage Users', icon: Users }, 
                 { label: 'Manage Jobs', icon: Briefcase }, 
+                { label: 'Monetization', icon: DollarSign },
                 { label: 'Platform Settings', icon: SlidersHorizontal },
             ];
         default:

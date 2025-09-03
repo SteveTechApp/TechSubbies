@@ -50,7 +50,6 @@ export const DashboardView = ({ user, myJobs, engineers, applications, setActive
     const getApplicantName = (engineerId: string) => engineers.find(e => e.id === engineerId)?.name || 'An engineer';
     const getJobTitle = (jobId: string) => myJobs.find(j => j.id === jobId)?.title || 'a job';
     
-    // Mock time for demo purposes
     const getTimeAgo = (index: number) => ['2 hours ago', 'Yesterday', '3 days ago'][index] || 'A while ago';
 
     const spotlightEngineer = engineers.find(e => e.profileTier !== 'BASIC' && e.status === 'active');
