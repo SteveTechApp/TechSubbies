@@ -13,17 +13,11 @@ interface LandingPageProps {
   onHowItWorksClick: () => void;
 }
 
-// Dynamic text for the headline
 const dynamicRoles = [
-    "Tech Subcontractor",
-    "AV Engineer",
-    "Network Specialist",
-    "Crestron Programmer",
-    "Cloud Architect",
-    "Live Events Tech",
+    "Tech Subcontractor", "AV Engineer", "Network Specialist",
+    "Crestron Programmer", "Cloud Architect", "Live Events Tech",
 ];
 
-// Matching prompts for engineers
 const engineerPrompts = [
     "Get matched with high-value projects from leading integrators.",
     "Showcase your commissioning skills and land your next major installation.",
@@ -36,13 +30,10 @@ const engineerPrompts = [
 export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps) => {
   const { engineers, jobs, companies } = useAppContext();
   const [heroImage, setHeroImage] = useState('');
-
-  // State for headline animation
   const [roleIndex, setRoleIndex] = useState(0);
   const [textOpacity, setTextOpacity] = useState(1);
   
   useEffect(() => {
-      // Select a random hero image on component mount
       setHeroImage(HERO_IMAGES.landing[Math.floor(Math.random() * HERO_IMAGES.landing.length)]);
 
       const roleInterval = setInterval(() => {
@@ -50,8 +41,8 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
           setTimeout(() => {
               setRoleIndex(prevIndex => (prevIndex + 1) % dynamicRoles.length);
               setTextOpacity(1); // Start fade in
-          }, 500); // Wait for fade out to complete before changing text
-      }, 3000); // Change role every 3 seconds
+          }, 500);
+      }, 3000);
 
       return () => clearInterval(roleInterval);
   }, []);
@@ -65,23 +56,19 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
     
   const getCompanyName = (companyId: string) => companies.find(c => c.id === companyId)?.name || 'A Leading Company';
 
-
   return (
     <div className="flex flex-col min-h-screen">
       <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
       <main className="bg-gray-50 flex-grow pt-24">
            {/* Hero Section */}
            <section className="relative text-white text-center h-screen flex items-center justify-center px-4 overflow-hidden">
-                {/* Static Background Image with slow zoom effect */}
                 <div
                     className="absolute inset-0 bg-cover bg-center z-0 slow-zoom"
                     style={{ backgroundImage: `url('${heroImage}')` }}
                     aria-hidden="true"
                 />
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-900/80 via-blue-900/70 to-indigo-800/60 z-10"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-900/80 via-blue-900/70 to-indigo-800/60 z-10" />
                 
-                {/* Glassmorphism Content Box */}
                 <div className="relative z-20 max-w-4xl p-8 bg-black/20 backdrop-blur-md rounded-xl border border-white/10">
                     <h1 className="text-4xl md:text-6xl font-extrabold mb-4 fade-in-up">
                         Find Your Next{' '}

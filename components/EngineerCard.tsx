@@ -10,16 +10,10 @@ interface EngineerCardProps {
 }
 
 const getMatchScoreBadgeClass = (score: number) => {
-    if (score >= 85) {
-        return 'bg-green-600 text-white'; // Excellent
-    }
-    if (score >= 70) {
-        return 'bg-blue-600 text-white'; // Good
-    }
-    if (score >= 50) {
-        return 'bg-yellow-500 text-black'; // Okay
-    }
-    return 'bg-gray-500 text-white'; // Consider
+    if (score >= 85) return 'bg-green-600 text-white';
+    if (score >= 70) return 'bg-blue-600 text-white';
+    if (score >= 50) return 'bg-yellow-500 text-black';
+    return 'bg-gray-500 text-white';
 };
 
 export const EngineerCard = ({ profile, onClick, matchScore }: EngineerCardProps) => {
@@ -47,7 +41,7 @@ export const EngineerCard = ({ profile, onClick, matchScore }: EngineerCardProps
                     <img src={profile.avatar} alt={profile.name} className="w-24 h-24 rounded-full border-4 border-white shadow-md" />
                 </div>
                 
-                {resourcingCompany && resourcingCompany.logo && (
+                {resourcingCompany?.logo && (
                     <div 
                         className="absolute bottom-0 right-0 transform translate-x-1/4 translate-y-1/4 bg-white p-1 rounded-full shadow-lg"
                         title={`Managed by ${resourcingCompany.name}`}
@@ -87,9 +81,7 @@ export const EngineerCard = ({ profile, onClick, matchScore }: EngineerCardProps
             </div>
             
             <div className="flex-grow">
-                <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-lg font-bold text-gray-800 truncate">{profile.name}</h3>
-                </div>
+                <h3 className="text-lg font-bold text-gray-800 truncate">{profile.name}</h3>
                 <p className="text-blue-600 font-semibold text-sm">{profile.discipline}</p>
                 <p className="text-sm text-gray-500 flex items-center mt-1"><MapPin size={14} className="mr-1"/> {profile.location}</p>
             </div>

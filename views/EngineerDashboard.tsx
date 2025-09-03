@@ -23,7 +23,7 @@ export const EngineerDashboard = () => {
     const [activeView, setActiveView] = useState('Dashboard');
 
     if (!user || !('skills' in user.profile)) {
-        return <div>Loading...</div>; // or a proper loading spinner
+        return <div>Loading...</div>;
     }
     const engineerProfile = user.profile as EngineerProfile;
 

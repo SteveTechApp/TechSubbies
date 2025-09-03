@@ -1,9 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext.tsx';
 import { JobCard } from '../../components/JobCard.tsx';
-import { Search, MapPin, DollarSign, ArrowLeft, Briefcase, Layers } from '../../components/Icons.tsx';
-import { JobType, ExperienceLevel, ProfileTier } from '../../types/index.ts';
-
+import { Search, MapPin, DollarSign, ArrowLeft, Layers } from '../../components/Icons.tsx';
+import { ExperienceLevel, ProfileTier } from '../../types/index.ts';
 
 export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string) => void }) => {
     const { user, jobs } = useAppContext();
@@ -16,28 +15,21 @@ export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string)
     
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFilters(prev => {
-            const newFilters = { ...prev };
-            if (name === 'maxRate') {
-                newFilters.maxRate = parseInt(value, 10) || 0;
-            } else {
-                // This explicit cast fixes a potential TypeScript error where it might infer 'name' as 'never'.
-                const key = name as 'keyword' | 'location' | 'experienceLevel';
-                newFilters[key] = value;
-            }
-            return newFilters;
-        });
+        setFilters(prev => ({
+            ...prev,
+            [name]: name === 'maxRate' ? (parseInt(value, 10) || 0) : value,
+        }));
     };
 
     const filteredJobs = useMemo(() => {
         return jobs.filter(job => {
             if (job.status !== 'active') return false;
 
-            const keywordMatch = filters.keyword.toLowerCase() === '' ||
+            const keywordMatch = filters.keyword === '' ||
                 job.title.toLowerCase().includes(filters.keyword.toLowerCase()) ||
                 job.description.toLowerCase().includes(filters.keyword.toLowerCase());
 
-            const locationMatch = filters.location.toLowerCase() === '' ||
+            const locationMatch = filters.location === '' ||
                 job.location.toLowerCase().includes(filters.location.toLowerCase());
             
             const rateMatch = filters.maxRate === 0 || (parseInt(job.dayRate, 10) || 0) <= filters.maxRate;
@@ -49,21 +41,17 @@ export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string)
     }, [jobs, filters]);
 
     const isFreeTier = user && 'profileTier' in user.profile && user.profile.profileTier === ProfileTier.BASIC;
+    
     const highPayingJobs = useMemo(() => {
         return filteredJobs.filter(job => (parseInt(job.dayRate, 10) || 0) > 195);
     }, [filteredJobs]);
 
     return (
         <div>
-            <button 
-                onClick={() => setActiveView('Dashboard')} 
-                className="flex items-center mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-            >
-                <ArrowLeft size={16} className="mr-2" />
-                Back to Dashboard
+            <button onClick={() => setActiveView('Dashboard')} className="flex items-center mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                <ArrowLeft size={16} className="mr-2" /> Back to Dashboard
             </button>
             <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-10rem)]">
-                {/* Filters Sidebar */}
                 <aside className="w-full lg:w-1/3 xl:w-1/4 bg-white p-6 rounded-lg shadow-md flex-shrink-0">
                     <h2 className="text-xl font-bold mb-4 flex items-center"><Search size={20} className="mr-2"/> Find Work</h2>
                     <div className="space-y-6">
@@ -89,11 +77,10 @@ export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string)
                     </div>
                 </aside>
 
-                {/* Job Results */}
                 <main className="flex-1 bg-gray-50 overflow-y-auto custom-scrollbar pr-2">
                      {isFreeTier && highPayingJobs.length > 0 && (
                         <div className="p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md mb-4 text-sm">
-                            <strong>Heads up!</strong> {highPayingJobs.length} job(s) in your search offer a day rate above £195. To be more competitive for these high-value roles, consider upgrading to a <button onClick={() => setActiveView('Billing')} className="font-bold underline hover:text-yellow-900">Gold Profile</button>.
+                            <strong>Heads up!</strong> {highPayingJobs.length} job(s) in your search offer a day rate above £195. To be more competitive, consider upgrading to a <button onClick={() => setActiveView('Billing')} className="font-bold underline hover:text-yellow-900">Gold Profile</button>.
                         </div>
                     )}
                     <p className="text-sm text-gray-600 mb-4">Showing {filteredJobs.length} of {jobs.filter(j => j.status === 'active').length} available contracts.</p>

@@ -2,7 +2,7 @@ import React from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
 import { Job, Role } from '../types/index.ts';
 import { MapPin, Calendar, DollarSign, Clock, MessageCircle, Briefcase, Layers } from './Icons.tsx';
-import { formatDisplayDate } from '../utils/dateFormatter.ts';
+import { formatDisplayDate } from '../../utils/dateFormatter.ts';
 
 interface JobCardProps {
     job: Job;
@@ -11,9 +11,11 @@ interface JobCardProps {
 
 export const JobCard = ({ job, setActiveView }: JobCardProps) => {
     const { user, applyForJob, startConversationAndNavigate } = useAppContext();
+    const canMessage = user?.role === Role.ENGINEER && setActiveView;
 
-    const handleMessageClick = () => {
-        if (setActiveView) {
+    const handleMessageClick = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent the main card click if it were a button
+        if (canMessage) {
             startConversationAndNavigate(job.companyId, () => setActiveView('Messages'));
         }
     };
@@ -32,7 +34,7 @@ export const JobCard = ({ job, setActiveView }: JobCardProps) => {
                     >
                         Apply Now
                     </button>
-                    {user?.role === Role.ENGINEER && setActiveView && (
+                    {canMessage && (
                          <button 
                             onClick={handleMessageClick}
                             className="flex items-center justify-center bg-gray-200 text-gray-700 font-semibold py-2 px-5 rounded-lg hover:bg-gray-300 transition-colors whitespace-nowrap text-sm w-full"

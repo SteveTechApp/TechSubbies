@@ -39,12 +39,12 @@ const generateMockJobs = (count: number, companies: CompanyProfile[]): Job[] => 
     return Array.from({ length: count }, (_, i) => {
         const roleDef = getRandom(JOB_ROLE_DEFINITIONS);
         const company = getRandom(companies);
-        const allSkillsForRole = roleDef.skillCategories.flatMap(category => category.skills.map(s => s.name));
+        const allSkillsForRole = roleDef.skillCategories.flatMap(category => category.skills);
         return {
             id: `gen-job-${i}`,
             companyId: company.id,
             title: roleDef.name,
-            description: `We are looking for a skilled ${roleDef.name} for an upcoming project. The ideal candidate will have strong experience in ${allSkillsForRole.slice(0, 3).join(', ')}. This is a contract role with potential for extension.`,
+            description: `We are looking for a skilled ${roleDef.name} for an upcoming project. The ideal candidate will have strong experience in ${allSkillsForRole.slice(0, 3).map(s => s.name).join(', ')}. This is a contract role with potential for extension.`,
             location: Math.random() > 0.2 ? `${getRandom(LOCATIONS)}, UK` : 'Remote',
             dayRate: String(getRandomInt(13, 30) * 25),
             currency: Currency.GBP,

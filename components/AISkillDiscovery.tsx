@@ -17,18 +17,17 @@ export const AISkillDiscovery = ({ onSkillsAdded }: AISkillDiscoveryProps) => {
 
     const groupedRoles = useMemo(() => {
         return JOB_ROLE_DEFINITIONS.reduce((acc, roleDef) => {
-            if (!acc[roleDef.category]) {
-                acc[roleDef.category] = [];
+            const category = roleDef.category;
+            if (!acc[category]) {
+                acc[category] = [];
             }
-            acc[roleDef.category].push(roleDef);
+            acc[category].push(roleDef);
             return acc;
         }, {} as Record<string, typeof JOB_ROLE_DEFINITIONS>);
     }, []);
 
     const handleRoleSelect = async (selectedRole: string) => {
-        if (!selectedRole.trim() || isLoading) {
-            return;
-        }
+        if (!selectedRole.trim() || isLoading) return;
         
         setRole(selectedRole);
         setIsLoading(true);
@@ -41,10 +40,10 @@ export const AISkillDiscovery = ({ onSkillsAdded }: AISkillDiscoveryProps) => {
 
         if (result.error) {
             setError(result.error);
-        } else if (result && result.skills) {
+        } else if (result?.skills) {
             setDiscoveredSkills(result.skills);
         } else {
-            setError('Could not discover skills for this role. An unexpected error occurred.');
+            setError('An unexpected error occurred while discovering skills.');
         }
     };
 
@@ -62,7 +61,7 @@ export const AISkillDiscovery = ({ onSkillsAdded }: AISkillDiscoveryProps) => {
                 <BrainCircuit className="w-8 h-8 text-blue-600 mr-3" />
                 <h3 className="text-xl font-bold text-blue-800">AI Skill Discovery</h3>
             </div>
-            <p className="text-gray-600 mb-4">Don't want to add skills manually? Select a job role from our list and let our AI suggest relevant skills for you.</p>
+            <p className="text-gray-600 mb-4">Select a job role from our list, and let our AI suggest relevant skills to add to your profile.</p>
             
             <div className="flex items-center space-x-2">
                 <select

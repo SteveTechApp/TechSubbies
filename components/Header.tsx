@@ -7,14 +7,13 @@ import { GuestMenu } from './GuestMenu.tsx';
 
 interface HeaderProps {
     onNavigate: (page: Page) => void;
-    onHowItWorksClick?: () => void; // Can keep this for modals
+    onHowItWorksClick?: () => void;
 }
 
 export const Header = ({ onNavigate, onHowItWorksClick }: HeaderProps) => {
     const { user, logout } = useAppContext();
 
     const headerClasses = "bg-white shadow-md p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50";
-    
     const logoColorClass = "text-gray-800";
 
     return (

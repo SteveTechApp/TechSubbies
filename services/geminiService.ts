@@ -56,7 +56,7 @@ export const geminiService = {
                     systemInstruction: personaInstruction,
                 },
             });
-            return String(response.text).trim();
+            return response.text.trim();
 
         } catch (error) {
             console.error("Error generating chat response:", error);
@@ -78,7 +78,7 @@ export const geminiService = {
         
         try {
             const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-            return String(response.text).trim();
+            return response.text.trim();
         } catch (error) {
             console.error("Error generating description:", error);
             return profile.description;
@@ -98,7 +98,7 @@ export const geminiService = {
                     },
                 },
             });
-            return JSON.parse(String(response.text));
+            return JSON.parse(response.text);
         } catch (error) {
             console.error("Error generating skills:", error);
             return { error: "Failed to generate skills. The AI service may be busy or unavailable. Please try again." };
@@ -149,7 +149,7 @@ export const geminiService = {
                     },
                 },
             });
-            return JSON.parse(String(response.text));
+            return JSON.parse(response.text);
         } catch (error) {
             console.error("Error getting training recommendations:", error);
             return { error: "Failed to get recommendations. The AI service may be busy or unavailable. Please try again." };
@@ -170,7 +170,7 @@ export const geminiService = {
                     },
                 },
             });
-            return JSON.parse(String(response.text));
+            return JSON.parse(response.text);
         } catch (error) {
             console.error("Error suggesting team:", error);
             return { error: "Failed to suggest a team. The AI service may be busy or unavailable. Please try again." };
@@ -206,7 +206,7 @@ export const geminiService = {
                     },
                 },
             });
-            return JSON.parse(String(response.text));
+            return JSON.parse(response.text);
         } catch (error) {
             console.error("Error analyzing cost:", error);
             return { error: "Failed to perform analysis. The AI service may be busy or unavailable. Please try again." };
@@ -273,7 +273,7 @@ export const geminiService = {
                     },
                 },
             });
-            return JSON.parse(String(response.text));
+            return JSON.parse(response.text);
         } catch (error) {
             console.error("Error finding best matches:", error);
             return { error: "Failed to find matches. The AI service may be busy or unavailable. Please try again." };
@@ -308,7 +308,7 @@ export const geminiService = {
                     },
                 },
             });
-            return JSON.parse(String(response.text));
+            return JSON.parse(response.text);
         } catch (error) {
             console.error("Error suggesting day rate:", error);
             return { error: "Failed to suggest a day rate. The AI service may be busy or unavailable. Please try again." };
@@ -349,7 +349,7 @@ export const geminiService = {
                     },
                 },
             });
-            return JSON.parse(String(response.text));
+            return JSON.parse(response.text);
         } catch (error) {
             console.error("Error moderating forum post:", error);
             return { decision: 'reject', reason: 'AI moderation service failed.' };

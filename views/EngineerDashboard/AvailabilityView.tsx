@@ -19,10 +19,11 @@ export const AvailabilityView = ({ profile, onUpdateAvailability, setActiveView 
     };
     
     const [newDateStr, setNewDateStr] = useState(getInitialDateString());
-    const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
-    const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+    const [displayDate, setDisplayDate] = useState(new Date());
     const [copySuccess, setCopySuccess] = useState('');
 
+    const currentMonth = displayDate.getMonth();
+    const currentYear = displayDate.getFullYear();
 
     const handleUpdate = () => {
         onUpdateAvailability(new Date(newDateStr));
@@ -30,35 +31,31 @@ export const AvailabilityView = ({ profile, onUpdateAvailability, setActiveView 
     };
     
     const handleCopyUrl = () => {
-        if (profile.calendarSyncUrl) {
-            navigator.clipboard.writeText(profile.calendarSyncUrl).then(() => {
-                setCopySuccess('Copied!');
-                setTimeout(() => setCopySuccess(''), 2000);
-            }, () => {
-                setCopySuccess('Failed to copy.');
-                setTimeout(() => setCopySuccess(''), 2000);
-            });
-        }
+        if (!profile.calendarSyncUrl) return;
+        navigator.clipboard.writeText(profile.calendarSyncUrl).then(() => {
+            setCopySuccess('Copied!');
+            setTimeout(() => setCopySuccess(''), 2000);
+        }, () => {
+            setCopySuccess('Failed to copy');
+        });
     };
 
-    const { monthName, blanks, days } = useMemo(() => {
+    const calendarGrid = useMemo(() => {
         const monthDate = new Date(currentYear, currentMonth, 1);
         const monthName = monthDate.toLocaleString('default', { month: 'long' });
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-        const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay();
-        const blanksArray = Array(firstDayOfWeek).fill(null);
-        const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-        return { monthName, blanks: blanksArray, days: daysArray };
+        const firstDayOfWeek = monthDate.getDay();
+        const blanks = Array(firstDayOfWeek).fill(null);
+        const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+        return { monthName, year: currentYear, grid: [...blanks, ...days] };
     }, [currentMonth, currentYear]);
 
-    const prevMonth = () => {
-        setCurrentMonth(m => m === 0 ? 11 : m - 1);
-        if (currentMonth === 0) setCurrentYear(y => y - 1);
-    };
-
-    const nextMonth = () => {
-        setCurrentMonth(m => m === 11 ? 0 : m + 1);
-        if (currentMonth === 11) setCurrentYear(y => y - 1);
+    const changeMonth = (delta: number) => {
+        setDisplayDate(prev => {
+            const newDate = new Date(prev);
+            newDate.setMonth(newDate.getMonth() + delta);
+            return newDate;
+        });
     };
 
     const isSameDay = (d1: Date, d2: Date) =>
@@ -80,28 +77,31 @@ export const AvailabilityView = ({ profile, onUpdateAvailability, setActiveView 
             <h1 className="text-3xl font-bold mb-4">My Availability</h1>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-1">
-                    <div className="bg-white p-5 rounded-lg shadow">
-                        <h2 className="text-xl font-bold mb-4">Update Your Status</h2>
-                        <p className="text-gray-600 mb-4">Companies will see you as available from this date onwards.</p>
-                        <label className="block font-medium mb-1">Available from date:</label>
-                        <input
-                            type="date"
-                            value={newDateStr}
-                            onChange={(e) => setNewDateStr(e.target.value)}
-                            className="w-full border p-2 rounded mb-4"
-                        />
-                        <button
-                            onClick={handleUpdate}
-                            className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700"
-                        >
-                            Update Availability
-                        </button>
-                        <div className="mt-5 pt-5 border-t border-gray-200">
+                    <div className="bg-white p-5 rounded-lg shadow space-y-5">
+                        <div>
+                            <h2 className="text-xl font-bold mb-2">Update Your Status</h2>
+                            <p className="text-gray-600 mb-4">Companies will see you as available from this date onwards.</p>
+                            <label htmlFor="availability-date" className="block font-medium mb-1">Available from date:</label>
+                            <input
+                                id="availability-date"
+                                type="date"
+                                value={newDateStr}
+                                onChange={(e) => setNewDateStr(e.target.value)}
+                                className="w-full border p-2 rounded mb-4"
+                            />
+                            <button
+                                onClick={handleUpdate}
+                                className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700"
+                            >
+                                Update Availability
+                            </button>
+                        </div>
+                        <div className="pt-5 border-t border-gray-200">
                             <h3 className="text-lg font-semibold mb-3 flex items-center">
                                 <LinkIcon size={18} className="mr-2"/> Calendar Sync
                             </h3>
                             <p className="text-gray-600 mb-4 text-sm">
-                                Subscribe to this URL in your calendar app (Outlook, Google, iCal) to automatically sync your TechSubbies availability and project dates.
+                                Subscribe to this URL in your calendar app to automatically sync your availability and project dates.
                             </p>
                             <div className="flex items-center gap-2">
                                 <input
@@ -124,15 +124,15 @@ export const AvailabilityView = ({ profile, onUpdateAvailability, setActiveView 
                 <div className="lg:col-span-2">
                     <div className="bg-white p-5 rounded-lg shadow">
                         <div className="flex justify-between items-center mb-4">
-                            <button onClick={prevMonth} className="p-2 rounded-full hover:bg-gray-100"><ChevronLeft /></button>
-                            <h2 className="text-xl font-bold">{monthName} {currentYear}</h2>
-                            <button onClick={nextMonth} className="p-2 rounded-full hover:bg-gray-100"><ChevronRight /></button>
+                            <button onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-gray-100" aria-label="Previous month"><ChevronLeft /></button>
+                            <h2 className="text-xl font-bold">{calendarGrid.monthName} {calendarGrid.year}</h2>
+                            <button onClick={() => changeMonth(1)} className="p-2 rounded-full hover:bg-gray-100" aria-label="Next month"><ChevronRight /></button>
                         </div>
                         <div className="grid grid-cols-7 gap-2 text-center font-semibold text-gray-500">
                             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => <div key={day}>{day}</div>)}
                         </div>
                         <div className="grid grid-cols-7 gap-2 mt-2">
-                            {[...blanks, ...days].map((day, index) => {
+                            {calendarGrid.grid.map((day, index) => {
                                 if (!day) return <div key={`blank-${index}`}></div>;
                                 
                                 const dayDate = new Date(currentYear, currentMonth, day);

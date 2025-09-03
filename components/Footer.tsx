@@ -16,7 +16,6 @@ export const Footer = ({ onNavigate, onHowItWorksClick }: FooterProps) => {
 
     return (
         <footer className="bg-white shadow-md mt-auto border-t border-gray-200 z-40">
-            {/* NEW: Single-line footer for large screens, stacking for mobile */}
             <div className="container mx-auto p-4 flex flex-col lg:flex-row justify-between items-center gap-6">
                 
                 {/* Left Side: Logo & Copyright */}

@@ -55,7 +55,10 @@ const getLinksForRole = (user: any) => {
             ];
         case Role.ADMIN:
             return [
-                { label: 'Dashboard', icon: BarChart2 }, { label: 'Manage Users', icon: Users }, { label: 'Manage Jobs', icon: Briefcase }, { label: 'Platform Settings', icon: SlidersHorizontal },
+                { label: 'Dashboard', icon: BarChart2 }, 
+                { label: 'Manage Users', icon: Users }, 
+                { label: 'Manage Jobs', icon: Briefcase }, 
+                { label: 'Platform Settings', icon: SlidersHorizontal },
             ];
         default:
             return [];

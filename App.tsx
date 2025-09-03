@@ -20,13 +20,11 @@ import { UserGuidePage } from './views/UserGuidePage.tsx';
 import { AIAssistant } from './components/AIAssistant.tsx';
 import { HowItWorksModal } from './components/HowItWorksModal.tsx';
 
-
 const App = () => {
     const { user } = useAppContext();
     const [page, setPage] = useState<Page>('landing');
     const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
 
-    // Scroll to top whenever the page changes
     useEffect(() => {
         window.scrollTo(0, 0);
     }, [page]);
@@ -49,6 +47,7 @@ const App = () => {
                 case Role.ADMIN:
                     return <AdminDashboard />;
                 default:
+                    // Fallback for an unknown or loading role
                     return <p>Loading dashboard...</p>;
             }
         }

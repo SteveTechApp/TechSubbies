@@ -6,29 +6,34 @@ import { ReviewCard } from '../components/ReviewCard.tsx';
 import { useAppContext } from '../context/AppContext.tsx';
 import { BadgeDisplay } from '../components/BadgeDisplay.tsx';
 
-export const EngineerProfileView = ({ profile, isEditable, onEdit }: { profile: EngineerProfile | null, isEditable: boolean, onEdit: () => void }) => {
+interface EngineerProfileViewProps {
+    profile: EngineerProfile | null;
+    isEditable: boolean;
+    onEdit: () => void;
+}
+
+export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerProfileViewProps) => {
     const { user, startConversationAndNavigate, reviews, allUsers } = useAppContext();
 
-    if (!profile) return <div>Loading profile...</div>;
+    if (!profile) {
+        return <div>Loading profile...</div>;
+    }
 
     const canMessage = user && (user.role === Role.COMPANY || user.role === Role.RESOURCING_COMPANY);
     
-    // This is a placeholder for the actual navigation logic which will be passed down
+    // This callback is passed to the context function which then calls it after initiating the conversation.
     const handleNavigateToMessages = () => {
-        // In a real app with a router, this would be a navigation action.
-        // For now, the dashboard view itself will handle the view switch.
-        // This callback is passed to the context function which then calls it.
         alert("Navigating to messages... (This is handled by the dashboard)");
     };
 
-    const profileReviews = reviews.filter(r => r.engineerId === profile.id)
+    const profileReviews = reviews
+        .filter(r => r.engineerId === profile.id)
         .sort((a,b) => b.date.getTime() - a.date.getTime());
 
     const findCompanyById = (companyId: string) => {
-        const user = allUsers.find(u => u.profile.id === companyId && (u.role === Role.COMPANY || u.role === Role.RESOURCING_COMPANY));
-        return user?.profile;
+        const companyUser = allUsers.find(u => u.profile.id === companyId && (u.role === Role.COMPANY || u.role === Role.RESOURCING_COMPANY));
+        return companyUser?.profile;
     };
-
 
     return (
         <div className="relative font-sans max-w-4xl mx-auto py-4">
@@ -74,7 +79,6 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: { profile: 
                     <p className="text-gray-500 text-center py-4">This engineer has not received any reviews yet.</p>
                 )}
             </div>
-
         </div>
     );
 };

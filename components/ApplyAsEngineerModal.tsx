@@ -26,10 +26,10 @@ export const ApplyAsEngineerModal = ({ isOpen, onClose, job, managedEngineers, o
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
             <div className="bg-white rounded-lg p-8 max-w-lg w-full">
-                <div className="flex justify-between items-center mb-4">
+                <header className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold">Apply for Job</h2>
-                    <button onClick={onClose}><X className="text-gray-500" /></button>
-                </div>
+                    <button onClick={onClose} aria-label="Close modal"><X className="text-gray-500" /></button>
+                </header>
                 
                 <p className="mb-2">You are applying for the role:</p>
                 <h3 className="text-lg font-semibold text-blue-700 mb-6">{job.title}</h3>
@@ -53,16 +53,17 @@ export const ApplyAsEngineerModal = ({ isOpen, onClose, job, managedEngineers, o
                     </select>
                 </div>
 
-                <div className="flex justify-end space-x-4 mt-8">
-                    <button onClick={onClose} className="px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
+                <footer className="flex justify-end space-x-4 mt-8">
+                    <button type="button" onClick={onClose} className="px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
                     <button 
+                        type="button"
                         onClick={handleSubmit} 
                         disabled={!selectedEngineerId}
                         className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300"
                     >
                         Submit Application
                     </button>
-                </div>
+                </footer>
             </div>
         </div>
     );

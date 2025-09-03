@@ -14,19 +14,26 @@ import { ContractsView } from './ContractsView.tsx';
 import { InstantInviteModal } from '../components/InstantInviteModal.tsx';
 import { ProjectPlannerView } from './CompanyDashboard/ProjectPlannerView.tsx';
 
-
 export const CompanyDashboard = () => {
-    const { user, postJob, jobs, engineers, applications, updateCompanyProfile } from useAppContext();
+    const { user, postJob, jobs, engineers, applications, updateCompanyProfile } = useAppContext();
     const [activeView, setActiveView] = useState('Dashboard');
     const [isJobModalOpen, setIsJobModalOpen] = useState(false);
     
-    // State for Find Talent view
     const [talentView, setTalentView] = useState<'list' | 'profile'>('list');
     const [selectedEngineer, setSelectedEngineer] = useState<EngineerProfile | null>(null);
     
-    // State for Instant Invite Modal
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [jobForInvite, setJobForInvite] = useState<Job | null>(null);
+
+    const myJobs = useMemo(() => jobs.filter(j => j.companyId === user?.profile?.id), [jobs, user]);
+
+    useEffect(() => {
+        if (activeView === 'Post a Job') {
+            setIsJobModalOpen(true);
+        } else {
+            handleBackToSearch();
+        }
+    }, [activeView]);
 
     const handleSelectEngineer = (engineer: EngineerProfile) => {
         setSelectedEngineer(engineer);
@@ -37,18 +44,6 @@ export const CompanyDashboard = () => {
         setSelectedEngineer(null);
         setTalentView('list');
     };
-
-
-    const myJobs = useMemo(() => jobs.filter(j => j.companyId === user?.profile?.id), [jobs, user]);
-
-    useEffect(() => {
-        if (activeView === 'Post a Job') {
-            setIsJobModalOpen(true);
-        } else {
-            // Reset talent view when switching main tabs
-            handleBackToSearch();
-        }
-    }, [activeView]);
 
     const handlePostJob = (jobData: any) => {
         const newJob = postJob(jobData);
@@ -80,7 +75,7 @@ export const CompanyDashboard = () => {
                     )
                 }
                 return <FindTalentView engineers={engineers} myJobs={myJobs} onSelectEngineer={handleSelectEngineer} />;
-            case 'Post a Job': // Intentionally fall through, modal handles it
+            case 'Post a Job': // Intentionally fall through; modal is controlled by useEffect.
             case 'My Jobs':
                 return <MyJobsView myJobs={myJobs} setActiveView={setActiveView} />;
             case 'Project Planner':
@@ -102,9 +97,9 @@ export const CompanyDashboard = () => {
     };
 
     return (
-        <div className="flex">
+        <div className="flex h-screen">
             <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-grow p-8 bg-gray-50 h-screen overflow-hidden">
+            <main className="flex-grow p-8 bg-gray-50 overflow-hidden">
                 {renderActiveView()}
             </main>
             <JobPostModal

@@ -5,6 +5,7 @@ import App from './App.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 
 const rootElement = document.getElementById('root');
+
 if (rootElement) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
@@ -16,4 +17,6 @@ if (rootElement) {
       </ErrorBoundary>
     </React.StrictMode>
   );
+} else {
+  console.error('Failed to find the root element to mount the application.');
 }

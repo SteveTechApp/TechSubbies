@@ -4,16 +4,16 @@ import { Job, EngineerProfile } from '../types/index.ts';
 import { ResultDisplay } from './ResultDisplay.tsx';
 import { BrainCircuit, Loader } from './Icons.tsx';
 
-interface AIEngineerCostAnalysisProps {
-    job: Job;
-    engineer: EngineerProfile;
-}
-
 export interface AnalysisResult {
     skill_match_assessment: string;
     rate_justification: string;
     overall_recommendation: string;
     confidence_score: number;
+}
+
+interface AIEngineerCostAnalysisProps {
+    job: Job;
+    engineer: EngineerProfile;
 }
 
 export const AIEngineerCostAnalysis = ({ job, engineer }: AIEngineerCostAnalysisProps) => {
@@ -26,12 +26,15 @@ export const AIEngineerCostAnalysis = ({ job, engineer }: AIEngineerCostAnalysis
     setIsLoading(true);
     setError('');
     setAnalysisResult(null);
+
     const result = await geminiService.analyzeEngineerCost(job.description, engineer);
+    
     if (result.error) {
       setError(result.error);
     } else {
       setAnalysisResult(result as AnalysisResult);
     }
+
     setIsLoading(false);
   };
   

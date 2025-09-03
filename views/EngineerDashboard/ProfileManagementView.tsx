@@ -7,7 +7,6 @@ import { ProfileEssentials } from '../../components/ProfileManagement/ProfileEss
 import { ProfileCertifications } from '../../components/ProfileManagement/ProfileCertifications.tsx';
 import { ProfilePortfolio } from '../../components/ProfileManagement/ProfilePortfolio.tsx';
 
-
 interface ProfileManagementViewProps {
     profile: EngineerProfile;
     onSave: (updatedProfile: Partial<EngineerProfile>) => void;
@@ -24,7 +23,7 @@ export const ProfileManagementView = ({ profile, onSave, setActiveView }: Profil
 
     return (
         <div>
-             <div className="flex justify-between items-center mb-4">
+             <header className="flex justify-between items-center mb-4">
                 <button 
                     type="button"
                     onClick={() => setActiveView('Dashboard')} 
@@ -40,7 +39,7 @@ export const ProfileManagementView = ({ profile, onSave, setActiveView }: Profil
                     <Save size={18} className="mr-2" />
                     Save Changes
                 </button>
-             </div>
+             </header>
             <h1 className="text-3xl font-bold mb-2">Manage Profile</h1>
             <p className="text-gray-500 mb-6">Edit each section of your profile. Click 'Save Changes' when you're done.</p>
             

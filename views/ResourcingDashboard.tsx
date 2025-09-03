@@ -59,9 +59,9 @@ export const ResourcingDashboard = () => {
     };
 
     return (
-        <div className="flex">
+        <div className="flex h-screen">
             <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-grow p-8 bg-gray-50 h-screen overflow-y-auto custom-scrollbar">
+            <main className="flex-grow p-8 bg-gray-50 overflow-y-auto custom-scrollbar">
                 {renderActiveView()}
             </main>
         </div>

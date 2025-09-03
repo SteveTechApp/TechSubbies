@@ -29,18 +29,11 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
         setError('');
 
         const validEmails = [
-            'steve.goodwin@techsubbies.com',
-            'neil.bishop@example.com',
-            'emily.carter@example.com',
-            'sam.greene@example.com',
-            'contact@proav.com',
-            'contact@avplacements.com',
-            'stevegoodwin1972@gmail.com'
+            'steve.goodwin@techsubbies.com', 'neil.bishop@example.com', 'emily.carter@example.com',
+            'sam.greene@example.com', 'contact@proav.com', 'contact@avplacements.com', 'stevegoodwin1972@gmail.com'
         ];
 
-        const isLoginValid = validEmails.includes(email.toLowerCase());
-
-        if (isLoginValid) {
+        if (validEmails.includes(email.toLowerCase())) {
             if (rememberMe) {
                 localStorage.setItem('rememberedEmail', email);
             } else {
@@ -49,29 +42,14 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
         }
         
         // This is a mock authentication system based on email.
-        // In a real app, you would send email and password to a server.
         switch (email.toLowerCase()) {
-            case 'steve.goodwin@techsubbies.com':
-                loginAsSteve();
-                break;
-            case 'neil.bishop@example.com':
-                login(Role.ENGINEER, false); // Premium Engineer
-                break;
-            case 'emily.carter@example.com':
-                 login(Role.ENGINEER, true); // Free Tier Engineer
-                break;
-            case 'sam.greene@example.com':
-                 login(Role.ENGINEER, true); // Another Free Tier Engineer
-                break;
-            case 'contact@proav.com':
-                login(Role.COMPANY);
-                break;
-            case 'contact@avplacements.com':
-                login(Role.RESOURCING_COMPANY);
-                break;
-            case 'stevegoodwin1972@gmail.com':
-                login(Role.ADMIN);
-                break;
+            case 'steve.goodwin@techsubbies.com': loginAsSteve(); break;
+            case 'neil.bishop@example.com': login(Role.ENGINEER, false); break; // Premium
+            case 'emily.carter@example.com': login(Role.ENGINEER, true); break;  // Free
+            case 'sam.greene@example.com': login(Role.ENGINEER, true); break;   // Free
+            case 'contact@proav.com': login(Role.COMPANY); break;
+            case 'contact@avplacements.com': login(Role.RESOURCING_COMPANY); break;
+            case 'stevegoodwin1972@gmail.com': login(Role.ADMIN); break;
             default:
                 setError('Invalid email. Please use one of the mock user emails below.');
                 break;
@@ -98,7 +76,6 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
                     </div>
 
                     <div className="p-8">
-                        {/* --- SIGN IN TAB --- */}
                         {activeTab === 'signin' && (
                             <form onSubmit={handleLogin} className="space-y-4 fade-in-up">
                                 <h2 className="text-2xl font-bold text-center text-gray-800">Welcome Back</h2>
@@ -106,10 +83,7 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
                                 <div>
                                     <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label>
                                     <input 
-                                        type="email" 
-                                        id="email" 
-                                        name="email"
-                                        value={email}
+                                        type="email" id="email" name="email" value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         placeholder="you@example.com" 
                                         className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2" 
@@ -119,10 +93,7 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
                                 <div>
                                     <label htmlFor="password-login" className="block text-sm font-medium text-gray-700">Password</label>
                                     <input 
-                                        type="password" 
-                                        id="password-login"
-                                        name="password"
-                                        value={password}
+                                        type="password" id="password-login" name="password" value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="••••••••" 
                                         className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2" 
@@ -131,8 +102,7 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
                                 <div className="flex items-center justify-between">
                                     <label className="flex items-center text-sm text-gray-600 cursor-pointer">
                                         <input 
-                                            type="checkbox" 
-                                            checked={rememberMe}
+                                            type="checkbox" checked={rememberMe}
                                             onChange={(e) => setRememberMe(e.target.checked)}
                                             className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                         />
@@ -161,7 +131,6 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
                             </form>
                         )}
                         
-                        {/* --- CREATE ACCOUNT TAB --- */}
                         {activeTab === 'create' && (
                             <div className="space-y-4 fade-in-up">
                                 <h2 className="text-2xl font-bold text-center text-gray-800">Join TechSubbies</h2>

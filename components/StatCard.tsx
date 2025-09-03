@@ -21,11 +21,13 @@ export const StatCard = ({ icon: Icon, value, label, onClick, colorClass = 'bg-b
         </>
     );
 
+    const baseClasses = "bg-white p-6 rounded-lg shadow flex items-start";
+
     if (onClick) {
         return (
             <button
                 onClick={onClick}
-                className="w-full bg-white p-6 rounded-lg shadow flex items-start text-left hover:shadow-lg hover:-translate-y-1 transition-all"
+                className={`w-full text-left hover:shadow-lg hover:-translate-y-1 transition-all ${baseClasses}`}
             >
                 {content}
             </button>
@@ -33,7 +35,7 @@ export const StatCard = ({ icon: Icon, value, label, onClick, colorClass = 'bg-b
     }
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow flex items-start">
+        <div className={baseClasses}>
             {content}
         </div>
     );

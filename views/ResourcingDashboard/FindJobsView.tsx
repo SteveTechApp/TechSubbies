@@ -5,7 +5,6 @@ import { ApplyAsEngineerModal } from '../../components/ApplyAsEngineerModal.tsx'
 import { Search, MapPin, Calendar, DollarSign, Clock, MessageCircle, Briefcase, Layers } from '../../components/Icons.tsx';
 import { formatDisplayDate } from '../../utils/dateFormatter.ts';
 
-
 interface ResourcingJobCardProps {
     job: Job;
     onApply: (job: Job) => void;
@@ -20,16 +19,10 @@ const ResourcingJobCard = ({ job, onApply, onMessage }: ResourcingJobCardProps) 
                 <p className="text-gray-500 text-sm">Posted on {formatDisplayDate(job.postedDate)}</p>
             </div>
             <div className="flex items-center gap-2">
-                 <button 
-                    onClick={() => onMessage(job.companyId)}
-                    className="bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors text-sm"
-                >
-                    <MessageCircle size={16}/>
+                 <button onClick={() => onMessage(job.companyId)} className="bg-gray-200 text-gray-700 font-semibold p-2 rounded-lg hover:bg-gray-300 transition-colors" aria-label="Message Company">
+                    <MessageCircle size={20}/>
                 </button>
-                <button 
-                    onClick={() => onApply(job)}
-                    className="bg-green-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-green-700 transition-transform transform hover:scale-105 whitespace-nowrap"
-                >
+                <button onClick={() => onApply(job)} className="bg-green-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-green-700 transition-transform transform hover:scale-105 whitespace-nowrap">
                     Apply on Behalf of...
                 </button>
             </div>
@@ -48,7 +41,6 @@ const ResourcingJobCard = ({ job, onApply, onMessage }: ResourcingJobCardProps) 
     </div>
 );
 
-
 interface FindJobsViewProps {
     managedEngineers: EngineerProfile[];
     setActiveView: (view: string) => void;
@@ -61,11 +53,14 @@ export const FindJobsView = ({ managedEngineers, setActiveView }: FindJobsViewPr
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
     const filteredJobs = useMemo(() => {
-        if (!searchTerm) return jobs;
+        if (!searchTerm.trim()) return jobs.filter(j => j.status === 'active');
+        const lowercasedFilter = searchTerm.toLowerCase();
         return jobs.filter(job => 
-            job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            job.location.toLowerCase().includes(searchTerm.toLowerCase())
+            job.status === 'active' && (
+                job.title.toLowerCase().includes(lowercasedFilter) ||
+                job.description.toLowerCase().includes(lowercasedFilter) ||
+                job.location.toLowerCase().includes(lowercasedFilter)
+            )
         );
     }, [jobs, searchTerm]);
 

@@ -28,7 +28,7 @@ export const HowItWorksModal = ({ isOpen, onClose, onNavigate }: HowItWorksModal
             >
                 {/* Header */}
                 <div className="flex-shrink-0 p-6 text-center border-b">
-                     <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
+                     <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800" aria-label="Close modal">
                         <X size={24} />
                     </button>
                     <h2 className="text-3xl font-bold">How It Works</h2>

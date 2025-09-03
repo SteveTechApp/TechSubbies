@@ -23,7 +23,7 @@ export const DropdownMenu = ({ triggerText, children, isLanding = false, directi
     const handleMouseLeave = () => {
         timeoutRef.current = window.setTimeout(() => {
             setIsOpen(false);
-        }, 200); // 200ms delay before closing
+        }, 200);
     };
 
     const menuClasses = 'bg-white shadow-lg border border-gray-200';

@@ -10,11 +10,8 @@ interface DashboardViewProps {
     setActiveView: (view: string) => void;
 }
 
-export const DashboardView = ({ managedEngineers, applications, activePlacements, setActiveView }: DashboardViewProps) => {
-    const managedEngineerIds = new Set(managedEngineers.map(e => e.id));
-    const applicationsByManaged = applications.filter(app => managedEngineerIds.has(app.engineerId));
-
-    const availableEngineers = managedEngineers.filter(e => e.availability <= new Date());
+export const DashboardView = ({ managedEngineers, activePlacements, setActiveView }: DashboardViewProps) => {
+    const availableEngineersCount = managedEngineers.filter(e => e.availability <= new Date()).length;
 
     return (
         <div>
@@ -29,7 +26,7 @@ export const DashboardView = ({ managedEngineers, applications, activePlacements
                 />
                 <StatCard 
                     icon={UserCheck} 
-                    value={availableEngineers.length} 
+                    value={availableEngineersCount} 
                     label="Currently Available" 
                     colorClass="bg-green-500" 
                     onClick={() => setActiveView('Manage Engineers')} 
@@ -44,7 +41,7 @@ export const DashboardView = ({ managedEngineers, applications, activePlacements
             </div>
             <div className="bg-white p-5 rounded-lg shadow">
                 <h2 className="text-xl font-bold mb-4">Activity Feed</h2>
-                <p className="text-gray-500">The activity feed showing recent applications and job matches is coming soon.</p>
+                <p className="text-gray-500 text-center py-8">The activity feed showing recent applications and job matches is coming soon.</p>
             </div>
         </div>
     );

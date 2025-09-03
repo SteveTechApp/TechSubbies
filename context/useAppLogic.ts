@@ -422,8 +422,8 @@ export const useAppLogic = (): AppContextType => {
         const totalCustomer = engineerReviews.reduce((sum, r) => sum + r.customerRating, 0);
         
         // FIX: Prevent division by zero if this is the first review, which would create a NaN state.
-        const newPeerRating = engineerReviews.length > 0 ? parseFloat((totalPeer / engineerReviews.length).toFixed(1)) : 0;
-        const newCustomerRating = engineerReviews.length > 0 ? parseFloat((totalCustomer / engineerReviews.length).toFixed(1)) : 0;
+        const newPeerRating = engineerReviews.length > 0 ? parseFloat((totalPeer / engineerReviews.length).toFixed(1)) : reviewData.peerRating;
+        const newCustomerRating = engineerReviews.length > 0 ? parseFloat((totalCustomer / engineerReviews.length).toFixed(1)) : reviewData.customerRating;
 
         updateEngineerProfile({ id: reviewData.engineerId, peerRating: newPeerRating, customerRating: newCustomerRating });
         setApplications(prev => prev.map(app => (app.jobId === reviewData.jobId && app.engineerId === reviewData.engineerId) ? { ...app, status: ApplicationStatus.COMPLETED, reviewed: true } : app));

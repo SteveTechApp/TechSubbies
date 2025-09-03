@@ -12,11 +12,10 @@ export const UserMenu = ({ user, logout }: UserMenuProps) => {
     if (!user) return null;
 
     const isCompany = user.role === Role.COMPANY || user.role === Role.RESOURCING_COMPANY || user.role === Role.ADMIN;
-    // Cast to CompanyProfile to safely access the optional logo property
     const companyProfile = user.profile as CompanyProfile;
     const displayImage = isCompany && companyProfile.logo ? companyProfile.logo : user.profile.avatar;
     
-    // Add specific styling for logos to ensure they fit well within the circular container
+    // Specific styling for logos to ensure they fit well within the circular container
     const imageClass = `w-10 h-10 rounded-full border-2 border-blue-500 ${isCompany && companyProfile.logo ? 'object-contain bg-white p-0.5' : 'object-cover'}`;
 
     return (

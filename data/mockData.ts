@@ -1,7 +1,7 @@
 import { User, Role } from '../types/index.ts';
 // FIX: Corrected module imports after refactoring mockProfiles.ts to solve module resolution error.
 import { MOCK_ENGINEERS, MOCK_COMPANIES } from './modules/mockGeneratedProfiles.ts';
-import { MOCK_RESOURCING_COMPANY_1, MOCK_ADMIN_PROFILE, MOCK_FREE_ENGINEER } from './modules/mockStaticProfiles.ts';
+import { MOCK_RESOURCING_COMPANY_1, MOCK_ADMIN_PROFILE, MOCK_FREE_ENGINEER, MOCK_ENGINEER_STEVE } from './modules/mockStaticProfiles.ts';
 import { MOCK_JOBS } from './modules/mockJobs.ts';
 import { MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_CONTRACTS, MOCK_TRANSACTIONS, MOCK_PROJECTS } from './modules/mockInteractions.ts';
 import { MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_NOTIFICATIONS } from './modules/mockForum.ts';
@@ -56,3 +56,8 @@ export const ALL_MOCK_USERS: User[] = [
     })),
      { id: 'user-admin-1', role: Role.ADMIN, profile: MOCK_ADMIN_PROFILE }
 ];
+
+// Add Steve's user object separately if he's not in the generated engineers
+if (!ALL_MOCK_USERS.some(u => u.profile.id === 'eng-steve')) {
+    ALL_MOCK_USERS.push({ id: 'user-eng-steve', role: Role.ENGINEER, profile: MOCK_ENGINEER_STEVE });
+}

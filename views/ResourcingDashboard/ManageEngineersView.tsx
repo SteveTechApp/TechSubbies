@@ -16,27 +16,21 @@ const ManagedEngineerCard = ({ profile, onMessage }: { profile: EngineerProfile,
         </div>
         <div className="flex-grow space-y-2 text-sm text-gray-600 pt-2">
              <div className="flex justify-between">
-                <p className="flex items-center text-gray-500"><Calendar size={14} className="mr-1.5"/> Available From</p>
-                <p className="font-semibold">{formatDisplayDate(profile.availability)}</p>
+                <span className="flex items-center text-gray-500"><Calendar size={14} className="mr-1.5"/> Available From</span>
+                <span className="font-semibold">{formatDisplayDate(profile.availability)}</span>
             </div>
             <div className="flex justify-between">
-                <p className="flex items-center text-gray-500"><DollarSign size={14} className="mr-1.5"/> Day Rate</p>
-                <p className="font-semibold">{profile.currency}{profile.minDayRate} - {profile.maxDayRate}</p>
+                <span className="flex items-center text-gray-500"><DollarSign size={14} className="mr-1.5"/> Day Rate</span>
+                <span className="font-semibold">{profile.currency}{profile.minDayRate} - {profile.maxDayRate}</span>
             </div>
         </div>
         <div className="mt-4 pt-4 border-t flex flex-col gap-2">
-             <button 
-                onClick={() => onMessage(profile.id)}
-                className="px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 w-full font-semibold flex items-center justify-center"
-            >
-                <MessageCircle size={16} className="mr-2"/> Message Engineer
-            </button>
+             <button onClick={() => onMessage(profile.id)} className="px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 w-full font-semibold flex items-center justify-center"><MessageCircle size={16} className="mr-2"/> Message Engineer</button>
             <button className="px-3 py-2 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 w-full font-semibold">View Profile</button>
             <button className="px-3 py-2 bg-gray-200 text-gray-700 text-sm rounded-md hover:bg-gray-300 w-full font-semibold">Edit Details</button>
         </div>
     </div>
 );
-
 
 interface ManageEngineersViewProps {
     managedEngineers: EngineerProfile[];
@@ -57,11 +51,7 @@ export const ManageEngineersView = ({ managedEngineers, setActiveView }: ManageE
             .sort((a, b) => {
                 const nameA = a.name.toLowerCase();
                 const nameB = b.name.toLowerCase();
-                if (sortOrder === 'asc') {
-                    return nameA.localeCompare(nameB);
-                } else {
-                    return nameB.localeCompare(nameA);
-                }
+                return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
             });
     }, [managedEngineers, searchTerm, sortOrder]);
 
@@ -74,12 +64,10 @@ export const ManageEngineersView = ({ managedEngineers, setActiveView }: ManageE
             <div className="flex justify-between items-center mb-4">
                 <h1 className="text-3xl font-bold">Manage Engineers</h1>
                 <button className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700">
-                    <PlusCircle size={18} className="mr-2" />
-                    Add New Engineer
+                    <PlusCircle size={18} className="mr-2" /> Add New Engineer
                 </button>
             </div>
 
-            {/* Search and Sort Controls */}
             <div className="mb-4 flex flex-col sm:flex-row justify-between items-center gap-4 p-3 bg-white rounded-lg shadow-sm border">
                 <div className="relative w-full sm:w-auto sm:flex-grow">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -93,18 +81,8 @@ export const ManageEngineersView = ({ managedEngineers, setActiveView }: ManageE
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                     <span className="text-sm font-medium text-gray-600">Sort by:</span>
-                    <button
-                        onClick={() => setSortOrder('asc')}
-                        className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${sortOrder === 'asc' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                    >
-                        A-Z
-                    </button>
-                    <button
-                        onClick={() => setSortOrder('desc')}
-                        className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${sortOrder === 'desc' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                    >
-                        Z-A
-                    </button>
+                    <button onClick={() => setSortOrder('asc')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${sortOrder === 'asc' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>A-Z</button>
+                    <button onClick={() => setSortOrder('desc')} className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${sortOrder === 'desc' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>Z-A</button>
                 </div>
             </div>
             

@@ -1,19 +1,23 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useAppLogic } from './useAppLogic.ts';
-
-// The type definition for the context value remains the same, ensuring a consistent API for consumers.
 import type { AppContextType } from '../types/index.ts';
 
-// Create the context with an undefined initial value.
+// Create the context with an undefined initial value, to be populated by the provider.
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// The AppProvider now simply calls the useAppLogic hook and provides its return value to the context.
+/**
+ * AppProvider component that wraps the application and provides all global state and logic.
+ * It utilizes the useAppLogic hook to keep the provider itself clean and focused.
+ */
 export const AppProvider = ({ children }: { children: ReactNode }) => {
     const logic = useAppLogic();
     return <AppContext.Provider value={logic}>{children}</AppContext.Provider>;
 };
 
-// The consumer hook remains unchanged.
+/**
+ * Custom hook to easily consume the AppContext throughout the application.
+ * It ensures that the context is used within a valid AppProvider.
+ */
 export const useAppContext = (): AppContextType => {
     const context = useContext(AppContext);
     if (context === undefined) {

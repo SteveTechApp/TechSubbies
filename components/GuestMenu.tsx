@@ -41,34 +41,11 @@ export const GuestMenu = ({ onHowItWorksClick, onNavigate }: GuestMenuProps) => 
                     <button onClick={() => onNavigate('forCompanies')} className={dropdownItemClass}>Why It's Free</button>
                     <button onClick={() => onNavigate('login')} className={dropdownItemClass}>Post a Job</button>
                 </DropdownMenu>
-                <button
-                    onClick={onHowItWorksClick}
-                    className={navButtonClass}
-                >
-                    How It Works
-                </button>
-                <button
-                    onClick={() => onNavigate('pricing')}
-                    className={navButtonClass}
-                >
-                    Pricing
-                </button>
-                <button
-                    onClick={() => onNavigate('investors')}
-                    className={navButtonClass}
-                >
-                    Investors
-                </button>
-                <button
-                    onClick={() => onNavigate('aboutUs')}
-                    className={navButtonClass}
-                >
-                    About Us
-                </button>
-                <button
-                    onClick={() => onNavigate('login')}
-                    className={loginButtonClass}
-                >
+                <button onClick={onHowItWorksClick} className={navButtonClass}>How It Works</button>
+                <button onClick={() => onNavigate('pricing')} className={navButtonClass}>Pricing</button>
+                <button onClick={() => onNavigate('investors')} className={navButtonClass}>Investors</button>
+                <button onClick={() => onNavigate('aboutUs')} className={navButtonClass}>About Us</button>
+                <button onClick={() => onNavigate('login')} className={loginButtonClass}>
                     <LogIn className="w-4 h-4 mr-2" />
                     <span>Login / Sign Up</span>
                 </button>
@@ -84,14 +61,14 @@ export const GuestMenu = ({ onHowItWorksClick, onNavigate }: GuestMenuProps) => 
             {/* Mobile Menu Panel */}
             {isMenuOpen && (
                 <div className="fixed inset-0 bg-white z-50 p-6 flex flex-col lg:hidden fade-in-up">
-                    <div className="flex justify-between items-center mb-10">
+                    <header className="flex justify-between items-center mb-10">
                         <button onClick={() => handleMobileNav('landing')} aria-label="Go to homepage">
                             <Logo className="text-gray-800 h-12" />
                         </button>
                         <button onClick={() => setIsMenuOpen(false)} aria-label="Close menu">
                             <X className="w-8 h-8 text-gray-700" />
                         </button>
-                    </div>
+                    </header>
                     <nav className="flex flex-col flex-grow space-y-5 text-center">
                         <button onClick={() => handleMobileNav('forEngineers')} className={mobileLinkClass}>For Engineers</button>
                         <button onClick={() => handleMobileNav('forCompanies')} className={mobileLinkClass}>For Companies</button>

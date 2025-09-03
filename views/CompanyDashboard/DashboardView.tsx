@@ -1,7 +1,7 @@
 import React from 'react';
 import { User, Job, EngineerProfile, Application } from '../../types/index.ts';
 import { AIEngineerCostAnalysis } from '../../components/AIEngineerCostAnalysis.tsx';
-import { PlusCircle, Briefcase, Users, Mail } from '../../components/Icons.tsx';
+import { PlusCircle, Users, Mail } from '../../components/Icons.tsx';
 
 interface DashboardViewProps {
     user: User;
@@ -41,25 +41,19 @@ const ActivityItem = ({ icon: Icon, text, time }: { icon: React.ComponentType<an
 );
 
 export const DashboardView = ({ user, myJobs, engineers, applications, setActiveView }: DashboardViewProps) => {
-    // Find recent applications for jobs posted by the current company
     const myJobIds = new Set(myJobs.map(j => j.id));
     const recentApplications = applications
         .filter(app => myJobIds.has(app.jobId))
         .sort((a, b) => b.date.getTime() - a.date.getTime())
         .slice(0, 3);
 
-    const getApplicantName = (engineerId: string) => {
-        return engineers.find(e => e.id === engineerId)?.name || 'An engineer';
-    };
-    const getJobTitle = (jobId: string) => {
-        return myJobs.find(j => j.id === jobId)?.title || 'a job';
-    };
+    const getApplicantName = (engineerId: string) => engineers.find(e => e.id === engineerId)?.name || 'An engineer';
+    const getJobTitle = (jobId: string) => myJobs.find(j => j.id === jobId)?.title || 'a job';
     
     // Mock time for demo purposes
-    const getTimeAgo = (index: number) => {
-        const times = ['2 hours ago', 'Yesterday', '3 days ago'];
-        return times[index] || 'A while ago';
-    }
+    const getTimeAgo = (index: number) => ['2 hours ago', 'Yesterday', '3 days ago'][index] || 'A while ago';
+
+    const spotlightEngineer = engineers.find(e => e.profileTier !== 'BASIC' && e.status === 'active');
 
     return (
       <div className="space-y-6">
@@ -72,7 +66,7 @@ export const DashboardView = ({ user, myJobs, engineers, applications, setActive
             <StatCard label="Active Jobs" value={myJobs.length} onClick={() => setActiveView('My Jobs')} />
             <StatCard label="Total Applicants" value={applications.filter(app => myJobIds.has(app.jobId)).length} onClick={() => setActiveView('My Jobs')} />
             
-            <div className="bg-white p-5 rounded-lg shadow col-span-2">
+            <div className="bg-white p-5 rounded-lg shadow col-span-1 md:col-span-2">
                 <h2 className="font-bold text-xl mb-2">Quick Actions</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <QuickActionButton icon={PlusCircle} label="Post New Job" description="Get your role in front of engineers." onClick={() => setActiveView('Post a Job')} />
@@ -84,9 +78,9 @@ export const DashboardView = ({ user, myJobs, engineers, applications, setActive
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 bg-white p-5 rounded-lg shadow">
               <h2 className="text-xl font-bold mb-4">Engineer Spotlight</h2>
-              {myJobs.length > 0 && engineers.length > 0 ?
-                <AIEngineerCostAnalysis job={myJobs[0]} engineer={engineers[0]} /> :
-                <p>Post a job to see an AI-powered analysis of a matching engineer.</p>
+              {myJobs.length > 0 && spotlightEngineer ?
+                <AIEngineerCostAnalysis job={myJobs[0]} engineer={spotlightEngineer} /> :
+                <p className="text-center text-gray-500 py-8">Post a job to see an AI-powered analysis of a matching engineer.</p>
               }
             </div>
             <div className="lg:col-span-1 bg-white p-5 rounded-lg shadow">

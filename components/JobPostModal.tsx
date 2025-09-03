@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Currency, JobType, ExperienceLevel, JobRoleDefinition, JobSkillRequirement, Job } from '../types/index.ts';
-import { X, ArrowRight, Save } from './Icons.tsx';
-import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles.ts';
+import { Currency, JobType, ExperienceLevel, JobSkillRequirement, Job } from '../types/index.ts';
+import { X } from './Icons.tsx';
 import { JobPostStep1 } from './JobPost/JobPostStep1.tsx';
 import { JobPostStep2 } from './JobPost/JobPostStep2.tsx';
 
@@ -30,12 +29,14 @@ export const JobPostModal = ({ isOpen, onClose, onPostJob }: JobPostModalProps) 
     const [skillRequirements, setSkillRequirements] = useState<JobSkillRequirement[]>([]);
 
     useEffect(() => {
+        // Delay state reset until after the closing animation completes
         if (!isOpen) {
-            setTimeout(() => {
+            const timer = setTimeout(() => {
                 setStep(1);
                 setJobDetails(initialJobDetails);
                 setSkillRequirements([]);
-            }, 300); // Delay reset to allow for closing animation
+            }, 300);
+            return () => clearTimeout(timer);
         }
     }, [isOpen]);
 
@@ -61,7 +62,7 @@ export const JobPostModal = ({ isOpen, onClose, onPostJob }: JobPostModalProps) 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
             <div className="bg-white rounded-lg p-8 max-w-3xl w-full relative transform transition-all duration-300 flex flex-col" onClick={e => e.stopPropagation()}>
-                <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"><X /></button>
+                <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800" aria-label="Close modal"><X /></button>
                 
                 {step === 1 && (
                     <JobPostStep1 
