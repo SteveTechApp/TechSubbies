@@ -42,10 +42,16 @@ export const ProjectTimeline = ({ project }: ProjectTimelineProps) => {
     }, [project.roles]);
 
     const getRoleStyle = (role: typeof project.roles[0]) => {
-        const offsetMs = role.startDate.getTime() - projectStart.getTime();
-        const durationMs = role.endDate.getTime() - role.startDate.getTime();
         const totalDurationMs = totalDurationDays * 24 * 3600 * 1000;
 
+        // Prevent division by zero if project duration is 0
+        if (totalDurationMs <= 0) {
+            return { left: '0%', width: '0%' };
+        }
+        
+        const offsetMs = role.startDate.getTime() - projectStart.getTime();
+        const durationMs = role.endDate.getTime() - role.startDate.getTime();
+        
         const left = (offsetMs / totalDurationMs) * 100;
         const width = (durationMs / totalDurationMs) * 100;
 

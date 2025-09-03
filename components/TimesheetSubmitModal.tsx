@@ -24,7 +24,7 @@ export const TimesheetSubmitModal = ({ isOpen, onClose, onSubmit, contract }: Ti
         onSubmit({ period, days });
     };
     
-    const totalAmount = Number(contract.amount) * days;
+    const totalAmount = (Number(contract.amount) || 0) * days;
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={onClose}>
@@ -61,7 +61,7 @@ export const TimesheetSubmitModal = ({ isOpen, onClose, onSubmit, contract }: Ti
                             value={days}
                             min="0.5"
                             step="0.5"
-                            onChange={e => setDays(Number(e.target.value))}
+                            onChange={e => setDays(parseFloat(e.target.value) || 0)}
                             className="w-full border p-2 rounded-md focus:ring-2 focus:ring-blue-500"
                             required
                         />

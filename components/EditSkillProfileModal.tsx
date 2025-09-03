@@ -89,7 +89,7 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
         if (!currentRole) return;
 
         const newSkills = currentRole.skills.map(skill => 
-            skill.name === skillName ? { ...skill, rating: parseInt(value, 10) } : skill
+            skill.name === skillName ? { ...skill, rating: parseInt(value, 10) || 0 } : skill
         );
 
         const totalScore = newSkills.reduce((acc, skill) => acc + skill.rating, 0);

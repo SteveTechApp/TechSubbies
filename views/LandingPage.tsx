@@ -59,7 +59,7 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
   const featuredCompanies = companies.filter(c => c.consentToFeature).slice(0, 8);
   
   const featuredJobs = jobs
-    .filter(j => j.status === 'active' && parseInt(j.dayRate, 10) > 400)
+    .filter(j => j.status === 'active' && (parseInt(String(j.dayRate), 10) || 0) > 400)
     .sort((a, b) => b.postedDate.getTime() - a.postedDate.getTime())
     .slice(0, 3);
     

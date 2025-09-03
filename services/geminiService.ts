@@ -4,8 +4,8 @@ import { EngineerProfile, Job, ProfileTier, User, Message, CompanyProfile, JobSk
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const SYSTEM_INSTRUCTION = `You are the TechSubbies.com AI Assistant. Your role is to help users navigate the platform and answer their questions. 
-TechSubbies is a platform that connects freelance AV & IT engineers with companies.
-- Companies can post jobs for free.
+TechSubbies is a platform that connects freelance AV & IT engineers with companies for contract work.
+- Companies can post contracts for free.
 - Engineers can create a basic profile for free.
 - Engineers can upgrade to a paid "Skills Profile" to get more features and better visibility.
 - Be friendly, concise, and helpful. Do not make up features that don't exist.
@@ -13,6 +13,7 @@ TechSubbies is a platform that connects freelance AV & IT engineers with compani
 
 
 export const geminiService = {
+    // --- CHAT & GENERAL ASSISTANCE ---
     startChat: (): Chat => {
         return ai.chats.create({
             model: 'gemini-2.5-flash',
@@ -22,6 +23,48 @@ export const geminiService = {
         });
     },
 
+    generateChatResponse: async (
+        conversationHistory: Message[],
+        currentUser: User,
+        otherParticipant: User
+    ): Promise<string> => {
+        const otherUserProfile = otherParticipant.profile;
+        
+        let personaInstruction = `You are impersonating ${otherUserProfile.name}. Your role is ${otherParticipant.role}.`;
+        if ('discipline' in otherUserProfile) {
+            const engineerProfile = otherUserProfile as EngineerProfile;
+            personaInstruction += ` You are a freelance ${engineerProfile.discipline} with ${engineerProfile.experience} years of experience.`;
+            if (engineerProfile.skills && engineerProfile.skills.length > 0) {
+                 personaInstruction += ` Your key skills are: ${engineerProfile.skills.map(s => s.name).join(', ')}.`;
+            }
+        } else {
+            const companyProfile = otherUserProfile as CompanyProfile;
+            personaInstruction += ` You represent the company ${companyProfile.name}.`;
+        }
+        personaInstruction += ` Keep your responses concise, professional, and relevant to a tech subcontracting platform called TechSubbies.com. The current user's name is ${currentUser.profile.name}.`;
+
+        const contents = conversationHistory.map(msg => ({
+            role: msg.senderId === otherParticipant.id ? 'model' as const : 'user' as const,
+            parts: [{ text: msg.text }]
+        }));
+
+        try {
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents,
+                config: {
+                    systemInstruction: personaInstruction,
+                },
+            });
+            return String(response.text).trim();
+
+        } catch (error) {
+            console.error("Error generating chat response:", error);
+            return "Sorry, I'm having trouble responding right now. Please try again later.";
+        }
+    },
+
+    // --- PROFILE ENHANCEMENT ---
     generateDescriptionForProfile: async (profile: EngineerProfile) => {
         let prompt: string;
 
@@ -41,6 +84,7 @@ export const geminiService = {
             return profile.description;
         }
     },
+
     generateSkillsForRole: async (role: string) => {
         const prompt = `Based on the Tech industry job title "${role}", suggest 5 to 7 key technical skills. For each skill, provide a "rating" from 60 to 95, where 60 is proficient and 95 is expert. This rating should reflect the typical proficiency expected for someone in that role.`;
         try {
@@ -60,60 +104,7 @@ export const geminiService = {
             return { error: "Failed to generate skills. The AI service may be busy or unavailable. Please try again." };
         }
     },
-    suggestTeamForProject: async (description: string) => {
-        const prompt = `Based on this IT/AV project description, suggest a small team of freelance specialists that would be required. For each role, list 2-3 key skills needed.\n\nProject Description: "${description}"`;
-        try {
-            const response = await ai.models.generateContent({
-                model: "gemini-2.5-flash", contents: prompt,
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: Type.OBJECT,
-                        properties: { team: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { role: { type: Type.STRING }, skills: { type: Type.ARRAY, items: { type: Type.STRING } } }, required: ["role", "skills"] } } }
-                    },
-                },
-            });
-            return JSON.parse(String(response.text));
-        } catch (error) {
-            console.error("Error suggesting team:", error);
-            return { error: "Failed to suggest a team. The AI service may be busy or unavailable. Please try again." };
-        }
-    },
-    analyzeEngineerCost: async (jobDescription: string, engineerProfile: EngineerProfile) => {
-        const prompt = `Analyze the cost-effectiveness of hiring a freelance tech engineer for a project.
-        Project Description: "${jobDescription}"
-        Engineer Profile:
-        - Role: ${engineerProfile.discipline}
-        - Experience: ${engineerProfile.experience} years
-        - Day Rate Range: ${engineerProfile.currency}${engineerProfile.minDayRate} - ${engineerProfile.maxDayRate}
-        - Key Skills: ${engineerProfile.skills?.map(s => `${s.name} (rated ${s.rating}/100)`).join(', ') || 'Not specified'}
-        Provide a JSON response with:
-        1. "skill_match_assessment" (string): A brief sentence on how well their skills match the project.
-        2. "rate_justification" (string): A brief sentence justifying if their day rate is fair, high, or low based on their experience and skills for this project.
-        3. "overall_recommendation" (string): A concluding recommendation (e.g., "Highly Recommended", "Good Value", "Consider Alternatives").
-        4. "confidence_score" (number): A score from 0 to 100 on your confidence in this analysis.`;
-        try {
-            const response = await ai.models.generateContent({
-                model: "gemini-2.5-flash", contents: prompt,
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: Type.OBJECT,
-                        properties: {
-                            skill_match_assessment: { type: Type.STRING },
-                            rate_justification: { type: Type.STRING },
-                            overall_recommendation: { type: Type.STRING },
-                            confidence_score: { type: Type.NUMBER },
-                        }, required: ["skill_match_assessment", "rate_justification", "overall_recommendation", "confidence_score"],
-                    },
-                },
-            });
-            return JSON.parse(String(response.text));
-        } catch (error) {
-            console.error("Error analyzing cost:", error);
-            return { error: "Failed to perform analysis. The AI service may be busy or unavailable. Please try again." };
-        }
-    },
+
     getTrainingRecommendations: async (profile: EngineerProfile) => {
         const lowRatedSkills = profile.skills?.filter(s => s.rating < 75).map(s => s.name).join(', ');
         const highRatedSkills = profile.skills?.filter(s => s.rating >= 75).map(s => s.name).join(', ');
@@ -164,6 +155,64 @@ export const geminiService = {
             return { error: "Failed to get recommendations. The AI service may be busy or unavailable. Please try again." };
         }
     },
+
+    // --- JOB & TALENT MATCHING ---
+    suggestTeamForProject: async (description: string) => {
+        const prompt = `Based on this IT/AV project description, suggest a small team of freelance specialists that would be required. For each role, list 2-3 key skills needed.\n\nProject Description: "${description}"`;
+        try {
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash", contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: { team: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { role: { type: Type.STRING }, skills: { type: Type.ARRAY, items: { type: Type.STRING } } }, required: ["role", "skills"] } } }
+                    },
+                },
+            });
+            return JSON.parse(String(response.text));
+        } catch (error) {
+            console.error("Error suggesting team:", error);
+            return { error: "Failed to suggest a team. The AI service may be busy or unavailable. Please try again." };
+        }
+    },
+
+    analyzeEngineerCost: async (jobDescription: string, engineerProfile: EngineerProfile) => {
+        const prompt = `Analyze the cost-effectiveness of hiring a freelance tech engineer for a project.
+        Project Description: "${jobDescription}"
+        Engineer Profile:
+        - Role: ${engineerProfile.discipline}
+        - Experience: ${engineerProfile.experience} years
+        - Day Rate Range: ${engineerProfile.currency}${engineerProfile.minDayRate} - ${engineerProfile.maxDayRate}
+        - Key Skills: ${engineerProfile.skills?.map(s => `${s.name} (rated ${s.rating}/100)`).join(', ') || 'Not specified'}
+        Provide a JSON response with:
+        1. "skill_match_assessment" (string): A brief sentence on how well their skills match the project.
+        2. "rate_justification" (string): A brief sentence justifying if their day rate is fair, high, or low based on their experience and skills for this project.
+        3. "overall_recommendation" (string): A concluding recommendation (e.g., "Highly Recommended", "Good Value", "Consider Alternatives").
+        4. "confidence_score" (number): A score from 0 to 100 on your confidence in this analysis.`;
+        try {
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash", contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            skill_match_assessment: { type: Type.STRING },
+                            rate_justification: { type: Type.STRING },
+                            overall_recommendation: { type: Type.STRING },
+                            confidence_score: { type: Type.NUMBER },
+                        }, required: ["skill_match_assessment", "rate_justification", "overall_recommendation", "confidence_score"],
+                    },
+                },
+            });
+            return JSON.parse(String(response.text));
+        } catch (error) {
+            console.error("Error analyzing cost:", error);
+            return { error: "Failed to perform analysis. The AI service may be busy or unavailable. Please try again." };
+        }
+    },
+
      findBestMatchesForJob: async (job: Job, engineers: EngineerProfile[]) => {
         const summarizedEngineers = engineers
             .filter(eng => eng.profileTier !== ProfileTier.BASIC && eng.selectedJobRoles && eng.selectedJobRoles.length > 0)
@@ -177,11 +226,10 @@ export const geminiService = {
         const essentialSkills = job.skillRequirements?.filter(s => s.importance === 'essential').map(s => s.name) || [];
         const desirableSkills = job.skillRequirements?.filter(s => s.importance === 'desirable').map(s => s.name) || [];
 
-        const prompt = `You are an AI-powered talent matching engine for TechSubbies.com. Your task is to analyze a job's specific requirements and compare them against a list of freelance engineers to generate a match score for each.
+        const prompt = `You are an AI-powered talent matching engine for TechSubbies.com. Your task is to analyze a contract job's specific requirements and compare them against a list of freelance engineers to generate a match score for each.
 
-        Job Requirement Profile:
+        Contract Requirement Profile:
         - Title: ${job.title}
-        - Job Type: ${job.jobType}
         - Required Experience Level: ${job.experienceLevel}
         - Essential Skills: ${JSON.stringify(essentialSkills)}
         - Desirable Skills: ${JSON.stringify(desirableSkills)}
@@ -191,14 +239,12 @@ export const geminiService = {
 
         Analysis Rules:
         1.  Calculate a 'match_score' (0-100) for each engineer based on a weighted analysis.
-        2.  **Skill Match (60% weight):**
+        2.  **Skill Match (70% weight):**
             -   Essential Skills are critical. An engineer's score should be heavily penalized if their self-rated score for any essential skill is below 75. Give a significant bonus if all essential skills are rated 85+.
             -   Desirable Skills add to the score. For each desirable skill an engineer has, add points proportional to their self-rated score.
         3.  **Experience Match (30% weight):**
-            -   Compare the engineer's years of experience with the 'Required Experience Level'. An engineer with significantly less experience than required should be scored lower, while someone within or above the expected range should score highly.
-        4.  **Job Type Fit (10% weight):**
-            -   Consider the 'Job Type'. For a '${JobType.CONTRACT}' role, prioritize engineers with high ratings in essential skills, indicating they can start immediately. For a '${JobType.FULL_TIME}' role, you can slightly favor a candidate with strong desirable skills and experience, even if one essential skill is slightly lower, as there's room for growth.
-        5.  Return a ranked list of ALL provided engineers, from best match to worst.
+            -   Compare the engineer's years of experience with the 'Required Experience Level'. An engineer with significantly less experience than required should be scored lower, while someone within or above the expected range should score highly. For contract roles, prioritize skill match slightly over years of experience if the skills are a perfect fit.
+        4.  Return a ranked list of ALL provided engineers, from best match to worst.
 
         Provide the output in JSON format.`;
 
@@ -233,7 +279,43 @@ export const geminiService = {
             return { error: "Failed to find matches. The AI service may be busy or unavailable. Please try again." };
         }
     },
-    // NEW: AI Forum Moderator
+
+    suggestDayRate: async (title: string, description: string) => {
+        const prompt = `Based on the following freelance job details for the UK tech market (AV & IT), suggest a fair day rate range in GBP.
+        
+        Job Title: "${title}"
+        Job Description: "${description}"
+    
+        Provide a JSON response with:
+        1. "min_rate" (number): The lower end of the suggested day rate range.
+        2. "max_rate" (number): The upper end of the suggested day rate range.
+        3. "reasoning" (string): A brief, one-sentence justification for this range.`;
+        
+        try {
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            min_rate: { type: Type.NUMBER },
+                            max_rate: { type: Type.NUMBER },
+                            reasoning: { type: Type.STRING },
+                        },
+                        required: ["min_rate", "max_rate", "reasoning"],
+                    },
+                },
+            });
+            return JSON.parse(String(response.text));
+        } catch (error) {
+            console.error("Error suggesting day rate:", error);
+            return { error: "Failed to suggest a day rate. The AI service may be busy or unavailable. Please try again." };
+        }
+    },
+
+    // --- MODERATION ---
     moderateForumPost: async (post: { title: string; content: string }): Promise<{ decision: 'approve' | 'reject'; reason: string } | null> => {
         const prompt = `You are a content moderator for a tech forum called TechSubbies.com. Your ONLY task is to determine if a new post is a job posting, an advertisement for services, or a request for work. The forum is strictly for technical discussions, sharing ideas, and asking for help. It is NOT for job listings.
 
@@ -271,82 +353,6 @@ export const geminiService = {
         } catch (error) {
             console.error("Error moderating forum post:", error);
             return { decision: 'reject', reason: 'AI moderation service failed.' };
-        }
-    },
-    // NEW: AI Day Rate Suggester
-    suggestDayRate: async (title: string, description: string) => {
-        const prompt = `Based on the following freelance job details for the UK tech market (AV & IT), suggest a fair day rate range in GBP.
-        
-        Job Title: "${title}"
-        Job Description: "${description}"
-    
-        Provide a JSON response with:
-        1. "min_rate" (number): The lower end of the suggested day rate range.
-        2. "max_rate" (number): The upper end of the suggested day rate range.
-        3. "reasoning" (string): A brief, one-sentence justification for this range.`;
-        
-        try {
-            const response = await ai.models.generateContent({
-                model: "gemini-2.5-flash",
-                contents: prompt,
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: Type.OBJECT,
-                        properties: {
-                            min_rate: { type: Type.NUMBER },
-                            max_rate: { type: Type.NUMBER },
-                            reasoning: { type: Type.STRING },
-                        },
-                        required: ["min_rate", "max_rate", "reasoning"],
-                    },
-                },
-            });
-            return JSON.parse(String(response.text));
-        } catch (error) {
-            console.error("Error suggesting day rate:", error);
-            return { error: "Failed to suggest a day rate. The AI service may be busy or unavailable. Please try again." };
-        }
-    },
-    // NEW: AI Chat Responder
-    generateChatResponse: async (
-        conversationHistory: Message[],
-        currentUser: User,
-        otherParticipant: User
-    ): Promise<string> => {
-        const otherUserProfile = otherParticipant.profile;
-        
-        let personaInstruction = `You are impersonating ${otherUserProfile.name}. Your role is ${otherParticipant.role}.`;
-        if ('discipline' in otherUserProfile) {
-            const engineerProfile = otherUserProfile as EngineerProfile;
-            personaInstruction += ` You are a freelance ${engineerProfile.discipline} with ${engineerProfile.experience} years of experience.`;
-            if (engineerProfile.skills && engineerProfile.skills.length > 0) {
-                 personaInstruction += ` Your key skills are: ${engineerProfile.skills.map(s => s.name).join(', ')}.`;
-            }
-        } else {
-            const companyProfile = otherUserProfile as CompanyProfile;
-            personaInstruction += ` You represent the company ${companyProfile.name}.`;
-        }
-        personaInstruction += ` Keep your responses concise, professional, and relevant to a tech subcontracting platform called TechSubbies.com. The current user's name is ${currentUser.profile.name}.`;
-
-        const contents = conversationHistory.map(msg => ({
-            role: msg.senderId === otherParticipant.id ? 'model' as const : 'user' as const,
-            parts: [{ text: msg.text }]
-        }));
-
-        try {
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents,
-                config: {
-                    systemInstruction: personaInstruction,
-                },
-            });
-            return String(response.text).trim();
-
-        } catch (error) {
-            console.error("Error generating chat response:", error);
-            return "Sorry, I'm having trouble responding right now. Please try again later.";
         }
     },
 };

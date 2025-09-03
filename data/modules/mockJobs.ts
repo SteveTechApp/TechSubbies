@@ -1,5 +1,6 @@
 import { Job, CompanyProfile, Currency, JobType, ExperienceLevel } from '../../types/index.ts';
-import { MOCK_COMPANIES } from './mockProfiles.ts';
+// FIX: Corrected import path for MOCK_COMPANIES to resolve module error.
+import { MOCK_COMPANIES } from './mockGeneratedProfiles.ts';
 import { JOB_ROLE_DEFINITIONS } from '../jobRoles.ts';
 import { LOCATIONS, DURATIONS, JOB_TYPES, EXP_LEVELS } from './mockConstants.ts';
 
@@ -38,7 +39,7 @@ const generateMockJobs = (count: number, companies: CompanyProfile[]): Job[] => 
     return Array.from({ length: count }, (_, i) => {
         const roleDef = getRandom(JOB_ROLE_DEFINITIONS);
         const company = getRandom(companies);
-        const allSkillsForRole = roleDef.skillCategories.flatMap(category => category.skills);
+        const allSkillsForRole = roleDef.skillCategories.flatMap(category => category.skills.map(s => s.name));
         return {
             id: `gen-job-${i}`,
             companyId: company.id,
@@ -55,7 +56,7 @@ const generateMockJobs = (count: number, companies: CompanyProfile[]): Job[] => 
             experienceLevel: getRandom(EXP_LEVELS),
             jobRole: roleDef.name,
             skillRequirements: allSkillsForRole.slice(0, 5).map((skill, index) => ({
-                name: skill,
+                name: skill.name,
                 importance: index < 2 ? 'essential' : 'desirable', // Make first 2 essential
             })),
         };

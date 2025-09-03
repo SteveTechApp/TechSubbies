@@ -5,7 +5,7 @@ import { geminiService } from '../services/geminiService.ts';
 // --- Type definition for our AI service ---
 export type GeminiServiceType = typeof geminiService;
 
-// --- Enums and Interfaces ---
+// --- Enums ---
 export enum Role {
     ENGINEER = 'engineer',
     COMPANY = 'company',
@@ -26,8 +26,6 @@ export enum Discipline {
 
 export enum JobType {
     CONTRACT = 'Contract',
-    FULL_TIME = 'Full-time',
-    PART_TIME = 'Part-time',
 }
 
 export enum ExperienceLevel {
@@ -44,7 +42,7 @@ export enum ProfileTier {
     BUSINESS = 'BUSINESS',
 }
 
-
+// --- Skills & Roles ---
 export interface Skill {
     name: string;
     rating: number; // 0-100 (represents general proficiency for basic skills)
@@ -73,6 +71,15 @@ export interface JobRoleDefinition {
     category: string;
     skills: { name: string; description: string; }[];
   }[];
+}
+
+// --- Profiles ---
+
+interface BaseProfile {
+    id: string;
+    name: string;
+    avatar: string;
+    status: 'active' | 'suspended' | 'inactive';
 }
 
 export interface Certification {
@@ -132,14 +139,6 @@ export interface IdentityVerification {
     isVerified: boolean;
 }
 
-interface BaseProfile {
-    id: string;
-    name: string;
-    avatar: string;
-    status: 'active' | 'suspended' | 'inactive';
-}
-
-// FIX: Added ConditionContext type for badge logic
 export type ConditionContext = {
     completedContracts: number;
     forumScore: number;
@@ -151,7 +150,6 @@ export interface Badge {
     description: string;
     icon: React.ComponentType<any>;
     color: string;
-    // FIX: Added condition property to Badge type
     condition: (profile: EngineerProfile, context: ConditionContext) => boolean;
 }
 
@@ -200,8 +198,8 @@ export interface EngineerProfile extends BaseProfile {
     matchScore?: number;
     joinDate: Date;
     badges: Badge[];
+    roleCredits?: number; // For á la carte role purchases
 }
-
 
 export interface CompanyProfile extends BaseProfile {
     website?: string;
@@ -219,6 +217,7 @@ export interface User {
     profile: UserProfile;
 }
 
+// --- Jobs & Applications ---
 export type SkillImportance = 'desirable' | 'essential';
 
 export interface JobSkillRequirement {
@@ -278,6 +277,7 @@ export interface TrainingProvider {
     specialties: string[]; // e.g., ['Crestron', 'Cisco', 'AWS']
 }
 
+// --- Messaging & Notifications ---
 export interface Message {
     id: string;
     conversationId: string;
@@ -312,7 +312,7 @@ export interface Notification {
     timestamp: Date;
 }
 
-// --- NEW: Forum Types ---
+// --- Forum ---
 export interface ForumPost {
     id: string;
     authorId: string; // user.id
@@ -336,7 +336,7 @@ export interface ForumComment {
     downvotes: number;
 }
 
-// --- NEW: Contract, Milestone, Timesheet, and Transaction Types ---
+// --- Contracts, Payments & Projects ---
 export enum ContractType {
     SOW = 'Statement of Work',
     DAY_RATE = 'Day Rate Agreement',
@@ -364,6 +364,7 @@ export enum TransactionType {
     ESCROW_FUNDING = 'Escrow Funding',
     PAYOUT = 'Payout',
     PLATFORM_FEE = 'Platform Fee',
+    ROLE_CREDIT_PURCHASE = 'Role Credit Purchase',
 }
 
 export interface Signature {
@@ -414,7 +415,6 @@ export interface Transaction {
     date: Date;
 }
 
-// --- NEW: Project Planner Types ---
 export interface ProjectRole {
   id: string;
   title: string;
@@ -437,6 +437,7 @@ export interface Project {
 }
 
 
+// --- App Navigation & Context ---
 export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'companySignUp' | 'resourcingCompanySignUp' | 'investors' | 'aboutUs' | 'terms' | 'privacy' | 'pricing' | 'howItWorks' | 'userGuide' | 'security';
 
 export interface AppContextType {
@@ -481,18 +482,18 @@ export interface AppContextType {
     declineOffer: (jobId: string, engineerId: string) => void;
     inviteEngineerToJob: (jobId: string, engineerId: string) => void;
     isAiReplying: boolean;
-    // NEW: Forum context
+    // Forum context
     forumPosts: ForumPost[];
     forumComments: ForumComment[];
     createForumPost: (post: { title: string; content: string; tags: string[] }) => Promise<void>;
     addForumComment: (comment: { postId: string; parentId: string | null; content: string }) => void;
     voteOnPost: (postId: string, voteType: 'up' | 'down') => void;
     voteOnComment: (commentId: string, voteType: 'up' | 'down') => void;
-    // NEW: Contract context
+    // Contract context
     contracts: Contract[];
     sendContractForSignature: (contract: Contract) => void;
     signContract: (contractId: string, signatureName: string) => void;
-    // NEW: Milestone & Payment Context
+    // Milestone & Payment Context
     transactions: Transaction[];
     fundMilestone: (contractId: string, milestoneId: string) => void;
     submitMilestoneForApproval: (contractId: string, milestoneId: string) => void;
@@ -500,7 +501,9 @@ export interface AppContextType {
     submitTimesheet: (contractId: string, timesheet: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => void;
     approveTimesheet: (contractId: string, timesheetId: string) => void;
     upgradeSubscription: (profileId: string, toTier: ProfileTier) => void;
-    // NEW: Project Planner context
+    purchaseRoleCredits: (userId: string, numberOfCredits: 1 | 3 | 5) => void;
+    useRoleCredit: (userId: string) => void;
+    // Project Planner context
     projects: Project[];
     createProject: (name: string, description: string) => Project;
     addRoleToProject: (projectId: string, role: Omit<ProjectRole, 'id' | 'assignedEngineerId'>) => void;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Contract, User, Role, ContractStatus, UserProfile, CompanyProfile, EngineerProfile, Milestone, MilestoneStatus, ContractType, Timesheet } from '../types/index.ts';
 import { useAppContext } from '../context/AppContext.tsx';
-import { FileText, User as UserIcon, Building, Calendar, CheckCircle, Clock, DollarSign, Loader } from '../components/Icons.tsx';
+import { FileText, User as UserIcon, Building, Calendar, CheckCircle, Clock, DollarSign, Loader, BrainCircuit } from '../components/Icons.tsx';
 import { SignContractModal } from '../components/SignContractModal.tsx';
 import { formatDisplayDate } from '../utils/dateFormatter.ts';
 import { PaymentModal } from '../components/PaymentModal.tsx';
@@ -191,6 +191,12 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
                             ) : (
                                 <p className="text-sm text-gray-500 text-center bg-gray-50 p-3 rounded-md">No timesheets submitted yet.</p>
                             )}
+                        </div>
+                         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded-md text-sm flex items-start gap-2">
+                            <BrainCircuit size={20} className="flex-shrink-0 mt-0.5" />
+                            <div>
+                                <span className="font-bold">Coming Soon:</span> AI-powered timesheet verification using geolocation to confirm time on-site and travel.
+                            </div>
                         </div>
                     </div>
                 )}

@@ -10,14 +10,23 @@ export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string)
     const [filters, setFilters] = useState({
         keyword: '',
         location: '',
-        maxRate: 1200,
-        jobType: 'any',
+        maxRate: 0,
         experienceLevel: 'any',
     });
     
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFilters(prev => ({...prev, [name]: name === 'maxRate' ? parseInt(value) : value }));
+        setFilters(prev => {
+            const newFilters = { ...prev };
+            if (name === 'maxRate') {
+                newFilters.maxRate = parseInt(value, 10) || 0;
+            } else {
+                // This explicit cast fixes a potential TypeScript error where it might infer 'name' as 'never'.
+                const key = name as 'keyword' | 'location' | 'experienceLevel';
+                newFilters[key] = value;
+            }
+            return newFilters;
+        });
     };
 
     const filteredJobs = useMemo(() => {
@@ -31,19 +40,17 @@ export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string)
             const locationMatch = filters.location.toLowerCase() === '' ||
                 job.location.toLowerCase().includes(filters.location.toLowerCase());
             
-            const rateMatch = parseInt(job.dayRate) <= filters.maxRate;
-            
-            const typeMatch = filters.jobType === 'any' || job.jobType === filters.jobType;
+            const rateMatch = filters.maxRate === 0 || (parseInt(job.dayRate, 10) || 0) <= filters.maxRate;
             
             const levelMatch = filters.experienceLevel === 'any' || job.experienceLevel === filters.experienceLevel;
 
-            return keywordMatch && locationMatch && rateMatch && typeMatch && levelMatch;
+            return keywordMatch && locationMatch && rateMatch && levelMatch;
         });
     }, [jobs, filters]);
 
     const isFreeTier = user && 'profileTier' in user.profile && user.profile.profileTier === ProfileTier.BASIC;
     const highPayingJobs = useMemo(() => {
-        return filteredJobs.filter(job => parseInt(job.dayRate) > 195);
+        return filteredJobs.filter(job => (parseInt(job.dayRate, 10) || 0) > 195);
     }, [filteredJobs]);
 
     return (
@@ -69,13 +76,6 @@ export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string)
                             <input type="text" id="location" name="location" value={filters.location} onChange={handleFilterChange} placeholder="e.g., London, Remote" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2" />
                         </div>
                         <div>
-                            <label htmlFor="jobType" className="block text-sm font-medium text-gray-700 flex items-center"><Briefcase size={14} className="mr-1.5"/> Job Type</label>
-                            <select name="jobType" id="jobType" value={filters.jobType} onChange={handleFilterChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 bg-white">
-                                <option value="any">Any Type</option>
-                                {Object.values(JobType).map(type => <option key={type} value={type}>{type}</option>)}
-                            </select>
-                        </div>
-                        <div>
                             <label htmlFor="experienceLevel" className="block text-sm font-medium text-gray-700 flex items-center"><Layers size={14} className="mr-1.5"/> Experience Level</label>
                             <select name="experienceLevel" id="experienceLevel" value={filters.experienceLevel} onChange={handleFilterChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 bg-white">
                                 <option value="any">Any Level</option>
@@ -83,8 +83,8 @@ export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string)
                             </select>
                         </div>
                         <div>
-                            <label htmlFor="maxRate" className="block text-sm font-medium text-gray-700 flex items-center"><DollarSign size={14} className="mr-1.5"/> Max Day Rate: £{filters.maxRate}</label>
-                            <input type="range" id="maxRate" name="maxRate" min="200" max="1200" step="25" value={filters.maxRate} onChange={handleFilterChange} className="mt-1 block w-full" />
+                            <label htmlFor="maxRate" className="block text-sm font-medium text-gray-700 flex items-center"><DollarSign size={14} className="mr-1.5"/> Max Day Rate: £{filters.maxRate || 'Any'}</label>
+                            <input type="range" id="maxRate" name="maxRate" min="0" max="1200" step="25" value={filters.maxRate} onChange={handleFilterChange} className="mt-1 block w-full" />
                         </div>
                     </div>
                 </aside>
@@ -96,13 +96,13 @@ export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string)
                             <strong>Heads up!</strong> {highPayingJobs.length} job(s) in your search offer a day rate above £195. To be more competitive for these high-value roles, consider upgrading to a <button onClick={() => setActiveView('Billing')} className="font-bold underline hover:text-yellow-900">Gold Profile</button>.
                         </div>
                     )}
-                    <p className="text-sm text-gray-600 mb-4">Showing {filteredJobs.length} of {jobs.filter(j => j.status === 'active').length} available jobs.</p>
+                    <p className="text-sm text-gray-600 mb-4">Showing {filteredJobs.length} of {jobs.filter(j => j.status === 'active').length} available contracts.</p>
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                         {filteredJobs.length > 0 ? (
                             filteredJobs.map(job => <JobCard key={job.id} job={job} setActiveView={setActiveView} />)
                         ) : (
                             <div className="text-center py-10 bg-white rounded-lg shadow-sm col-span-full">
-                                <p className="font-semibold">No jobs match your search.</p>
+                                <p className="font-semibold">No contracts match your search.</p>
                                 <p className="text-sm text-gray-500">Try adjusting your filters.</p>
                             </div>
                         )}

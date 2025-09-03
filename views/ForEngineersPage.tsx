@@ -80,9 +80,10 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                 "Everything in Bronze, plus:",
                 "Add Core Skills & Verified Certifications",
                 "Add 1 Specialist Role with rated skills",
-                "Priority ranking in company searches",
-                "Create visual case studies (Storyboards)",
                 "Access all AI-powered Tools",
+                "Create visual case studies (Storyboards)",
+                "Includes 5 Role Credits",
+                "Priority ranking in company searches",
                 "Covered by our Security Net Guarantee",
             ]
         },

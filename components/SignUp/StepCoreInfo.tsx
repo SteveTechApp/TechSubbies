@@ -10,7 +10,9 @@ export const StepCoreInfo = ({ data, setData }: StepCoreInfoProps) => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setData((prev: any) => ({ ...prev, [name]: value }));
+        const isNumberField = name === 'experience';
+        // Ensure that parsing an empty string results in 0, not NaN, to prevent app crashes.
+        setData((prev: any) => ({ ...prev, [name]: isNumberField ? (parseInt(value, 10) || 0) : value }));
     };
 
     return (

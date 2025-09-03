@@ -45,7 +45,7 @@ export const MOCK_MESSAGES: Message[] = [
 ];
 
 export const MOCK_TIMESHEETS: Timesheet[] = [
-    { id: 'ts-1', contractId: 'contract-1', engineerId: 'eng-1', period: 'Week ending 2024-08-02', days: 5, status: 'approved' }
+    { id: 'ts-1', contractId: 'contract-1', engineerId: 'eng-1', period: 'Week ending 2024-08-02', days: 5, status: 'paid' }
 ];
 
 export const MOCK_CONTRACTS: Contract[] = [
@@ -88,6 +88,8 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     { id: 'txn-1', userId: 'user-eng-eng-1', contractId: 'contract-2', type: TransactionType.PAYOUT, description: "Payout for Milestone: Phase 1: Initial Site Survey & Report", amount: 475, date: new Date('2024-07-28') },
     { id: 'txn-2', userId: 'user-eng-eng-1', contractId: 'contract-2', type: TransactionType.PLATFORM_FEE, description: "Platform Fee (5%) for Milestone: Phase 1", amount: -25, date: new Date('2024-07-28') },
     { id: 'txn-3', userId: 'user-comp-comp-2', contractId: 'contract-2', type: TransactionType.ESCROW_FUNDING, description: "Funded Milestone: Phase 1: Initial Site Survey & Report", amount: -500, date: new Date('2024-07-26') },
+    { id: 'txn-4', userId: 'user-eng-eng-1', contractId: 'contract-1', type: TransactionType.PAYOUT, description: "Payout for Timesheet: Week ending 2024-08-02", amount: 2612.50, date: new Date('2024-08-03') },
+    { id: 'txn-5', userId: 'user-comp-comp-1', contractId: 'contract-1', type: TransactionType.PLATFORM_FEE, description: "Platform Fee for Timesheet: Week ending 2024-08-02", amount: -137.50, date: new Date('2024-08-03') },
 ];
 
 

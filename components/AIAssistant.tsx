@@ -1,6 +1,6 @@
 import React, { useState, useRef, useLayoutEffect } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
-import { MessageCircle, X, Loader } from './Icons.tsx';
+import { MessageCircle, X, Loader, Send } from './Icons.tsx';
 
 interface ChatMessage {
     role: 'user' | 'ai';
@@ -133,7 +133,7 @@ export const AIAssistant = () => {
                     left: `${position.x}px`,
                     touchAction: 'none'
                 }}
-                className="bg-blue-600 text-white rounded-full p-4 shadow-lg hover:bg-blue-700 transition-colors z-50 cursor-grab active:cursor-grabbing"
+                className="bg-blue-600 text-white rounded-full p-4 shadow-lg hover:bg-blue-700 transition-all transform hover:scale-110 active:scale-100 z-50 cursor-grab active:cursor-grabbing"
                 aria-label={isOpen ? "Close AI Assistant" : "Open AI Assistant"}
             >
                 {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
@@ -169,16 +169,26 @@ export const AIAssistant = () => {
                     </div>
 
                     {/* Input */}
-                    <form onSubmit={handleSendMessage} className="p-4 border-t">
-                        <input
-                            type="text"
-                            value={userInput}
-                            onChange={(e) => setUserInput(e.target.value)}
-                            placeholder="Ask a question..."
-                            disabled={isLoading}
-                            className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500"
-                            aria-label="Chat input"
-                        />
+                    <form onSubmit={handleSendMessage} className="p-3 border-t bg-gray-50 rounded-b-lg">
+                        <div className="flex items-center space-x-2">
+                            <input
+                                type="text"
+                                value={userInput}
+                                onChange={(e) => setUserInput(e.target.value)}
+                                placeholder="Ask a question..."
+                                disabled={isLoading}
+                                className="w-full border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-shadow disabled:bg-gray-100"
+                                aria-label="Chat input"
+                            />
+                            <button
+                                type="submit"
+                                disabled={isLoading || !userInput.trim()}
+                                className="flex-shrink-0 bg-blue-600 text-white rounded-lg p-2.5 hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
+                                aria-label="Send message"
+                            >
+                                <Send size={20} />
+                            </button>
+                        </div>
                     </form>
                 </div>
             )}
