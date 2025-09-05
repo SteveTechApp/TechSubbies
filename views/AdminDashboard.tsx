@@ -1,13 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
 import { DashboardView } from './AdminDashboard/DashboardView.tsx';
 import { UserManagementView } from './AdminDashboard/UserManagementView.tsx';
 import { JobManagementView } from './AdminDashboard/JobManagementView.tsx';
 import { PlatformSettingsView } from './AdminDashboard/PlatformSettingsView.tsx';
 import { MonetizationView } from './AdminDashboard/MonetizationView.tsx';
+import { useAppContext } from '../context/AppContext.tsx';
 
 export const AdminDashboard = () => {
+    const { setCurrentPageContext } = useAppContext();
     const [activeView, setActiveView] = useState('Dashboard');
+
+    useEffect(() => {
+        setCurrentPageContext(`Admin Dashboard: ${activeView}`);
+    }, [activeView, setCurrentPageContext]);
 
     const renderActiveView = () => {
         switch(activeView) {
@@ -34,7 +40,7 @@ export const AdminDashboard = () => {
     return (
         <div className="flex h-screen overflow-hidden">
             <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-grow p-8 bg-gray-50 overflow-y-auto custom-scrollbar">
+            <main className="flex-grow p-2 sm:p-3 bg-gray-50 overflow-y-auto custom-scrollbar">
                 {renderActiveView()}
             </main>
         </div>

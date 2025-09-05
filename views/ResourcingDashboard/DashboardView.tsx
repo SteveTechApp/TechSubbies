@@ -15,8 +15,8 @@ export const DashboardView = ({ managedEngineers, activePlacements, setActiveVie
 
     return (
         <div>
-            <h1 className="text-3xl font-bold mb-4">Resourcing Dashboard</h1>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <h1 className="text-xl font-bold mb-2">Resourcing Dashboard</h1>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                 <StatCard 
                     icon={Users} 
                     value={managedEngineers.length} 
@@ -39,9 +39,9 @@ export const DashboardView = ({ managedEngineers, activePlacements, setActiveVie
                     onClick={() => setActiveView('Contracts')} 
                 />
             </div>
-            <div className="bg-white p-5 rounded-lg shadow">
-                <h2 className="text-xl font-bold mb-4">Activity Feed</h2>
-                <p className="text-gray-500 text-center py-8">The activity feed showing recent applications and job matches is coming soon.</p>
+            <div className="bg-white p-3 rounded-lg shadow">
+                <h2 className="text-base font-bold mb-2">Activity Feed</h2>
+                <p className="text-gray-500 text-center py-6 text-sm">The activity feed showing recent applications and job matches is coming soon.</p>
             </div>
         </div>
     );

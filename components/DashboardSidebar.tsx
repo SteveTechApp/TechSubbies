@@ -5,7 +5,7 @@ import { NavLink } from './NavLink.tsx';
 import { 
     LayoutDashboard, User, CalendarDays, Search, Settings, PlusCircle, Briefcase, 
     Users, Building, BarChart2, SlidersHorizontal, Edit, BrainCircuit, CreditCard, Mail, BarChart, MessageSquare,
-    KanbanSquare, DollarSign, Lightbulb
+    KanbanSquare, DollarSign, Lightbulb, ClipboardList
 } from './Icons.tsx';
 
 interface DashboardSidebarProps {
@@ -25,10 +25,12 @@ const getLinksForRole = (user: any) => {
                 { label: 'Job Search', icon: Search },
                 { label: 'My Network', icon: Users },
                 { label: 'Contracts', icon: Briefcase },
+                { label: 'Invoices', icon: CreditCard },
                 { label: 'Forum', icon: MessageSquare },
                 { label: 'AI Tools', icon: BrainCircuit },
                 { label: 'AI Coach', icon: Lightbulb },
                 { label: 'Billing', icon: CreditCard },
+                { label: 'Settings', icon: Settings },
             ];
             if (user.profile.profileTier === ProfileTier.BUSINESS) {
                 engineerLinks.push({ label: 'Analytics', icon: BarChart });
@@ -42,7 +44,9 @@ const getLinksForRole = (user: any) => {
                 { label: 'Find Talent', icon: Search }, 
                 { label: 'My Jobs', icon: Briefcase },
                 { label: 'Project Planner', icon: KanbanSquare },
+                { label: 'Project Tracking', icon: ClipboardList },
                 { label: 'Contracts', icon: Briefcase },
+                { label: 'Invoices', icon: CreditCard },
                 { label: 'Settings', icon: Settings },
             ];
         case Role.RESOURCING_COMPANY:
@@ -52,6 +56,7 @@ const getLinksForRole = (user: any) => {
                 { label: 'Manage Engineers', icon: Users }, 
                 { label: 'Find Jobs', icon: Search }, 
                 { label: 'Contracts', icon: Briefcase },
+                { label: 'Invoices', icon: CreditCard },
                 { label: 'Settings', icon: Settings },
             ];
         case Role.ADMIN:
@@ -75,7 +80,7 @@ export const DashboardSidebar = ({ activeView, setActiveView }: DashboardSidebar
     const links = getLinksForRole(user);
 
     return (
-        <aside className="w-64 bg-gray-100 p-4 border-r border-gray-200 flex flex-col">
+        <aside className="w-44 bg-gray-100 p-1 border-r border-gray-200 flex flex-col">
             <nav className="flex-grow">
               <ul>
                   {links.map(link => (

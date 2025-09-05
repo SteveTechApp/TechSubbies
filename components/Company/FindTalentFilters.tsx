@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { EngineerProfile, Job, ProfileTier } from '../../types/index.ts';
+import { EngineerProfile, Job, ProfileTier, CompanyProfile } from '../../types/index.ts';
 import { useAppContext } from '../../context/AppContext.tsx';
 import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles.ts';
 import { Search, Sparkles, Loader } from '../../components/Icons.tsx';
+import { getDistance } from '../../utils/locationUtils.ts';
 
 interface AiMatchResult {
     id: string;
@@ -16,9 +17,9 @@ interface FindTalentFiltersProps {
 }
 
 export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTalentFiltersProps) => {
-    const { geminiService } = useAppContext();
+    const { user, geminiService } = useAppContext();
     const [filters, setFilters] = useState({
-        keyword: '', role: 'any', maxRate: 0, minExperience: 0,
+        keyword: '', role: 'any', maxRate: 0, minExperience: 0, maxDistance: 0,
     });
     const [sort, setSort] = useState('relevance');
     const [aiSelectedJobId, setAiSelectedJobId] = useState('');
@@ -34,7 +35,7 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTal
             switch (name) {
                 case 'maxRate':
                 case 'minExperience':
-                    // Robustly handle number parsing to prevent NaN, which causes rendering errors.
+                case 'maxDistance':
                     newFilters[name] = parseInt(value, 10) || 0;
                     break;
                 case 'keyword':
@@ -48,6 +49,7 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTal
 
     useEffect(() => {
         const aiScores = new Map(aiMatchResults.map(r => [r.id, r.match_score]));
+        const companyLocation = (user?.profile as CompanyProfile)?.location || '';
 
         const filtered = engineers
             .map(eng => ({ ...eng, matchScore: aiScores.get(eng.id) }))
@@ -56,6 +58,13 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTal
                 if (eng.minDayRate > filters.maxRate && filters.maxRate > 0) return false;
                 if (eng.experience < filters.minExperience) return false;
                 if (filters.role !== 'any' && !eng.selectedJobRoles?.some(r => r.roleName === filters.role)) return false;
+                
+                 if (filters.maxDistance > 0 && companyLocation) {
+                    const distance = getDistance(companyLocation, eng.location);
+                    if (distance === null || distance > filters.maxDistance) {
+                        return false;
+                    }
+                }
                 
                 if (filters.keyword.trim() !== '') {
                     const searchableText = [eng.name, eng.discipline, eng.description, ...(eng.skills?.map(s => s.name) || []), ...(eng.selectedJobRoles?.flatMap(r => [...r.skills.map(s => s.name), r.roleName]) || [])].join(' ').toLowerCase();
@@ -80,7 +89,7 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTal
                 }
             });
         onFilterChange(filtered);
-    }, [engineers, filters, sort, aiMatchResults, onFilterChange]);
+    }, [engineers, filters, sort, aiMatchResults, onFilterChange, user]);
 
     const handleAiMatch = async () => {
         if (!aiSelectedJobId) return;
@@ -115,6 +124,10 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTal
                         <option value="any">Any Role</option>
                         {specialistRoles.map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
+                </div>
+                 <div>
+                    <label htmlFor="maxDistance" className="block text-sm font-medium text-gray-700">Max Distance (miles): {filters.maxDistance > 0 ? filters.maxDistance : 'Any'}</label>
+                    <input type="range" id="maxDistance" name="maxDistance" min="0" max="500" step="10" value={filters.maxDistance} onChange={handleFilterChange} className="mt-1 block w-full" />
                 </div>
                 <div>
                     <label htmlFor="maxRate" className="block text-sm font-medium text-gray-700">Max Day Rate: {filters.maxRate || 'Any'}</label>

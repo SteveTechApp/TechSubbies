@@ -11,15 +11,15 @@ interface StatCardProps {
 export const StatCard = ({ icon: Icon, value, label, onClick, colorClass = 'bg-blue-500' }: StatCardProps) => {
     const content = (
         <>
-            <div className={`p-3 rounded-full inline-block mb-3 ${colorClass}`}>
-                <Icon className="w-8 h-8 text-white" />
+            <div className={`p-1 rounded-full inline-block mb-1 ${colorClass}`}>
+                <Icon className="w-5 h-5 text-white" />
             </div>
-            <p className="text-4xl font-extrabold text-gray-800">{value}</p>
-            <h2 className="font-bold text-lg text-gray-500">{label}</h2>
+            <p className="text-xl font-extrabold text-gray-800">{value}</p>
+            <h2 className="font-bold text-xs text-gray-500">{label}</h2>
         </>
     );
 
-    const baseClasses = "bg-white p-6 rounded-lg shadow text-center";
+    const baseClasses = "bg-white p-2 rounded-lg shadow text-center";
 
     if (onClick) {
         return (

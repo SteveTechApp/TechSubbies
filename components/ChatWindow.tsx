@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
 import { Conversation } from '../types/index.ts';
+import { Globe } from './Icons.tsx';
 
 interface ChatWindowProps {
     conversation: Conversation;
@@ -9,6 +10,7 @@ interface ChatWindowProps {
 export const ChatWindow = ({ conversation }: ChatWindowProps) => {
     const { user, messages, sendMessage, findUserById, isAiReplying } = useAppContext();
     const [newMessage, setNewMessage] = useState('');
+    const [showOriginal, setShowOriginal] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const conversationMessages = messages
@@ -26,8 +28,6 @@ export const ChatWindow = ({ conversation }: ChatWindowProps) => {
         e.preventDefault();
         if (!newMessage.trim() || !user || isAiReplying) return;
         
-        // sendMessage is now async, but we don't need to await it here
-        // as we want the input cleared immediately. The context handles the AI reply.
         sendMessage(conversation.id, newMessage);
         setNewMessage('');
     };
@@ -41,21 +41,39 @@ export const ChatWindow = ({ conversation }: ChatWindowProps) => {
                 <h2 className="font-bold text-lg">{otherParticipant.profile.name}</h2>
             </div>
             <div className="flex-grow p-4 overflow-y-auto custom-scrollbar flex flex-col gap-4">
-                {conversationMessages.map(msg => (
-                    <div
-                        key={msg.id}
-                        className={`p-3 rounded-lg max-w-[70%] ${
-                            msg.senderId === user.id
-                                ? 'self-end bg-blue-600 text-white'
-                                : 'self-start bg-white text-gray-800 shadow-sm'
-                        }`}
-                    >
-                        <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
-                        <p className={`text-xs mt-1 ${msg.senderId === user.id ? 'text-blue-200' : 'text-gray-400'} text-right`}>
-                            {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                    </div>
-                ))}
+                {conversationMessages.map(msg => {
+                    const isOwnMessage = msg.senderId === user.id;
+                    const isTranslated = !isOwnMessage && msg.originalText && msg.originalText !== msg.text;
+                    
+                    return (
+                        <div
+                            key={msg.id}
+                            className={`p-3 rounded-lg max-w-[70%] relative group ${
+                                isOwnMessage
+                                    ? 'self-end bg-blue-600 text-white'
+                                    : 'self-start bg-white text-gray-800 shadow-sm'
+                            }`}
+                             onMouseEnter={() => isTranslated && setShowOriginal(msg.id)}
+                             onMouseLeave={() => isTranslated && setShowOriginal(null)}
+                        >
+                            <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                             {isTranslated && (
+                                <div className="text-xs font-bold text-blue-400 mt-1 flex items-center gap-1">
+                                    <Globe size={12}/> 
+                                    <span>Translated</span>
+                                </div>
+                            )}
+                            <p className={`text-xs mt-1 ${isOwnMessage ? 'text-blue-200' : 'text-gray-400'} text-right`}>
+                                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                            {isTranslated && showOriginal === msg.id && (
+                                <div className="absolute bottom-full mb-1 left-0 w-full max-w-xs bg-gray-800 text-white text-xs rounded py-1 px-2 z-10">
+                                    <strong>Original:</strong> {msg.originalText}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
                 {isAiReplying && (
                      <div className="self-start bg-white text-gray-800 shadow-sm p-3 rounded-lg max-w-[70%] flex items-center gap-2">
                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>

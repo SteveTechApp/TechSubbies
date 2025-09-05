@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { SelectedJobRole, JobRoleDefinition, RatedSkill } from '../types/index.ts';
 import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles.ts';
-import { X, Save } from './Icons.tsx';
+import { X, Save, Plus, Trash2 } from './Icons.tsx';
 
 interface EditSkillProfileModalProps {
     isOpen: boolean;
@@ -21,6 +21,9 @@ const getRatingStyles = (rating: number): { bg: string; text: string; accent: st
 export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles, initialRole }: EditSkillProfileModalProps) => {
     const [selectedRoleDef, setSelectedRoleDef] = useState<JobRoleDefinition | null>(null);
     const [currentRole, setCurrentRole] = useState<SelectedJobRole | null>(initialRole || null);
+    const [openAddMenu, setOpenAddMenu] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const addMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -28,28 +31,25 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
         if (initialRole) {
             const roleDef = JOB_ROLE_DEFINITIONS.find(def => def.name === initialRole.roleName);
             setSelectedRoleDef(roleDef || null);
-    
-            if (roleDef) {
-                const allCanonicalSkills = roleDef.skillCategories.flatMap(category => category.skills);
-                const userSkillsMap = new Map(initialRole.skills.map(skill => [skill.name, skill.rating]));
-    
-                const synchronizedSkills: RatedSkill[] = allCanonicalSkills.map(canonicalSkill => ({
-                    name: canonicalSkill.name,
-                    rating: userSkillsMap.get(canonicalSkill.name) || 1,
-                }));
-    
-                const totalScore = synchronizedSkills.reduce((acc, skill) => acc + skill.rating, 0);
-                const newOverallScore = synchronizedSkills.length > 0 ? Math.round(totalScore / synchronizedSkills.length) : 0;
-    
-                setCurrentRole({ ...initialRole, skills: synchronizedSkills, overallScore: newOverallScore });
-            } else {
-                setCurrentRole(initialRole);
-            }
+            setCurrentRole(initialRole);
         } else {
             setCurrentRole(null);
             setSelectedRoleDef(null);
         }
+        setOpenAddMenu(null);
+        setSearchTerm('');
     }, [isOpen, initialRole]);
+
+     // Close dropdown if clicked outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (addMenuRef.current && !addMenuRef.current.contains(event.target as Node)) {
+                setOpenAddMenu(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     if (!isOpen) return null;
 
@@ -57,28 +57,47 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
         const roleDef = JOB_ROLE_DEFINITIONS.find(r => r.name === roleName);
         if (roleDef) {
             setSelectedRoleDef(roleDef);
-            const allSkills = roleDef.skillCategories.flatMap(category => category.skills);
             const newRole: SelectedJobRole = {
                 roleName: roleDef.name,
-                skills: allSkills.map(skill => ({ name: skill.name, rating: 50 })),
-                overallScore: 50
+                skills: [], // Start with an empty skill set
+                overallScore: 0
             };
             setCurrentRole(newRole);
         }
     };
     
+    const recalculateScore = (skills: RatedSkill[]) => {
+        const totalScore = skills.reduce((acc, skill) => acc + skill.rating, 0);
+        return skills.length > 0 ? Math.round(totalScore / skills.length) : 0;
+    }
+
     const handleSkillChange = (skillName: string, value: string) => {
         if (!currentRole) return;
-
+        const newRating = parseInt(value, 10) || 0;
         const newSkills = currentRole.skills.map(skill => 
-            skill.name === skillName ? { ...skill, rating: parseInt(value, 10) || 0 } : skill
+            skill.name === skillName ? { ...skill, rating: newRating } : skill
         );
-
-        const totalScore = newSkills.reduce((acc, skill) => acc + skill.rating, 0);
-        const newOverallScore = newSkills.length > 0 ? Math.round(totalScore / newSkills.length) : 0;
-
+        const newOverallScore = recalculateScore(newSkills);
         setCurrentRole({ ...currentRole, skills: newSkills, overallScore: newOverallScore });
     };
+
+    const addSkill = (skillDef: { name: string; description: string }) => {
+        if (!currentRole) return;
+        const newSkill: RatedSkill = { name: skillDef.name, rating: 50 }; // Default rating
+        const newSkills = [...currentRole.skills, newSkill];
+        const newOverallScore = recalculateScore(newSkills);
+        setCurrentRole({ ...currentRole, skills: newSkills, overallScore: newOverallScore });
+        setOpenAddMenu(null);
+        setSearchTerm('');
+    };
+
+    const removeSkill = (skillName: string) => {
+        if (!currentRole) return;
+        const newSkills = currentRole.skills.filter(s => s.name !== skillName);
+        const newOverallScore = recalculateScore(newSkills);
+        setCurrentRole({ ...currentRole, skills: newSkills, overallScore: newOverallScore });
+    };
+
 
     const handleSave = () => {
         if (currentRole) {
@@ -87,7 +106,7 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
         }
     };
     
-    const canSave = currentRole && currentRole.skills.every(s => s.rating > 0);
+    const canSave = currentRole && currentRole.skills.length > 0;
     const overallScore = currentRole?.overallScore ?? 0;
     const overallScoreStyles = getRatingStyles(overallScore);
 
@@ -121,41 +140,78 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
                     
                     {currentRole && selectedRoleDef && (
                         <div className="fade-in-up space-y-4">
-                            {!initialRole && <p className="font-medium">2. Rate your competency for each skill (hover for info):</p>}
+                            {!initialRole && <p className="font-medium">2. Add skills and rate your competency:</p>}
                             
                             <div className="space-y-4">
-                                {selectedRoleDef.skillCategories.map(category => (
-                                    <div key={category.category} className="p-4 bg-gray-50 rounded-lg border">
-                                        <h3 className="font-bold text-lg text-blue-700 mb-3 border-b pb-2">{category.category}</h3>
-                                        <div className="divide-y divide-gray-200">
-                                            {category.skills.map(skillDef => {
-                                                const skill = currentRole.skills.find(s => s.name === skillDef.name);
-                                                if (!skill) return null;
-                                                const ratingStyles = getRatingStyles(skill.rating);
-                                                
-                                                return (
-                                                    <div key={skillDef.name} className="py-3">
-                                                         <div className="flex justify-between items-center mb-1">
-                                                            <div className="block font-medium text-gray-700 text-sm tooltip-container">
-                                                                {skillDef.name}
-                                                                <span className="tooltip-text">{skillDef.description}</span>
+                                {selectedRoleDef.skillCategories.map(category => {
+                                    const categorySkillsInRole = currentRole.skills.filter(s => category.skills.some(cs => cs.name === s.name));
+                                    const availableSkills = category.skills
+                                        .filter(skillDef => !currentRole.skills.some(s => s.name === skillDef.name))
+                                        .filter(skillDef => skillDef.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+                                    return (
+                                        <div key={category.category} className="p-4 bg-gray-50 rounded-lg border">
+                                            <h3 className="font-bold text-lg text-blue-700 mb-3 border-b pb-2">{category.category}</h3>
+                                            <div className="divide-y divide-gray-200">
+                                                {categorySkillsInRole.map(skill => {
+                                                    const skillDef = category.skills.find(cs => cs.name === skill.name)!;
+                                                    const ratingStyles = getRatingStyles(skill.rating);
+                                                    
+                                                    return (
+                                                        <div key={skillDef.name} className="py-3">
+                                                            <div className="flex justify-between items-center mb-1">
+                                                                <div className="flex items-center gap-4">
+                                                                    <button type="button" onClick={() => removeSkill(skillDef.name)} className="text-red-500 hover:text-red-700"><Trash2 size={16}/></button>
+                                                                    <div className="block font-medium text-gray-700 text-sm tooltip-container">
+                                                                        {skillDef.name}
+                                                                        <span className="tooltip-text">{skillDef.description}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div className={`flex items-baseline gap-2 flex-shrink-0 px-2.5 py-1 rounded-full transition-colors duration-200 min-w-[120px] justify-center ${ratingStyles.bg}`}>
+                                                                    <span className={`text-lg font-bold ${ratingStyles.text}`}>{skill.rating}</span>
+                                                                    <span className={`text-xs font-semibold ${ratingStyles.text}`}>{ratingStyles.descriptor}</span>
+                                                                </div>
                                                             </div>
-                                                            <div className={`flex items-baseline gap-2 flex-shrink-0 px-2.5 py-1 rounded-full transition-colors duration-200 min-w-[120px] justify-center ${ratingStyles.bg}`}>
-                                                                <span className={`text-lg font-bold ${ratingStyles.text}`}>{skill.rating}</span>
-                                                                <span className={`text-xs font-semibold ${ratingStyles.text}`}>{ratingStyles.descriptor}</span>
-                                                            </div>
+                                                            <input 
+                                                                type="range" min="1" max="100" value={skill.rating} 
+                                                                onChange={e => handleSkillChange(skillDef.name, e.target.value)} 
+                                                                className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer ${ratingStyles.accent}`}
+                                                            />
                                                         </div>
-                                                        <input 
-                                                            type="range" min="1" max="100" value={skill.rating} 
-                                                            onChange={e => handleSkillChange(skillDef.name, e.target.value)} 
-                                                            className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer ${ratingStyles.accent}`}
+                                                    );
+                                                })}
+                                            </div>
+
+                                            <div className="mt-4 relative" ref={addMenuRef}>
+                                                <button type="button" onClick={() => { setOpenAddMenu(openAddMenu === category.category ? null : category.category); setSearchTerm(''); }} className="flex items-center text-sm font-semibold text-blue-600 hover:text-blue-800">
+                                                    <Plus size={16} className="mr-1"/> Add Skill to {category.category}
+                                                </button>
+                                                {openAddMenu === category.category && (
+                                                    <div className="absolute top-full left-0 mt-2 w-full sm:w-96 bg-white border rounded-lg shadow-xl z-10 p-2">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Search skills..."
+                                                            value={searchTerm}
+                                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                                            className="w-full border p-2 rounded-md mb-2"
                                                         />
+                                                        <ul className="max-h-48 overflow-y-auto custom-scrollbar">
+                                                            {availableSkills.map(skillDef => (
+                                                                <li key={skillDef.name}>
+                                                                    <button type="button" onClick={() => addSkill(skillDef)} className="w-full text-left p-2 rounded-md hover:bg-gray-100 text-sm tooltip-container">
+                                                                        {skillDef.name}
+                                                                        <span className="tooltip-text">{skillDef.description}</span>
+                                                                    </button>
+                                                                </li>
+                                                            ))}
+                                                             {availableSkills.length === 0 && <li className="p-2 text-sm text-gray-500">No skills found.</li>}
+                                                        </ul>
                                                     </div>
-                                                );
-                                            })}
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}

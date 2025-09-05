@@ -1,4 +1,4 @@
-import { EngineerProfile, CompanyProfile, Discipline, Currency, ProfileTier, Compliance, RatedSkill } from '../../types/index.ts';
+import { EngineerProfile, CompanyProfile, Discipline, Currency, ProfileTier, Compliance, RatedSkill, Language, Country } from '../../types/index.ts';
 import { JOB_ROLE_DEFINITIONS } from '../jobRoles.ts';
 import { MALE_FIRST_NAMES, FEMALE_FIRST_NAMES, LAST_NAMES, LOCATIONS, COMPANY_NAMES, COMPANY_SUFFIXES } from './mockConstants.ts';
 import { MOCK_ENGINEER_STEVE, MOCK_ENGINEER_1, MOCK_ENGINEER_2, MOCK_ENGINEER_3, MOCK_RESOURCING_COMPANY_1 } from './mockStaticProfiles.ts';
@@ -38,7 +38,8 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
             id: `gen-eng-${i}`, name, firstName, surname: name.split(' ')[1], status: 'active',
             discipline: getRandom([Discipline.AV, Discipline.IT, Discipline.BOTH]),
             avatar: `https://i.pravatar.cc/150?u=gen-eng-${i}`,
-            location: `${getRandom(LOCATIONS)}, UK`, currency: Currency.GBP, minDayRate, maxDayRate,
+            location: `${getRandom(LOCATIONS)}, UK`, country: Country.UK,
+            currency: Currency.GBP, language: Language.EN, minDayRate, maxDayRate,
             experience: getRandomInt(3, 20), availability: new Date(new Date().getTime() + getRandomInt(1, 90) * 24 * 60 * 60 * 1000),
             description: `A skilled ${name.split(' ')[1]} with ${name.length % 10 + 5} years of experience.`,
             profileTier, certifications: [], caseStudies: [],
@@ -50,6 +51,8 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
             calendarSyncUrl: `https://api.techsubbies.com/calendar/gen-eng-${i}.ics`,
             joinDate: new Date(new Date().setDate(new Date().getDate() - getRandomInt(10, 365))),
             badges: [],
+            warnings: 0, isBanned: false,
+            jobAlertsEnabled: Math.random() > 0.5, // Randomly enable for some users
         };
 
         if (profileTier !== ProfileTier.BASIC) {
@@ -70,12 +73,16 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
 const generateMockCompanies = (count: number): CompanyProfile[] => {
     return Array.from({ length: count }, (_, i) => {
         const name = `${getRandom(COMPANY_NAMES)} ${getRandom(COMPANY_SUFFIXES)}`;
+        const location = `${getRandom(LOCATIONS)}, UK`;
         return {
             id: `gen-comp-${i}`, name, status: 'active',
             avatar: `https://i.pravatar.cc/150?u=gen-comp-${i}`,
             website: `www.${name.replace(/\s/g, '').toLowerCase()}.com`,
             consentToFeature: Math.random() < 0.2, logo: '', 
             companyRegNumber: `GB${getRandomInt(10000000, 99999999)}`, isVerified: true,
+            language: Language.EN, currency: Currency.GBP,
+            country: Country.UK, location: location,
+            warnings: 0, isBanned: false,
         };
     });
 };
@@ -85,9 +92,9 @@ const generateMockCompanies = (count: number): CompanyProfile[] => {
 export const MOCK_ENGINEERS = [MOCK_ENGINEER_STEVE, MOCK_ENGINEER_1, MOCK_ENGINEER_2, MOCK_ENGINEER_3, ...generateMockEngineers(20)];
 
 export const MOCK_COMPANIES: CompanyProfile[] = [
-    { id: 'comp-1', name: 'Pro AV Solutions', avatar: AVATARS.defaultCompany, consentToFeature: true, status: 'active', logo: 'proav', companyRegNumber: 'VALID-12345', isVerified: true },
-    { id: 'comp-2', name: 'Starlight Events', avatar: AVATARS.defaultCompany, consentToFeature: true, status: 'active', logo: 'starlight', companyRegNumber: 'VALID-67890', isVerified: true },
-    { id: 'comp-3', name: 'Nexus IT Integrators', avatar: AVATARS.defaultCompany, consentToFeature: true, status: 'active', logo: 'nexus', companyRegNumber: 'VALID-11223', isVerified: true },
+    { id: 'comp-1', name: 'Pro AV Solutions', avatar: AVATARS.defaultCompany, consentToFeature: true, status: 'active', logo: 'proav', companyRegNumber: 'VALID-12345', isVerified: true, language: Language.EN, currency: Currency.GBP, country: Country.UK, location: 'London, UK', warnings: 0, isBanned: false },
+    { id: 'comp-2', name: 'Starlight Events', avatar: AVATARS.defaultCompany, consentToFeature: true, status: 'active', logo: 'starlight', companyRegNumber: 'VALID-67890', isVerified: true, language: Language.ES, currency: Currency.EUR, country: Country.FR, location: 'Paris, France', warnings: 1, isBanned: false }, // Has 1 warning
+    { id: 'comp-3', name: 'Nexus IT Integrators', avatar: AVATARS.defaultCompany, consentToFeature: true, status: 'active', logo: 'nexus', companyRegNumber: 'VALID-11223', isVerified: true, language: Language.EN, currency: Currency.USD, country: Country.USA, location: 'New York, USA', warnings: 0, isBanned: false },
     MOCK_RESOURCING_COMPANY_1,
     ...generateMockCompanies(15)
 ];

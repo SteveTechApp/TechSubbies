@@ -16,20 +16,25 @@ import { InvestorRelationsPage } from './views/InvestorRelationsPage.tsx';
 import { AboutUsPage } from './views/AboutUsPage.tsx';
 import { LegalPage } from './views/LegalPage.tsx';
 import { PricingPage } from './views/PricingPage.tsx';
-import { UserGuidePage } from './views/UserGuidePage.tsx';
+import { HelpCenterPage } from './views/UserGuidePage.tsx';
 import { AIAssistant } from './components/AIAssistant.tsx';
 import { HowItWorksModal } from './components/HowItWorksModal.tsx';
 import { PaymentModal } from './components/PaymentModal.tsx';
 
 const App = () => {
-    const { user, purchaseDayPass } = useAppContext();
+    const { user, purchaseDayPass, setCurrentPageContext } = useAppContext();
     const [page, setPage] = useState<Page>('landing');
     const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
     useEffect(() => {
+        // For logged-out users, the page state is the context.
+        // For logged-in users, the dashboard component will set the context.
+        if (!user) {
+            setCurrentPageContext(page);
+        }
         window.scrollTo(0, 0);
-    }, [page, user]);
+    }, [page, user, setCurrentPageContext]);
 
     const onNavigate = (targetPage: Page) => {
         setPage(targetPage);
@@ -85,8 +90,8 @@ const App = () => {
                 return <LegalPage documentType="security" {...pageProps} />;
             case 'pricing':
                 return <PricingPage {...pageProps} />;
-            case 'userGuide':
-                return <UserGuidePage {...pageProps} />;
+            case 'helpCenter':
+                return <HelpCenterPage {...pageProps} />;
             case 'landing':
             default:
                 return <LandingPage {...pageProps} />;

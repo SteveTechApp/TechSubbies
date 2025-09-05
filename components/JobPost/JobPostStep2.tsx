@@ -1,86 +1,120 @@
 import React, { useEffect, useState } from 'react';
-import { JobRoleDefinition, JobSkillRequirement, SkillImportance, ExperienceLevel } from '../../types/index.ts';
-import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles.ts';
-import { Save } from '../Icons.tsx';
+import { JobSkillRequirement, SkillImportance } from '../../types/index.ts';
+import { Save, Loader, Sparkles } from '../Icons.tsx';
+import { useAppContext } from '../../context/AppContext.tsx';
 
 interface JobPostStep2Props {
     jobDetails: any;
     skillRequirements: JobSkillRequirement[];
-    setSkillRequirements: (skills: JobSkillRequirement[]) => void;
+    // FIX: Corrected the type definition to allow for state setter callbacks, which is the standard for React's useState setters.
+    setSkillRequirements: React.Dispatch<React.SetStateAction<JobSkillRequirement[]>>;
     onBack: () => void;
     onSubmit: () => void;
 }
 
-export const JobPostStep2 = ({ jobDetails, skillRequirements, setSkillRequirements, onBack, onSubmit }: JobPostStep2Props) => {
-    const [selectedRoleDef, setSelectedRoleDef] = useState<JobRoleDefinition | null>(null);
-
-    useEffect(() => {
-        if (!jobDetails.jobRole) return;
-        const roleDef = JOB_ROLE_DEFINITIONS.find(r => r.name === jobDetails.jobRole);
-        if (roleDef) {
-            setSelectedRoleDef(roleDef);
-            const experience = jobDetails.experienceLevel;
-            
-            const expertThreshold = 0.4; // 40% of skills are essential for experts.
-            const seniorThreshold = 2; // Top 2 skills are essential for seniors.
-            
-            let newReqs: JobSkillRequirement[] = [];
-            
-            roleDef.skillCategories.forEach(category => {
-                let skillsForCategory = [...category.skills];
-                
-                if (experience === ExperienceLevel.JUNIOR) {
-                    skillsForCategory = skillsForCategory.slice(0, Math.ceil(skillsForCategory.length * 0.6));
-                }
-                
-                const categoryReqs = skillsForCategory.map((skillDef, index) => {
-                    let importance: SkillImportance = 'desirable';
-                    if (experience === ExperienceLevel.SENIOR && index < seniorThreshold) {
-                        importance = 'essential';
-                    } else if (experience === ExperienceLevel.EXPERT && index < Math.ceil(skillsForCategory.length * expertThreshold)) {
-                        importance = 'essential';
-                    }
-                    return { name: skillDef.name, importance };
-                });
-                newReqs.push(...categoryReqs);
-            });
-            setSkillRequirements(newReqs);
+const SkillRequirementSelector = ({ skill, selection, onSelect }: { skill: JobSkillRequirement, selection: SkillImportance | 'N/A', onSelect: (importance: SkillImportance | 'N/A') => void }) => {
+    const getButtonClass = (value: SkillImportance | 'N/A') => {
+        let base = 'px-3 py-1 text-xs font-bold rounded-full';
+        if (value === selection) {
+            if (value === 'essential') return `${base} bg-yellow-400 text-yellow-900`;
+            if (value === 'desirable') return `${base} bg-blue-200 text-blue-800`;
+            return `${base} bg-gray-400 text-white`;
         }
-    }, [jobDetails.jobRole, jobDetails.experienceLevel, setSkillRequirements]);
-
-    const handleImportanceToggle = (skillName: string) => {
-        setSkillRequirements(skillRequirements.map(skill => 
-            skill.name === skillName
-            ? { ...skill, importance: skill.importance === 'desirable' ? 'essential' : 'desirable' }
-            : skill
-        ));
+        return `${base} bg-gray-200 text-gray-600 hover:bg-gray-300`;
     };
 
     return (
-        <>
-            <h2 className="text-2xl font-bold mb-2">Step 2: Define Skill Importance</h2>
-            <p className="text-gray-500 mb-4">Mark skills as 'Essential' or 'Desirable'. This will power the AI matching.</p>
-            <div className="space-y-4 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2">
-                {selectedRoleDef?.skillCategories.map(category => (
-                    <div key={category.category} className="p-4 bg-gray-50 rounded-lg border">
-                        <h3 className="font-bold text-lg text-blue-700 mb-3 border-b pb-2">{category.category}</h3>
-                        <div className="space-y-2">
-                            {skillRequirements.filter(skillReq => category.skills.some(skillDef => skillDef.name === skillReq.name)).map(skill => {
-                                const isEssential = skill.importance === 'essential';
-                                return (
-                                    <div key={skill.name} className="flex items-center justify-between p-2 bg-white rounded-md">
-                                        <span className="font-medium text-gray-700 text-sm">{skill.name}</span>
-                                        <div className="flex items-center gap-2">
-                                            <button type="button" onClick={() => handleImportanceToggle(skill.name)} className={`px-3 py-1 text-xs font-bold rounded-full ${!isEssential ? 'bg-blue-200 text-blue-800' : 'bg-gray-200 text-gray-600'}`}>Desirable</button>
-                                            <button type="button" onClick={() => handleImportanceToggle(skill.name)} className={`px-3 py-1 text-xs font-bold rounded-full ${isEssential ? 'bg-yellow-400 text-yellow-900' : 'bg-gray-200 text-gray-600'}`}>Essential</button>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                ))}
+        <div className="flex items-center justify-between p-2 bg-white rounded-md">
+            <span className="font-medium text-gray-700 text-sm">{skill.name}</span>
+            <div className="flex items-center gap-2">
+                <button type="button" onClick={() => onSelect('essential')} className={getButtonClass('essential')}>Essential</button>
+                <button type="button" onClick={() => onSelect('desirable')} className={getButtonClass('desirable')}>Desirable</button>
+                <button type="button" onClick={() => onSelect('N/A')} className={getButtonClass('N/A')}>N/A</button>
             </div>
+        </div>
+    );
+};
+
+export const JobPostStep2 = ({ jobDetails, skillRequirements, setSkillRequirements, onBack, onSubmit }: JobPostStep2Props) => {
+    const { geminiService } = useAppContext();
+    const [isLoading, setIsLoading] = useState(false);
+    const [aiSuggestedSkills, setAiSuggestedSkills] = useState<JobSkillRequirement[] | null>(null);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        const fetchSkills = async () => {
+            if (!jobDetails.jobRole) return;
+            setIsLoading(true);
+            setError('');
+            setAiSuggestedSkills(null);
+
+            const result = await geminiService.suggestSkillsForJobRole(jobDetails.jobRole);
+            
+            if (result.error) {
+                setError(result.error);
+            } else if (result.skills) {
+                setAiSuggestedSkills(result.skills);
+                setSkillRequirements(result.skills); // Pre-populate with AI suggestions
+            } else {
+                setError("An unexpected error occurred while fetching skills.");
+            }
+            setIsLoading(false);
+        };
+
+        fetchSkills();
+    }, [jobDetails.jobRole, geminiService, setSkillRequirements]);
+
+    const handleSkillSelectionChange = (skillName: string, newImportance: SkillImportance | 'N/A') => {
+        setSkillRequirements(prevReqs => {
+            const existingIndex = prevReqs.findIndex(s => s.name === skillName);
+
+            if (newImportance === 'N/A') {
+                return existingIndex > -1 ? prevReqs.filter(s => s.name !== skillName) : prevReqs;
+            }
+            
+            if (existingIndex > -1) {
+                const updatedReqs = [...prevReqs];
+                updatedReqs[existingIndex].importance = newImportance;
+                return updatedReqs;
+            }
+            
+            return [...prevReqs, { name: skillName, importance: newImportance }];
+        });
+    };
+    
+    const getSkillSelection = (skillName: string): SkillImportance | 'N/A' => {
+        const skill = skillRequirements.find(s => s.name === skillName);
+        return skill ? skill.importance : 'N/A';
+    };
+
+
+    return (
+        <>
+            <h2 className="text-2xl font-bold mb-2 flex items-center"><Sparkles className="mr-2 text-purple-600"/> Step 2: AI-Powered Skill Selection</h2>
+            <p className="text-gray-500 mb-4">We've suggested key skills for a <strong>{jobDetails.jobRole}</strong>. Refine the list to match your exact needs.</p>
+            
+            <div className="space-y-2 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2 p-4 bg-gray-50 rounded-lg border">
+                {isLoading && (
+                    <div className="flex items-center justify-center p-8">
+                        <Loader className="animate-spin w-8 h-8 text-blue-600 mr-3" />
+                        <span className="font-semibold text-gray-700">Generating skill suggestions...</span>
+                    </div>
+                )}
+                {error && <p className="text-red-500 text-center">{error}</p>}
+                {aiSuggestedSkills && (
+                     <div className="space-y-2">
+                        {aiSuggestedSkills.map(skill => (
+                           <SkillRequirementSelector
+                                key={skill.name}
+                                skill={skill}
+                                selection={getSkillSelection(skill.name)}
+                                onSelect={(importance) => handleSkillSelectionChange(skill.name, importance)}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
+            
             <div className="flex justify-between items-center mt-6 pt-4 border-t">
                 <button onClick={onBack} className="px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Back</button>
                 <button onClick={onSubmit} className="flex items-center px-6 py-2 bg-green-600 text-white font-bold rounded-md hover:bg-green-700">

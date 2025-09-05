@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { PoundSterling, DollarSign } from '../components/Icons.tsx';
-// FIX: Added Invoice to the type import to support the new `invoices` state.
-import { Role, EngineerProfile, User, Job, Application, Currency, Conversation, Message, Review, CompanyProfile, ApplicationStatus, Notification, NotificationType, AppContextType, ForumPost, ForumComment, ProfileTier, Contract, ContractStatus, ContractType, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Compliance, IdentityVerification, Discipline, JobSkillRequirement, Badge, Project, ProjectRole, Invoice, Insight } from '../types/index.ts';
+// FIX: Added Invoice and TimesheetStatus to the type import to support the new `invoices` state and fix enum errors.
+import { Role, EngineerProfile, User, Job, Application, Currency, Conversation, Message, Review, CompanyProfile, ApplicationStatus, Notification, NotificationType, AppContextType, ForumPost, ForumComment, ProfileTier, Contract, ContractStatus, ContractType, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Compliance, IdentityVerification, Discipline, JobSkillRequirement, Badge, Project, ProjectRole, Invoice, Insight, Language, LocalizationFunction, Country, InvoiceItem, PaymentTerms, TimesheetStatus, InvoiceStatus } from '../types/index.ts';
 import { MOCK_JOBS, MOCK_ENGINEERS, MOCK_USERS, MOCK_USER_FREE_ENGINEER, ALL_MOCK_USERS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_COMPANIES, MOCK_NOTIFICATIONS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_CONTRACTS, MOCK_TRANSACTIONS, MOCK_PROJECTS } from '../data/mockData.ts';
 import { geminiService } from '../services/geminiService.ts';
 import type { Chat } from '@google/genai';
@@ -10,9 +10,15 @@ import { BADGES } from '../data/badges.ts';
 
 // --- CONSTANTS ---
 export const APP_NAME = "TechSubbies.com";
+// FIX: Add missing currency icons to satisfy the Currency enum type.
 export const CURRENCY_ICONS: { [key in Currency]: React.ComponentType<any> } = {
     [Currency.GBP]: PoundSterling,
     [Currency.USD]: DollarSign,
+    [Currency.EUR]: PoundSterling, // Placeholder, a Euro icon would be better.
+    [Currency.AUD]: DollarSign,
+    [Currency.INR]: DollarSign, // Placeholder, a Rupee icon would be better.
+    [Currency.CAD]: DollarSign,
+    [Currency.BRL]: DollarSign,
 };
 const PLATFORM_FEE_PERCENTAGE = 0.05; // 5%
 
@@ -55,8 +61,416 @@ export const useAppLogic = (): AppContextType => {
     const [contracts, setContracts] = useState<Contract[]>(MOCK_CONTRACTS);
     const [transactions, setTransactions] = useState<Transaction[]>(MOCK_TRANSACTIONS);
     const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
-    // FIX: Added missing state for invoices to conform to AppContextType.
+    const [currentPageContext, setCurrentPageContext] = useState<string>('Landing Page');
     const [invoices, setInvoices] = useState<Invoice[]>([]);
+    const [language, setLanguageState] = useState<Language>(Language.EN);
+    const [currency, setCurrencyState] = useState<Currency>(Currency.GBP);
+    
+    // --- LOCALIZATION & PRICING ---
+    const translations: Record<Language, Record<string, string>> = {
+        [Language.EN]: {
+            pricing_title: "Flexible Pricing for Every Professional",
+            pricing_subtitle: "Choose the plan that best fits your career goals. All plans include direct messaging, contract management, and secure payments.",
+            free: "Free",
+            forever: "Forever",
+            month: "mo",
+            get_started: "Get Started",
+            choose_silver: "Choose Silver",
+            start_free_trial: "Start Free Trial",
+            choose_platinum: "Choose Platinum",
+            for_engineers: "For Engineers",
+            for_companies_resourcing: "For Companies & Resourcing",
+            bronze_tier: "Bronze",
+            bronze_desc: "The essential on-ramp for visibility in entry-level and support roles.",
+            bronze_feat_1: "Public Professional Profile",
+            bronze_feat_2: "Appear in General Searches",
+            bronze_feat_3: "Set Availability Calendar",
+            bronze_feat_4: "Search and Apply for Jobs",
+            silver_tier: "Silver",
+            silver_desc: "For the growing professional who needs to stand out with proven credentials and access powerful tools.",
+            silver_feat_1: "Everything in Bronze, plus:",
+            silver_feat_2: "Core Skills (Tags)",
+            silver_feat_3: "Verified Certifications",
+            silver_feat_4: "{count} Specialist Role",
+            silver_feat_5: "AI-Powered Tools",
+            silver_feat_6: "Priority Search Ranking",
+            silver_feat_7: "Visual Case Studies (Storyboards)",
+            gold_tier: "Gold",
+            gold_desc: "For the established specialist who needs to showcase a diverse range of deep expertise.",
+            gold_feat_1: "Everything in Silver, plus:",
+            gold_feat_2: "Up to {count} Specialist Roles",
+            gold_feat_3: "Enhanced Search Visibility",
+            platinum_tier: "Platinum",
+            platinum_desc: "For the elite freelancer or small business owner who needs advanced tools and maximum visibility.",
+            platinum_feat_1: "Everything in Gold, plus:",
+            platinum_feat_2: "Up to {count} Specialist Roles",
+            platinum_feat_3: "Profile Analytics",
+            platinum_feat_4: "Advanced Profile Customization",
+            platinum_feat_5: "Dedicated Support",
+            for_companies: "For Companies",
+            free_forever: "Free. Forever.",
+            company_pricing_desc: "Our model is simple: we provide free, unlimited access for companies to find talent. This creates a vibrant marketplace that attracts the best engineers, who subscribe for our premium career tools.",
+            company_feat_1: "Unlimited Job Posts",
+            company_feat_2: "Search Full Engineer Database",
+            company_feat_3: "AI Smart Match to find the best talent",
+            company_feat_4: "Direct Messaging & Hiring",
+            company_feat_5: "Integrated Contracts & Escrow",
+            post_job_free: "Post a Job For Free",
+            agency_plan: "Agency Plan",
+            agency_desc: "A dedicated plan for resourcing companies to manage their talent roster and find contracts on their behalf.",
+            agency_feat_1: "Manage up to {count} Engineers",
+            agency_feat_2: "Search the full job board",
+            agency_feat_3: "Apply for jobs on behalf of engineers",
+            agency_feat_4: "Centralized messaging portal",
+            agency_feat_5: "Consolidated contract management",
+            agency_feat_6: "Roster performance analytics",
+            agency_feat_7: "Additional engineers at {price}/mo",
+            signed_in_as: "Signed in as",
+            logout: "Logout",
+        },
+        [Language.ES]: {
+            pricing_title: "Precios Flexibles para Cada Profesional",
+            pricing_subtitle: "Elige el plan que mejor se adapte a tus metas profesionales. Todos los planes incluyen mensajería directa, gestión de contratos y pagos seguros.",
+            free: "Gratis",
+            forever: "Para Siempre",
+            month: "mes",
+            get_started: "Comenzar",
+            choose_silver: "Elegir Plata",
+            start_free_trial: "Iniciar Prueba Gratuita",
+            choose_platinum: "Elegir Platino",
+            for_engineers: "Para Ingenieros",
+            for_companies_resourcing: "Para Empresas y Agencias",
+            bronze_tier: "Bronce",
+            bronze_desc: "La rampa de acceso esencial para la visibilidad en roles de nivel de entrada y soporte.",
+            bronze_feat_1: "Perfil Profesional Público",
+            bronze_feat_2: "Aparecer en Búsquedas Generales",
+            bronze_feat_3: "Establecer Calendario de Disponibilidad",
+            bronze_feat_4: "Buscar y Aplicar a Trabajos",
+            silver_tier: "Plata",
+            silver_desc: "Para el profesional en crecimiento que necesita destacar con credenciales probadas y acceder a herramientas potentes.",
+            silver_feat_1: "Todo en Bronce, más:",
+            silver_feat_2: "Habilidades Clave (Etiquetas)",
+            silver_feat_3: "Certificaciones Verificadas",
+            silver_feat_4: "{count} Rol de Especialista",
+            silver_feat_5: "Herramientas con IA",
+            silver_feat_6: "Ranking de Búsqueda Prioritario",
+            silver_feat_7: "Estudios de Caso Visuales (Storyboards)",
+            gold_tier: "Oro",
+            gold_desc: "Para el especialista establecido que necesita mostrar una gama diversa de experiencia profunda.",
+            gold_feat_1: "Todo en Plata, más:",
+            gold_feat_2: "Hasta {count} Roles de Especialista",
+            gold_feat_3: "Visibilidad de Búsqueda Mejorada",
+            platinum_tier: "Platino",
+            platinum_desc: "Para el freelancer de élite o propietario de pequeña empresa que necesita herramientas avanzadas y máxima visibilidad.",
+            platinum_feat_1: "Todo en Oro, más:",
+            platinum_feat_2: "Hasta {count} Roles de Especialista",
+            platinum_feat_3: "Análisis de Perfil",
+            platinum_feat_4: "Personalización Avanzada de Perfil",
+            platinum_feat_5: "Soporte Dedicado",
+            for_companies: "Para Empresas",
+            free_forever: "Gratis. Para Siempre.",
+            company_pricing_desc: "Nuestro modelo es simple: ofrecemos acceso gratuito e ilimitado para que las empresas encuentren talento. Esto crea un mercado vibrante que atrae a los mejores ingenieros, quienes se suscriben a nuestras herramientas profesionales premium.",
+            company_feat_1: "Publicaciones de Trabajo Ilimitadas",
+            company_feat_2: "Buscar en la Base de Datos Completa de Ingenieros",
+            company_feat_3: "AI Smart Match para encontrar el mejor talento",
+            company_feat_4: "Mensajería Directa y Contratación",
+            company_feat_5: "Contratos y Depósito de Garantía Integrados",
+            post_job_free: "Publicar un Trabajo Gratis",
+            agency_plan: "Plan de Agencia",
+            agency_desc: "Un plan dedicado para que las empresas de recursos gestionen su lista de talentos y encuentren contratos en su nombre.",
+            agency_feat_1: "Gestionar hasta {count} Ingenieros",
+            agency_feat_2: "Buscar en la bolsa de trabajo completa",
+            agency_feat_3: "Aplicar a trabajos en nombre de los ingenieros",
+            agency_feat_4: "Portal de mensajería centralizado",
+            agency_feat_5: "Gestión de contratos consolidada",
+            agency_feat_6: "Análisis de rendimiento de la lista",
+            agency_feat_7: "Ingenieros adicionales a {price}/mes",
+            signed_in_as: "Has iniciado sesión como",
+            logout: "Cerrar sesión",
+        },
+        [Language.DE]: { // Using EN as placeholder
+            pricing_title: "Flexible Pricing for Every Professional",
+            pricing_subtitle: "Choose the plan that best fits your career goals. All plans include direct messaging, contract management, and secure payments.",
+            free: "Free",
+            forever: "Forever",
+            month: "mo",
+            get_started: "Get Started",
+            choose_silver: "Choose Silver",
+            start_free_trial: "Start Free Trial",
+            choose_platinum: "Choose Platinum",
+            for_engineers: "For Engineers",
+            for_companies_resourcing: "For Companies & Resourcing",
+            bronze_tier: "Bronze",
+            bronze_desc: "The essential on-ramp for visibility in entry-level and support roles.",
+            bronze_feat_1: "Public Professional Profile",
+            bronze_feat_2: "Appear in General Searches",
+            bronze_feat_3: "Set Availability Calendar",
+            bronze_feat_4: "Search and Apply for Jobs",
+            silver_tier: "Silver",
+            silver_desc: "For the growing professional who needs to stand out with proven credentials and access powerful tools.",
+            silver_feat_1: "Everything in Bronze, plus:",
+            silver_feat_2: "Core Skills (Tags)",
+            silver_feat_3: "Verified Certifications",
+            silver_feat_4: "{count} Specialist Role",
+            silver_feat_5: "AI-Powered Tools",
+            silver_feat_6: "Priority Search Ranking",
+            silver_feat_7: "Visual Case Studies (Storyboards)",
+            gold_tier: "Gold",
+            gold_desc: "For the established specialist who needs to showcase a diverse range of deep expertise.",
+            gold_feat_1: "Everything in Silver, plus:",
+            gold_feat_2: "Up to {count} Specialist Roles",
+            gold_feat_3: "Enhanced Search Visibility",
+            platinum_tier: "Platinum",
+            platinum_desc: "For the elite freelancer or small business owner who needs advanced tools and maximum visibility.",
+            platinum_feat_1: "Everything in Gold, plus:",
+            platinum_feat_2: "Up to {count} Specialist Roles",
+            platinum_feat_3: "Profile Analytics",
+            platinum_feat_4: "Advanced Profile Customization",
+            platinum_feat_5: "Dedicated Support",
+            for_companies: "For Companies",
+            free_forever: "Free. Forever.",
+            company_pricing_desc: "Our model is simple: we provide free, unlimited access for companies to find talent. This creates a vibrant marketplace that attracts the best engineers, who subscribe for our premium career tools.",
+            company_feat_1: "Unlimited Job Posts",
+            company_feat_2: "Search Full Engineer Database",
+            company_feat_3: "AI Smart Match to find the best talent",
+            company_feat_4: "Direct Messaging & Hiring",
+            company_feat_5: "Integrated Contracts & Escrow",
+            post_job_free: "Post a Job For Free",
+            agency_plan: "Agency Plan",
+            agency_desc: "A dedicated plan for resourcing companies to manage their talent roster and find contracts on their behalf.",
+            agency_feat_1: "Manage up to {count} Engineers",
+            agency_feat_2: "Search the full job board",
+            agency_feat_3: "Apply for jobs on behalf of engineers",
+            agency_feat_4: "Centralized messaging portal",
+            agency_feat_5: "Consolidated contract management",
+            agency_feat_6: "Roster performance analytics",
+            agency_feat_7: "Additional engineers at {price}/mo",
+            signed_in_as: "Signed in as",
+            logout: "Logout",
+        },
+        [Language.FR]: { // Using EN as placeholder
+            pricing_title: "Flexible Pricing for Every Professional",
+            pricing_subtitle: "Choose the plan that best fits your career goals. All plans include direct messaging, contract management, and secure payments.",
+            free: "Free",
+            forever: "Forever",
+            month: "mo",
+            get_started: "Get Started",
+            choose_silver: "Choose Silver",
+            start_free_trial: "Start Free Trial",
+            choose_platinum: "Choose Platinum",
+            for_engineers: "For Engineers",
+            for_companies_resourcing: "For Companies & Resourcing",
+            bronze_tier: "Bronze",
+            bronze_desc: "The essential on-ramp for visibility in entry-level and support roles.",
+            bronze_feat_1: "Public Professional Profile",
+            bronze_feat_2: "Appear in General Searches",
+            bronze_feat_3: "Set Availability Calendar",
+            bronze_feat_4: "Search and Apply for Jobs",
+            silver_tier: "Silver",
+            silver_desc: "For the growing professional who needs to stand out with proven credentials and access powerful tools.",
+            silver_feat_1: "Everything in Bronze, plus:",
+            silver_feat_2: "Core Skills (Tags)",
+            silver_feat_3: "Verified Certifications",
+            silver_feat_4: "{count} Specialist Role",
+            silver_feat_5: "AI-Powered Tools",
+            silver_feat_6: "Priority Search Ranking",
+            silver_feat_7: "Visual Case Studies (Storyboards)",
+            gold_tier: "Gold",
+            gold_desc: "For the established specialist who needs to showcase a diverse range of deep expertise.",
+            gold_feat_1: "Everything in Silver, plus:",
+            gold_feat_2: "Up to {count} Specialist Roles",
+            gold_feat_3: "Enhanced Search Visibility",
+            platinum_tier: "Platinum",
+            platinum_desc: "For the elite freelancer or small business owner who needs advanced tools and maximum visibility.",
+            platinum_feat_1: "Everything in Gold, plus:",
+            platinum_feat_2: "Up to {count} Specialist Roles",
+            platinum_feat_3: "Profile Analytics",
+            platinum_feat_4: "Advanced Profile Customization",
+            platinum_feat_5: "Dedicated Support",
+            for_companies: "For Companies",
+            free_forever: "Free. Forever.",
+            company_pricing_desc: "Our model is simple: we provide free, unlimited access for companies to find talent. This creates a vibrant marketplace that attracts the best engineers, who subscribe for our premium career tools.",
+            company_feat_1: "Unlimited Job Posts",
+            company_feat_2: "Search Full Engineer Database",
+            company_feat_3: "AI Smart Match to find the best talent",
+            company_feat_4: "Direct Messaging & Hiring",
+            company_feat_5: "Integrated Contracts & Escrow",
+            post_job_free: "Post a Job For Free",
+            agency_plan: "Agency Plan",
+            agency_desc: "A dedicated plan for resourcing companies to manage their talent roster and find contracts on their behalf.",
+            agency_feat_1: "Manage up to {count} Engineers",
+            agency_feat_2: "Search the full job board",
+            agency_feat_3: "Apply for jobs on behalf of engineers",
+            agency_feat_4: "Centralized messaging portal",
+            agency_feat_5: "Consolidated contract management",
+            agency_feat_6: "Roster performance analytics",
+            agency_feat_7: "Additional engineers at {price}/mo",
+            signed_in_as: "Signed in as",
+            logout: "Logout",
+        },
+        [Language.HI]: { // Using EN as placeholder
+            pricing_title: "Flexible Pricing for Every Professional",
+            pricing_subtitle: "Choose the plan that best fits your career goals. All plans include direct messaging, contract management, and secure payments.",
+            free: "Free",
+            forever: "Forever",
+            month: "mo",
+            get_started: "Get Started",
+            choose_silver: "Choose Silver",
+            start_free_trial: "Start Free Trial",
+            choose_platinum: "Choose Platinum",
+            for_engineers: "For Engineers",
+            for_companies_resourcing: "For Companies & Resourcing",
+            bronze_tier: "Bronze",
+            bronze_desc: "The essential on-ramp for visibility in entry-level and support roles.",
+            bronze_feat_1: "Public Professional Profile",
+            bronze_feat_2: "Appear in General Searches",
+            bronze_feat_3: "Set Availability Calendar",
+            bronze_feat_4: "Search and Apply for Jobs",
+            silver_tier: "Silver",
+            silver_desc: "For the growing professional who needs to stand out with proven credentials and access powerful tools.",
+            silver_feat_1: "Everything in Bronze, plus:",
+            silver_feat_2: "Core Skills (Tags)",
+            silver_feat_3: "Verified Certifications",
+            silver_feat_4: "{count} Specialist Role",
+            silver_feat_5: "AI-Powered Tools",
+            silver_feat_6: "Priority Search Ranking",
+            silver_feat_7: "Visual Case Studies (Storyboards)",
+            gold_tier: "Gold",
+            gold_desc: "For the established specialist who needs to showcase a diverse range of deep expertise.",
+            gold_feat_1: "Everything in Silver, plus:",
+            gold_feat_2: "Up to {count} Specialist Roles",
+            gold_feat_3: "Enhanced Search Visibility",
+            platinum_tier: "Platinum",
+            platinum_desc: "For the elite freelancer or small business owner who needs advanced tools and maximum visibility.",
+            platinum_feat_1: "Everything in Gold, plus:",
+            platinum_feat_2: "Up to {count} Specialist Roles",
+            platinum_feat_3: "Profile Analytics",
+            platinum_feat_4: "Advanced Profile Customization",
+            platinum_feat_5: "Dedicated Support",
+            for_companies: "For Companies",
+            free_forever: "Free. Forever.",
+            company_pricing_desc: "Our model is simple: we provide free, unlimited access for companies to find talent. This creates a vibrant marketplace that attracts the best engineers, who subscribe for our premium career tools.",
+            company_feat_1: "Unlimited Job Posts",
+            company_feat_2: "Search Full Engineer Database",
+            company_feat_3: "AI Smart Match to find the best talent",
+            company_feat_4: "Direct Messaging & Hiring",
+            company_feat_5: "Integrated Contracts & Escrow",
+            post_job_free: "Post a Job For Free",
+            agency_plan: "Agency Plan",
+            agency_desc: "A dedicated plan for resourcing companies to manage their talent roster and find contracts on their behalf.",
+            agency_feat_1: "Manage up to {count} Engineers",
+            agency_feat_2: "Search the full job board",
+            agency_feat_3: "Apply for jobs on behalf of engineers",
+            agency_feat_4: "Centralized messaging portal",
+            agency_feat_5: "Consolidated contract management",
+            agency_feat_6: "Roster performance analytics",
+            agency_feat_7: "Additional engineers at {price}/mo",
+            signed_in_as: "Signed in as",
+            logout: "Logout",
+        },
+        [Language.PT]: { // Using EN as placeholder
+            pricing_title: "Flexible Pricing for Every Professional",
+            pricing_subtitle: "Choose the plan that best fits your career goals. All plans include direct messaging, contract management, and secure payments.",
+            free: "Free",
+            forever: "Forever",
+            month: "mo",
+            get_started: "Get Started",
+            choose_silver: "Choose Silver",
+            start_free_trial: "Start Free Trial",
+            choose_platinum: "Choose Platinum",
+            for_engineers: "For Engineers",
+            for_companies_resourcing: "For Companies & Resourcing",
+            bronze_tier: "Bronze",
+            bronze_desc: "The essential on-ramp for visibility in entry-level and support roles.",
+            bronze_feat_1: "Public Professional Profile",
+            bronze_feat_2: "Appear in General Searches",
+            bronze_feat_3: "Set Availability Calendar",
+            bronze_feat_4: "Search and Apply for Jobs",
+            silver_tier: "Silver",
+            silver_desc: "For the growing professional who needs to stand out with proven credentials and access powerful tools.",
+            silver_feat_1: "Everything in Bronze, plus:",
+            silver_feat_2: "Core Skills (Tags)",
+            silver_feat_3: "Verified Certifications",
+            silver_feat_4: "{count} Specialist Role",
+            silver_feat_5: "AI-Powered Tools",
+            silver_feat_6: "Priority Search Ranking",
+            silver_feat_7: "Visual Case Studies (Storyboards)",
+            gold_tier: "Gold",
+            gold_desc: "For the established specialist who needs to showcase a diverse range of deep expertise.",
+            gold_feat_1: "Everything in Silver, plus:",
+            gold_feat_2: "Up to {count} Specialist Roles",
+            gold_feat_3: "Enhanced Search Visibility",
+            platinum_tier: "Platinum",
+            platinum_desc: "For the elite freelancer or small business owner who needs advanced tools and maximum visibility.",
+            platinum_feat_1: "Everything in Gold, plus:",
+            platinum_feat_2: "Up to {count} Specialist Roles",
+            platinum_feat_3: "Profile Analytics",
+            platinum_feat_4: "Advanced Profile Customization",
+            platinum_feat_5: "Dedicated Support",
+            for_companies: "For Companies",
+            free_forever: "Free. Forever.",
+            company_pricing_desc: "Our model is simple: we provide free, unlimited access for companies to find talent. This creates a vibrant marketplace that attracts the best engineers, who subscribe for our premium career tools.",
+            company_feat_1: "Unlimited Job Posts",
+            company_feat_2: "Search Full Engineer Database",
+            company_feat_3: "AI Smart Match to find the best talent",
+            company_feat_4: "Direct Messaging & Hiring",
+            company_feat_5: "Integrated Contracts & Escrow",
+            post_job_free: "Post a Job For Free",
+            agency_plan: "Agency Plan",
+            agency_desc: "A dedicated plan for resourcing companies to manage their talent roster and find contracts on their behalf.",
+            agency_feat_1: "Manage up to {count} Engineers",
+            agency_feat_2: "Search the full job board",
+            agency_feat_3: "Apply for jobs on behalf of engineers",
+            agency_feat_4: "Centralized messaging portal",
+            agency_feat_5: "Consolidated contract management",
+            agency_feat_6: "Roster performance analytics",
+            agency_feat_7: "Additional engineers at {price}/mo",
+            signed_in_as: "Signed in as",
+            logout: "Logout",
+        },
+    };
+    
+    const t: LocalizationFunction = (key, replacements) => {
+        const langDict = translations[language] || translations[Language.EN];
+        let str = langDict[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        if (replacements) {
+            Object.entries(replacements).forEach(([rKey, value]) => {
+                str = str.replace(`{${rKey}}`, String(value));
+            });
+        }
+        return str;
+    };
+    
+    const getRegionalPrice = (basePrice: number) => {
+        const multipliers = { [Currency.GBP]: 1, [Currency.USD]: 1.25, [Currency.EUR]: 1.18, [Currency.AUD]: 1.9, [Currency.INR]: 0.5 * 105, [Currency.CAD]: 1.7, [Currency.BRL]: 0.6 * 6.5 }; // Example multipliers
+        const symbols = { [Currency.GBP]: '£', [Currency.USD]: '$', [Currency.EUR]: '€', [Currency.AUD]: 'A$', [Currency.INR]: '₹', [Currency.CAD]: 'C$', [Currency.BRL]: 'R$' };
+        const amount = basePrice * (multipliers[currency] || 1);
+        return { amount, symbol: symbols[currency] || '£' };
+    };
+
+     const setLanguage = (lang: Language) => {
+        setLanguageState(lang);
+        if (user) {
+            const updatedProfile = { ...user.profile, language: lang };
+            if (user.role === Role.ENGINEER) {
+                updateEngineerProfile(updatedProfile as EngineerProfile);
+            } else {
+                updateCompanyProfile(updatedProfile as CompanyProfile);
+            }
+        }
+    };
+
+    const setCurrency = (curr: Currency) => {
+        setCurrencyState(curr);
+         if (user) {
+            const updatedProfile = { ...user.profile, currency: curr };
+            if (user.role === Role.ENGINEER) {
+                updateEngineerProfile(updatedProfile as EngineerProfile);
+            } else {
+                updateCompanyProfile(updatedProfile as CompanyProfile);
+            }
+        }
+    };
 
 
     // --- UTILITY FUNCTIONS ---
@@ -155,6 +569,11 @@ export const useAppLogic = (): AppContextType => {
             alert("This account has been suspended. Please contact support.");
             return;
         }
+        
+        // On login, set the global language/currency to the user's saved preference.
+        setLanguageState(userToLogin.profile.language);
+        setCurrencyState(userToLogin.profile.currency);
+
 
         // Check for expired trial on login for engineers
         if (userToLogin.role === Role.ENGINEER) {
@@ -195,21 +614,31 @@ export const useAppLogic = (): AppContextType => {
     };
 
     const createAndLoginEngineer = (data: {
-        name: string, email: string, discipline: Discipline, location: string, experience: number,
+        name: string, email: string, discipline: Discipline, location: string, experience: number, country: Country,
         minDayRate: number, maxDayRate: number, currency: Currency, availability: string,
         compliance: Compliance, identity: IdentityVerification
     }) => {
+        // Simulated country verification
+        if (data.email.endsWith('.co.uk') && data.country !== Country.UK) {
+            alert('Warning: Your email domain suggests you are in the UK, but you have selected a different country. Your account will be flagged for review to ensure correct regional pricing.');
+        } else if (data.email.endsWith('.com') && data.country !== Country.USA) {
+            // Add more rules as needed
+        }
+
         const [firstName, ...lastNameParts] = data.name.split(' ');
         const newEngineer: EngineerProfile = {
             id: `eng-${generateUniqueId()}`, name: data.name, status: 'active',
             firstName: firstName, surname: lastNameParts.join(' ') || ' ', avatar: `https://i.pravatar.cc/150?u=${data.name.replace(' ', '')}`,
             profileTier: ProfileTier.BASIC, certifications: [], caseStudies: [], skills: [],
-            discipline: data.discipline, location: data.location, experience: data.experience, currency: data.currency,
+            discipline: data.discipline, location: data.location, country: data.country,
+            experience: data.experience, currency: currency, // Use context currency
+            language: language, // Use context language
             minDayRate: data.minDayRate, maxDayRate: data.maxDayRate, availability: new Date(data.availability),
             compliance: data.compliance, identity: data.identity,
             contact: { email: data.email, phone: '', website: '', linkedin: '' },
             description: `Newly joined freelance ${data.discipline} with ${data.experience} years of experience, based in ${data.location}. Ready for new opportunities starting ${new Date(data.availability).toLocaleDateString()}.`,
             profileViews: 0, searchAppearances: 0, jobInvites: 0, joinDate: new Date(), badges: [],
+            warnings: 0, isBanned: false,
         };
 
         setEngineers(prev => [newEngineer, ...prev]);
@@ -218,7 +647,14 @@ export const useAppLogic = (): AppContextType => {
         setAllUsers(prev => [...prev, newUser]);
     };
 
-    const createAndLoginCompany = (data: any) => {
+    const createAndLoginCompany = (data: {
+        companyName: string, email: string, website: string, regNumber: string, country: Country, location: string
+    }) => {
+        // Simulated country verification
+        if (data.email.endsWith('.co.uk') && data.country !== Country.UK) {
+            alert('Warning: Your email domain suggests you are in the UK, but you have selected a different country. Your account will be flagged for review to ensure correct regional pricing.');
+        }
+
         let isVerified = false;
         const validPrefixes = ['123', 'GB', 'VALID']; 
         if (validPrefixes.some(p => data.regNumber.toUpperCase().startsWith(p)) && data.regNumber.length > 5) {
@@ -233,6 +669,8 @@ export const useAppLogic = (): AppContextType => {
         const newCompany: CompanyProfile = {
             id: `comp-${generateUniqueId()}`, name: data.companyName, status: 'active', avatar: `https://logo.clearbit.com/${websiteDomain}`,
             logo: `https://logo.clearbit.com/${websiteDomain}`, website: data.website, companyRegNumber: data.regNumber, isVerified: isVerified,
+            language: language, currency: currency, country: data.country, location: data.location,
+            warnings: 0, isBanned: false,
         };
         setCompanies(prev => [newCompany, ...prev]);
         const newUser: User = { id: `user-${generateUniqueId()}`, role: Role.COMPANY, profile: newCompany };
@@ -240,7 +678,14 @@ export const useAppLogic = (): AppContextType => {
         setUser(newUser);
     };
 
-    const createAndLoginResourcingCompany = (data: any) => {
+    const createAndLoginResourcingCompany = (data: {
+        companyName: string, email: string, website: string, regNumber: string, country: Country, location: string
+    }) => {
+        // Simulated country verification
+        if (data.email.endsWith('.co.uk') && data.country !== Country.UK) {
+            alert('Warning: Your email domain suggests you are in the UK, but you have selected a different country. Your account will be flagged for review to ensure correct regional pricing.');
+        }
+        
         let isVerified = false;
         const validPrefixes = ['123', 'GB', 'VALID'];
         if (validPrefixes.some(p => data.regNumber.toUpperCase().startsWith(p)) && data.regNumber.length > 5) {
@@ -255,6 +700,8 @@ export const useAppLogic = (): AppContextType => {
         const newCompany: CompanyProfile = {
             id: `res-${generateUniqueId()}`, name: data.companyName, status: 'active', avatar: `https://logo.clearbit.com/${websiteDomain}`,
             logo: `https://logo.clearbit.com/${websiteDomain}`, website: data.website, companyRegNumber: data.regNumber, isVerified: isVerified,
+            language: language, currency: currency, country: data.country, location: data.location,
+            warnings: 0, isBanned: false,
         };
         setCompanies(prev => [newCompany, ...prev]);
         const newUser: User = { id: `user-${generateUniqueId()}`, role: Role.RESOURCING_COMPANY, profile: newCompany };
@@ -371,7 +818,6 @@ export const useAppLogic = (): AppContextType => {
         return newJob;
     };
 
-    // FIX: Updated applyForJob to handle supercharged applications and provide better feedback.
     const applyForJob = (jobId: string, engineerId?: string, isSupercharged = false) => {
         let applyingEngineerId: string | undefined = engineerId;
         if (!applyingEngineerId) {
@@ -393,15 +839,12 @@ export const useAppLogic = (): AppContextType => {
         alert(alertMessage);
     };
 
-    // FIX: Implemented the missing 'superchargeApplication' function.
     const superchargeApplication = (job: Job) => {
         if (!user || user.role !== Role.ENGINEER) {
             alert("You must be logged in as an engineer to supercharge an application.");
             return;
         }
 
-        // In a real app, this would trigger a payment flow.
-        // For this demo, we'll simulate the payment and create a transaction.
         const newTransaction: Transaction = {
             id: `txn-${generateUniqueId()}`,
             userId: user.id,
@@ -451,7 +894,6 @@ export const useAppLogic = (): AppContextType => {
         const totalPeer = engineerReviews.reduce((sum, r) => sum + r.peerRating, 0);
         const totalCustomer = engineerReviews.reduce((sum, r) => sum + r.customerRating, 0);
         
-        // FIX: Prevent division by zero if this is the first review, which would create a NaN state.
         const newPeerRating = engineerReviews.length > 0 ? parseFloat((totalPeer / engineerReviews.length).toFixed(1)) : reviewData.peerRating;
         const newCustomerRating = engineerReviews.length > 0 ? parseFloat((totalCustomer / engineerReviews.length).toFixed(1)) : reviewData.customerRating;
 
@@ -474,8 +916,16 @@ export const useAppLogic = (): AppContextType => {
     // --- MESSAGING ---
     const sendMessage = async (conversationId: string, text: string) => {
         if (!user || isAiReplying) return;
+        
+        const recipientId = conversations.find(c => c.id === conversationId)?.participantIds.find(id => id !== user.id);
+        const recipient = recipientId ? findUserById(recipientId) : undefined;
+        if (!recipient) return;
+
+        const originalText = text;
+        const translatedText = await geminiService.translateText(originalText, user.profile.language, recipient.profile.language);
+        
         const newMessage: Message = {
-            id: `msg-${generateUniqueId()}`, conversationId, senderId: user.id, text, timestamp: new Date(), isRead: true,
+            id: `msg-${generateUniqueId()}`, conversationId, senderId: user.id, text: translatedText, originalText: originalText, timestamp: new Date(), isRead: true,
         };
         const updatedMessagesWithUser = [...messages, newMessage];
         setMessages(updatedMessagesWithUser);
@@ -484,14 +934,16 @@ export const useAppLogic = (): AppContextType => {
         setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, lastMessageText: text, lastMessageTimestamp: newMessage.timestamp } : c));
         setIsAiReplying(true);
         try {
-            const recipientId = conversation.participantIds.find(id => id !== user.id);
-            const otherParticipant = recipientId ? findUserById(recipientId) : undefined;
+            const otherParticipant = recipient;
             if (otherParticipant) {
                 await new Promise(resolve => setTimeout(resolve, 1200 + Math.random() * 800));
                 const conversationHistory = updatedMessagesWithUser.filter(m => m.conversationId === conversationId);
                 const aiResponseText = await geminiService.generateChatResponse(conversationHistory, user, otherParticipant);
+                const originalAIResponse = aiResponseText;
+                const translatedAIResponse = await geminiService.translateText(originalAIResponse, otherParticipant.profile.language, user.profile.language);
+
                 const aiMessage: Message = {
-                    id: `msg-${generateUniqueId()}`, conversationId, senderId: otherParticipant.id, text: aiResponseText, timestamp: new Date(), isRead: false,
+                    id: `msg-${generateUniqueId()}`, conversationId, senderId: otherParticipant.id, text: translatedAIResponse, originalText: originalAIResponse, timestamp: new Date(), isRead: false,
                 };
                 setMessages(prev => [...prev, aiMessage]);
                 setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, lastMessageText: aiResponseText, lastMessageTimestamp: aiMessage.timestamp } : c));
@@ -617,67 +1069,41 @@ export const useAppLogic = (): AppContextType => {
         setContracts(prev => prev.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? { ...m, status: MilestoneStatus.SUBMITTED_FOR_APPROVAL } : m) } : c));
     };
 
-    const approveMilestonePayout = (contractId: string, milestoneId: string) => {
-         if(!user) return;
-        const contractToUpdate = contracts.find(c => c.id === contractId);
-        const engineerUser = contractToUpdate ? findUserByProfileId(contractToUpdate.engineerId) : undefined;
-        if (!contractToUpdate || !engineerUser) return;
-        setContracts(prev => prev.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? { ...m, status: MilestoneStatus.COMPLETED_PAID } : m) } : c));
-        const milestone = contractToUpdate.milestones.find(m => m.id === milestoneId);
-        if (milestone) {
-            const payoutAmount = milestone.amount * (1 - PLATFORM_FEE_PERCENTAGE);
-            const feeAmount = milestone.amount * PLATFORM_FEE_PERCENTAGE;
-            const payoutTx: Transaction = {
-                id: `txn-${generateUniqueId()}`, userId: engineerUser.id, contractId, type: TransactionType.PAYOUT,
-                description: `Payout for Milestone: ${milestone.description}`, amount: payoutAmount, date: new Date()
-            };
-            const feeTx: Transaction = {
-                 id: `txn-${generateUniqueId()}`, userId: engineerUser.id, contractId, type: TransactionType.PLATFORM_FEE,
-                description: `Platform Fee (5%) for Milestone: ${milestone.description}`, amount: -feeAmount, date: new Date()
-            };
-            setTransactions(prev => [payoutTx, feeTx, ...prev]);
+    const approveMilestone = (contractId: string, milestoneId: string) => {
+        setContracts(prev => prev.map(c => {
+            if (c.id === contractId) {
+                return { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? { ...m, status: MilestoneStatus.APPROVED_PENDING_INVOICE } : m) };
+            }
+            return c;
+        }));
+        const contract = contracts.find(c => c.id === contractId);
+        if (contract) {
+            const engineerUser = findUserByProfileId(contract.engineerId);
+            if (engineerUser) {
+                createNotification(engineerUser.id, NotificationType.APPLICATION_UPDATE, "A milestone has been approved. You can now generate an invoice.", "Invoices");
+            }
         }
     };
 
     const submitTimesheet = (contractId: string, timesheetData: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => {
         if (!user || user.role !== Role.ENGINEER) return;
-        const newTimesheet: Timesheet = { ...timesheetData, id: `ts-${generateUniqueId()}`, contractId, engineerId: user.profile.id, status: 'submitted' };
+        const newTimesheet: Timesheet = { ...timesheetData, id: `ts-${generateUniqueId()}`, contractId, engineerId: user.profile.id, status: TimesheetStatus.SUBMITTED };
         setContracts(prev => prev.map(c => c.id === contractId ? { ...c, timesheets: [...(c.timesheets || []), newTimesheet] } : c));
     };
 
     const approveTimesheet = (contractId: string, timesheetId: string) => {
-        if(!user) return;
-        let updatedTimesheet: Timesheet | undefined;
-        let contractToUpdate: Contract | undefined;
-        let engineerUser: User | undefined;
         setContracts(prev => prev.map(c => {
             if (c.id === contractId) {
-                contractToUpdate = c;
-                engineerUser = findUserByProfileId(c.engineerId);
-                const newTimesheets = c.timesheets?.map(ts => {
-                    if (ts.id === timesheetId) { updatedTimesheet = { ...ts, status: 'paid' }; return updatedTimesheet; }
-                    return ts;
-                });
-                return { ...c, timesheets: newTimesheets };
+                return { ...c, timesheets: c.timesheets?.map(ts => ts.id === timesheetId ? { ...ts, status: TimesheetStatus.APPROVED } : ts) };
             }
             return c;
         }));
-        if (contractToUpdate && engineerUser && updatedTimesheet) {
-            // FIX: Hardened this logic to prevent NaN values from corrupting payment calculations.
-            const dayRate = parseFloat(String(contractToUpdate.amount)) || 0;
-            const totalAmount = dayRate * updatedTimesheet.days;
-            const payoutAmount = totalAmount * (1 - PLATFORM_FEE_PERCENTAGE);
-            const feeAmount = totalAmount * PLATFORM_FEE_PERCENTAGE;
-            const payoutTx: Transaction = {
-                id: `txn-${generateUniqueId()}`, userId: engineerUser.id, contractId, type: TransactionType.PAYOUT,
-                description: `Payout for Timesheet: ${updatedTimesheet.period}`, amount: payoutAmount, date: new Date()
-            };
-            const feeTx: Transaction = {
-                 id: `txn-${generateUniqueId()}`, userId: user.id, contractId, type: TransactionType.PLATFORM_FEE,
-                description: `Platform Fee for Timesheet: ${updatedTimesheet.period}`, amount: -feeAmount, date: new Date()
-            };
-            setTransactions(prev => [payoutTx, feeTx, ...prev]);
-            createNotification(engineerUser.id, NotificationType.APPLICATION_UPDATE, `Your timesheet for '${updatedTimesheet.period}' has been approved and paid!`);
+        const contract = contracts.find(c => c.id === contractId);
+        if (contract) {
+            const engineerUser = findUserByProfileId(contract.engineerId);
+            if (engineerUser) {
+                createNotification(engineerUser.id, NotificationType.APPLICATION_UPDATE, `Your timesheet for contract '${contract.jobTitle}' has been approved. You can now generate an invoice.`, 'Invoices');
+            }
         }
     };
 
@@ -721,7 +1147,6 @@ export const useAppLogic = (): AppContextType => {
         }
     };
 
-    // FIX: Added missing functions required by AppContextType.
     const purchaseDayPass = () => {
         if (!user) return;
         const newTransaction: Transaction = {
@@ -780,7 +1205,6 @@ export const useAppLogic = (): AppContextType => {
             return { error: "You must be logged in as an engineer." };
         }
     
-        // 1. Derive trending skills from active jobs.
         const skillCounts: { [key: string]: number } = {};
         jobs.filter(j => j.status === 'active' && j.skillRequirements)
             .forEach(job => {
@@ -794,12 +1218,124 @@ export const useAppLogic = (): AppContextType => {
             .slice(0, 15)
             .map(([name]) => name);
         
-        // 2. Call gemini service
         return geminiService.getCareerCoaching(user.profile as EngineerProfile, trendingSkills);
     };
 
-    // --- CONTEXT EXPORT ---
-    // FIX: Added missing properties to the returned context object to resolve the type error.
+    const generateInvoice = (contractId: string, items: InvoiceItem[], paymentTerms: PaymentTerms, timesheetId?: string) => {
+        const contract = contracts.find(c => c.id === contractId);
+        if (!contract || !user) return;
+
+        const issueDate = new Date();
+        const dueDate = new Date(issueDate);
+        let daysToAdd = 0;
+        switch(paymentTerms) {
+            case PaymentTerms.NET7: daysToAdd = 7; break;
+            case PaymentTerms.NET14: daysToAdd = 14; break;
+            case PaymentTerms.NET30: daysToAdd = 30; break;
+        }
+        dueDate.setDate(issueDate.getDate() + daysToAdd);
+
+        const newInvoice: Invoice = {
+            id: `inv-${generateUniqueId()}`,
+            contractId,
+            companyId: contract.companyId,
+            engineerId: contract.engineerId,
+            issueDate,
+            dueDate,
+            paymentTerms,
+            items,
+            total: items.reduce((sum, item) => sum + item.amount, 0),
+            status: InvoiceStatus.SENT,
+        };
+
+        setInvoices(prev => [newInvoice, ...prev]);
+
+        if (timesheetId) {
+            setContracts(prev => prev.map(c => c.id === contractId ? {
+                ...c,
+                timesheets: c.timesheets?.map(ts => ts.id === timesheetId ? { ...ts, status: TimesheetStatus.INVOICED } : ts)
+            } : c));
+        }
+        
+        const engineerUser = findUserByProfileId(contract.engineerId);
+        if(engineerUser) {
+            createNotification(engineerUser.id, NotificationType.APPLICATION_UPDATE, `You have a new invoice from ${user.profile.name} to review.`, 'Invoices');
+        }
+    };
+
+    const payInvoice = (invoiceId: string) => {
+        const invoice = invoices.find(inv => inv.id === invoiceId);
+        if (!invoice || !user) return;
+
+        setInvoices(prev => prev.map(inv => inv.id === invoiceId ? { ...inv, status: InvoiceStatus.PAID } : inv));
+        
+        const contract = contracts.find(c => c.id === invoice.contractId);
+        if (!contract) return;
+        
+        const engineerUser = findUserByProfileId(contract.engineerId);
+        if (!engineerUser) return;
+
+        const totalAmount = invoice.total;
+        const payoutAmount = totalAmount * (1 - PLATFORM_FEE_PERCENTAGE);
+        const feeAmount = totalAmount * PLATFORM_FEE_PERCENTAGE;
+
+        const payoutTx: Transaction = {
+            id: `txn-${generateUniqueId()}`, userId: engineerUser.id, contractId: contract.id, type: TransactionType.PAYOUT,
+            description: `Payout for Invoice #${invoice.id.slice(-6)}`, amount: payoutAmount, date: new Date()
+        };
+        const feeTx: Transaction = {
+             id: `txn-${generateUniqueId()}`, userId: user.id, contractId: contract.id, type: TransactionType.PLATFORM_FEE,
+            description: `Platform Fee for Invoice #${invoice.id.slice(-6)}`, amount: -feeAmount, date: new Date()
+        };
+        const paymentTx: Transaction = {
+            id: `txn-${generateUniqueId()}`, userId: user.id, contractId: contract.id, type: TransactionType.INVOICE_PAYMENT,
+            description: `Payment for Invoice #${invoice.id.slice(-6)}`, amount: -totalAmount, date: new Date()
+        };
+
+        setTransactions(prev => [payoutTx, feeTx, paymentTx, ...prev]);
+
+        setContracts(prev => prev.map(c => {
+            if (c.id === contract.id) {
+                return {
+                    ...c,
+                    milestones: c.milestones.map(m => m.status === MilestoneStatus.APPROVED_PENDING_INVOICE ? { ...m, status: MilestoneStatus.COMPLETED_PAID } : m),
+                    timesheets: c.timesheets?.map(ts => ts.status === TimesheetStatus.INVOICED ? { ...ts, status: TimesheetStatus.PAID } : ts)
+                };
+            }
+            return c;
+        }));
+        
+        createNotification(engineerUser.id, NotificationType.APPLICATION_UPDATE, `Invoice #${invoice.id.slice(-6)} has been paid by ${user.profile.name}.`, "Invoices");
+    };
+
+    const reportUser = (profileId: string) => {
+        const userToReport = allUsers.find(u => u.profile.id === profileId);
+        if (!userToReport) {
+            alert("Could not find the user to report.");
+            return;
+        }
+        const newWarnings = (userToReport.profile.warnings || 0) + 1;
+        const shouldBeBanned = newWarnings >= 3;
+
+        const updateUser = (profileUpdate: Partial<EngineerProfile> | Partial<CompanyProfile>) => {
+            if (userToReport.role === Role.ENGINEER) {
+                updateEngineerProfile(profileUpdate as Partial<EngineerProfile>);
+            } else {
+                updateCompanyProfile(profileUpdate as Partial<CompanyProfile>);
+            }
+        };
+        
+        if (shouldBeBanned) {
+            const banEndDate = new Date();
+            banEndDate.setDate(banEndDate.getDate() + 30);
+            updateUser({ id: profileId, warnings: newWarnings, isBanned: true, banEndDate, status: 'suspended' });
+            alert(`You have reported ${userToReport.profile.name}. This is their third warning, and their account has been suspended for 30 days.`);
+        } else {
+            updateUser({ id: profileId, warnings: newWarnings });
+            alert(`You have reported ${userToReport.profile.name}. This is warning #${newWarnings}. At 3 warnings, their account will be automatically suspended.`);
+        }
+    };
+    
     return useMemo(() => ({
         user, allUsers, jobs, companies, engineers, login, loginAsSteve, logout, 
         updateEngineerProfile, updateCompanyProfile, postJob, startTrial, geminiService, 
@@ -811,7 +1347,7 @@ export const useAppLogic = (): AppContextType => {
         notifications, markNotificationsAsRead, offerJob, acceptOffer, declineOffer, inviteEngineerToJob,
         isAiReplying, forumPosts, forumComments, createForumPost, addForumComment, voteOnPost, voteOnComment,
         contracts, sendContractForSignature, signContract,
-        transactions, fundMilestone, submitMilestoneForApproval, approveMilestonePayout,
+        transactions, fundMilestone, submitMilestoneForApproval,
         submitTimesheet, approveTimesheet, upgradeSubscription, purchaseRoleCredits, useRoleCredit,
         projects, createProject, addRoleToProject, assignEngineerToRole,
         purchaseDayPass,
@@ -819,5 +1355,17 @@ export const useAppLogic = (): AppContextType => {
         invoices,
         isPremium,
         getCareerCoaching,
-    }), [user, allUsers, jobs, companies, engineers, applications, conversations, messages, selectedConversationId, reviews, notifications, isAiReplying, forumPosts, forumComments, contracts, transactions, projects, invoices]);
+        currentPageContext,
+        setCurrentPageContext,
+        language,
+        setLanguage,
+        currency,
+        setCurrency,
+        t,
+        getRegionalPrice,
+        approveMilestone,
+        generateInvoice,
+        payInvoice,
+        reportUser,
+    }), [user, allUsers, jobs, companies, engineers, applications, conversations, messages, selectedConversationId, reviews, notifications, isAiReplying, forumPosts, forumComments, contracts, transactions, projects, invoices, currentPageContext, language, currency]);
 };

@@ -16,11 +16,11 @@ export const Footer = ({ onNavigate, onHowItWorksClick }: FooterProps) => {
 
     return (
         <footer className="bg-white shadow-md mt-auto border-t border-gray-200 z-40">
-            <div className="container mx-auto p-4 flex flex-col lg:flex-row justify-between items-center gap-6">
+            <div className="container mx-auto p-2 flex flex-col lg:flex-row justify-between items-center gap-2">
                 
-                <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+                <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
                     <button onClick={() => onNavigate('landing')} aria-label="Go to homepage" className="flex-shrink-0">
-                      <Logo className="text-gray-800 h-10" />
+                      <Logo className="text-gray-800 h-7" />
                     </button>
                     <div className="text-xs text-gray-600">
                         <p>&copy; {new Date().getFullYear()} TechSubbies.com. All Rights Reserved.</p>
@@ -30,7 +30,7 @@ export const Footer = ({ onNavigate, onHowItWorksClick }: FooterProps) => {
                     </div>
                 </div>
 
-                <div className="flex flex-col lg:flex-row items-center gap-4">
+                <div className="flex flex-col lg:flex-row items-center gap-3">
                      <div className="flex items-center space-x-4">
                         <a href="https://www.linkedin.com/company/techsubbies" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600" aria-label="LinkedIn"><Linkedin /></a>
                         <a href="https://x.com/techsubbies" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600" aria-label="X - formerly Twitter"><XIcon /></a>
@@ -57,7 +57,7 @@ export const Footer = ({ onNavigate, onHowItWorksClick }: FooterProps) => {
                             <DropdownMenu triggerText="Company" direction="up">
                                 <button onClick={() => onNavigate('aboutUs')} className={dropdownItemClass}>About Us</button>
                                 <button onClick={() => onNavigate('investors')} className={dropdownItemClass}>For Investors</button>
-                                <button onClick={() => onNavigate('userGuide')} className={dropdownItemClass}>User Guide</button>
+                                <button onClick={() => onNavigate('helpCenter')} className={dropdownItemClass}>Help Center</button>
                             </DropdownMenu>
                              <DropdownMenu triggerText="Legal" direction="up">
                                 <button onClick={() => onNavigate('terms')} className={dropdownItemClass}>Terms of Service</button>

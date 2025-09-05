@@ -13,10 +13,36 @@ export enum Role {
     ADMIN = 'admin',
 }
 
-export enum Currency {
-    GBP = '£',
-    USD = '$',
+export enum Language {
+    EN = 'English',
+    ES = 'Español',
+    DE = 'Deutsch',
+    FR = 'Français',
+    HI = 'हिन्दी', // Hindi
+    PT = 'Português', // Portuguese
 }
+
+export enum Currency {
+    GBP = 'GBP',
+    USD = 'USD',
+    EUR = 'EUR',
+    AUD = 'AUD',
+    INR = 'INR',
+    CAD = 'CAD', // Canadian Dollar
+    BRL = 'BRL', // Brazilian Real
+}
+
+export enum Country {
+    UK = 'United Kingdom',
+    USA = 'United States',
+    DE = 'Germany',
+    FR = 'France',
+    IN = 'India',
+    AU = 'Australia',
+    CA = 'Canada',
+    BR = 'Brazil',
+}
+
 
 export enum Discipline {
     AV = 'AV Engineer',
@@ -80,6 +106,9 @@ interface BaseProfile {
     name: string;
     avatar: string;
     status: 'active' | 'suspended' | 'inactive';
+    warnings: number;
+    isBanned: boolean;
+    banEndDate?: Date;
 }
 
 export interface Certification {
@@ -156,7 +185,9 @@ export interface Badge {
 export interface EngineerProfile extends BaseProfile {
     discipline: Discipline;
     location: string;
+    country: Country;
     currency: Currency;
+    language: Language;
     minDayRate: number;
     maxDayRate: number;
     experience: number; // years
@@ -200,6 +231,7 @@ export interface EngineerProfile extends BaseProfile {
     badges: Badge[];
     roleCredits?: number; // For á la carte role purchases
     boostCredits?: number;
+    jobAlertsEnabled?: boolean;
 }
 
 export interface CompanyProfile extends BaseProfile {
@@ -208,6 +240,10 @@ export interface CompanyProfile extends BaseProfile {
     logo?: string;
     companyRegNumber?: string;
     isVerified?: boolean;
+    language: Language;
+    currency: Currency;
+    country: Country;
+    location: string;
 }
 
 export type UserProfile = EngineerProfile | CompanyProfile;
@@ -286,6 +322,7 @@ export interface Message {
     conversationId: string;
     senderId: string; // user.id
     text: string;
+    originalText?: string; // For storing the original message before translation
     timestamp: Date;
     isRead: boolean;
 }
@@ -303,6 +340,7 @@ export enum NotificationType {
     MESSAGE = 'message',
     APPLICATION_UPDATE = 'application_update',
     JOB_INVITE = 'job_invite',
+    JOB_ALERT = 'job_alert',
 }
 
 export interface Notification {
@@ -358,6 +396,7 @@ export enum MilestoneStatus {
     AWAITING_FUNDING = 'Awaiting Funding',
     FUNDED_IN_PROGRESS = 'Funded & In Progress',
     SUBMITTED_FOR_APPROVAL = 'Submitted for Approval',
+    APPROVED_PENDING_INVOICE = 'Approved - Pending Invoice',
     COMPLETED_PAID = 'Completed & Paid',
 }
 
@@ -370,6 +409,7 @@ export enum TransactionType {
     ROLE_CREDIT_PURCHASE = 'Role Credit Purchase',
     SUPERCHARGE = 'Supercharge Application',
     AD_REVENUE = 'Ad Revenue',
+    INVOICE_PAYMENT = 'Invoice Payment',
 }
 
 export interface Signature {
@@ -384,13 +424,20 @@ export interface Milestone {
     status: MilestoneStatus;
 }
 
+export enum TimesheetStatus {
+    SUBMITTED = 'submitted',
+    APPROVED = 'approved',
+    INVOICED = 'invoiced',
+    PAID = 'paid',
+}
+
 export interface Timesheet {
     id: string;
     contractId: string;
     engineerId: string;
     period: string; // e.g., "Week ending 2024-08-02"
     days: number;
-    status: 'submitted' | 'approved' | 'paid';
+    status: TimesheetStatus;
 }
 
 export interface Contract {
@@ -441,9 +488,42 @@ export interface Project {
   status: 'planning' | 'active' | 'completed';
 }
 
+export enum InvoiceStatus {
+    DRAFT = 'Draft',
+    SENT = 'Sent',
+    PAID = 'Paid',
+    OVERDUE = 'Overdue',
+    DISPUTED = 'Disputed',
+}
+
+export enum PaymentTerms {
+    IMMEDIATE = 'Due Immediately',
+    NET7 = 'Net 7 Days',
+    NET14 = 'Net 14 Days',
+    NET30 = 'Net 30 Days',
+}
+
+export interface InvoiceItem {
+    description: string;
+    amount: number;
+}
+
+export interface Invoice {
+    id: string;
+    contractId: string;
+    companyId: string;
+    engineerId: string;
+    issueDate: Date;
+    dueDate: Date;
+    paymentTerms: PaymentTerms;
+    items: InvoiceItem[];
+    total: number;
+    status: InvoiceStatus;
+}
+
 
 // --- App Navigation & Context ---
-export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'companySignUp' | 'resourcingCompanySignUp' | 'investors' | 'aboutUs' | 'terms' | 'privacy' | 'pricing' | 'howItWorks' | 'userGuide' | 'security';
+export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'companySignUp' | 'resourcingCompanySignUp' | 'investors' | 'aboutUs' | 'terms' | 'privacy' | 'pricing' | 'howItWorks' | 'helpCenter' | 'security';
 
 export interface Insight {
     type: 'Upskill' | 'Certification' | 'Profile Enhancement';
@@ -454,12 +534,20 @@ export interface Insight {
     };
 }
 
+export type LocalizationFunction = (key: string, replacements?: { [key: string]: string | number }) => string;
+
 export interface AppContextType {
     user: User | null;
     allUsers: User[];
     jobs: Job[];
     companies: CompanyProfile[];
     engineers: EngineerProfile[];
+    language: Language;
+    setLanguage: (lang: Language) => void;
+    currency: Currency;
+    setCurrency: (curr: Currency) => void;
+    t: LocalizationFunction;
+    getRegionalPrice: (basePrice: number) => { amount: number, symbol: string };
     login: (role: Role, isFreeTier?: boolean) => void;
     loginAsSteve: () => void;
     logout: () => void;
@@ -470,7 +558,6 @@ export interface AppContextType {
     geminiService: GeminiServiceType;
     applications: Application[];
     applyForJob: (jobId: string, engineerId?: string, isSupercharged?: boolean) => void;
-    // FIX: Added missing function definition for superchargeApplication.
     superchargeApplication: (job: Job) => void;
     purchaseDayPass: () => void;
     createAndLoginEngineer: (data: any) => void;
@@ -505,7 +592,6 @@ export interface AppContextType {
     createForumPost: (post: { title: string; content: string; tags: string[] }) => Promise<void>;
     addForumComment: (comment: { postId: string; parentId: string | null; content: string }) => void;
     voteOnPost: (postId: string, voteType: 'up' | 'down') => void;
-    // FIX: Corrected the type definition to allow 'up' votes on comments.
     voteOnComment: (commentId: string, voteType: 'up' | 'down') => void;
     // Contract context
     contracts: Contract[];
@@ -514,34 +600,24 @@ export interface AppContextType {
     // Milestone & Payment Context
     transactions: Transaction[];
     fundMilestone: (contractId: string, milestoneId: string) => void;
+    approveMilestone: (contractId: string, milestoneId: string) => void;
     submitMilestoneForApproval: (contractId: string, milestoneId: string) => void;
-    approveMilestonePayout: (contractId: string, milestoneId: string) => void;
     submitTimesheet: (contractId: string, timesheet: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => void;
     approveTimesheet: (contractId: string, timesheetId: string) => void;
     upgradeSubscription: (profileId: string, toTier: ProfileTier) => void;
     purchaseRoleCredits: (userId: string, numberOfCredits: 1 | 3 | 5) => void;
     useRoleCredit: (userId: string) => void;
-    purchaseBoostCredits: (userId: string, numberOfCredits: number, price: number) => void;
     // Project Planner context
     projects: Project[];
     createProject: (name: string, description: string) => Project;
     addRoleToProject: (projectId: string, role: Omit<ProjectRole, 'id' | 'assignedEngineerId'>) => void;
     assignEngineerToRole: (projectId: string, roleId: string, engineerId: string) => void;
     invoices: Invoice[];
+    generateInvoice: (contractId: string, items: InvoiceItem[], paymentTerms: PaymentTerms, timesheetId?: string) => void;
+    payInvoice: (invoiceId: string) => void;
+    reportUser: (profileId: string) => void;
     isPremium: (profile: EngineerProfile) => boolean;
     getCareerCoaching: () => Promise<{ insights?: Insight[]; error?: string }>;
-}
-
-export interface InvoiceItem {
-    description: string;
-    amount: number;
-}
-
-export interface Invoice {
-    id: string;
-    userId: string;
-    date: Date;
-    items: InvoiceItem[];
-    total: number;
-    status: 'Paid' | 'Pending';
+    currentPageContext: string;
+    setCurrentPageContext: Dispatch<SetStateAction<string>>;
 }

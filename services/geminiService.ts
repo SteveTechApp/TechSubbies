@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { EngineerProfile, Job, ProfileTier, User, Message, CompanyProfile, JobSkillRequirement, JobType, ExperienceLevel } from '../types/index.ts';
+import { EngineerProfile, Job, ProfileTier, User, Message, CompanyProfile, JobSkillRequirement, JobType, ExperienceLevel, Insight, Language } from '../types/index.ts';
 import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles.ts';
 import { MOCK_TRAINING_PROVIDERS } from '../data/trainingProviders.ts';
 
@@ -53,11 +53,11 @@ export const geminiService = {
             const companyProfile = otherUserProfile as CompanyProfile;
             personaInstruction += ` You represent the company ${companyProfile.name}.`;
         }
-        personaInstruction += ` Keep your responses concise, professional, and relevant to a tech subcontracting platform called TechSubbies.com. The current user's name is ${currentUser.profile.name}.`;
+        personaInstruction += ` Keep your responses concise, professional, and relevant to a tech subcontracting platform called TechSubbies.com. The current user's name is ${currentUser.profile.name}. Your response must be in ${currentUser.profile.language}.`;
 
         const contents = conversationHistory.map(msg => ({
             role: msg.senderId === otherParticipant.id ? 'model' as const : 'user' as const,
-            parts: [{ text: msg.text }]
+            parts: [{ text: msg.originalText || msg.text }] // Always use original text for context
         }));
 
         try {
@@ -73,6 +73,23 @@ export const geminiService = {
         } catch (error) {
             console.error("Error generating chat response:", error);
             return "Sorry, I'm having trouble responding right now. Please try again later.";
+        }
+    },
+
+    translateText: async (text: string, fromLang: Language, toLang: Language): Promise<string> => {
+        if (fromLang === toLang) {
+            return text;
+        }
+        const prompt = `Translate the following text from ${fromLang} to ${toLang}. Only return the translated text, with no additional explanation or preamble.\n\nText: "${text}"`;
+        try {
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt
+            });
+            return response.text.trim();
+        } catch (error) {
+            console.error(`Error translating text from ${fromLang} to ${toLang}:`, error);
+            return text; // Return original text on failure
         }
     },
 
@@ -173,7 +190,7 @@ export const geminiService = {
         }
     },
     
-    getCareerCoaching: async (profile: EngineerProfile, trendingSkills: string[]) => {
+    getCareerCoaching: async (profile: EngineerProfile, trendingSkills: string[]): Promise<{ insights?: Insight[]; error?: string; }> => {
         const profileSummary = `
         - Discipline: ${profile.discipline}
         - Experience: ${profile.experience} years
@@ -212,7 +229,7 @@ export const geminiService = {
                                 items: {
                                     type: Type.OBJECT,
                                     properties: {
-                                        type: { type: Type.STRING, enum: ['Upskill', 'Certification', 'Profile Enhancement'] },
+                                        type: { type: Type.STRING },
                                         suggestion: { type: Type.STRING },
                                         callToAction: {
                                             type: Type.OBJECT,
@@ -231,7 +248,17 @@ export const geminiService = {
                     },
                 },
             });
-            return JSON.parse(response.text);
+            // A simple check to ensure the 'type' field is one of the allowed enums.
+            const parsed = JSON.parse(response.text);
+            if(parsed.insights && Array.isArray(parsed.insights)) {
+                const validTypes = ['Upskill', 'Certification', 'Profile Enhancement'];
+                parsed.insights.forEach((insight: Insight) => {
+                    if(!validTypes.includes(insight.type)) {
+                        insight.type = 'Profile Enhancement'; // Default fallback
+                    }
+                });
+            }
+            return parsed;
         } catch (error) {
             console.error("Error getting career coaching:", error);
             return { error: "Failed to get career insights. The AI service may be busy or unavailable. Please try again." };
@@ -252,7 +279,8 @@ export const geminiService = {
         1. "improved_description" (string): A revised, professional job description of about 100-150 words. It should be engaging and clear.
         2. "suggested_job_role" (string): The single most appropriate specialist role from the provided list.
         3. "suggested_experience_level" (enum from ['Junior', 'Mid-level', 'Senior', 'Expert']): The most appropriate experience level.
-        4. "suggested_day_rate" (object with "min_rate": number, "max_rate": number): A fair day rate range in GBP. Min rate should not be lower than 150.`;
+        4. "suggested_day_rate" (object with "min_rate": number, "max_rate": number): A fair day rate range in GBP. Min rate should not be lower than 150.
+        5. "suggested_titles" (array of 3 strings): Three alternative, professional, and engaging job titles based on the description. One should be similar to the original, one more senior/specialized, and one more modern/dynamic.`;
     
         try {
             const response = await ai.models.generateContent({
@@ -274,8 +302,12 @@ export const geminiService = {
                                 },
                                 required: ["min_rate", "max_rate"],
                             },
+                            suggested_titles: {
+                                type: Type.ARRAY,
+                                items: { type: Type.STRING }
+                            },
                         },
-                        required: ["improved_description", "suggested_job_role", "suggested_experience_level", "suggested_day_rate"],
+                        required: ["improved_description", "suggested_job_role", "suggested_experience_level", "suggested_day_rate", "suggested_titles"],
                     },
                 },
             });
@@ -283,6 +315,42 @@ export const geminiService = {
         } catch (error) {
             console.error("Error analyzing job description:", error);
             return { error: "Failed to analyze job description. The AI service may be busy or unavailable. Please try again." };
+        }
+    },
+
+    suggestSkillsForJobRole: async (jobRole: string): Promise<{ skills?: JobSkillRequirement[], error?: string }> => {
+        const prompt = `You are an expert recruitment consultant for the UK's freelance AV & IT sector. For the specialist job role "${jobRole}", generate a list of 10-15 key technical skills.
+        Categorize each skill's importance for this role as either 'essential' or 'desirable'. Provide the output as a JSON object containing a 'skills' array.`;
+        
+        try {
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            skills: {
+                                type: Type.ARRAY,
+                                items: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        name: { type: Type.STRING },
+                                        importance: { type: Type.STRING, enum: ['essential', 'desirable'] }
+                                    },
+                                    required: ["name", "importance"]
+                                }
+                            }
+                        },
+                        required: ["skills"]
+                    },
+                },
+            });
+            return JSON.parse(response.text);
+        } catch (error) {
+            console.error("Error suggesting skills for job role:", error);
+            return { error: "Failed to suggest skills. The AI service may be busy or unavailable. Please try again." };
         }
     },
 

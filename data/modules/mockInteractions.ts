@@ -1,4 +1,4 @@
-import { Application, Review, Conversation, Message, ApplicationStatus, Contract, ContractStatus, ContractType, Currency, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Project, Discipline } from '../../types/index.ts';
+import { Application, Review, Conversation, Message, ApplicationStatus, Contract, ContractStatus, ContractType, Currency, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Project, Discipline, TimesheetStatus } from '../../types/index.ts';
 
 export const MOCK_APPLICATIONS: Application[] = [
     { jobId: 'job-1', engineerId: 'eng-1', date: new Date('2024-06-20'), status: ApplicationStatus.COMPLETED, reviewed: true },
@@ -45,7 +45,8 @@ export const MOCK_MESSAGES: Message[] = [
 ];
 
 export const MOCK_TIMESHEETS: Timesheet[] = [
-    { id: 'ts-1', contractId: 'contract-1', engineerId: 'eng-1', period: 'Week ending 2024-08-02', days: 5, status: 'paid' }
+    // FIX: Changed status from string 'paid' to the enum member `TimesheetStatus.PAID`.
+    { id: 'ts-1', contractId: 'contract-1', engineerId: 'eng-1', period: 'Week ending 2024-08-02', days: 5, status: TimesheetStatus.PAID }
 ];
 
 export const MOCK_CONTRACTS: Contract[] = [

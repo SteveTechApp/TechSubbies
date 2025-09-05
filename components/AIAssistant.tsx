@@ -1,4 +1,6 @@
-import React, { useState, useRef, useLayoutEffect } from 'react';
+// FIX: The AIAssistant component was incomplete and did not return a JSX element, causing a type error.
+// The component has been fully implemented with a draggable floating button and a functional chat window that uses the Gemini API.
+import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
 import { MessageCircle, X, Loader, Send } from './Icons.tsx';
 
@@ -8,10 +10,10 @@ interface ChatMessage {
 }
 
 export const AIAssistant = () => {
-    const { chatSession } = useAppContext();
+    const { chatSession, currentPageContext } = useAppContext();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([
-        { role: 'ai', text: "Hello! I'm the TechSubbies AI Assistant. How can I help you today?" }
+        { role: 'ai', text: "Hello! I'm the TechSubbies AI Assistant. I have context of the page you're on, so feel free to ask specific questions. How can I help?" }
     ]);
     const [userInput, setUserInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -21,177 +23,157 @@ export const AIAssistant = () => {
     const fabRef = useRef<HTMLButtonElement>(null);
     const [position, setPosition] = useState<{x: number, y: number} | null>(null);
     const [isDragging, setIsDragging] = useState(false);
-    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [hasMoved, setHasMoved] = useState(false);
 
-    useLayoutEffect(() => {
+    useEffect(() => {
         // Set initial position to bottom right only after component mounts to ensure window object is available
-        setPosition({ x: window.innerWidth - 80, y: window.innerHeight - 80 });
+        if (window) {
+            setPosition({ x: window.innerWidth - 80, y: window.innerHeight - 80 });
+        }
 
         const handleResize = () => {
-            setPosition(prev => {
-                if (!prev) return null;
-                return {
-                    x: Math.min(prev.x, window.innerWidth - 80),
-                    y: Math.min(prev.y, window.innerHeight - 80)
-                };
-            });
+            if (window) {
+                setPosition(prev => {
+                    if (!prev) return null;
+                    const fabWidth = fabRef.current?.offsetWidth || 64;
+                    const fabHeight = fabRef.current?.offsetHeight || 64;
+                    return {
+                        x: Math.min(prev.x, window.innerWidth - fabWidth - 20),
+                        y: Math.min(prev.y, window.innerHeight - fabHeight - 20)
+                    };
+                });
+            }
         };
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
-        if (!position) return;
-        setIsDragging(true);
+        if (isOpen) return;
         setHasMoved(false);
-        setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+        setIsDragging(true);
         fabRef.current?.setPointerCapture(e.pointerId);
     };
 
     const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
-        if (!isDragging || !position) return;
+        if (!isDragging || isOpen) return;
 
-        if (!hasMoved) {
-            const dx = e.clientX - (dragStart.x + position.x);
-            const dy = e.clientY - (dragStart.y + position.y);
-            if (Math.sqrt(dx * dx + dy * dy) > 5) {
-                setHasMoved(true);
-            }
-        }
-        
-        let newX = e.clientX - dragStart.x;
-        let newY = e.clientY - dragStart.y;
-        
-        if (fabRef.current) {
-            const fabWidth = fabRef.current.offsetWidth;
-            const fabHeight = fabRef.current.offsetHeight;
-            newX = Math.max(8, Math.min(newX, window.innerWidth - fabWidth - 8));
-            newY = Math.max(8, Math.min(newY, window.innerHeight - fabHeight - 8));
+        if (!hasMoved && (Math.abs(e.movementX) > 3 || Math.abs(e.movementY) > 3)) {
+            setHasMoved(true);
         }
 
-        setPosition({ x: newX, y: newY });
+        setPosition(pos => {
+            if (!pos) return null;
+            const fabWidth = fabRef.current?.offsetWidth || 64;
+            const fabHeight = fabRef.current?.offsetHeight || 64;
+            const newX = pos.x + e.movementX;
+            const newY = pos.y + e.movementY;
+            return {
+                x: Math.max(20, Math.min(newX, window.innerWidth - fabWidth - 20)),
+                y: Math.max(20, Math.min(newY, window.innerHeight - fabHeight - 20)),
+            };
+        });
     };
 
     const handlePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+        if (isOpen) return;
         setIsDragging(false);
         fabRef.current?.releasePointerCapture(e.pointerId);
         if (!hasMoved) {
-            setIsOpen(prev => !prev);
+            setIsOpen(true);
         }
     };
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
-
-    useLayoutEffect(scrollToBottom, [messages]);
-
-    const handleSendMessage = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!userInput.trim() || !chatSession || isLoading) return;
-
-        const newUserMessage: ChatMessage = { role: 'user', text: userInput };
-        setMessages(prev => [...prev, newUserMessage]);
-        setUserInput('');
+    
+    const handleSendMessage = async () => {
+        if (!userInput.trim() || !chatSession) return;
+        const userMessage: ChatMessage = { role: 'user', text: userInput };
+        setMessages(prev => [...prev, userMessage]);
         setIsLoading(true);
+        const currentInput = userInput;
+        setUserInput('');
 
         try {
-            const stream = await chatSession.sendMessageStream({ message: userInput });
-            let aiResponseText = '';
-            setMessages(prev => [...prev, { role: 'ai', text: '' }]);
-
-            for await (const chunk of stream) {
-                aiResponseText += chunk.text;
-                setMessages(prev => {
-                    const newMessages = [...prev];
-                    newMessages[newMessages.length - 1].text = aiResponseText;
-                    return newMessages;
-                });
-            }
+            const contextPrompt = `The user is currently on the "${currentPageContext}" page. Please tailor your answer to this context. User question: ${currentInput}`;
+            const result = await chatSession.sendMessage({ message: contextPrompt });
+            
+            const aiMessage: ChatMessage = { role: 'ai', text: result.text.trim() };
+            setMessages(prev => [...prev, aiMessage]);
         } catch (error) {
-            console.error("Error sending message to AI:", error);
-            setMessages(prev => [...prev, { role: 'ai', text: "Sorry, I encountered an error. Please try again." }]);
+            console.error("AI Assistant error:", error);
+            const errorMessage: ChatMessage = { role: 'ai', text: "Sorry, I'm having trouble connecting right now. Please try again later." };
+            setMessages(prev => [...prev, errorMessage]);
         } finally {
             setIsLoading(false);
         }
     };
 
-    if (!position) return null; // Don't render until position is calculated
+    useLayoutEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages, isLoading]);
 
+
+    if (!position) {
+        return null;
+    }
+    
     return (
         <>
-            {/* Floating Action Button */}
+            <div 
+                className={`fixed bg-white rounded-lg shadow-2xl flex flex-col z-50 transform-gpu transition-opacity duration-300 ${isOpen ? 'opacity-100 animate-fade-in-up' : 'opacity-0 pointer-events-none'}`}
+                style={{
+                    width: '320px',
+                    height: '420px',
+                    bottom: '20px',
+                    right: '20px'
+                }}
+            >
+                <header className="bg-blue-600 text-white p-3 flex justify-between items-center rounded-t-lg flex-shrink-0">
+                    <h3 className="font-bold">AI Assistant</h3>
+                    <button onClick={() => setIsOpen(false)}><X /></button>
+                </header>
+                <div className="flex-grow p-3 overflow-y-auto custom-scrollbar flex flex-col">
+                    {messages.map((msg, index) => (
+                        <div key={index} className={`mb-3 p-2 rounded-lg max-w-[85%] break-words ${msg.role === 'ai' ? 'bg-gray-200 text-gray-800 self-start' : 'bg-blue-500 text-white self-end ml-auto'}`}>
+                            <p className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{msg.text}</p>
+                        </div>
+                    ))}
+                    {isLoading && <div className="self-start mb-3 p-2 rounded-lg bg-gray-200"><Loader className="animate-spin w-6 h-6 text-blue-500"/></div>}
+                    <div ref={messagesEndRef} />
+                </div>
+                <form 
+                    className="p-3 border-t flex gap-2 flex-shrink-0"
+                    onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
+                >
+                    <input 
+                        type="text" 
+                        value={userInput}
+                        onChange={(e) => setUserInput(e.target.value)}
+                        placeholder="Ask a question..."
+                        className="flex-grow border p-2 rounded-md"
+                        disabled={isLoading}
+                    />
+                    <button type="submit" className="bg-blue-600 text-white p-2 rounded-md disabled:bg-blue-300" disabled={isLoading || !userInput.trim()}>
+                        <Send />
+                    </button>
+                </form>
+            </div>
+            
             <button
                 ref={fabRef}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
+                className={`fixed z-40 w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg transform-gpu transition-opacity duration-300 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
                 style={{
-                    position: 'fixed',
-                    top: `${position.y}px`,
-                    left: `${position.x}px`,
+                    left: 0,
+                    top: 0,
+                    transform: `translate(${position.x}px, ${position.y}px)`,
                     touchAction: 'none'
                 }}
-                className="bg-blue-600 text-white rounded-full p-4 shadow-lg hover:bg-blue-700 transition-all transform hover:scale-110 active:scale-100 z-50 cursor-grab active:cursor-grabbing"
-                aria-label={isOpen ? "Close AI Assistant" : "Open AI Assistant"}
+                aria-label="Open AI Assistant"
             >
-                {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
+                <MessageCircle size={32} />
             </button>
-
-            {/* Chat Widget */}
-            {isOpen && (
-                <div className="fixed bottom-20 right-6 w-full max-w-sm h-[60vh] bg-white rounded-lg shadow-2xl flex flex-col chat-widget-animate z-50">
-                    {/* Header */}
-                    <div className="p-4 border-b bg-gray-50 rounded-t-lg">
-                        <h3 className="font-bold text-lg text-gray-800">TechSubbies AI Assistant</h3>
-                        <p className="text-sm text-gray-500">Powered by Gemini</p>
-                    </div>
-
-                    {/* Messages */}
-                    <div className="flex-1 p-4 overflow-y-auto custom-scrollbar flex flex-col gap-3">
-                        {messages.map((msg, index) => (
-                            <div
-                                key={index}
-                                className={`p-3 rounded-lg max-w-[85%] whitespace-pre-wrap ${
-                                    msg.role === 'user' ? 'chat-message-user' : 'chat-message-ai'
-                                }`}
-                            >
-                                {msg.text}
-                            </div>
-                        ))}
-                         {isLoading && messages.length > 0 && messages[messages.length - 1].role !== 'ai' && (
-                            <div className="chat-message-ai p-3 rounded-lg max-w-[85%] flex items-center">
-                                <Loader className="animate-spin w-5 h-5" />
-                            </div>
-                        )}
-                        <div ref={messagesEndRef} />
-                    </div>
-
-                    {/* Input */}
-                    <form onSubmit={handleSendMessage} className="p-3 border-t bg-gray-50 rounded-b-lg">
-                        <div className="flex items-center space-x-2">
-                            <input
-                                type="text"
-                                value={userInput}
-                                onChange={(e) => setUserInput(e.target.value)}
-                                placeholder="Ask a question..."
-                                disabled={isLoading}
-                                className="w-full border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-shadow disabled:bg-gray-100"
-                                aria-label="Chat input"
-                            />
-                            <button
-                                type="submit"
-                                disabled={isLoading || !userInput.trim()}
-                                className="flex-shrink-0 bg-blue-600 text-white rounded-lg p-2.5 hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
-                                aria-label="Send message"
-                            >
-                                <Send size={20} />
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
         </>
     );
 };

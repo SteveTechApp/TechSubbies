@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Footer } from '../components/Footer.tsx';
 import { Header } from '../components/Header.tsx';
 import { Page, ProfileTier } from '../types/index.ts';
-import { CheckCircle, Award, Star, BarChart, X } from '../components/Icons.tsx';
+import { CheckCircle, Star, User, Building } from '../components/Icons.tsx';
+import { useAppContext } from '../context/AppContext.tsx';
 
 interface PricingPageProps {
     onNavigate: (page: Page) => void;
@@ -10,11 +11,8 @@ interface PricingPageProps {
 }
 
 const FeatureListItem = ({ children, included = true }: { children: React.ReactNode, included?: boolean }) => (
-    <li className={`flex items-start ${included ? '' : 'text-gray-400'}`}>
-        {included 
-            ? <CheckCircle className="w-5 h-5 text-green-500 mr-3 mt-1 flex-shrink-0" />
-            : <X className="w-5 h-5 text-gray-400 mr-3 mt-1 flex-shrink-0" />
-        }
+    <li className={`flex items-start ${included ? '' : 'text-gray-400 line-through'}`}>
+        <CheckCircle className={`w-5 h-5 mr-3 mt-1 flex-shrink-0 ${included ? 'text-green-500' : 'text-gray-300'}`} />
         <span>{children}</span>
     </li>
 );
@@ -29,7 +27,7 @@ interface TierStyle {
 }
 
 interface TierCardProps {
-    tier: ProfileTier;
+    tier?: ProfileTier;
     title: string;
     description: string;
     price: string;
@@ -42,20 +40,20 @@ interface TierCardProps {
 }
 
 const TierCard = ({ title, description, price, period, features, ctaText, onCtaClick, isFeatured, styles }: TierCardProps) => (
-    <div className={`border-2 rounded-lg p-6 bg-white flex flex-col relative transition-all duration-300 ${isFeatured ? `${styles.border} ${styles.shadow || 'shadow-2xl'} transform scale-105` : `border-gray-200 shadow-lg ${styles.border}`}`}>
+    <div className={`border-2 rounded-lg p-4 bg-white flex flex-col relative transition-all duration-300 ${isFeatured ? `${styles.border} ${styles.shadow || 'shadow-2xl'} transform scale-105` : `border-gray-200 shadow-lg ${styles.border}`}`}>
         {isFeatured && <span className={`absolute top-0 -translate-y-1/2 ${styles.badgeBg} text-white text-xs font-bold uppercase px-3 py-1 rounded-full self-center`}>Most Popular</span>}
-        <h3 className={`text-2xl font-bold ${styles.titleText}`}>{title}</h3>
-        <p className="text-gray-500 mt-2 mb-4 flex-grow">{description}</p>
-        <div className="my-4">
-            <span className="text-5xl font-extrabold text-gray-800">{price}</span>
-            {period && <span className="text-xl font-medium text-gray-500">{period}</span>}
+        <h3 className={`text-lg font-bold ${styles.titleText}`}>{title}</h3>
+        <p className="text-gray-500 text-xs mt-2 mb-3 flex-grow">{description}</p>
+        <div className="my-2">
+            <span className="text-3xl font-extrabold text-gray-800">{price}</span>
+            {period && <span className="text-base font-medium text-gray-500">{period}</span>}
         </div>
-        <ul className="space-y-3 mb-6 text-sm">
+        <ul className="space-y-2 mb-4 text-sm">
             {features.map((feature, index) => <FeatureListItem key={index} included={feature.included}>{feature.text}</FeatureListItem>)}
         </ul>
         <button
             onClick={onCtaClick}
-            className={`w-full mt-auto font-bold py-3 px-6 rounded-lg text-white transition-colors ${styles.buttonBg} ${styles.buttonHoverBg}`}
+            className={`w-full mt-auto font-bold py-2 px-4 rounded-lg text-white transition-colors ${styles.buttonBg} ${styles.buttonHoverBg}`}
         >
             {ctaText}
         </button>
@@ -64,6 +62,15 @@ const TierCard = ({ title, description, price, period, features, ctaText, onCtaC
 
 
 export const PricingPage = ({ onNavigate, onHowItWorksClick }: PricingPageProps) => {
+    const { t, getRegionalPrice } = useAppContext();
+    const [activeTab, setActiveTab] = useState('engineers');
+
+    const getTabClass = (tabName: string) => 
+        `px-4 py-2 font-semibold text-sm rounded-t-lg transition-colors duration-200 flex items-center gap-2 border-b-2 ${
+            activeTab === tabName 
+            ? 'bg-white text-blue-600 border-blue-600' 
+            : 'bg-transparent text-gray-500 border-transparent hover:bg-gray-100 hover:border-gray-300'
+        }`;
 
     const TIER_STYLES: Record<string, TierStyle> = {
         [ProfileTier.BASIC]: { border: 'border-amber-700', titleText: 'text-amber-800', buttonBg: 'bg-amber-700', buttonHoverBg: 'hover:bg-amber-800', badgeBg: 'bg-amber-700' },
@@ -72,109 +79,184 @@ export const PricingPage = ({ onNavigate, onHowItWorksClick }: PricingPageProps)
         [ProfileTier.BUSINESS]: { border: 'border-indigo-700', titleText: 'text-indigo-800', buttonBg: 'bg-indigo-700', buttonHoverBg: 'hover:bg-indigo-800', badgeBg: 'bg-indigo-700' }
     };
 
-    const TIERS: TierCardProps[] = [
+    const formatPrice = (basePrice: number) => {
+        const { amount, symbol } = getRegionalPrice(basePrice);
+        return `${symbol}${amount.toFixed(2)}`;
+    }
+
+    const ENGINEER_TIERS: TierCardProps[] = [
         {
             tier: ProfileTier.BASIC,
-            title: "Bronze",
-            description: "The essential on-ramp for visibility in entry-level and support roles.",
-            price: "Free",
-            period: " / Forever",
-            ctaText: "Get Started",
+            title: t('bronze_tier'),
+            description: t('bronze_desc'),
+            price: t('free'),
+            period: ` / ${t('forever')}`,
+            ctaText: t('get_started'),
             onCtaClick: () => onNavigate('engineerSignUp'),
             styles: TIER_STYLES[ProfileTier.BASIC],
             features: [
-                { text: "Public Professional Profile", included: true },
-                { text: "Appear in General Searches", included: true },
-                { text: "Set Availability Calendar", included: true },
-                { text: "Search and Apply for Jobs", included: true },
-                { text: "Core Skills (Tags)", included: false },
-                { text: "Verified Certifications", included: false },
-                { text: "Specialist Roles", included: false },
-                { text: "AI-Powered Tools", included: false },
-                { text: "Priority Search Ranking", included: false },
-                { text: "Visual Case Studies (Storyboards)", included: false },
-                { text: "Profile Analytics", included: false },
+                { text: t('bronze_feat_1'), included: true },
+                { text: t('bronze_feat_2'), included: true },
+                { text: t('bronze_feat_3'), included: true },
+                { text: t('bronze_feat_4'), included: true },
+                { text: t('silver_feat_2'), included: false },
+                { text: t('silver_feat_3'), included: false },
+                { text: t('silver_feat_4'), included: false },
+                { text: t('silver_feat_5'), included: false },
+                { text: t('silver_feat_6'), included: false },
+                { text: t('silver_feat_7'), included: false },
+                { text: t('platinum_feat_2'), included: false },
             ]
         },
         {
             tier: ProfileTier.PROFESSIONAL,
-            title: "Silver",
-            description: "For the growing professional who needs to stand out with proven credentials and access powerful tools.",
-            price: "£7",
-            period: " / mo",
-            ctaText: "Choose Silver",
+            title: t('silver_tier'),
+            description: t('silver_desc'),
+            price: formatPrice(7),
+            period: ` / ${t('month')}`,
+            ctaText: t('choose_silver'),
             onCtaClick: () => onNavigate('engineerSignUp'),
             styles: TIER_STYLES[ProfileTier.PROFESSIONAL],
             features: [
-                { text: "Everything in Bronze, plus:", included: true },
-                { text: "Core Skills (Tags)", included: true },
-                { text: "Verified Certifications", included: true },
-                { text: <strong>1 Specialist Role</strong>, included: true },
-                { text: "AI-Powered Tools", included: true },
-                { text: "Priority Search Ranking", included: true },
-                { text: "Visual Case Studies (Storyboards)", included: true },
-                { text: "Profile Analytics", included: false },
+                { text: t('silver_feat_1'), included: true },
+                { text: t('silver_feat_2'), included: true },
+                { text: t('silver_feat_3'), included: true },
+                { text: <strong>{t('silver_feat_4', { count: 1 })}</strong>, included: true },
+                { text: t('silver_feat_5'), included: true },
+                { text: t('silver_feat_6'), included: true },
+                { text: t('silver_feat_7'), included: true },
+                { text: t('platinum_feat_2'), included: false },
             ]
         },
         {
             tier: ProfileTier.SKILLS,
-            title: "Gold",
-            description: "For the established specialist who needs to showcase a diverse range of deep expertise.",
-            price: "£15",
-            period: " / mo",
-            ctaText: "Start Free Trial",
+            title: t('gold_tier'),
+            description: t('gold_desc'),
+            price: formatPrice(15),
+            period: ` / ${t('month')}`,
+            ctaText: t('start_free_trial'),
             isFeatured: true,
             onCtaClick: () => onNavigate('engineerSignUp'),
             styles: TIER_STYLES[ProfileTier.SKILLS],
             features: [
-                { text: "Everything in Silver, plus:", included: true },
-                { text: <strong>Up to 3 Specialist Roles</strong>, included: true },
-                { text: "Enhanced Search Visibility", included: true },
-                { text: "Profile Analytics", included: false },
+                { text: t('gold_feat_1'), included: true },
+                { text: <strong>{t('gold_feat_2', { count: 3 })}</strong>, included: true },
+                { text: t('gold_feat_3'), included: true },
+                { text: t('platinum_feat_2'), included: false },
             ]
         },
         {
             tier: ProfileTier.BUSINESS,
-            title: "Platinum",
-            description: "For the elite freelancer or small business owner who needs advanced tools and maximum visibility.",
-            price: "£35",
-            period: " / mo",
-            ctaText: "Choose Platinum",
+            title: t('platinum_tier'),
+            description: t('platinum_desc'),
+            price: formatPrice(35),
+            period: ` / ${t('month')}`,
+            ctaText: t('choose_platinum'),
             onCtaClick: () => onNavigate('engineerSignUp'),
             styles: TIER_STYLES[ProfileTier.BUSINESS],
             features: [
-                { text: "Everything in Gold, plus:", included: true },
-                { text: <strong>Up to 5 Specialist Roles</strong>, included: true },
-                { text: "Profile Analytics", included: true },
-                { text: "Advanced Profile Customization", included: true },
-                { text: "Dedicated Support", included: true },
+                { text: t('platinum_feat_1'), included: true },
+                { text: <strong>{t('platinum_feat_2', { count: 5 })}</strong>, included: true },
+                { text: t('platinum_feat_3'), included: true },
+                { text: t('platinum_feat_4'), included: true },
+                { text: t('platinum_feat_5'), included: true },
             ]
         }
     ];
+    
+    const RESOURCING_TIER: TierCardProps = {
+        title: t('agency_plan'),
+        description: t('agency_desc'),
+        price: formatPrice(49),
+        period: ` / ${t('month')}`,
+        ctaText: t('get_started'),
+        onCtaClick: () => onNavigate('resourcingCompanySignUp'),
+        styles: { border: 'border-indigo-700', titleText: 'text-indigo-800', buttonBg: 'bg-indigo-700', buttonHoverBg: 'hover:bg-indigo-800', badgeBg: 'bg-indigo-700' },
+        features: [
+            { text: <strong>{t('agency_feat_1', { count: 25 })}</strong>, included: true },
+            { text: t('agency_feat_2'), included: true },
+            { text: t('agency_feat_3'), included: true },
+            { text: t('agency_feat_4'), included: true },
+            { text: t('agency_feat_5'), included: true },
+            { text: t('agency_feat_6'), included: true },
+            { text: t('agency_feat_7', { price: formatPrice(2) }), included: true },
+        ]
+    };
 
     return (
         <div className="bg-gray-50 flex flex-col min-h-screen">
             <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
-            <main className="flex-grow pt-24">
-                {/* Hero Section */}
-                <section className="py-12 bg-white text-center">
+            <main className="flex-grow pt-14">
+                <section className="py-8 bg-white text-center">
                     <div className="container mx-auto px-4">
-                        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-4">A Plan for Every Ambition</h1>
-                        <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">From getting your foot in the door to becoming an industry leader, we have a plan that grows with your career. It's always free for companies to post jobs.</p>
+                        <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800 mb-2">{t('pricing_title')}</h1>
+                        <p className="text-sm md:text-base text-gray-600 max-w-3xl mx-auto">{t('pricing_subtitle')}</p>
                     </div>
                 </section>
 
-                {/* Pricing Section */}
-                <section className="py-16 checker-plate-background">
+                <section className="py-10 checker-plate-background">
                     <div className="container mx-auto px-4 max-w-7xl">
-                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-end">
-                           {TIERS.map(tier => (
-                               <TierCard 
-                                   key={tier.title}
-                                   {...tier}
-                               />
-                           ))}
+                         <div className="flex justify-center mb-4 border-b border-gray-200">
+                            <button onClick={() => setActiveTab('engineers')} className={getTabClass('engineers')}>
+                                <User /> {t('for_engineers')}
+                            </button>
+                            <button onClick={() => setActiveTab('companies')} className={getTabClass('companies')}>
+                                <Building /> {t('for_companies_resourcing')}
+                            </button>
                         </div>
+                        
+                        {activeTab === 'engineers' && (
+                            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-end fade-in-up">
+                               {ENGINEER_TIERS.map(tier => (
+                                   <TierCard 
+                                       key={tier.title}
+                                       {...tier}
+                                   />
+                               ))}
+                            </div>
+                        )}
+                        
+                        {activeTab === 'companies' && (
+                           <div className="fade-in-up space-y-8">
+                                {/* Section for Companies */}
+                                <div className="bg-gradient-to-br from-green-50 to-teal-50 p-6 rounded-lg shadow-lg border-2 border-green-200 text-center">
+                                    <h2 className="text-2xl font-extrabold text-green-800">{t('for_companies')}</h2>
+                                    <p className="text-4xl font-black text-gray-800 my-3">{t('free_forever')}</p>
+                                    <p className="text-gray-600 max-w-2xl mx-auto mb-4 text-sm">{t('company_pricing_desc')}</p>
+                                    <div className="inline-block bg-white p-3 rounded-md shadow">
+                                        <ul className="space-y-2 text-left text-sm">
+                                            <FeatureListItem>{t('company_feat_1')}</FeatureListItem>
+                                            <FeatureListItem>{t('company_feat_2')}</FeatureListItem>
+                                            <FeatureListItem>{t('company_feat_3')}</FeatureListItem>
+                                            <FeatureListItem>{t('company_feat_4')}</FeatureListItem>
+                                            <FeatureListItem>{t('company_feat_5')}</FeatureListItem>
+                                        </ul>
+                                    </div>
+                                    <div className="mt-6">
+                                        <button onClick={() => onNavigate('companySignUp')} className="font-bold py-2 px-6 rounded-lg text-white transition-colors bg-green-600 hover:bg-green-700 text-base transform hover:scale-105">
+                                            {t('post_job_free')}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Section for Resourcing Companies */}
+                                <div>
+                                    <div className="text-center mb-4">
+                                        <h2 className="text-2xl font-bold text-gray-800">For Resourcing Agencies</h2>
+                                        <p className="text-gray-600 mt-1 text-sm">{t('agency_desc')}</p>
+                                    </div>
+                                    <div className="flex justify-center">
+                                        <div className="max-w-md w-full">
+                                            <TierCard 
+                                                {...RESOURCING_TIER}
+                                                description="A powerful toolkit for agencies to manage their talent and workflow efficiently."
+                                                isFeatured={true}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </section>
             </main>

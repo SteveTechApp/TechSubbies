@@ -16,6 +16,7 @@ interface AnalysisResult {
         min_rate: number;
         max_rate: number;
     };
+    suggested_titles: string[];
     error?: string;
 }
 
@@ -33,12 +34,36 @@ const SuggestionCard = ({ icon: Icon, title, children, onApply, isApplied }: { i
     </div>
 );
 
+const TitleSuggestionCard = ({ titles, onApply, appliedTitle }: { titles: string[], onApply: (title: string) => void, appliedTitle: string | null }) => (
+    <div className="bg-white p-3 rounded-lg border">
+        <h4 className="font-bold text-sm mb-2 flex items-center text-gray-700">
+            <Briefcase size={16} className="mr-2" /> Suggested Job Titles
+        </h4>
+        <div className="space-y-2">
+            {titles.map((title, index) => (
+                <div key={index} className="flex items-center justify-between text-sm p-1 hover:bg-gray-50 rounded">
+                    <span className="text-gray-800">{title}</span>
+                    <button
+                        type="button"
+                        onClick={() => onApply(title)}
+                        className="text-xs font-bold text-blue-600 hover:underline disabled:text-gray-400 disabled:no-underline"
+                        disabled={appliedTitle === title}
+                    >
+                        {appliedTitle === title ? 'Applied ✓' : 'Use this title'}
+                    </button>
+                </div>
+            ))}
+        </div>
+    </div>
+);
+
 export const AIJobHelper = ({ jobDetails, setJobDetails }: AIJobHelperProps) => {
     const { geminiService } = useAppContext();
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<AnalysisResult | null>(null);
     const [error, setError] = useState('');
     const [applied, setApplied] = useState<string[]>([]);
+    const [appliedTitle, setAppliedTitle] = useState<string | null>(null);
 
     const handleAnalyze = async () => {
         if (!jobDetails.description.trim()) {
@@ -49,6 +74,7 @@ export const AIJobHelper = ({ jobDetails, setJobDetails }: AIJobHelperProps) => 
         setError('');
         setResult(null);
         setApplied([]);
+        setAppliedTitle(null);
         const analysis = await geminiService.analyzeJobDescription(jobDetails.title, jobDetails.description);
         if (analysis.error) {
             setError(analysis.error);
@@ -60,7 +86,14 @@ export const AIJobHelper = ({ jobDetails, setJobDetails }: AIJobHelperProps) => 
 
     const handleApply = (field: string, value: any) => {
         setJobDetails(prev => ({...prev, ...value}));
-        setApplied(prev => [...prev, field]);
+        if (!applied.includes(field)) {
+             setApplied(prev => [...prev, field]);
+        }
+    };
+    
+    const applyTitle = (title: string) => {
+        setJobDetails(prev => ({ ...prev, title }));
+        setAppliedTitle(title);
     };
 
     return (
@@ -81,7 +114,7 @@ export const AIJobHelper = ({ jobDetails, setJobDetails }: AIJobHelperProps) => 
             {error && <p className="text-red-500 mt-2 text-sm">{error}</p>}
 
             {result && (
-                <div className="mt-4 grid grid-cols-1 gap-4">
+                <div className="mt-4 grid grid-cols-1 gap-4 animate-fade-in-up">
                      <SuggestionCard 
                         icon={Briefcase} 
                         title="Suggested Description"
@@ -91,14 +124,23 @@ export const AIJobHelper = ({ jobDetails, setJobDetails }: AIJobHelperProps) => 
                         <p className="text-xs text-gray-600 h-24 overflow-y-auto custom-scrollbar pr-2 border-l-2 pl-2 border-gray-200">{result.improved_description}</p>
                     </SuggestionCard>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {result.suggested_titles && (
+                        <TitleSuggestionCard 
+                            titles={result.suggested_titles}
+                            onApply={applyTitle}
+                            appliedTitle={appliedTitle}
+                        />
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <SuggestionCard 
                             icon={Briefcase} 
-                            title="Suggested Role & Title"
+                            title="Suggested Role"
                             isApplied={applied.includes('role')}
                             onApply={() => handleApply('role', { jobRole: result.suggested_job_role, title: result.suggested_job_role })}
                         >
                             <p className="font-semibold">{result.suggested_job_role}</p>
+                            <p className="text-xs text-gray-500">(Applying will also update the title)</p>
                         </SuggestionCard>
 
                          <SuggestionCard 
@@ -109,17 +151,17 @@ export const AIJobHelper = ({ jobDetails, setJobDetails }: AIJobHelperProps) => 
                          >
                              <p className="font-semibold">{result.suggested_experience_level}</p>
                         </SuggestionCard>
-
-                        <SuggestionCard 
-                            icon={DollarSign} 
-                            title="Suggested Day Rate"
-                            isApplied={applied.includes('rate')}
-                            onApply={() => handleApply('rate', { dayRate: String(result.suggested_day_rate.max_rate) })}
-                        >
-                            <p className="font-semibold">£{result.suggested_day_rate.min_rate} - £{result.suggested_day_rate.max_rate}</p>
-                             <p className="text-xs text-gray-500">(Applying sets the max rate)</p>
-                        </SuggestionCard>
                     </div>
+
+                     <SuggestionCard 
+                        icon={DollarSign} 
+                        title="Suggested Day Rate"
+                        isApplied={applied.includes('rate')}
+                        onApply={() => handleApply('rate', { dayRate: String(result.suggested_day_rate.max_rate) })}
+                    >
+                        <p className="font-semibold">£{result.suggested_day_rate.min_rate} - £{result.suggested_day_rate.max_rate}</p>
+                         <p className="text-xs text-gray-500">(Applying sets the max rate)</p>
+                    </SuggestionCard>
                 </div>
             )}
         </div>

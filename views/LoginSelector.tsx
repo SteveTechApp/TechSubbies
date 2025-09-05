@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
-import { Role, Page } from '../types/index.ts';
+import { Role, Page, User, EngineerProfile, CompanyProfile } from '../types/index.ts';
 import { Logo } from '../components/Logo.tsx';
-import { User, Building, Users } from '../components/Icons.tsx';
+import { User as UserIcon, Building, Users } from '../components/Icons.tsx';
 
 interface LoginSelectorProps {
     onNavigate: (page: Page) => void;
 }
 
 export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
-    const { login, loginAsSteve } = useAppContext();
+    const { login, loginAsSteve, allUsers, updateEngineerProfile, updateCompanyProfile } = useAppContext();
     const [activeTab, setActiveTab] = useState('signin');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -34,6 +34,35 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
             localStorage.removeItem('rememberedEmail');
         }
         
+        const userToLogin = allUsers.find(u => 
+            'contact' in u.profile && (u.profile.contact as any).email.toLowerCase() === email.toLowerCase()
+        );
+
+        if (userToLogin && userToLogin.profile.isBanned && userToLogin.profile.banEndDate) {
+            const banEnd = new Date(userToLogin.profile.banEndDate);
+            if (banEnd > new Date()) {
+                setError(`This account is suspended until ${banEnd.toLocaleDateString()}.`);
+                return;
+            } else {
+                // Ban has expired, lift it and reactivate the account.
+                alert("Your temporary account suspension has ended. Your account has been reactivated. You can now log in.");
+                const profileUpdate = {
+                    id: userToLogin.profile.id,
+                    isBanned: false,
+                    banEndDate: undefined,
+                    status: 'active',
+                    warnings: 0, // Reset warnings
+                };
+                if (userToLogin.role === Role.ENGINEER) {
+                    updateEngineerProfile(profileUpdate as Partial<EngineerProfile>);
+                } else {
+                    updateCompanyProfile(profileUpdate as Partial<CompanyProfile>);
+                }
+                setError("Your account is reactivated. Please try logging in again.");
+                return; // Force user to re-submit login on the updated state.
+            }
+        }
+
         // This is a mock authentication system based on email.
         switch (email.toLowerCase()) {
             case 'steve.goodwin@techsubbies.com': loginAsSteve(); break;
@@ -131,7 +160,7 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
                                 
                                 <button onClick={() => onNavigate('engineerSignUp')} className="w-full p-6 text-left border-2 border-blue-500 bg-blue-50 rounded-lg hover:shadow-lg transition-shadow">
                                     <div className="flex items-center">
-                                        <User className="w-8 h-8 text-blue-600 mr-4"/>
+                                        <UserIcon className="w-8 h-8 text-blue-600 mr-4"/>
                                         <div>
                                             <h3 className="font-bold text-lg text-gray-800">I'm an Engineer</h3>
                                             <p className="text-gray-600">Create a profile to find freelance work.</p>

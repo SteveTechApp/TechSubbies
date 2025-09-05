@@ -16,7 +16,7 @@ interface DashboardPanelProps {
 }
 
 const DashboardPanel = ({ icon: Icon, title, description, onClick, disabled = false, isFeatured = false }: DashboardPanelProps) => {
-    const baseClasses = "flex flex-col p-4 bg-white rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left h-44";
+    const baseClasses = "flex flex-col p-2 bg-white rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left h-32";
     const disabledClasses = "bg-gray-100 text-gray-400 cursor-not-allowed hover:shadow-md hover:-translate-y-0";
     const featuredClasses = "bg-gradient-to-br from-yellow-300 to-orange-400 text-white";
     
@@ -24,43 +24,43 @@ const DashboardPanel = ({ icon: Icon, title, description, onClick, disabled = fa
 
     return (
         <button onClick={onClick} disabled={disabled} className={finalClasses}>
-            <div className={`p-2 rounded-full inline-block mb-2 ${isFeatured ? 'bg-white/30' : 'bg-blue-100'}`}>
-                <Icon size={24} className={isFeatured ? 'text-white' : 'text-blue-600'} />
+            <div className={`p-1 rounded-full inline-block mb-1 ${isFeatured ? 'bg-white/30' : 'bg-blue-100'}`}>
+                <Icon size={18} className={isFeatured ? 'text-white' : 'text-blue-600'} />
             </div>
-            <h3 className={`text-lg font-bold ${isFeatured ? 'text-white' : 'text-gray-800'}`}>{title}</h3>
+            <h3 className={`text-sm font-bold ${isFeatured ? 'text-white' : 'text-gray-800'}`}>{title}</h3>
             <p className={`mt-1 text-xs ${isFeatured ? 'text-yellow-100' : 'text-gray-600'}`}>{description}</p>
         </button>
     );
 };
 
 const ProfileStrength = ({ score }: { score: number }) => (
-    <div className="bg-white p-5 rounded-lg shadow">
-        <h3 className="font-bold text-lg mb-2">Profile Strength</h3>
-        <div className="flex items-center gap-4">
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div className="bg-green-500 h-2.5 rounded-full" style={{ width: `${score}%` }}></div>
+    <div className="bg-white p-2 rounded-lg shadow">
+        <h3 className="font-bold text-xs mb-1">Profile Strength</h3>
+        <div className="flex items-center gap-2">
+            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${score}%` }}></div>
             </div>
-            <span className="font-bold text-green-600">{score}%</span>
+            <span className="font-bold text-green-600 text-xs">{score}%</span>
         </div>
-        <p className="text-xs text-gray-500 mt-2">A complete profile attracts more high-quality job offers.</p>
+        <p className="text-xs text-gray-500 mt-1">A complete profile attracts more high-quality job offers.</p>
     </div>
 );
 
 const StatBox = ({ value, label, icon: Icon, onClick }: { value: string, label: string, icon: React.ComponentType<any>, onClick?: () => void }) => {
     const content = (
-         <div className="flex items-center gap-4">
-            <Icon size={24} className="text-blue-500" />
+         <div className="flex items-center gap-2">
+            <Icon size={18} className="text-blue-500" />
             <div>
-                <p className="text-2xl font-bold">{value}</p>
-                <p className="text-sm text-gray-500">{label}</p>
+                <p className="text-lg font-bold">{value}</p>
+                <p className="text-xs text-gray-500">{label}</p>
             </div>
         </div>
     );
     
-    const baseClasses = "w-full bg-white p-4 rounded-lg shadow text-left";
+    const baseClasses = "w-full bg-white p-2 rounded-lg shadow text-left";
     if(onClick) {
         return (
-            <button onClick={onClick} className={`${baseClasses} hover:shadow-lg hover:-translate-y-1 transition-all`}>
+            <button onClick={onClick} className={`${baseClasses} hover:shadow-lg hover:-translate-y-0.5 transition-all`}>
                 {content}
             </button>
         );
@@ -94,14 +94,14 @@ const ActionableInsight = ({ profile, onUpgrade, onNavigate }: { profile: Engine
     }
 
     return (
-        <div className={`${insight.bgColor} ${insight.textColor} p-5 rounded-lg shadow`}>
-            <div className="flex items-start gap-3">
-                <insight.icon size={24} className="flex-shrink-0 mt-1" />
+        <div className={`${insight.bgColor} ${insight.textColor} p-2 rounded-lg shadow`}>
+            <div className="flex items-start gap-2">
+                <insight.icon size={18} className="flex-shrink-0 mt-0.5" />
                 <div>
-                    <h3 className="font-bold text-lg">{insight.title}</h3>
-                    <p className="text-sm opacity-90">{insight.description}</p>
-                    <button onClick={insight.action} className="font-bold text-sm mt-3 flex items-center gap-1 hover:underline">
-                        {insight.actionText} <ArrowRight size={14} />
+                    <h3 className="font-bold text-sm">{insight.title}</h3>
+                    <p className="text-xs opacity-90">{insight.description}</p>
+                    <button onClick={insight.action} className="font-bold text-xs mt-1.5 flex items-center gap-1 hover:underline">
+                        {insight.actionText} <ArrowRight size={12} />
                     </button>
                 </div>
             </div>
@@ -146,11 +146,11 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
 
     return (
         <div>
-            <h1 className="text-3xl font-bold mb-1">Welcome back, {firstName}!</h1>
-            <p className="text-gray-500 mb-6">This is your command center for managing your freelance career.</p>
+            <h1 className="text-lg font-bold mb-0.5">Welcome back, {firstName}!</h1>
+            <p className="text-gray-500 mb-2 text-xs">This is your command center for managing your freelance career.</p>
 
             {engineerProfile.status === 'inactive' && (
-                 <div className="p-4 mb-6 bg-orange-100 border-l-4 border-orange-500 text-orange-700">
+                 <div className="p-3 mb-3 bg-orange-100 border-l-4 border-orange-500 text-orange-700">
                     <div className="flex">
                         <div className="py-1"><svg className="fill-current h-6 w-6 text-orange-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zM9 5v6h2V5H9zm0 8v2h2v-2H9z"/></svg></div>
                         <div>
@@ -162,8 +162,8 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
                 </div>
             )}
             
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+                <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                     <DashboardPanel icon={Edit} title="Manage Profile" description="Update your roles, bio, and case studies." onClick={() => setActiveView('Manage Profile')} />
                     <DashboardPanel icon={User} title="View Public Profile" description="See your Stats Card as companies see it." onClick={() => setActiveView('View Public Profile')} />
                     <DashboardPanel icon={CalendarDays} title="Set Availability" description="Update your calendar to get relevant offers." onClick={() => setActiveView('Availability')} />
@@ -181,18 +181,18 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
                         )}
                     </div>
                     {premiumAccess && engineerProfile.jobDigestOptIn && (
-                        <div className="sm:col-span-2 md:col-span-3 bg-white p-5 rounded-lg shadow">
-                            <h3 className="font-bold text-lg mb-2">Your Weekly Digest</h3>
-                            <p className="text-sm text-gray-500 mb-4">Here are some of the latest top-matching jobs. We'll send a full summary to your email.</p>
-                            <div className="space-y-3">
+                        <div className="sm:col-span-2 md:col-span-3 bg-white p-3 rounded-lg shadow">
+                            <h3 className="font-bold text-sm mb-2">Your Weekly Digest</h3>
+                            <p className="text-xs text-gray-500 mb-2">Here are some of the latest top-matching jobs. We'll send a full summary to your email.</p>
+                            <div className="space-y-2">
                                 {digestJobs.map(job => (
-                                    <div key={job.id} className="p-3 bg-gray-50 rounded-md flex justify-between items-center">
+                                    <div key={job.id} className="p-2 bg-gray-50 rounded-md flex justify-between items-center">
                                         <div>
-                                            <p className="font-semibold text-blue-700">{job.title}</p>
+                                            <p className="font-semibold text-xs text-blue-700">{job.title}</p>
                                             <p className="text-xs text-gray-600">{job.location} • {job.currency}{job.dayRate}/day</p>
                                         </div>
-                                        <button onClick={() => setActiveView('Job Search')} className="text-sm font-semibold text-blue-600 hover:underline flex items-center gap-1">
-                                            View <ArrowRight size={14} />
+                                        <button onClick={() => setActiveView('Job Search')} className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1">
+                                            View <ArrowRight size={12} />
                                         </button>
                                     </div>
                                 ))}
@@ -201,9 +201,9 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
                     )}
                 </div>
 
-                <div className="lg:col-span-1 space-y-6">
+                <div className="lg:col-span-1 space-y-2">
                     <ProfileStrength score={profileScore} />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
                         <StatBox value={engineerProfile.profileViews.toString()} label="Profile Views (30d)" icon={TrendingUp} onClick={() => setActiveView('Analytics')} />
                         <StatBox value={engineerProfile.jobInvites.toString()} label="Job Invites" icon={Mail} onClick={() => setActiveView('My Network')} />
                     </div>

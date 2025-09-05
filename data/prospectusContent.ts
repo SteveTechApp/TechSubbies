@@ -1,3 +1,4 @@
+
 export const PROSPECTUS_CONTENT = `
 **TechSubbies.com: Investor Relations Guide**
 
@@ -24,7 +25,7 @@ We are targeting a massive and expanding addressable market.
 **5. Business Model & Revenue Streams**
 Our revenue model is designed for scalability and high margins, built on a foundation of a strong user base.
 1.  **Skills Profile Subscriptions:** A low-cost, high-volume monthly subscription for engineers to unlock premium profile features. This is our core recurring revenue stream.
-2.  **"Profile Boost" Credits:** A pay-per-use microtransaction for premium engineers to temporarily increase their visibility in search results, driving engagement and direct revenue.
+2.  **Microtransactions:** Pay-per-use features like "Profile Boosts," "Supercharged Applications," and "12-Hour Day Passes" provide high-margin, value-added services.
 3.  **Targeted Advertising:** Premium, native advertising slots for industry-specific manufacturers (e.g., Crestron, Cisco), training providers, and distributors to reach their ideal professional audience.
 
 **6. Technology & Competitive Advantage**

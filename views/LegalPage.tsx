@@ -77,17 +77,17 @@ const LegalContent = ({ documentType }: { documentType: 'terms' | 'privacy' | 's
     const selectedDoc = content[documentType];
 
     return (
-        <div className="bg-white py-12">
+        <div className="bg-white py-8">
             <div className="container mx-auto px-4 max-w-3xl">
-                <h1 className="text-4xl font-extrabold text-gray-800 mb-2">{selectedDoc.title}</h1>
-                <p className="text-gray-500 mb-8">Last Updated: {selectedDoc.lastUpdated}</p>
-                <div className="prose prose-lg max-w-none">
+                <h1 className="text-2xl font-extrabold text-gray-800 mb-2">{selectedDoc.title}</h1>
+                <p className="text-gray-500 mb-4 text-sm">Last Updated: {selectedDoc.lastUpdated}</p>
+                <div className="prose max-w-none">
                     {selectedDoc.sections.map(section => (
-                        <div key={section.title} className="mb-6">
-                            <h2 className="text-2xl font-bold text-gray-700">{section.title}</h2>
+                        <div key={section.title} className="mb-4">
+                            <h2 className="text-lg font-bold text-gray-700">{section.title}</h2>
                             <p className="text-gray-600">{section.text}</p>
                              {section.list && (
-                                <ul className="list-disc pl-6 mt-4 space-y-2">
+                                <ul className="list-disc pl-6 mt-2 space-y-1">
                                     {section.list.map((item, index) => (
                                         <li key={index} className="text-gray-600">{item}</li>
                                     ))}
@@ -105,7 +105,7 @@ export const LegalPage = ({ onNavigate, onHowItWorksClick, documentType }: Legal
     return (
         <div className="bg-gray-50 flex flex-col min-h-screen">
             <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
-            <main className="flex-grow pt-24">
+            <main className="flex-grow pt-14">
                 <LegalContent documentType={documentType} />
             </main>
             <Footer onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />

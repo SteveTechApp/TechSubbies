@@ -18,23 +18,23 @@ const FeatureListItem = ({ children }: { children: React.ReactNode }) => (
 );
 
 const TestimonialCard = ({ quote, name, role, avatar }: { quote: string, name: string, role: string, avatar: string }) => (
-    <div className="bg-blue-700 p-6 rounded-lg text-center h-full flex flex-col">
-        <img src={avatar} alt={name} className="w-20 h-20 rounded-full mx-auto -mt-12 border-4 border-blue-600 shadow-lg"/>
-        <p className="text-blue-200 italic my-4 flex-grow">"{quote}"</p>
+    <div className="bg-blue-700 p-4 rounded-lg text-center h-full flex flex-col">
+        <img src={avatar} alt={name} className="w-14 h-14 rounded-full mx-auto -mt-8 border-4 border-blue-600 shadow-lg"/>
+        <p className="text-blue-200 italic text-xs my-3 flex-grow">"{quote}"</p>
         <div>
-            <p className="font-bold text-white">{name}</p>
-            <p className="text-sm text-blue-300">{role}</p>
+            <p className="font-bold text-white text-sm">{name}</p>
+            <p className="text-xs text-blue-300">{role}</p>
         </div>
     </div>
 );
 
 const FeatureDetailCard = ({ icon: Icon, title, children }: { icon: React.ComponentType<any>, title: string, children: React.ReactNode }) => (
-    <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <div className="flex items-center mb-3">
-            <Icon className="w-8 h-8 text-blue-500 mr-3" />
-            <h3 className="text-xl font-bold">{title}</h3>
+    <div className="bg-white p-4 rounded-lg border border-gray-200">
+        <div className="flex items-center mb-2">
+            <Icon className="w-6 h-6 text-blue-500 mr-2" />
+            <h3 className="text-base font-bold">{title}</h3>
         </div>
-        <p className="text-gray-600">{children}</p>
+        <p className="text-gray-600 text-xs">{children}</p>
     </div>
 );
 
@@ -48,20 +48,20 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
     return (
         <div className="bg-gray-50 flex flex-col min-h-screen">
             <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
-            <main className="flex-grow pt-24">
-                <section className="relative text-white text-center min-h-[50vh] flex items-center justify-center px-4 bg-cover bg-center" style={{ backgroundImage: `url('${heroImage}')` }}>
+            <main className="flex-grow pt-14">
+                <section className="relative text-white text-center min-h-[40vh] flex items-center justify-center px-4 bg-cover bg-center" style={{ backgroundImage: `url('${heroImage}')` }}>
                     <div className="absolute inset-0 bg-black opacity-60"></div>
                     <div className="relative z-10 max-w-4xl">
-                        <h1 className="text-4xl md:text-6xl font-extrabold mb-4">Your Career, Supercharged.</h1>
-                        <p className="text-lg md:text-xl mx-auto mb-8">Showcase your specialist skills, get matched with high-value contracts, and take control of your freelance career. All on one dedicated platform.</p>
-                        <button onClick={() => onNavigate('login')} className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">Create Your Free Profile</button>
+                        <h1 className="text-2xl md:text-4xl font-extrabold mb-2">Your Career, Supercharged.</h1>
+                        <p className="text-sm md:text-base mx-auto mb-4">Showcase your specialist skills, get matched with high-value contracts, and take control of your freelance career. All on one dedicated platform.</p>
+                        <button onClick={() => onNavigate('login')} className="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">Create Your Free Profile</button>
                     </div>
                 </section>
                 
-                <section className="py-16 bg-white">
+                <section className="py-8 bg-white">
                     <div className="container mx-auto px-4 text-center">
-                         <h2 className="text-4xl font-bold text-gray-800 mb-12">How TechSubbies Works For You</h2>
-                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+                         <h2 className="text-2xl font-bold text-gray-800 mb-6">How TechSubbies Works For You</h2>
+                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-7xl mx-auto">
                             <FeatureDetailCard icon={Star} title="Build a Skills Profile">
                                 Go beyond a simple CV. Our Skills Profile lets you add specialist roles and rate your competency on granular, industry-specific skills.
                             </FeatureDetailCard>
@@ -78,10 +78,10 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                     </div>
                 </section>
 
-                <section className="py-12 bg-gray-50">
+                <section className="py-8 bg-gray-50">
                     <div className="container mx-auto px-4 max-w-4xl">
-                        <h2 className="text-3xl font-bold text-center mb-10">All The Tools You Need</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                        <h2 className="text-xl font-bold text-center mb-6">All The Tools You Need</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
                             <FeatureListItem>
                                 <strong>Free Basic Profile:</strong> Get started with a professional profile, set your availability, and apply for jobs at no cost.
                             </FeatureListItem>
@@ -104,10 +104,10 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                     </div>
                 </section>
                 
-                <section className="py-12 bg-blue-600">
+                <section className="py-8 bg-blue-600">
                     <div className="container mx-auto px-4">
-                        <h2 className="text-4xl font-bold text-center text-white mb-16">Hear From Our Engineers</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                        <h2 className="text-2xl font-bold text-center text-white mb-10">Hear From Our Engineers</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
                            <TestimonialCard 
                                 avatar="https://xsgames.co/randomusers/assets/avatars/male/74.jpg"
                                 name="Neil B."
@@ -130,11 +130,11 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                     </div>
                 </section>
 
-                <section className="py-12 bg-gray-800 text-white">
+                <section className="py-8 bg-gray-800 text-white">
                     <div className="container mx-auto px-4 text-center">
-                        <h2 className="text-4xl font-bold mb-4">Ready to Find Your Next Project?</h2>
-                        <p className="text-xl mb-8">Join the UK's dedicated network for freelance tech professionals.</p>
-                        <button onClick={() => onNavigate('login')} className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">
+                        <h2 className="text-2xl font-bold mb-2">Ready to Find Your Next Project?</h2>
+                        <p className="text-base mb-4">Join the UK's dedicated network for freelance tech professionals.</p>
+                        <button onClick={() => onNavigate('login')} className="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">
                             Sign Up and Get Started
                         </button>
                     </div>

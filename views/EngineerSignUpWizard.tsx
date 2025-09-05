@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
-import { Currency, Discipline, Compliance, IdentityVerification } from '../types/index.ts';
+import { Currency, Discipline, Compliance, IdentityVerification, Country } from '../types/index.ts';
 import { Logo } from '../components/Logo.tsx';
 import { ArrowLeft } from '../components/Icons.tsx';
 import { ProgressTracker } from '../components/SignUp/ProgressTracker.tsx';
@@ -20,6 +20,7 @@ export const EngineerSignUpWizard = ({ onCancel }: EngineerSignUpWizardProps) =>
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         name: '', email: '', discipline: Discipline.AV, location: '', experience: 5,
+        country: Country.UK, // Add country to initial state
         minDayRate: 150, maxDayRate: 180, currency: Currency.GBP, availability: new Date().toISOString().split('T')[0],
         compliance: {
             professionalIndemnity: { hasCoverage: false, isVerified: false, amount: 1000000 },

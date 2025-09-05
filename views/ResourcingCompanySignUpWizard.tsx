@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext.tsx';
 import { Logo } from '../components/Logo.tsx';
 import { ArrowLeft } from '../components/Icons.tsx';
+import { Country } from '../types/index.ts';
 
 interface ResourcingCompanySignUpWizardProps {
     onCancel: () => void;
@@ -16,11 +17,13 @@ export const ResourcingCompanySignUpWizard = ({ onCancel }: ResourcingCompanySig
         companyName: '',
         website: '',
         regNumber: '',
+        country: Country.UK,
+        location: 'London, UK',
     });
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
         setError('');
@@ -87,6 +90,18 @@ export const ResourcingCompanySignUpWizard = ({ onCancel }: ResourcingCompanySig
                             <div>
                                 <label className="block font-medium text-sm mb-1">Company Website</label>
                                 <input type="url" name="website" value={formData.website} onChange={handleChange} placeholder="https://avplacements.com" className="w-full border p-2 rounded" />
+                            </div>
+                        </div>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <div>
+                                <label className="block font-medium text-sm mb-1">Country</label>
+                                 <select name="country" value={formData.country} onChange={handleChange} className="w-full border p-2 rounded bg-white h-[42px]">
+                                    {Object.values(Country).map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block font-medium text-sm mb-1">Location (City, Country)</label>
+                                <input type="text" name="location" value={formData.location} onChange={handleChange} placeholder="e.g., London, UK" className="w-full border p-2 rounded" />
                             </div>
                         </div>
                          <div>

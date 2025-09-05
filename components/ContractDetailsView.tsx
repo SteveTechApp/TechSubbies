@@ -24,6 +24,7 @@ const StatusBadge = ({ status, className }: { status: string, className?: string
         [MilestoneStatus.AWAITING_FUNDING]: { text: 'Awaiting Funding', color: 'bg-gray-200 text-gray-700' },
         [MilestoneStatus.FUNDED_IN_PROGRESS]: { text: 'In Progress', color: 'bg-blue-100 text-blue-700' },
         [MilestoneStatus.SUBMITTED_FOR_APPROVAL]: { text: 'Submitted', color: 'bg-yellow-100 text-yellow-700' },
+        [MilestoneStatus.APPROVED_PENDING_INVOICE]: { text: 'Approved - Pending Invoice', color: 'bg-teal-100 text-teal-800' },
         [MilestoneStatus.COMPLETED_PAID]: { text: 'Paid', color: 'bg-green-100 text-green-700' },
     };
     const info = STATUS_INFO[status] || { text: status, color: 'bg-gray-200 text-gray-800' };
@@ -32,7 +33,8 @@ const StatusBadge = ({ status, className }: { status: string, className?: string
 
 
 const MilestoneRow = ({ milestone, contract, userRole }: { milestone: Milestone, contract: Contract, userRole: Role }) => {
-    const { fundMilestone, submitMilestoneForApproval, approveMilestonePayout } = useAppContext();
+    // FIX: Changed approveMilestonePayout to approveMilestone to match the updated AppContextType.
+    const { fundMilestone, submitMilestoneForApproval, approveMilestone } = useAppContext();
     const [isLoading, setIsLoading] = useState(false);
 
     const handleAction = async (action: Function) => {
@@ -51,7 +53,8 @@ const MilestoneRow = ({ milestone, contract, userRole }: { milestone: Milestone,
                 return <button onClick={() => handleAction(fundMilestone)} className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Fund Milestone</button>;
             }
             if (milestone.status === MilestoneStatus.SUBMITTED_FOR_APPROVAL) {
-                return <button onClick={() => handleAction(approveMilestonePayout)} className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700">Approve & Release Payment</button>;
+                // FIX: Changed button text to be more accurate for the new approval flow.
+                return <button onClick={() => handleAction(approveMilestone)} className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700">Approve Milestone</button>;
             }
         }
         if (userRole === Role.ENGINEER && milestone.status === MilestoneStatus.FUNDED_IN_PROGRESS) {

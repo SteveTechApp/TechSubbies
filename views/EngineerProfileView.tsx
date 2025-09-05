@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { EngineerProfile, Role } from '../types/index.ts';
-import { MessageCircle, Star, Trophy } from '../components/Icons.tsx';
+import { MessageCircle, Star, Trophy, Share2 } from '../components/Icons.tsx';
 import { TopTrumpCard } from '../components/TopTrumpCard.tsx';
 import { ReviewCard } from '../components/ReviewCard.tsx';
 import { useAppContext } from '../context/AppContext.tsx';
 import { BadgeDisplay } from '../components/BadgeDisplay.tsx';
+import { ShareProfileModal } from '../components/ShareProfileModal.tsx';
 
 interface EngineerProfileViewProps {
     profile: EngineerProfile | null;
@@ -14,6 +15,7 @@ interface EngineerProfileViewProps {
 
 export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerProfileViewProps) => {
     const { user, startConversationAndNavigate, reviews, allUsers } = useAppContext();
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
     if (!profile) {
         return <div>Loading profile...</div>;
@@ -34,17 +36,28 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerPro
         const companyUser = allUsers.find(u => u.profile.id === companyId && (u.role === Role.COMPANY || u.role === Role.RESOURCING_COMPANY));
         return companyUser?.profile;
     };
+    
+    const profileUrl = `https://techsubbies.com/engineer/${profile.id}`;
 
     return (
         <div className="relative font-sans max-w-4xl mx-auto py-4">
             {canMessage && (
-                 <button
-                    onClick={() => startConversationAndNavigate(profile.id, handleNavigateToMessages)}
-                    className="absolute top-8 right-0 sm:right-4 z-20 flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-lg"
-                    aria-label={`Message ${profile.name}`}
-                >
-                    <MessageCircle size={16} className="mr-2" /> Message
-                </button>
+                 <div className="absolute top-8 right-0 sm:right-4 z-20 flex items-center gap-2">
+                     <button
+                        onClick={() => setIsShareModalOpen(true)}
+                        className="flex items-center px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-100 shadow-lg border"
+                        aria-label={`Share ${profile.name}'s profile`}
+                    >
+                        <Share2 size={16} className="mr-2" /> Share
+                    </button>
+                    <button
+                        onClick={() => startConversationAndNavigate(profile.id, handleNavigateToMessages)}
+                        className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-lg"
+                        aria-label={`Message ${profile.name}`}
+                    >
+                        <MessageCircle size={16} className="mr-2" /> Message
+                    </button>
+                </div>
             )}
            
             <TopTrumpCard profile={profile} isEditable={isEditable} onEdit={onEdit} />
@@ -79,6 +92,13 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerPro
                     <p className="text-gray-500 text-center py-4">This engineer has not received any reviews yet.</p>
                 )}
             </div>
+            
+             <ShareProfileModal 
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                profileUrl={profileUrl}
+                profileName={profile.name}
+            />
         </div>
     );
 };

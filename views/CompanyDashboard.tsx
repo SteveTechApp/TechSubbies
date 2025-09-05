@@ -13,9 +13,11 @@ import { ArrowLeft } from '../components/Icons.tsx';
 import { ContractsView } from './ContractsView.tsx';
 import { InstantInviteModal } from '../components/InstantInviteModal.tsx';
 import { ProjectPlannerView } from './CompanyDashboard/ProjectPlannerView.tsx';
+import { ProjectTrackingView } from './CompanyDashboard/ProjectTrackingView.tsx';
+import { InvoicesView } from './InvoicesView.tsx';
 
 export const CompanyDashboard = () => {
-    const { user, postJob, jobs, engineers, applications, updateCompanyProfile } = useAppContext();
+    const { user, postJob, jobs, engineers, applications, updateCompanyProfile, setCurrentPageContext } = useAppContext();
     const [activeView, setActiveView] = useState('Dashboard');
     const [isJobModalOpen, setIsJobModalOpen] = useState(false);
     
@@ -26,6 +28,15 @@ export const CompanyDashboard = () => {
     const [jobForInvite, setJobForInvite] = useState<Job | null>(null);
 
     const myJobs = useMemo(() => jobs.filter(j => j.companyId === user?.profile?.id), [jobs, user]);
+
+    useEffect(() => {
+        let context = `Company Dashboard: ${activeView}`;
+        if (activeView === 'Find Talent' && talentView === 'profile') {
+            context = `Company Dashboard: Viewing Engineer Profile`;
+        }
+        setCurrentPageContext(context);
+    }, [activeView, talentView, setCurrentPageContext]);
+
 
     useEffect(() => {
         if (activeView === 'Post a Job') {
@@ -80,10 +91,14 @@ export const CompanyDashboard = () => {
                 return <MyJobsView myJobs={myJobs} setActiveView={setActiveView} />;
             case 'Project Planner':
                 return <ProjectPlannerView />;
+            case 'Project Tracking':
+                return <ProjectTrackingView />;
             case 'Messages':
                 return <MessagesView />;
             case 'Contracts':
                 return <ContractsView setActiveView={setActiveView} />;
+            case 'Invoices':
+                return <InvoicesView />;
             case 'Settings':
                 return <SettingsView profile={user.profile} onSave={updateCompanyProfile} />;
             default:
@@ -99,7 +114,7 @@ export const CompanyDashboard = () => {
     return (
         <div className="flex h-screen">
             <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-grow p-8 bg-gray-50 overflow-hidden">
+            <main className="flex-grow p-2 sm:p-3 bg-gray-50 overflow-hidden">
                 {renderActiveView()}
             </main>
             <JobPostModal

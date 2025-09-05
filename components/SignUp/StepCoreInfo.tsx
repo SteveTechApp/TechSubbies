@@ -1,8 +1,8 @@
 import React from 'react';
-import { Discipline } from '../../types/index.ts';
+import { Discipline, Country } from '../../types/index.ts';
 
 interface StepCoreInfoProps {
-    data: { name: string, email: string, discipline: Discipline, location: string, experience: number };
+    data: { name: string, email: string, discipline: Discipline, location: string, experience: number, country: Country };
     setData: (data: any) => void;
 }
 
@@ -38,16 +38,23 @@ export const StepCoreInfo = ({ data, setData }: StepCoreInfoProps) => {
                         <option value={Discipline.BOTH}>{Discipline.BOTH}</option>
                     </select>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div>
+                        <label className="block font-medium mb-1">Country of Residence</label>
+                         <select name="country" value={data.country} onChange={handleChange} className="w-full border p-2 rounded bg-white h-[42px]">
+                            {Object.values(Country).map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                    </div>
                     <div>
-                        <label className="block font-medium mb-1">Location</label>
+                        <label className="block font-medium mb-1">Location (City, Country)</label>
                         <input type="text" name="location" value={data.location} onChange={handleChange} placeholder="e.g., London, UK" className="w-full border p-2 rounded" />
                     </div>
-                    <div>
-                        <label className="block font-medium mb-1">Years of Experience</label>
-                        <input type="number" name="experience" value={data.experience} onChange={handleChange} className="w-full border p-2 rounded" />
-                    </div>
+                </div>
+
+                <div>
+                    <label className="block font-medium mb-1">Years of Experience</label>
+                    <input type="number" name="experience" value={data.experience} onChange={handleChange} className="w-full border p-2 rounded" />
                 </div>
             </div>
         </div>

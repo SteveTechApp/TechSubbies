@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { EngineerProfile } from '../../types/index.ts';
-import { ArrowLeft, User, Star, Award, Briefcase, Save } from '../../components/Icons.tsx';
+import { ArrowLeft, User, Star, Award, Briefcase, Save, Mail, Link as LinkIcon, ShieldCheck } from '../../components/Icons.tsx';
 import { AccordionSection } from '../../components/AccordionSection.tsx';
 import { SkillsAndRolesSection } from '../../components/ProfileManagement/SkillsAndRolesSection.tsx';
 import { ProfileEssentials } from '../../components/ProfileManagement/ProfileEssentials.tsx';
 import { ProfileCertifications } from '../../components/ProfileManagement/ProfileCertifications.tsx';
 import { ProfilePortfolio } from '../../components/ProfileManagement/ProfilePortfolio.tsx';
+import { ProfileContact } from '../../components/ProfileManagement/ProfileContact.tsx';
+import { ProfileSocials } from '../../components/ProfileManagement/ProfileSocials.tsx';
+import { ProfileCompliance } from '../../components/ProfileManagement/ProfileCompliance.tsx';
 
 interface ProfileManagementViewProps {
     profile: EngineerProfile;
@@ -51,6 +54,20 @@ export const ProfileManagementView = ({ profile, onSave, setActiveView }: Profil
                     />
                 </AccordionSection>
 
+                <AccordionSection title="Contact Information" icon={Mail}>
+                    <ProfileContact 
+                        formData={profileData}
+                        setFormData={setProfileData}
+                    />
+                </AccordionSection>
+
+                <AccordionSection title="Social Media Links" icon={LinkIcon}>
+                    <ProfileSocials
+                        formData={profileData}
+                        setFormData={setProfileData}
+                    />
+                </AccordionSection>
+
                 <AccordionSection title="Skills & Specialist Roles" icon={Star}>
                     <SkillsAndRolesSection 
                         profile={profile}
@@ -63,6 +80,13 @@ export const ProfileManagementView = ({ profile, onSave, setActiveView }: Profil
                 <AccordionSection title="Certifications" icon={Award}>
                     <ProfileCertifications
                         profile={profile}
+                        formData={profileData}
+                        setFormData={setProfileData}
+                    />
+                </AccordionSection>
+                
+                <AccordionSection title="Compliance Details" icon={ShieldCheck}>
+                    <ProfileCompliance
                         formData={profileData}
                         setFormData={setProfileData}
                     />

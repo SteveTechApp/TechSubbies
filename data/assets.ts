@@ -8,6 +8,9 @@ export const HERO_IMAGES = {
     'https://images.unsplash.com/photo-1614113489855-474aa913b438?q=80&w=1974&auto=format&fit=crop', // audio mixer
     'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=2070&auto=format&fit=crop', // server room
     'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop', // network globe
+    'https://images.unsplash.com/photo-1593720213428-28a5b9e94613?q=80&w=2070&auto=format&fit=crop', // Web developer setup
+    'https://images.unsplash.com/photo-1528659856941-2b3504a2b2ae?q=80&w=2070&auto=format&fit=crop', // Live event stage
+    'https://images.unsplash.com/photo-1591453089733-4a4385203115?q=80&w=2070&auto=format&fit=crop', // Data center wiring close-up
   ],
   engineers: [
     'https://images.unsplash.com/photo-1581092921462-205273467433?q=80&w=2070&auto=format&fit=crop', // tech working on server

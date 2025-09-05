@@ -64,7 +64,7 @@ export const HowItWorksModal = ({ isOpen, onClose, onNavigate }: HowItWorksModal
                             <Step icon={User} title="1. Create Your Profile" description="Build a free professional profile. Upgrade to a premium 'Skills Profile' to add specialist roles and showcase your deep expertise." />
                             <Step icon={Search} title="2. Find & Apply for Jobs" description="Search our exclusive job board and apply for contracts that match your skills and availability." />
                             <Step icon={FileText} title="3. Sign Contracts Securely" description="Receive job offers and sign contracts directly on the platform with e-signatures. No more chasing paperwork." />
-                            <Step icon={DollarSign} title="4. Get Paid via Escrow" description="For milestone-based projects, the client funds an escrow account before you start work. Once you complete a milestone and it's approved, payment is automatically released to you." />
+                            <Step icon={DollarSign} title="4. Get Paid Your Way" description="For milestone projects, clients can fund an escrow for security. For all jobs, once work is approved, you receive an official invoice to send to the client for direct payment based on the agreed terms." />
                             <Step icon={Users} title="5. Build Your Network" description="Every completed contract adds a permanent connection to your 'My Connections' page, helping you build a valuable network of clients for future work." />
                         </div>
                     )}
@@ -73,8 +73,8 @@ export const HowItWorksModal = ({ isOpen, onClose, onNavigate }: HowItWorksModal
                         <div className="space-y-6 fade-in-up">
                             <Step icon={Sparkles} title="1. Find Talent Instantly" description="Post jobs for free and use our 'AI Smart Match' to get a ranked list of the best-fit engineers based on their detailed skills." />
                             <Step icon={Handshake} title="2. Hire with Confidence" description="Send a contract directly through the platform. Choose between a milestone-based Statement of Work (SOW) or a simple Day Rate agreement." />
-                            <Step icon={DollarSign} title="3. Fund Secure Escrow" description="For SOWs, you fund project milestones into a secure escrow account. This shows the engineer the funds are ready, building trust and commitment." />
-                            <Step icon={CheckCircle} title="4. Approve Work & Pay" description="Review submitted milestones or timesheets. With a single click, approve the work and the funds are released from escrow to the engineer, minus our platform fee." />
+                            <Step icon={CheckCircle} title="3. Approve Work" description="Review submitted milestones or timesheets. With a single click, you can approve the work, which then allows for an invoice to be generated." />
+                            <Step icon={DollarSign} title="4. Pay Directly & Securely" description="Generate an invoice with flexible terms (Net 7, 14, 30). Pay the engineer directly. For added security on milestone projects, you have the option to fund a secure escrow account." />
                             <Step icon={Users} title="5. Build Your Talent Pool" description="After a successful contract, add your best freelancers to a 'Talent Pool'. This creates a curated list of trusted experts you can directly invite to future projects." />
                         </div>
                     )}
