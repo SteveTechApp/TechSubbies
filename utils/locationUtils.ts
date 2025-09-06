@@ -1,3 +1,5 @@
+// FIX: Removed self-import of `getDistance` which was causing a conflict with the local declaration.
+
 // A very simple mock distance calculator for the UK (distances are approximate in miles)
 const UK_CITIES_DISTANCES: Record<string, Record<string, number>> = {
     'london': { 'manchester': 200, 'birmingham': 120, 'leeds': 200, 'bristol': 120, 'edinburgh': 400, 'glasgow': 410, 'cardiff': 150, 'belfast': 400 },

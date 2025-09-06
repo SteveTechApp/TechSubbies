@@ -1,106 +1,76 @@
 import React, { useMemo } from 'react';
-import { Project } from '../types/index.ts';
-import { useAppContext } from '../context/AppContext.tsx';
+import { ProjectRole } from '../types/index.ts';
+import { User } from './Icons.tsx';
 
 interface ProjectTimelineProps {
-    project: Project;
+    roles: ProjectRole[];
 }
 
-const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const COLORS = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-yellow-500', 'bg-red-500', 'bg-indigo-500'];
 
-export const ProjectTimeline = ({ project }: ProjectTimelineProps) => {
-    const { engineers } = useAppContext();
-
-    const { projectStart, projectEnd, totalDurationDays, timelineMonths } = useMemo(() => {
-        if (project.roles.length === 0) {
+export const ProjectTimeline = ({ roles }: ProjectTimelineProps) => {
+    
+    const { phases, startDate, endDate, totalDays } = useMemo(() => {
+        if (roles.length === 0) {
             const today = new Date();
-            const end = new Date();
-            end.setMonth(today.getMonth() + 2);
-            return { projectStart: today, projectEnd: end, totalDurationDays: 60, timelineMonths: [] };
+            const nextMonth = new Date();
+            nextMonth.setMonth(today.getMonth() + 1);
+            return { phases: [], startDate: today, endDate: nextMonth, totalDays: 30 };
         }
 
-        const startDates = project.roles.map(r => r.startDate.getTime());
-        const endDates = project.roles.map(r => r.endDate.getTime());
+        const dates = roles.flatMap(r => [new Date(r.startDate).getTime(), new Date(r.endDate).getTime()]);
+        const minTime = Math.min(...dates);
+        const maxTime = Math.max(...dates);
+        const startDate = new Date(minTime);
+        const endDate = new Date(maxTime);
+        const totalDays = Math.max(1, (maxTime - minTime) / (1000 * 3600 * 24));
         
-        const projectStart = new Date(Math.min(...startDates));
-        projectStart.setDate(1); // Start timeline at the beginning of the first month
+        const groupedByPhase = roles.reduce((acc, role) => {
+            const phaseName = (role as any).phase || 'Unphased';
+            if (!acc[phaseName]) {
+                acc[phaseName] = [];
+            }
+            acc[phaseName].push(role);
+            return acc;
+        }, {} as Record<string, ProjectRole[]>);
 
-        const projectEnd = new Date(Math.max(...endDates));
-        projectEnd.setMonth(projectEnd.getMonth() + 1, 0); // End timeline at the end of the last month
-        
-        const totalDurationDays = (projectEnd.getTime() - projectStart.getTime()) / (1000 * 3600 * 24);
-        
-        // Generate month markers for the timeline header
-        const months = [];
-        let currentDate = new Date(projectStart);
-        while (currentDate <= projectEnd) {
-            months.push({ name: MONTH_NAMES[currentDate.getMonth()], year: currentDate.getFullYear() });
-            currentDate.setMonth(currentDate.getMonth() + 1);
-        }
+        return { phases: Object.entries(groupedByPhase), startDate, endDate, totalDays };
 
-        return { projectStart, projectEnd, totalDurationDays, timelineMonths: months };
-    }, [project.roles]);
+    }, [roles]);
 
-    const getRoleStyle = (role: typeof project.roles[0]) => {
-        const totalDurationMs = totalDurationDays * 24 * 3600 * 1000;
-
-        // Prevent division by zero if project duration is 0
-        if (totalDurationMs <= 0) {
-            return { left: '0%', width: '0%' };
-        }
-        
-        const offsetMs = role.startDate.getTime() - projectStart.getTime();
-        const durationMs = role.endDate.getTime() - role.startDate.getTime();
-        
-        const left = (offsetMs / totalDurationMs) * 100;
-        const width = (durationMs / totalDurationMs) * 100;
-
+    const getRoleStyle = (role: ProjectRole) => {
+        const left = ((new Date(role.startDate).getTime() - startDate.getTime()) / (1000 * 3600 * 24) / totalDays) * 100;
+        const width = ((new Date(role.endDate).getTime() - new Date(role.startDate).getTime()) / (1000 * 3600 * 24) / totalDays) * 100;
         return {
             left: `${left}%`,
-            width: `${width}%`,
+            width: `${Math.max(width, 2)}%`, // Ensure a minimum width for visibility
         };
     };
 
-    if (project.roles.length === 0) {
-        return <div className="text-center p-8 bg-gray-100 rounded-md">Add roles to see the project timeline.</div>
-    }
-
     return (
-        <div className="space-y-3 font-sans">
-            {/* Timeline Header */}
-            <div className="flex bg-gray-200 rounded-t-lg overflow-hidden">
-                {timelineMonths.map((month, index) => (
-                    <div key={index} className="flex-1 text-center p-2 text-sm font-semibold border-r border-gray-300 last:border-r-0">
-                        {month.name} '{String(month.year).slice(2)}
-                    </div>
-                ))}
+        <div className="space-y-4 text-xs">
+            <div className="flex justify-between font-bold text-gray-500">
+                <span>{startDate.toLocaleDateString()}</span>
+                <span>{endDate.toLocaleDateString()}</span>
             </div>
-            
-            {/* Timeline Rows */}
-            {project.roles.map((role, index) => {
-                const style = getRoleStyle(role);
-                const engineer = engineers.find(e => e.id === role.assignedEngineerId);
-                const colorIndex = index % 5;
-                const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-teal-500'];
-
-                return (
-                    <div key={role.id} className="relative h-12 flex items-center bg-gray-100 rounded-md">
-                        <div
-                            className={`absolute h-full ${colors[colorIndex]} rounded-md opacity-70`}
-                            style={style}
-                        ></div>
-                        <div className="relative z-10 p-3 w-full flex justify-between items-center text-white">
-                            <span className="font-bold text-sm truncate">{role.title}</span>
-                            {engineer && (
-                                <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-                                    <span className="text-xs font-semibold">{engineer.name}</span>
-                                    <img src={engineer.avatar} alt={engineer.name} className="w-6 h-6 rounded-full border-2 border-white"/>
-                                </div>
-                            )}
-                        </div>
+            {phases.map(([phaseName, phaseRoles], index) => (
+                <div key={phaseName}>
+                    <h5 className="font-bold text-gray-700 mb-2">{phaseName}</h5>
+                    <div className="relative bg-gray-100 rounded-lg h-10">
+                        {phaseRoles.map((role, rIndex) => (
+                             <div 
+                                key={role.id || rIndex} 
+                                style={getRoleStyle(role)} 
+                                title={`${role.title} (${new Date(role.startDate).toLocaleDateString()} - ${new Date(role.endDate).toLocaleDateString()})`}
+                                className={`absolute top-1 bottom-1 ${COLORS[index % COLORS.length]} rounded text-white flex items-center px-2 shadow-sm overflow-hidden`}
+                            >
+                                <User size={12} className="mr-1.5 flex-shrink-0"/>
+                                <span className="truncate">{role.title}</span>
+                            </div>
+                        ))}
                     </div>
-                );
-            })}
+                </div>
+            ))}
         </div>
     );
 };

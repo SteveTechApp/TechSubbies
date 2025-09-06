@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Footer } from '../components/Footer.tsx';
-import { Header } from '../components/Header.tsx';
-import { Page, ProfileTier } from '../types/index.ts';
-import { CheckCircle, BarChart, Star, Rocket, Clapperboard, TrendingUp, Award, DollarSign, Users } from '../components/Icons.tsx';
-import { HERO_IMAGES } from '../data/assets.ts';
+import { Footer } from '../components/Footer';
+import { Header } from '../components/Header';
+// FIX: Corrected module import to remove file extension.
+import { Page, ProfileTier } from '../types';
+import { CheckCircle, BarChart, Star, Rocket, Clapperboard, TrendingUp, Award, DollarSign, Users } from '../components/Icons';
+import { HERO_IMAGES } from '../data/assets';
 
 interface ForEngineersPageProps {
     onNavigate: (page: Page) => void;
@@ -52,15 +53,15 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                 <section className="relative text-white text-center min-h-[40vh] flex items-center justify-center px-4 bg-cover bg-center" style={{ backgroundImage: `url('${heroImage}')` }}>
                     <div className="absolute inset-0 bg-black opacity-60"></div>
                     <div className="relative z-10 max-w-4xl">
-                        <h1 className="text-2xl md:text-4xl font-extrabold mb-2">Your Career, Supercharged.</h1>
-                        <p className="text-sm md:text-base mx-auto mb-4">Showcase your specialist skills, get matched with high-value contracts, and take control of your freelance career. All on one dedicated platform.</p>
-                        <button onClick={() => onNavigate('login')} className="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">Create Your Free Profile</button>
+                        <h1 className="text-xl md:text-3xl font-extrabold mb-2">Your Career, Supercharged.</h1>
+                        <p className="text-xs md:text-sm mx-auto mb-4">Showcase your specialist skills, get matched with high-value contracts, and take control of your freelance career. All on one dedicated platform.</p>
+                        <button onClick={() => onNavigate('login')} className="bg-blue-600 text-white font-bold py-1.5 px-5 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">Create Your Free Profile</button>
                     </div>
                 </section>
                 
-                <section className="py-8 bg-white">
+                <section className="py-4 bg-white">
                     <div className="container mx-auto px-4 text-center">
-                         <h2 className="text-2xl font-bold text-gray-800 mb-6">How TechSubbies Works For You</h2>
+                         <h2 className="text-xl font-bold text-gray-800 mb-3">How TechSubbies Works For You</h2>
                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-7xl mx-auto">
                             <FeatureDetailCard icon={Star} title="Build a Skills Profile">
                                 Go beyond a simple CV. Our Skills Profile lets you add specialist roles and rate your competency on granular, industry-specific skills.
@@ -78,9 +79,9 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                     </div>
                 </section>
 
-                <section className="py-8 bg-gray-50">
+                <section className="py-4 bg-gray-50">
                     <div className="container mx-auto px-4 max-w-4xl">
-                        <h2 className="text-xl font-bold text-center mb-6">All The Tools You Need</h2>
+                        <h2 className="text-xl font-bold text-center mb-3">All The Tools You Need</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
                             <FeatureListItem>
                                 <strong>Free Basic Profile:</strong> Get started with a professional profile, set your availability, and apply for jobs at no cost.
@@ -104,9 +105,9 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                     </div>
                 </section>
                 
-                <section className="py-8 bg-blue-600">
+                <section className="py-4 bg-blue-600">
                     <div className="container mx-auto px-4">
-                        <h2 className="text-2xl font-bold text-center text-white mb-10">Hear From Our Engineers</h2>
+                        <h2 className="text-xl font-bold text-center text-white mb-6">Hear From Our Engineers</h2>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
                            <TestimonialCard 
                                 avatar="https://xsgames.co/randomusers/assets/avatars/male/74.jpg"
@@ -130,10 +131,10 @@ export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineers
                     </div>
                 </section>
 
-                <section className="py-8 bg-gray-800 text-white">
+                <section className="py-4 bg-gray-800 text-white">
                     <div className="container mx-auto px-4 text-center">
-                        <h2 className="text-2xl font-bold mb-2">Ready to Find Your Next Project?</h2>
-                        <p className="text-base mb-4">Join the UK's dedicated network for freelance tech professionals.</p>
+                        <h2 className="text-xl font-bold mb-2">Ready to Find Your Next Project?</h2>
+                        <p className="text-sm mb-4">Join the UK's dedicated network for freelance tech professionals.</p>
                         <button onClick={() => onNavigate('login')} className="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">
                             Sign Up and Get Started
                         </button>

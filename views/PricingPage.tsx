@@ -40,20 +40,20 @@ interface TierCardProps {
 }
 
 const TierCard = ({ title, description, price, period, features, ctaText, onCtaClick, isFeatured, styles }: TierCardProps) => (
-    <div className={`border-2 rounded-lg p-4 bg-white flex flex-col relative transition-all duration-300 ${isFeatured ? `${styles.border} ${styles.shadow || 'shadow-2xl'} transform scale-105` : `border-gray-200 shadow-lg ${styles.border}`}`}>
+    <div className={`border-2 rounded-lg p-3 bg-white flex flex-col relative transition-all duration-300 ${isFeatured ? `${styles.border} ${styles.shadow || 'shadow-2xl'} transform scale-105` : `border-gray-200 shadow-lg ${styles.border}`}`}>
         {isFeatured && <span className={`absolute top-0 -translate-y-1/2 ${styles.badgeBg} text-white text-xs font-bold uppercase px-3 py-1 rounded-full self-center`}>Most Popular</span>}
-        <h3 className={`text-lg font-bold ${styles.titleText}`}>{title}</h3>
-        <p className="text-gray-500 text-xs mt-2 mb-3 flex-grow">{description}</p>
+        <h3 className={`text-base font-bold ${styles.titleText}`}>{title}</h3>
+        <p className="text-gray-500 text-[11px] mt-2 mb-3 flex-grow">{description}</p>
         <div className="my-2">
-            <span className="text-3xl font-extrabold text-gray-800">{price}</span>
-            {period && <span className="text-base font-medium text-gray-500">{period}</span>}
+            <span className="text-2xl font-extrabold text-gray-800">{price}</span>
+            {period && <span className="text-sm font-medium text-gray-500">{period}</span>}
         </div>
-        <ul className="space-y-2 mb-4 text-sm">
+        <ul className="space-y-1.5 mb-4 text-sm">
             {features.map((feature, index) => <FeatureListItem key={index} included={feature.included}>{feature.text}</FeatureListItem>)}
         </ul>
         <button
             onClick={onCtaClick}
-            className={`w-full mt-auto font-bold py-2 px-4 rounded-lg text-white transition-colors ${styles.buttonBg} ${styles.buttonHoverBg}`}
+            className={`w-full mt-auto font-bold py-1.5 px-4 rounded-lg text-white transition-colors ${styles.buttonBg} ${styles.buttonHoverBg}`}
         >
             {ctaText}
         </button>
@@ -187,16 +187,16 @@ export const PricingPage = ({ onNavigate, onHowItWorksClick }: PricingPageProps)
         <div className="bg-gray-50 flex flex-col min-h-screen">
             <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
             <main className="flex-grow pt-14">
-                <section className="py-8 bg-white text-center">
+                <section className="py-4 bg-white text-center">
                     <div className="container mx-auto px-4">
-                        <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800 mb-2">{t('pricing_title')}</h1>
-                        <p className="text-sm md:text-base text-gray-600 max-w-3xl mx-auto">{t('pricing_subtitle')}</p>
+                        <h1 className="text-xl md:text-2xl font-extrabold text-gray-800 mb-1">{t('pricing_title')}</h1>
+                        <p className="text-xs md:text-sm text-gray-600 max-w-3xl mx-auto">{t('pricing_subtitle')}</p>
                     </div>
                 </section>
 
-                <section className="py-10 checker-plate-background">
+                <section className="py-4 checker-plate-background">
                     <div className="container mx-auto px-4 max-w-7xl">
-                         <div className="flex justify-center mb-4 border-b border-gray-200">
+                         <div className="flex justify-center mb-3 border-b border-gray-200">
                             <button onClick={() => setActiveTab('engineers')} className={getTabClass('engineers')}>
                                 <User /> {t('for_engineers')}
                             </button>
@@ -217,14 +217,14 @@ export const PricingPage = ({ onNavigate, onHowItWorksClick }: PricingPageProps)
                         )}
                         
                         {activeTab === 'companies' && (
-                           <div className="fade-in-up space-y-8">
+                           <div className="fade-in-up space-y-6">
                                 {/* Section for Companies */}
-                                <div className="bg-gradient-to-br from-green-50 to-teal-50 p-6 rounded-lg shadow-lg border-2 border-green-200 text-center">
-                                    <h2 className="text-2xl font-extrabold text-green-800">{t('for_companies')}</h2>
-                                    <p className="text-4xl font-black text-gray-800 my-3">{t('free_forever')}</p>
-                                    <p className="text-gray-600 max-w-2xl mx-auto mb-4 text-sm">{t('company_pricing_desc')}</p>
+                                <div className="bg-gradient-to-br from-green-50 to-teal-50 p-4 rounded-lg shadow-lg border-2 border-green-200 text-center">
+                                    <h2 className="text-xl font-extrabold text-green-800">{t('for_companies')}</h2>
+                                    <p className="text-3xl font-black text-gray-800 my-2">{t('free_forever')}</p>
+                                    <p className="text-gray-600 max-w-2xl mx-auto mb-3 text-xs">{t('company_pricing_desc')}</p>
                                     <div className="inline-block bg-white p-3 rounded-md shadow">
-                                        <ul className="space-y-2 text-left text-sm">
+                                        <ul className="space-y-1.5 text-left text-sm">
                                             <FeatureListItem>{t('company_feat_1')}</FeatureListItem>
                                             <FeatureListItem>{t('company_feat_2')}</FeatureListItem>
                                             <FeatureListItem>{t('company_feat_3')}</FeatureListItem>
@@ -232,7 +232,7 @@ export const PricingPage = ({ onNavigate, onHowItWorksClick }: PricingPageProps)
                                             <FeatureListItem>{t('company_feat_5')}</FeatureListItem>
                                         </ul>
                                     </div>
-                                    <div className="mt-6">
+                                    <div className="mt-4">
                                         <button onClick={() => onNavigate('companySignUp')} className="font-bold py-2 px-6 rounded-lg text-white transition-colors bg-green-600 hover:bg-green-700 text-base transform hover:scale-105">
                                             {t('post_job_free')}
                                         </button>
@@ -241,8 +241,8 @@ export const PricingPage = ({ onNavigate, onHowItWorksClick }: PricingPageProps)
 
                                 {/* Section for Resourcing Companies */}
                                 <div>
-                                    <div className="text-center mb-4">
-                                        <h2 className="text-2xl font-bold text-gray-800">For Resourcing Agencies</h2>
+                                    <div className="text-center mb-3">
+                                        <h2 className="text-xl font-bold text-gray-800">For Resourcing Agencies</h2>
                                         <p className="text-gray-600 mt-1 text-sm">{t('agency_desc')}</p>
                                     </div>
                                     <div className="flex justify-center">

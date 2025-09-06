@@ -1,8 +1,9 @@
 import React from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Job, Role, ProfileTier, EngineerProfile } from '../types/index.ts';
-import { MapPin, Calendar, DollarSign, Clock, MessageCircle, Briefcase, Layers, Sparkles } from './Icons.tsx';
-import { formatDisplayDate } from '../../utils/dateFormatter.ts';
+import { useAppContext } from '../context/AppContext';
+// FIX: Corrected module import to remove file extension.
+import { Job, Role, ProfileTier, EngineerProfile } from '../types';
+import { MapPin, Calendar, DollarSign, Clock, MessageCircle, Briefcase, Layers, Sparkles } from './Icons';
+import { formatDisplayDate } from '../../utils/dateFormatter';
 
 interface JobCardProps {
     job: Job;
@@ -30,7 +31,7 @@ export const JobCard = ({ job, setActiveView }: JobCardProps) => {
                 </div>
                 <div className="flex flex-col items-end gap-2 flex-shrink-0">
                     <button 
-                        onClick={() => applyForJob(job.id)}
+                        onClick={() => applyForJob(job.id, undefined, false)}
                         className="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 whitespace-nowrap w-full"
                     >
                         Apply Now

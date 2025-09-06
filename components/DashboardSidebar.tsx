@@ -1,12 +1,13 @@
 import React from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Role, ProfileTier } from '../types/index.ts';
-import { NavLink } from './NavLink.tsx';
+import { useAppContext } from '../context/AppContext';
+// FIX: Corrected module import to remove file extension.
+import { Role, ProfileTier } from '../types';
+import { NavLink } from './NavLink';
 import { 
     LayoutDashboard, User, CalendarDays, Search, Settings, PlusCircle, Briefcase, 
     Users, Building, BarChart2, SlidersHorizontal, Edit, BrainCircuit, CreditCard, Mail, BarChart, MessageSquare,
     KanbanSquare, DollarSign, Lightbulb, ClipboardList
-} from './Icons.tsx';
+} from './Icons';
 
 interface DashboardSidebarProps {
     activeView: string;
@@ -80,7 +81,7 @@ export const DashboardSidebar = ({ activeView, setActiveView }: DashboardSidebar
     const links = getLinksForRole(user);
 
     return (
-        <aside className="w-44 bg-gray-100 p-1 border-r border-gray-200 flex flex-col">
+        <aside className="w-40 bg-gray-100 p-1 border-r border-gray-200 flex flex-col">
             <nav className="flex-grow">
               <ul>
                   {links.map(link => (

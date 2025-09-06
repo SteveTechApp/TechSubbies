@@ -1,11 +1,13 @@
+
 import React, { useState } from 'react';
-import { EngineerProfile, Role } from '../types/index.ts';
-import { MessageCircle, Star, Trophy, Share2 } from '../components/Icons.tsx';
-import { TopTrumpCard } from '../components/TopTrumpCard.tsx';
-import { ReviewCard } from '../components/ReviewCard.tsx';
-import { useAppContext } from '../context/AppContext.tsx';
-import { BadgeDisplay } from '../components/BadgeDisplay.tsx';
-import { ShareProfileModal } from '../components/ShareProfileModal.tsx';
+// FIX: Corrected module imports to remove file extensions.
+import { EngineerProfile, Role } from '../types';
+import { MessageCircle, Star, Trophy, Share2 } from '../components/Icons';
+import { TopTrumpCard } from '../components/TopTrumpCard';
+import { ReviewCard } from '../components/ReviewCard';
+import { useAppContext } from '../context/AppContext';
+import { BadgeDisplay } from '../components/BadgeDisplay';
+import { ShareProfileModal } from '../components/ShareProfileModal';
 
 interface EngineerProfileViewProps {
     profile: EngineerProfile | null;

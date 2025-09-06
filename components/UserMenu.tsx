@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LogOut } from './Icons.tsx';
-import { User, Role, CompanyProfile } from '../types/index.ts';
-import { Notifications } from './Notifications.tsx';
-import { useAppContext } from '../context/AppContext.tsx';
+import { LogOut } from './Icons';
+// FIX: Corrected module import to remove file extension.
+import { User, Role, CompanyProfile } from '../types';
+import { Notifications } from './Notifications';
+import { useAppContext } from '../context/AppContext';
 
 interface UserMenuProps {
     user: User | null;

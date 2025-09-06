@@ -1,10 +1,11 @@
 import React from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Page } from '../types/index.ts';
-import { Logo } from './Logo.tsx';
-import { UserMenu } from './UserMenu.tsx';
-import { GuestMenu } from './GuestMenu.tsx';
-import { LanguageCurrencySelector } from './LanguageCurrencySelector.tsx';
+import { useAppContext } from '../context/AppContext';
+// FIX: Corrected module import to remove file extension.
+import { Page } from '../types';
+import { Logo } from './Logo';
+import { UserMenu } from './UserMenu';
+import { GuestMenu } from './GuestMenu';
+import { LanguageCurrencySelector } from './LanguageCurrencySelector';
 
 interface HeaderProps {
     onNavigate: (page: Page) => void;

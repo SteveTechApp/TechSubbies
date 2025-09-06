@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { useAppContext } from '../../context/AppContext.tsx';
-import { Job, EngineerProfile, Application, ApplicationStatus, ProfileTier } from '../../types/index.ts';
-import { MapPin, ArrowLeft, User, Mail, Phone, MessageCircle, Star, Briefcase, Sparkles, Loader, Zap } from '../../components/Icons.tsx';
-import { ReviewModal } from '../../components/ReviewModal.tsx';
-import { CreateContractModal } from '../../components/CreateContractModal.tsx';
-import { formatDisplayDate } from '../../utils/dateFormatter.ts';
+import { useAppContext } from '../../context/AppContext';
+// FIX: Corrected module import to remove file extension.
+import { Job, EngineerProfile, Application, ApplicationStatus, ProfileTier } from '../../types';
+import { MapPin, ArrowLeft, User, Mail, Phone, MessageCircle, Star, Briefcase, Sparkles, Loader, Zap } from '../../components/Icons';
+import { ReviewModal } from '../../components/ReviewModal';
+import { CreateContractModal } from '../../components/CreateContractModal';
+import { formatDisplayDate } from '../../utils/dateFormatter';
 
 const ApplicantCard = ({ profile, application, job, onMessage, onReview, onCreateContract, matchScore }: {
     profile: EngineerProfile; application: Application; job: Job; matchScore?: number;

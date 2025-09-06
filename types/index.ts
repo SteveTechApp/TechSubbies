@@ -1,249 +1,191 @@
-import type { Chat } from '@google/genai';
-import type { Dispatch, SetStateAction } from 'react';
-import { geminiService } from '../services/geminiService.ts';
+import { Chat } from "@google/genai";
 
-// --- Type definition for our AI service ---
-export type GeminiServiceType = typeof geminiService;
+// --- ENUMS ---
 
-// --- Enums ---
 export enum Role {
-    ENGINEER = 'engineer',
-    COMPANY = 'company',
-    RESOURCING_COMPANY = 'resourcing_company',
-    ADMIN = 'admin',
+    ENGINEER = 'Engineer',
+    COMPANY = 'Company',
+    RESOURCING_COMPANY = 'Resourcing Company',
+    ADMIN = 'Admin'
 }
 
-export enum Language {
-    EN = 'English',
-    ES = 'Español',
-    DE = 'Deutsch',
-    FR = 'Français',
-    HI = 'हिन्दी', // Hindi
-    PT = 'Português', // Portuguese
+export enum ProfileTier {
+    BASIC = 'Bronze',
+    PROFESSIONAL = 'Silver',
+    SKILLS = 'Gold',
+    BUSINESS = 'Platinum'
+}
+
+export enum Discipline {
+    AV = 'AV Engineer',
+    IT = 'IT Engineer',
+    BOTH = 'AV & IT Engineer'
 }
 
 export enum Currency {
-    GBP = 'GBP',
-    USD = 'USD',
-    EUR = 'EUR',
-    AUD = 'AUD',
-    INR = 'INR',
-    CAD = 'CAD', // Canadian Dollar
-    BRL = 'BRL', // Brazilian Real
+    GBP = '£',
+    USD = '$',
+    EUR = '€'
+}
+
+export enum Language {
+    ENGLISH = 'English',
+    SPANISH = 'Spanish',
+    FRENCH = 'French',
+    GERMAN = 'German'
 }
 
 export enum Country {
     UK = 'United Kingdom',
     USA = 'United States',
-    DE = 'Germany',
-    FR = 'France',
-    IN = 'India',
-    AU = 'Australia',
-    CA = 'Canada',
-    BR = 'Brazil',
-}
-
-
-export enum Discipline {
-    AV = 'AV Engineer',
-    IT = 'IT Engineer',
-    BOTH = 'AV & IT Engineer',
-}
-
-export enum JobType {
-    CONTRACT = 'Contract',
+    IRELAND = 'Ireland',
+    GERMANY = 'Germany',
+    FRANCE = 'France'
 }
 
 export enum ExperienceLevel {
     JUNIOR = 'Junior',
     MID_LEVEL = 'Mid-level',
     SENIOR = 'Senior',
-    EXPERT = 'Expert',
+    EXPERT = 'Expert'
 }
 
-export enum ProfileTier {
-    BASIC = 'BASIC',
-    PROFESSIONAL = 'PROFESSIONAL',
-    SKILLS = 'SKILLS',
-    BUSINESS = 'BUSINESS',
+export enum JobType {
+    CONTRACT = 'Contract',
+    PERMANENT = 'Permanent',
+    TEMP_TO_PERM = 'Temp-to-Perm'
 }
 
-// --- Skills & Roles ---
-export interface Skill {
-    name: string;
-    rating: number; // 0-100 (represents general proficiency for basic skills)
+export enum ApplicationStatus {
+    APPLIED = 'Applied',
+    OFFERED = 'Offered',
+    ACCEPTED = 'Accepted',
+    REJECTED = 'Rejected',
+    COMPLETED = 'Completed'
 }
 
-export interface RatedSkill {
-    name:string;
-    rating: number; // 1-100
+export enum ContractStatus {
+    DRAFT = 'Draft',
+    PENDING_SIGNATURE = 'Pending Signature',
+    SIGNED = 'Signed by Engineer',
+    ACTIVE = 'Active',
+    COMPLETED = 'Completed',
+    CANCELLED = 'Cancelled'
 }
 
-export interface SelectedJobRole {
-    roleName: string;
-    skills: RatedSkill[];
-    overallScore: number;
+export enum ContractType {
+    SOW = 'Statement of Work',
+    DAY_RATE = 'Day Rate'
 }
 
-export interface JobRoleDefinition {
-  name: string;
-  category: 'Audio Visual & Media Technology' | 
-    'Software Development' |
-    'Networking & Infrastructure' |
-    'Cybersecurity' |
-    'Database Administration' |
-    'Project Management & Leadership';
-  skillCategories: {
-    category: string;
-    skills: { name: string; description: string; }[];
-  }[];
+export enum MilestoneStatus {
+    AWAITING_FUNDING = 'Awaiting Funding',
+    FUNDED_IN_PROGRESS = 'In Progress',
+    SUBMITTED_FOR_APPROVAL = 'Submitted for Approval',
+    APPROVED_PENDING_INVOICE = 'Approved - Pending Invoice',
+    COMPLETED_PAID = 'Paid'
 }
 
-// --- Profiles ---
+export enum TimesheetStatus {
+    SUBMITTED = 'submitted',
+    APPROVED = 'approved',
+    PAID = 'paid',
+}
 
-interface BaseProfile {
+export enum TransactionType {
+    SUBSCRIPTION = 'Subscription',
+    ESCROW_FUNDING = 'Escrow Funding',
+    PAYOUT = 'Payout',
+    PLATFORM_FEE = 'Platform Fee',
+    BOOST_PURCHASE = 'Boost Purchase',
+    SUPERCHARGE = 'Supercharge Application',
+    AD_REVENUE = 'Ad Revenue',
+    INVOICE_PAYMENT = 'Invoice Payment'
+}
+
+export enum NotificationType {
+    MESSAGE = 'Message',
+    JOB_OFFER = 'Job Offer',
+    NEW_JOB_MATCH = 'New Job Match',
+    CONTRACT_UPDATE = 'Contract Update',
+    JOB_ALERT = 'Job Alert',
+}
+
+export enum PaymentTerms {
+    IMMEDIATE = 'Due Immediately',
+    NET7 = 'Net 7',
+    NET14 = 'Net 14',
+    NET30 = 'Net 30',
+}
+
+export enum InvoiceStatus {
+    DRAFT = 'Draft',
+    SENT = 'Sent',
+    PAID = 'Paid',
+    OVERDUE = 'Overdue',
+    DISPUTED = 'Disputed'
+}
+
+// --- PROFILES & USERS ---
+
+export interface BaseProfile {
     id: string;
     name: string;
     avatar: string;
-    status: 'active' | 'suspended' | 'inactive';
+    status: 'active' | 'inactive' | 'suspended';
+    language: Language;
+    currency: Currency;
+    country: Country;
+    location: string;
     warnings: number;
     isBanned: boolean;
-    banEndDate?: Date;
-}
-
-export interface Certification {
-    name: string;
-    verified: boolean;
-}
-
-export interface Contact {
-    email: string;
-    telephone?: string;
-    phone: string; // Mobile
-    website: string;
-    linkedin: string;
-}
-
-export interface SocialLink {
-    name: string;
-    url: string;
-}
-
-export interface Associate {
-    name: string;
-    value: string;
-    url?: string;
-}
-
-export interface CaseStudy {
-    id: string; // Added for easier management
-    name: string;
-    url: string;
-}
-
-export interface InsuranceDetail {
-    hasCoverage: boolean;
-    amount?: number;
-    certificateUrl?: string;
-    isVerified: boolean;
-}
-
-export interface Compliance {
-    professionalIndemnity: InsuranceDetail;
-    publicLiability: InsuranceDetail;
-    siteSafe: boolean; // Site safety certifications like SSSTS
-    cscsCard: boolean; // CSCS Card
-    ownPPE: boolean;
-    hasOwnTransport: boolean;
-    hasOwnTools: boolean;
-    powerToolCompetency: number; // 0-100 rating
-    accessEquipmentTrained: number; // 0-100 rating
-    firstAidTrained: boolean;
-    carriesSpares: boolean; // Carries spares and consumables
-}
-
-export interface IdentityVerification {
-    documentType: 'passport' | 'drivers_license' | 'none';
-    documentUrl?: string;
-    isVerified: boolean;
-}
-
-export type ConditionContext = {
-    completedContracts: number;
-    forumScore: number;
-};
-
-export interface Badge {
-    id: string;
-    name: string;
-    description: string;
-    icon: React.ComponentType<any>;
-    color: string;
-    condition: (profile: EngineerProfile, context: ConditionContext) => boolean;
+    banEndDate?: string;
+    banHistory: { date: string; duration: number }[];
 }
 
 export interface EngineerProfile extends BaseProfile {
+    description: string;
     discipline: Discipline;
-    location: string;
-    country: Country;
-    currency: Currency;
-    language: Language;
+    experience: number;
+    profileTier: ProfileTier;
     minDayRate: number;
     maxDayRate: number;
-    experience: number; // years
     availability: Date;
-    description: string;
-    skills?: Skill[]; // Basic skills/tags for paid tier only
-    selectedJobRoles?: SelectedJobRole[]; // Detailed skills for paid tier
+    skills: Skill[] | null;
+    selectedJobRoles?: SelectedJobRole[];
     certifications: Certification[];
-    contact: Contact;
-    profileTier: ProfileTier;
-    resourcingCompanyId?: string; // ID of the managing resourcing company
-    trialEndDate?: Date; // NEW: For managing Skills Profile trials
-    subscriptionEndDate?: Date; // NEW: For Security Net Guarantee
-    securityNetCreditsUsed?: number; // NEW: For Security Net Guarantee
-    jobDigestOptIn?: boolean; // NEW: For personalized job digests
-    title?: string;
-    firstName: string;
-    middleName?: string;
-    surname: string;
-    companyName?: string;
-    travelRadius?: string;
-    socials?: SocialLink[];
-    associates?: Associate[];
     compliance: Compliance;
     identity: IdentityVerification;
-    generalAvailability?: string; // e.g., 'Medium'
-    customerRating?: number; // 1-5
-    peerRating?: number; // 1-5
-    googleCalendarLink?: string;
     caseStudies?: CaseStudy[];
-    otherLinks?: SocialLink[];
-    rightColumnLinks?: { label: string, value: string, url: string }[];
+    socials?: SocialLink[];
     isBoosted?: boolean;
-    boostEndDate?: Date;
+    joinDate: Date;
     profileViews: number;
     searchAppearances: number;
     jobInvites: number;
+    reputation: number;
+    complianceScore: number;
+    subscriptionEndDate?: Date;
+    securityNetCreditsUsed?: number;
     calendarSyncUrl?: string;
-    matchScore?: number;
-    joinDate: Date;
-    badges: Badge[];
-    roleCredits?: number; // For á la carte role purchases
-    boostCredits?: number;
+    resourcingCompanyId?: string; 
+    jobDigestOptIn?: boolean;
     jobAlertsEnabled?: boolean;
+    matchScore?: number; 
+    badges: Badge[];
+    contact: {
+        email: string;
+        phone: string;
+        website?: string;
+        linkedin?: string;
+    };
 }
 
 export interface CompanyProfile extends BaseProfile {
-    website?: string;
-    consentToFeature?: boolean;
-    logo?: string;
-    companyRegNumber?: string;
-    isVerified?: boolean;
-    language: Language;
-    currency: Currency;
-    country: Country;
-    location: string;
+    website: string;
+    contact: { email: string; phone: string; };
+    logo: string;
+    consentToFeature: boolean;
 }
 
 export type UserProfile = EngineerProfile | CompanyProfile;
@@ -254,17 +196,87 @@ export interface User {
     profile: UserProfile;
 }
 
-// --- Jobs & Applications ---
-export type SkillImportance = 'desirable' | 'essential';
+// --- PROFILE SUB-TYPES ---
+
+export interface Skill {
+    name: string;
+    rating: number; // 1-100
+}
+
+export interface RatedSkill {
+    name: string;
+    rating: number;
+}
+
+export interface SelectedJobRole {
+    roleName: string;
+    skills: RatedSkill[];
+    overallScore: number;
+}
+
+export interface Certification {
+    name: string;
+    verified: boolean;
+}
+
+export interface Compliance {
+    professionalIndemnity: { hasCoverage: boolean; isVerified: boolean; amount: number; certificateUrl?: string; };
+    publicLiability: { hasCoverage: boolean; isVerified: boolean; amount: number; certificateUrl?: string; };
+    siteSafe: boolean;
+    cscsCard: boolean;
+    ownPPE: boolean;
+    hasOwnTransport: boolean;
+    hasOwnTools: boolean;
+    powerToolCompetency: number; // 0-100
+    accessEquipmentTrained: number; // 0-100
+    firstAidTrained: boolean;
+    carriesSpares: boolean;
+}
+
+export interface IdentityVerification {
+    documentType: 'passport' | 'drivers_license' | 'none';
+    isVerified: boolean;
+    documentUrl?: string;
+}
+
+export interface CaseStudy {
+    id: string;
+    name: string;
+    url: string;
+}
+
+export interface SocialLink {
+    name: string;
+    url: string;
+}
+
+export interface Badge {
+    id: string;
+    name: string;
+    description: string;
+    icon: React.ComponentType<any>;
+    color: string;
+    condition: (profile: EngineerProfile, context: ConditionContext) => boolean;
+}
+
+export interface ConditionContext {
+    completedContracts: number;
+    forumScore: number;
+}
+
+
+// --- JOBS & APPLICATIONS ---
 
 export interface JobSkillRequirement {
     name: string;
     importance: SkillImportance;
 }
 
+export type SkillImportance = 'essential' | 'desirable';
+
 export interface Job {
-    id:string;
-    companyId: string; // This is a profile ID
+    id: string;
+    companyId: string;
     title: string;
     description: string;
     location: string;
@@ -273,20 +285,11 @@ export interface Job {
     duration: string;
     postedDate: Date;
     startDate: Date | null;
-    status: 'active' | 'inactive';
+    status: 'active' | 'inactive' | 'completed';
     jobType: JobType;
     experienceLevel: ExperienceLevel;
-    jobRole: string; // The selected JobRoleDefinition name
-    skillRequirements?: JobSkillRequirement[];
-}
-
-export enum ApplicationStatus {
-    APPLIED = 'Applied',
-    VIEWED = 'Viewed',
-    OFFERED = 'Offered',
-    ACCEPTED = 'Accepted',
-    DECLINED = 'Declined',
-    COMPLETED = 'Completed',
+    jobRole: string;
+    skillRequirements: JobSkillRequirement[];
 }
 
 export interface Application {
@@ -294,53 +297,38 @@ export interface Application {
     engineerId: string;
     date: Date;
     status: ApplicationStatus;
-    reviewed?: boolean;
+    reviewed: boolean;
     isSupercharged?: boolean;
 }
+
+// --- INTERACTIONS ---
 
 export interface Review {
     id: string;
     jobId: string;
     companyId: string;
     engineerId: string;
-    peerRating: number; // Technical skill
-    customerRating: number; // Communication
+    peerRating: number;
+    customerRating: number;
     comment: string;
     date: Date;
 }
 
-export interface TrainingProvider {
-    name: string;
-    url: string;
-    specialties: string[]; // e.g., ['Crestron', 'Cisco', 'AWS']
-    type: 'Industry Standard' | 'Manufacturer' | 'Sponsored';
-}
-
-// --- Messaging & Notifications ---
-export interface Message {
-    id: string;
-    conversationId: string;
-    senderId: string; // user.id
-    text: string;
-    originalText?: string; // For storing the original message before translation
-    timestamp: Date;
-    isRead: boolean;
-}
-
 export interface Conversation {
     id: string;
-    participantIds: string[]; // array of user.id
+    participantIds: string[];
     lastMessageTimestamp: Date;
     lastMessageText: string;
 }
 
-export enum NotificationType {
-    NEW_JOB_MATCH = 'new_job_match',
-    JOB_OFFER = 'job_offer',
-    MESSAGE = 'message',
-    APPLICATION_UPDATE = 'application_update',
-    JOB_INVITE = 'job_invite',
-    JOB_ALERT = 'job_alert',
+export interface Message {
+    id: string;
+    conversationId: string;
+    senderId: string;
+    text: string;
+    timestamp: Date;
+    isRead: boolean;
+    originalText?: string;
 }
 
 export interface Notification {
@@ -348,70 +336,13 @@ export interface Notification {
     userId: string;
     type: NotificationType;
     text: string;
-    link?: string; // e.g., path to job or message view
+    link?: string; 
     isRead: boolean;
     timestamp: Date;
 }
 
-// --- Forum ---
-export interface ForumPost {
-    id: string;
-    authorId: string; // user.id
-    title: string;
-    content: string;
-    tags: string[];
-    timestamp: Date;
-    upvotes: number;
-    downvotes: number;
-    status: 'pending' | 'approved' | 'rejected';
-}
 
-export interface ForumComment {
-    id: string;
-    postId: string;
-    authorId: string; // user.id
-    parentId: string | null; // For nested comments
-    content: string;
-    timestamp: Date;
-    upvotes: number;
-    downvotes: number;
-}
-
-// --- Contracts, Payments & Projects ---
-export enum ContractType {
-    SOW = 'Statement of Work',
-    DAY_RATE = 'Day Rate Agreement',
-}
-
-export enum ContractStatus {
-    DRAFT = 'Draft',
-    PENDING_SIGNATURE = 'Pending Signature',
-    SIGNED = 'Signed by Engineer',
-    ACTIVE = 'Active',
-    COMPLETED = 'Completed',
-    CANCELLED = 'Cancelled',
-}
-
-export enum MilestoneStatus {
-    AWAITING_FUNDING = 'Awaiting Funding',
-    FUNDED_IN_PROGRESS = 'Funded & In Progress',
-    SUBMITTED_FOR_APPROVAL = 'Submitted for Approval',
-    APPROVED_PENDING_INVOICE = 'Approved - Pending Invoice',
-    COMPLETED_PAID = 'Completed & Paid',
-}
-
-export enum TransactionType {
-    SUBSCRIPTION = 'Subscription',
-    BOOST_PURCHASE = 'Boost Purchase',
-    ESCROW_FUNDING = 'Escrow Funding',
-    PAYOUT = 'Payout',
-    PLATFORM_FEE = 'Platform Fee',
-    ROLE_CREDIT_PURCHASE = 'Role Credit Purchase',
-    SUPERCHARGE = 'Supercharge Application',
-    AD_REVENUE = 'Ad Revenue',
-    INVOICE_PAYMENT = 'Invoice Payment',
-}
-
+// --- CONTRACTS & PAYMENTS ---
 export interface Signature {
     name: string;
     date: Date;
@@ -424,18 +355,11 @@ export interface Milestone {
     status: MilestoneStatus;
 }
 
-export enum TimesheetStatus {
-    SUBMITTED = 'submitted',
-    APPROVED = 'approved',
-    INVOICED = 'invoiced',
-    PAID = 'paid',
-}
-
 export interface Timesheet {
     id: string;
     contractId: string;
     engineerId: string;
-    period: string; // e.g., "Week ending 2024-08-02"
+    period: string;
     days: number;
     status: TimesheetStatus;
 }
@@ -443,6 +367,7 @@ export interface Timesheet {
 export interface Contract {
     id: string;
     jobId: string;
+    jobTitle?: string;
     companyId: string;
     engineerId: string;
     type: ContractType;
@@ -454,60 +379,22 @@ export interface Contract {
     companySignature: Signature | null;
     milestones: Milestone[];
     timesheets?: Timesheet[];
-    jobTitle?: string;
 }
 
 export interface Transaction {
     id: string;
-    userId: string; // User this transaction belongs to
-    contractId?: string;
+    userId: string;
     type: TransactionType;
     description: string;
-    amount: number; // Positive for income, negative for expense
+    amount: number;
     date: Date;
-}
-
-export interface ProjectRole {
-  id: string;
-  title: string;
-  discipline: Discipline;
-  startDate: Date;
-  endDate: Date;
-  assignedEngineerId: string | null;
-  hotelCovered?: boolean;
-  travelCovered?: boolean;
-  mealsCovered?: boolean;
-}
-
-export interface Project {
-  id: string;
-  companyId: string;
-  name: string;
-  description: string;
-  roles: ProjectRole[];
-  status: 'planning' | 'active' | 'completed';
-}
-
-export enum InvoiceStatus {
-    DRAFT = 'Draft',
-    SENT = 'Sent',
-    PAID = 'Paid',
-    OVERDUE = 'Overdue',
-    DISPUTED = 'Disputed',
-}
-
-export enum PaymentTerms {
-    IMMEDIATE = 'Due Immediately',
-    NET7 = 'Net 7 Days',
-    NET14 = 'Net 14 Days',
-    NET30 = 'Net 30 Days',
+    contractId?: string;
 }
 
 export interface InvoiceItem {
     description: string;
     amount: number;
 }
-
 export interface Invoice {
     id: string;
     contractId: string;
@@ -515,109 +402,159 @@ export interface Invoice {
     engineerId: string;
     issueDate: Date;
     dueDate: Date;
-    paymentTerms: PaymentTerms;
     items: InvoiceItem[];
     total: number;
     status: InvoiceStatus;
+    paymentTerms: PaymentTerms;
 }
 
+// --- PLATFORM & APP ---
 
-// --- App Navigation & Context ---
-export type Page = 'landing' | 'login' | 'forEngineers' | 'forCompanies' | 'engineerSignUp' | 'companySignUp' | 'resourcingCompanySignUp' | 'investors' | 'aboutUs' | 'terms' | 'privacy' | 'pricing' | 'howItWorks' | 'helpCenter' | 'security';
+export type Page = 'landing' | 'forEngineers' | 'forCompanies' | 'pricing' | 'investors' | 'aboutUs' | 'login' | 'engineerSignUp' | 'companySignUp' | 'resourcingCompanySignUp' | 'helpCenter' | 'terms' | 'privacy' | 'security';
+
+export interface JobRoleDefinition {
+    name: string;
+    category: string;
+    skillCategories: {
+        category: string;
+        skills: { name: string; description: string }[];
+    }[];
+}
+
+export interface TrainingProvider {
+    name: string;
+    url: string;
+    specialties: string[];
+    type: 'Manufacturer' | 'Industry Standard' | 'Sponsored';
+}
 
 export interface Insight {
     type: 'Upskill' | 'Certification' | 'Profile Enhancement';
     suggestion: string;
     callToAction: {
         text: string;
-        view: string; // The view to navigate to, e.g., 'Manage Profile'
+        view: string;
     };
 }
 
-export type LocalizationFunction = (key: string, replacements?: { [key: string]: string | number }) => string;
+// --- PROJECT MANAGEMENT ---
 
+export interface ProjectRole {
+    id: string;
+    title: string;
+    discipline: Discipline;
+    startDate: Date;
+    endDate: Date;
+    assignedEngineerId: string | null;
+    phase?: string;
+}
+export interface Project {
+    id: string;
+    companyId: string;
+    name: string;
+    description: string;
+    status: 'planning' | 'in-progress' | 'completed';
+    roles: ProjectRole[];
+}
+
+// --- FORUM ---
+export interface ForumPost {
+    id: string;
+    authorId: string;
+    title: string;
+    content: string;
+    tags: string[];
+    timestamp: Date;
+    upvotes: number;
+    downvotes: number;
+    status: 'pending' | 'approved' | 'rejected';
+}
+
+export interface ForumComment {
+    id: string;
+    postId: string;
+    authorId: string;
+    parentId: string | null;
+    content: string;
+    timestamp: Date;
+    upvotes: number;
+    downvotes: number;
+}
+
+
+// --- App Context ---
 export interface AppContextType {
     user: User | null;
+    login: (user: User) => void;
+    logout: () => void;
+    engineers: EngineerProfile[];
+    companies: CompanyProfile[];
     allUsers: User[];
     jobs: Job[];
-    companies: CompanyProfile[];
-    engineers: EngineerProfile[];
+    applications: Application[];
+    reviews: Review[];
+    conversations: Conversation[];
+    messages: Message[];
+    contracts: Contract[];
+    transactions: Transaction[];
+    forumPosts: ForumPost[];
+    forumComments: ForumComment[];
+    notifications: Notification[];
+    projects: Project[];
+    invoices: Invoice[];
+    selectedConversationId: string | null;
+    setSelectedConversationId: (id: string | null) => void;
+    sendMessage: (conversationId: string, text: string) => void;
+    startConversationAndNavigate: (otherPartyProfileId: string, navigate: () => void) => void;
+    isAiReplying: boolean;
+    findUserById: (userId: string) => User | undefined;
+    findUserByProfileId: (profileId: string) => User | undefined;
+    updateEngineerProfile: (updatedProfile: Partial<EngineerProfile>) => void;
+    updateCompanyProfile: (updatedProfile: Partial<CompanyProfile>) => void;
+    startTrial: () => void;
+    boostProfile: () => void;
+    purchaseDayPass: () => void;
+    claimSecurityNetGuarantee: () => void;
+    upgradeSubscription: (profileId: string, newTier: ProfileTier) => void;
+    reactivateProfile: () => void;
+    toggleUserStatus: (profileId: string) => void;
+    toggleJobStatus: (jobId: string) => void;
+    postJob: (jobData: any) => Job | null;
+    applyForJob: (jobId: string, engineerId?: string, isSupercharged?: boolean) => void;
+    superchargeApplication: (job: Job) => void;
+    acceptOffer: (jobId: string, engineerId: string) => void;
+    declineOffer: (jobId: string, engineerId: string) => void;
+    submitReview: (reviewData: Omit<Review, 'id' | 'date'>) => void;
+    sendContractForSignature: (contract: Contract) => void;
+    signContract: (contractId: string, signatureName: string) => void;
+    fundMilestone: (contractId: string, milestoneId: string) => void;
+    submitMilestoneForApproval: (contractId: string, milestoneId: string) => void;
+    approveMilestone: (contractId: string, milestoneId: string) => void;
+    submitTimesheet: (contractId: string, timesheetData: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => void;
+    approveTimesheet: (contractId: string, timesheetId: string) => void;
+    payInvoice: (invoiceId: string) => void;
+    reportUser: (profileId: string) => void;
+    generateInvoice: (contractId: string, paymentTerms: PaymentTerms) => void;
+    createAndLoginEngineer: (formData: any) => void;
+    createAndLoginCompany: (formData: any) => void;
+    createAndLoginResourcingCompany: (formData: any) => void;
+    inviteEngineerToJob: (jobId: string, engineerId: string) => void;
+    assignEngineerToProjectRole: (projectId: string, roleId: string, engineerId: string) => void;
+    createForumPost: (postData: Omit<ForumPost, 'id' | 'authorId' | 'timestamp' | 'upvotes' | 'downvotes' | 'status'>) => Promise<void>;
+    addForumComment: (commentData: Omit<ForumComment, 'id' | 'authorId' | 'timestamp' | 'upvotes' | 'downvotes'>) => void;
+    voteOnPost: (postId: string, vote: 'up' | 'down') => void;
+    voteOnComment: (commentId: string, vote: 'up' | 'down') => void;
+    markNotificationsAsRead: (userId: string) => void;
+    chatSession: Chat | null;
+    currentPageContext: string;
+    setCurrentPageContext: (context: string) => void;
+    geminiService: any;
+    isPremium: (profile: EngineerProfile) => boolean;
+    getCareerCoaching: () => Promise<{ insights?: Insight[]; error?: string; }>;
     language: Language;
     setLanguage: (lang: Language) => void;
     currency: Currency;
     setCurrency: (curr: Currency) => void;
-    t: LocalizationFunction;
-    getRegionalPrice: (basePrice: number) => { amount: number, symbol: string };
-    login: (role: Role, isFreeTier?: boolean) => void;
-    loginAsSteve: () => void;
-    logout: () => void;
-    updateEngineerProfile: (updatedProfile: Partial<EngineerProfile>) => void;
-    updateCompanyProfile: (updatedProfile: Partial<CompanyProfile>) => void;
-    postJob: (jobData: Omit<Job, 'id' | 'companyId' | 'postedDate' | 'status'>) => Job | undefined;
-    startTrial: () => void;
-    geminiService: GeminiServiceType;
-    applications: Application[];
-    applyForJob: (jobId: string, engineerId?: string, isSupercharged?: boolean) => void;
-    superchargeApplication: (job: Job) => void;
-    purchaseDayPass: () => void;
-    createAndLoginEngineer: (data: any) => void;
-    createAndLoginCompany: (data: any) => void;
-    createAndLoginResourcingCompany: (data: any) => void;
-    boostProfile: () => void;
-    claimSecurityNetGuarantee: () => void;
-    reactivateProfile: () => void;
-    chatSession: Chat | null;
-    conversations: Conversation[];
-    messages: Message[];
-    selectedConversationId: string | null;
-    setSelectedConversationId: Dispatch<SetStateAction<string | null>>;
-    findUserById: (userId: string) => User | undefined;
-    findUserByProfileId: (profileId: string) => User | undefined;
-    sendMessage: (conversationId: string, text: string) => void;
-    startConversationAndNavigate: (otherParticipantProfileId: string, navigateToMessages: () => void) => void;
-    reviews: Review[];
-    submitReview: (reviewData: Omit<Review, 'id' | 'date'>) => void;
-    toggleUserStatus: (profileId: string) => void;
-    toggleJobStatus: (jobId: string) => void;
-    notifications: Notification[];
-    markNotificationsAsRead: (userId: string) => void;
-    offerJob: (jobId: string, engineerId: string) => void;
-    acceptOffer: (jobId: string, engineerId: string) => void;
-    declineOffer: (jobId: string, engineerId: string) => void;
-    inviteEngineerToJob: (jobId: string, engineerId: string) => void;
-    isAiReplying: boolean;
-    // Forum context
-    forumPosts: ForumPost[];
-    forumComments: ForumComment[];
-    createForumPost: (post: { title: string; content: string; tags: string[] }) => Promise<void>;
-    addForumComment: (comment: { postId: string; parentId: string | null; content: string }) => void;
-    voteOnPost: (postId: string, voteType: 'up' | 'down') => void;
-    voteOnComment: (commentId: string, voteType: 'up' | 'down') => void;
-    // Contract context
-    contracts: Contract[];
-    sendContractForSignature: (contract: Contract) => void;
-    signContract: (contractId: string, signatureName: string) => void;
-    // Milestone & Payment Context
-    transactions: Transaction[];
-    fundMilestone: (contractId: string, milestoneId: string) => void;
-    approveMilestone: (contractId: string, milestoneId: string) => void;
-    submitMilestoneForApproval: (contractId: string, milestoneId: string) => void;
-    submitTimesheet: (contractId: string, timesheet: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => void;
-    approveTimesheet: (contractId: string, timesheetId: string) => void;
-    upgradeSubscription: (profileId: string, toTier: ProfileTier) => void;
-    purchaseRoleCredits: (userId: string, numberOfCredits: 1 | 3 | 5) => void;
-    useRoleCredit: (userId: string) => void;
-    // Project Planner context
-    projects: Project[];
-    createProject: (name: string, description: string) => Project;
-    addRoleToProject: (projectId: string, role: Omit<ProjectRole, 'id' | 'assignedEngineerId'>) => void;
-    assignEngineerToRole: (projectId: string, roleId: string, engineerId: string) => void;
-    invoices: Invoice[];
-    generateInvoice: (contractId: string, items: InvoiceItem[], paymentTerms: PaymentTerms, timesheetId?: string) => void;
-    payInvoice: (invoiceId: string) => void;
-    reportUser: (profileId: string) => void;
-    isPremium: (profile: EngineerProfile) => boolean;
-    getCareerCoaching: () => Promise<{ insights?: Insight[]; error?: string }>;
-    currentPageContext: string;
-    setCurrentPageContext: Dispatch<SetStateAction<string>>;
+    t: (key: string, options?: any) => string;
+    getRegionalPrice: (basePriceGBP: number) => { amount: number, symbol: string };
 }

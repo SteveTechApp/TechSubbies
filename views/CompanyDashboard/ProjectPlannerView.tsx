@@ -1,248 +1,151 @@
-import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../../context/AppContext.tsx';
-import { Project, ProjectRole, Discipline, EngineerProfile } from '../../types/index.ts';
-import { KanbanSquare, Plus, ArrowLeft, Calendar, Briefcase, User, Edit, Trash2, Bed, Plane, UtensilsCrossed } from '../../components/Icons.tsx';
-import { AssignEngineerModal } from '../../components/AssignEngineerModal.tsx';
+import React, { useState } from 'react';
+import { Project, ProjectRole, Discipline } from '../../types/index.ts';
+import { ProgressTracker } from '../../components/SignUp/ProgressTracker.tsx';
 import { ProjectTimeline } from '../../components/ProjectTimeline.tsx';
+import { ArrowLeft, ArrowRight, Plus, Trash2 } from '../../components/Icons.tsx';
+import { useAppContext } from '../../context/AppContext.tsx';
 
-// --- Main View Component ---
+// --- Step Components ---
+
+const Step1Details = ({ data, setData }: { data: Partial<Project>, setData: Function }) => (
+    <div className="space-y-4">
+        <div>
+            <label className="block font-medium mb-1">Project Name</label>
+            <input type="text" value={data.name || ''} onChange={e => setData({ ...data, name: e.target.value })} className="w-full border p-2 rounded" placeholder="e.g., Corporate HQ AV Fit-Out"/>
+        </div>
+        <div>
+            <label className="block font-medium mb-1">Project Description / Scope of Work</label>
+            <textarea value={data.description || ''} onChange={e => setData({ ...data, description: e.target.value })} rows={5} className="w-full border p-2 rounded" placeholder="Provide a high-level overview of the project."/>
+        </div>
+    </div>
+);
+
+const Step2Resources = ({ data, setData }: { data: Partial<Project>, setData: Function }) => {
+    const [phases, setPhases] = useState<{ name: string; roles: Partial<ProjectRole>[] }[]>([
+        { name: 'Phase 1: Design & First Fix', roles: [{id: `role-${Math.random()}`, title: 'AV Systems Designer', discipline: Discipline.AV, startDate: new Date(), endDate: new Date(new Date().setDate(new Date().getDate() + 30)) }] }
+    ]);
+
+    const addPhase = () => setPhases([...phases, { name: `Phase ${phases.length + 1}`, roles: [] }]);
+    
+    const addRole = (phaseIndex: number) => {
+        const newPhases = [...phases];
+        newPhases[phaseIndex].roles.push({ id: `role-${Math.random()}`, title: '', discipline: Discipline.AV, startDate: new Date(), endDate: new Date() });
+        setPhases(newPhases);
+    };
+
+    const removeRole = (phaseIndex: number, roleIndex: number) => {
+        const newPhases = [...phases];
+        newPhases[phaseIndex].roles.splice(roleIndex, 1);
+        setPhases(newPhases);
+        updateMainData(newPhases);
+    };
+
+    const handleRoleChange = (phaseIndex: number, roleIndex: number, field: keyof ProjectRole, value: any) => {
+        const newPhases = [...phases];
+        const role = newPhases[phaseIndex].roles[roleIndex] as any;
+        role[field] = value;
+
+        // Auto-adjust end date if start date changes
+        if(field === 'startDate' && new Date(value) > role.endDate) {
+            role.endDate = value;
+        }
+
+        setPhases(newPhases);
+        updateMainData(newPhases);
+    };
+    
+    const updateMainData = (currentPhases: typeof phases) => {
+         setData({ ...data, roles: currentPhases.flatMap(p => p.roles.map(r => ({ ...r, phase: p.name }))) });
+    };
+
+    return (
+        <div className="space-y-4">
+            {phases.map((phase, pIndex) => (
+                <div key={pIndex} className="p-4 border rounded-lg bg-gray-50">
+                    <input value={phase.name} onChange={e => {
+                        const newPhases = [...phases]; newPhases[pIndex].name = e.target.value; setPhases(newPhases);
+                    }} className="text-lg font-bold bg-transparent outline-none border-b-2 border-transparent focus:border-gray-300 w-full mb-3" />
+                    
+                    {phase.roles.map((role, rIndex) => (
+                        <div key={rIndex} className="p-3 bg-white rounded-md border mb-2 space-y-2 relative">
+                            <button onClick={() => removeRole(pIndex, rIndex)} className="absolute top-2 right-2 text-red-500 hover:text-red-700"><Trash2 size={16}/></button>
+                            <input type="text" placeholder="Role Title (e.g., Lead Engineer)" value={role.title || ''} onChange={e => handleRoleChange(pIndex, rIndex, 'title', e.target.value)} className="w-full border p-1 rounded text-sm"/>
+                            <div className="grid grid-cols-3 gap-2">
+                                <select value={role.discipline} onChange={e => handleRoleChange(pIndex, rIndex, 'discipline', e.target.value as Discipline)} className="w-full border p-1 rounded text-sm bg-white"><option>{Discipline.AV}</option><option>{Discipline.IT}</option><option>{Discipline.BOTH}</option></select>
+                                <input type="date" value={(role.startDate as Date)?.toISOString().split('T')[0]} onChange={e => handleRoleChange(pIndex, rIndex, 'startDate', new Date(e.target.value))} className="w-full border p-1 rounded text-sm"/>
+                                <input type="date" value={(role.endDate as Date)?.toISOString().split('T')[0]} onChange={e => handleRoleChange(pIndex, rIndex, 'endDate', new Date(e.target.value))} className="w-full border p-1 rounded text-sm"/>
+                            </div>
+                        </div>
+                    ))}
+                    <button onClick={() => addRole(pIndex)} className="text-sm font-semibold text-blue-600 flex items-center"><Plus size={16} className="mr-1"/> Add Role to Phase</button>
+                </div>
+            ))}
+            <button onClick={addPhase} className="font-semibold text-green-600 mt-2">Add Project Phase</button>
+        </div>
+    );
+};
+
+const Step3Summary = ({ data }: { data: Partial<Project> }) => (
+    <div>
+        <h3 className="text-xl font-bold mb-2">{data.name}</h3>
+        <p className="text-gray-600 mb-4">{data.description}</p>
+        <div className="p-4 bg-gray-50 rounded-lg border">
+            <h4 className="font-semibold mb-2">Project Timeline</h4>
+            <ProjectTimeline roles={(data.roles || []) as ProjectRole[]} />
+        </div>
+    </div>
+);
+
+
+// --- Main Component ---
+
 export const ProjectPlannerView = () => {
-    const { user, projects, createProject } = useAppContext();
-    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+    const { user } = useAppContext();
+    const [step, setStep] = useState(1);
+    const [projectData, setProjectData] = useState<Partial<Project>>({ companyId: user?.profile.id, roles: [] });
 
-    const myProjects = useMemo(() => {
-        if (!user) return [];
-        return projects.filter(p => p.companyId === user.profile.id);
-    }, [projects, user]);
+    const nextStep = () => setStep(s => Math.min(s + 1, 3));
+    const prevStep = () => setStep(s => Math.max(s - 1, 1));
+    
+    const handleSubmit = () => {
+        alert("Project Created! (Check console for data)");
+        console.log(projectData);
+    };
 
-    const handleCreateProject = () => {
-        const name = prompt("Enter new project name:");
-        if (name) {
-            const newProject = createProject(name, "A new project to manage resources.");
-            setSelectedProject(newProject);
+    const renderStep = () => {
+        switch(step) {
+            case 1: return <Step1Details data={projectData} setData={setProjectData} />;
+            case 2: return <Step2Resources data={projectData} setData={setProjectData} />;
+            case 3: return <Step3Summary data={projectData} />;
+            default: return null;
         }
     };
 
-    if (selectedProject) {
-        return <ProjectBuilderView project={selectedProject} onBack={() => setSelectedProject(null)} />;
-    }
-
     return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold flex items-center"><KanbanSquare className="mr-3 text-blue-600" /> Project Planner</h1>
-                <button onClick={handleCreateProject} className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700">
-                    <Plus size={18} className="mr-2" /> Create New Project
-                </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {myProjects.map(project => (
-                    <ProjectCard key={project.id} project={project} onSelect={() => setSelectedProject(project)} />
-                ))}
-            </div>
-        </div>
-    );
-};
-
-// --- Project Card for List View ---
-const ProjectCard = ({ project, onSelect }: { project: Project; onSelect: () => void }) => {
-    const projectDuration = useMemo(() => {
-        if (project.roles.length === 0) return 'N/A';
-        const startDates = project.roles.map(r => r.startDate.getTime());
-        const endDates = project.roles.map(r => r.endDate.getTime());
-        const minStart = new Date(Math.min(...startDates));
-        const maxEnd = new Date(Math.max(...endDates));
-        return `${minStart.toLocaleDateString()} - ${maxEnd.toLocaleDateString()}`;
-    }, [project.roles]);
-
-    return (
-        <div className="bg-white p-5 rounded-lg shadow flex flex-col h-full">
-            <h3 className="text-xl font-bold text-gray-800">{project.name}</h3>
-            <p className="text-sm text-gray-500 flex-grow mt-1">{project.description.substring(0, 100)}...</p>
-            <div className="mt-4 pt-4 border-t text-sm text-gray-600 space-y-2">
-                <div className="flex justify-between"><span>Status:</span> <span className="font-semibold">{project.status}</span></div>
-                <div className="flex justify-between"><span>Roles:</span> <span className="font-semibold">{project.roles.length}</span></div>
-                <div className="flex justify-between"><span>Timeline:</span> <span className="font-semibold">{projectDuration}</span></div>
-            </div>
-            <button onClick={onSelect} className="mt-4 w-full text-center px-4 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700">
-                Manage Project
-            </button>
-        </div>
-    );
-};
-
-// --- Project Builder View ---
-const ProjectBuilderView = ({ project, onBack }: { project: Project; onBack: () => void }) => {
-    const { engineers, addRoleToProject, assignEngineerToRole } = useAppContext();
-    const [isAssignModalOpen, setIsAssignModalOpen] = useState<ProjectRole | null>(null);
-    const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
-
-    const handleAssignEngineer = (roleId: string, engineerId: string) => {
-        assignEngineerToRole(project.id, roleId, engineerId);
-        setIsAssignModalOpen(null);
-    };
-
-    return (
-        <>
-            <button onClick={onBack} className="flex items-center mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
-                <ArrowLeft size={16} className="mr-2" /> Back to All Projects
-            </button>
-
-            <div className="bg-white p-6 rounded-lg shadow space-y-6">
-                <div>
-                    <h2 className="text-3xl font-bold">{project.name}</h2>
-                    <p className="text-gray-600">{project.description}</p>
-                </div>
-                
-                {/* Roles Section */}
-                <div className="pt-4 border-t">
-                    <div className="flex justify-between items-center mb-4">
-                         <h3 className="text-2xl font-bold">Project Roles</h3>
-                         <button onClick={() => setIsRoleModalOpen(true)} className="flex items-center px-3 py-1.5 bg-blue-500 text-white text-sm font-semibold rounded-md hover:bg-blue-600"><Plus size={16} className="mr-1.5" /> Add Role</button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {project.roles.map(role => (
-                            <RoleCard key={role.id} role={role} onAssignClick={() => setIsAssignModalOpen(role)} engineers={engineers} />
-                        ))}
-                    </div>
-                </div>
-
-                {/* Timeline Section */}
-                <div className="pt-4 border-t">
-                     <h3 className="text-2xl font-bold mb-4">Project Timeline</h3>
-                     <ProjectTimeline project={project} />
-                </div>
-            </div>
-
-            {isAssignModalOpen && (
-                <AssignEngineerModal
-                    isOpen={!!isAssignModalOpen}
-                    onClose={() => setIsAssignModalOpen(null)}
-                    role={isAssignModalOpen}
-                    onAssign={handleAssignEngineer}
-                />
-            )}
-            {isRoleModalOpen && (
-                <AddRoleModal 
-                    isOpen={isRoleModalOpen}
-                    onClose={() => setIsRoleModalOpen(false)}
-                    onAddRole={(roleData) => addRoleToProject(project.id, roleData)}
-                />
-            )}
-        </>
-    );
-};
-
-// --- Role Card in Builder View ---
-const RoleCard = ({ role, onAssignClick, engineers }: { role: ProjectRole; onAssignClick: () => void; engineers: EngineerProfile[] }) => {
-    const assignedEngineer = useMemo(() => engineers.find(e => e.id === role.assignedEngineerId), [engineers, role.assignedEngineerId]);
-    return (
-        <div className="bg-gray-50 p-4 rounded-lg border flex flex-col">
-            <div className="flex justify-between items-start">
-                <div>
-                    <h4 className="font-bold text-lg">{role.title}</h4>
-                    <p className="text-sm text-gray-500">{role.discipline}</p>
-                </div>
-                <div className="flex gap-2">
-                    <button className="p-1.5 text-gray-500 hover:text-blue-600"><Edit size={16}/></button>
-                    <button className="p-1.5 text-gray-500 hover:text-red-600"><Trash2 size={16}/></button>
-                </div>
-            </div>
-            <p className="text-sm my-3 flex items-center gap-2"><Calendar size={14} /> {role.startDate.toLocaleDateString()} to {role.endDate.toLocaleDateString()}</p>
+        <div className="bg-white p-4 rounded-lg shadow max-w-4xl mx-auto">
+            <h1 className="text-2xl font-bold mb-2">Project Resourcing Wizard</h1>
+            <p className="text-gray-500 mb-6">Plan your entire project's freelance needs from start to finish.</p>
             
-            <div className="flex items-center gap-4 text-xs text-gray-600 mb-3">
-                {role.hotelCovered && <span className="flex items-center gap-1.5" title="Hotel Covered"><Bed size={14} /> Hotel</span>}
-                {role.travelCovered && <span className="flex items-center gap-1.5" title="Travel Covered"><Plane size={14} /> Travel</span>}
-                {role.mealsCovered && <span className="flex items-center gap-1.5" title="Meals Covered"><UtensilsCrossed size={14} /> Meals</span>}
-            </div>
+            <ProgressTracker currentStep={step} />
 
-            <div className="mt-auto pt-3 border-t">
-                {assignedEngineer ? (
-                    <div className="flex items-center gap-3">
-                        <img src={assignedEngineer.avatar} alt={assignedEngineer.name} className="w-10 h-10 rounded-full" />
-                        <div>
-                            <p className="font-semibold">{assignedEngineer.name}</p>
-                            <button onClick={onAssignClick} className="text-xs text-blue-600 hover:underline">Change</button>
-                        </div>
-                    </div>
+            <div className="mt-8">
+                {renderStep()}
+            </div>
+            
+             <div className="flex justify-between mt-8 pt-6 border-t">
+                <button onClick={prevStep} disabled={step === 1} className="flex items-center px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50">
+                    <ArrowLeft size={16} className="mr-2"/> Back
+                </button>
+                {step < 3 ? (
+                    <button onClick={nextStep} className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Next <ArrowRight size={16} className="ml-2"/>
+                    </button>
                 ) : (
-                    <button onClick={onAssignClick} className="w-full text-blue-600 font-bold hover:text-blue-800 flex items-center justify-center gap-2">
-                        <User size={16}/> Assign Engineer
+                    <button onClick={handleSubmit} className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                        Create Project
                     </button>
                 )}
             </div>
-        </div>
-    );
-};
-
-
-// --- Add Role Modal ---
-const AddRoleModal = ({ isOpen, onClose, onAddRole }: { isOpen: boolean, onClose: () => void, onAddRole: (role: Omit<ProjectRole, 'id' | 'assignedEngineerId'>) => void }) => {
-    const [formData, setFormData] = useState({
-        title: '',
-        discipline: Discipline.AV,
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0],
-        hotelCovered: false,
-        travelCovered: false,
-        mealsCovered: false,
-    });
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value, type, checked } = e.target as HTMLInputElement;
-        setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        onAddRole({
-            ...formData,
-            startDate: new Date(formData.startDate),
-            endDate: new Date(formData.endDate),
-        });
-        onClose();
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
-            <form onSubmit={handleSubmit} className="bg-white rounded-lg p-6 w-full max-w-lg" onClick={e => e.stopPropagation()}>
-                <h2 className="text-2xl font-bold mb-4">Add New Role to Project</h2>
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium">Role Title</label>
-                        <input type="text" name="title" value={formData.title} onChange={handleChange} className="w-full border p-2 rounded" required />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium">Discipline</label>
-                        <select name="discipline" value={formData.discipline} onChange={handleChange} className="w-full border p-2 rounded bg-white">
-                            {Object.values(Discipline).map(d => <option key={d} value={d}>{d}</option>)}
-                        </select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium">Start Date</label>
-                            <input type="date" name="startDate" value={formData.startDate} onChange={handleChange} className="w-full border p-2 rounded" required />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium">End Date</label>
-                            <input type="date" name="endDate" value={formData.endDate} onChange={handleChange} className="w-full border p-2 rounded" required />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Additional Costs Covered</label>
-                        <div className="flex items-center gap-4">
-                            <label className="flex items-center"><input type="checkbox" name="hotelCovered" checked={formData.hotelCovered} onChange={handleChange} className="h-4 w-4 mr-1.5" /> Hotel</label>
-                            <label className="flex items-center"><input type="checkbox" name="travelCovered" checked={formData.travelCovered} onChange={handleChange} className="h-4 w-4 mr-1.5" /> Travel</label>
-                            <label className="flex items-center"><input type="checkbox" name="mealsCovered" checked={formData.mealsCovered} onChange={handleChange} className="h-4 w-4 mr-1.5" /> Meals</label>
-                        </div>
-                    </div>
-                </div>
-                <div className="flex justify-end gap-4 mt-6 pt-4 border-t">
-                    <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded-md">Cancel</button>
-                    <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md">Add Role</button>
-                </div>
-            </form>
         </div>
     );
 };

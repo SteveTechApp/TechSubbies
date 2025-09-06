@@ -45,7 +45,7 @@ export const ProfileCertifications = ({ profile, formData, setFormData }: Profil
                         className="flex-grow border p-2 rounded"
                     />
                     {cert.verified ? (
-                        <span className="flex items-center px-3 py-2 bg-green-100 text-green-700 font-semibold rounded-md text-sm">
+                        <span className="flex items-center px-3 py-2 bg-green-100 text-green-700 font-semibold rounded-md text-sm whitespace-nowrap">
                             <CheckCircle size={16} className="mr-1.5" /> Verified
                         </span>
                     ) : (
@@ -53,7 +53,7 @@ export const ProfileCertifications = ({ profile, formData, setFormData }: Profil
                             type="button"
                             disabled={!canVerifyCerts}
                             onClick={() => handleVerifyClick(index)}
-                            className="px-3 py-2 bg-blue-100 text-blue-700 font-semibold rounded-md text-sm hover:bg-blue-200 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+                            className="px-3 py-2 bg-blue-100 text-blue-700 font-semibold rounded-md text-sm hover:bg-blue-200 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed whitespace-nowrap"
                         >
                             {canVerifyCerts ? 'Request Verification' : 'Verification Disabled'}
                         </button>

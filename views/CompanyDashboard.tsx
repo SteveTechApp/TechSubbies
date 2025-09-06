@@ -1,20 +1,21 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { EngineerProfile, Job } from '../types/index.ts';
-import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
-import { JobPostModal } from '../components/JobPostModal.tsx';
-import { DashboardView } from './CompanyDashboard/DashboardView.tsx';
-import { MyJobsView } from './CompanyDashboard/MyJobsView.tsx';
-import { SettingsView } from './CompanyDashboard/SettingsView.tsx';
-import { FindTalentView } from './CompanyDashboard/FindTalentView.tsx';
-import { EngineerProfileView } from './EngineerProfileView.tsx';
-import { MessagesView } from './MessagesView.tsx';
-import { ArrowLeft } from '../components/Icons.tsx';
-import { ContractsView } from './ContractsView.tsx';
-import { InstantInviteModal } from '../components/InstantInviteModal.tsx';
-import { ProjectPlannerView } from './CompanyDashboard/ProjectPlannerView.tsx';
-import { ProjectTrackingView } from './CompanyDashboard/ProjectTrackingView.tsx';
-import { InvoicesView } from './InvoicesView.tsx';
+import { useAppContext } from '../context/AppContext';
+// FIX: Corrected module imports to remove file extensions.
+import { EngineerProfile, Job, CompanyProfile } from '../types';
+import { DashboardSidebar } from '../components/DashboardSidebar';
+import { JobPostModal } from '../components/JobPostModal';
+import { DashboardView } from './CompanyDashboard/DashboardView';
+import { MyJobsView } from './CompanyDashboard/MyJobsView';
+import { SettingsView } from './CompanyDashboard/SettingsView';
+import { FindTalentView } from './CompanyDashboard/FindTalentView';
+import { EngineerProfileView } from './EngineerProfileView';
+import { MessagesView } from './MessagesView';
+import { ArrowLeft } from '../components/Icons';
+import { ContractsView } from './ContractsView';
+import { InstantInviteModal } from '../components/InstantInviteModal';
+import { ProjectPlannerView } from './CompanyDashboard/ProjectPlannerView';
+import { ProjectTrackingView } from './CompanyDashboard/ProjectTrackingView';
+import { InvoicesView } from './InvoicesView';
 
 export const CompanyDashboard = () => {
     const { user, postJob, jobs, engineers, applications, updateCompanyProfile, setCurrentPageContext } = useAppContext();
@@ -41,7 +42,11 @@ export const CompanyDashboard = () => {
     useEffect(() => {
         if (activeView === 'Post a Job') {
             setIsJobModalOpen(true);
-        } else {
+        } else if (isJobModalOpen) {
+            setIsJobModalOpen(false);
+        }
+    
+        if (activeView !== 'Find Talent') {
             handleBackToSearch();
         }
     }, [activeView]);
@@ -59,6 +64,7 @@ export const CompanyDashboard = () => {
     const handlePostJob = (jobData: any) => {
         const newJob = postJob(jobData);
         setIsJobModalOpen(false);
+        setActiveView('My Jobs');
         if (newJob) {
             setJobForInvite(newJob);
             setIsInviteModalOpen(true);
@@ -86,7 +92,8 @@ export const CompanyDashboard = () => {
                     )
                 }
                 return <FindTalentView engineers={engineers} myJobs={myJobs} onSelectEngineer={handleSelectEngineer} />;
-            case 'Post a Job': // Intentionally fall through; modal is controlled by useEffect.
+            case 'Post a Job': 
+                return <MyJobsView myJobs={myJobs} setActiveView={setActiveView} />;
             case 'My Jobs':
                 return <MyJobsView myJobs={myJobs} setActiveView={setActiveView} />;
             case 'Project Planner':
@@ -100,7 +107,7 @@ export const CompanyDashboard = () => {
             case 'Invoices':
                 return <InvoicesView />;
             case 'Settings':
-                return <SettingsView profile={user.profile} onSave={updateCompanyProfile} />;
+                return <SettingsView profile={user.profile as CompanyProfile} onSave={updateCompanyProfile} />;
             default:
                 return (
                     <div>
@@ -114,7 +121,7 @@ export const CompanyDashboard = () => {
     return (
         <div className="flex h-screen">
             <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-grow p-2 sm:p-3 bg-gray-50 overflow-hidden">
+            <main className="flex-grow p-2 bg-gray-50 overflow-hidden">
                 {renderActiveView()}
             </main>
             <JobPostModal

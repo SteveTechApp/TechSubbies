@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Job, EngineerProfile } from '../types/index.ts';
-import { X } from './Icons.tsx';
+// FIX: Corrected module import to remove file extension.
+import { Job, EngineerProfile } from '../types';
+import { X } from './Icons';
 
 interface ApplyAsEngineerModalProps {
     isOpen: boolean;

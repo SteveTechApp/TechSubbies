@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext, } from '../../context/AppContext.tsx';
-import { Job, EngineerProfile } from '../../types/index.ts';
-import { ApplyAsEngineerModal } from '../../components/ApplyAsEngineerModal.tsx';
-import { Search, MapPin, Calendar, DollarSign, Clock, MessageCircle, Briefcase, Layers } from '../../components/Icons.tsx';
-import { formatDisplayDate } from '../../utils/dateFormatter.ts';
+import { useAppContext, } from '../../context/AppContext';
+// FIX: Corrected module import to remove file extension.
+import { Job, EngineerProfile } from '../../types';
+import { ApplyAsEngineerModal } from '../../components/ApplyAsEngineerModal';
+import { Search, MapPin, Calendar, DollarSign, Clock, MessageCircle, Briefcase, Layers } from '../../components/Icons';
+import { formatDisplayDate } from '../../utils/dateFormatter';
 
 interface ResourcingJobCardProps {
     job: Job;

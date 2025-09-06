@@ -11,7 +11,7 @@ export const NavLink = ({ label, icon: Icon, activeView, setActiveView }: NavLin
     const isActive = activeView === label;
     
     const classNames = [
-        "w-full", "flex", "items-center", "px-2 py-1", "my-1", 
+        "w-full", "flex", "items-center", "px-1.5 py-1", "my-1", 
         "text-left", "rounded-md", "transition-colors",
         isActive ? "bg-blue-500 text-white shadow" : "text-gray-600 hover:bg-gray-200 hover:text-gray-800"
     ].join(" ");

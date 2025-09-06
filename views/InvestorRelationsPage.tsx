@@ -59,21 +59,21 @@ export const InvestorRelationsPage = ({ onNavigate, onHowItWorksClick }: Investo
                 >
                     <div className="absolute inset-0 bg-blue-900 opacity-80"></div>
                     <div className="relative z-10 max-w-3xl">
-                        <h1 className="text-2xl md:text-4xl font-extrabold mb-2">An Investment in the Future of Work</h1>
-                        <p className="text-sm md:text-base mx-auto">TechSubbies.com is poised to become the essential infrastructure for the freelance tech economy. Discover our high-growth opportunity.</p>
+                        <h1 className="text-xl md:text-3xl font-extrabold mb-2">An Investment in the Future of Work</h1>
+                        <p className="text-xs md:text-sm mx-auto">TechSubbies.com is poised to become the essential infrastructure for the freelance tech economy. Discover our high-growth opportunity.</p>
                     </div>
                 </section>
 
-                 <section id="investors" className="py-8 bg-white">
+                 <section id="investors" className="py-4 bg-white">
                     <div className="container mx-auto px-4">
-                        <div className="max-w-4xl mx-auto bg-gray-50 p-4 rounded-lg shadow-lg mb-6 border border-gray-200">
-                            <h3 className="text-xl font-bold mb-2 text-center text-gray-800">Executive Summary</h3>
+                        <div className="max-w-4xl mx-auto bg-gray-50 p-4 rounded-lg shadow-lg mb-4 border border-gray-200">
+                            <h3 className="text-lg font-bold mb-2 text-center text-gray-800">Executive Summary</h3>
                             <p className="text-gray-700 text-center text-sm">TechSubbies.com is a vertically-integrated B2B marketplace solving a critical, dual-sided problem: companies struggle to find qualified, available specialist engineers quickly, while freelance engineers lack a dedicated platform to showcase their niche skills. By leveraging a freemium model for companies and a premium subscription for engineers, we create powerful network effects in a high-demand, growing market.</p>
                         </div>
 
-                        <div className="mb-6">
-                            <h3 className="text-xl font-bold text-center mb-4">Investment Highlights</h3>
-                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="mb-4">
+                            <h3 className="text-lg font-bold text-center mb-3">Investment Highlights</h3>
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
                                 <HighlightCard icon={Zap} title="Disruptive Business Model">Free access for companies drives massive adoption and network effects, creating a deep pool of opportunities for our paying engineer user base.</HighlightCard>
                                 <HighlightCard icon={Layers} title="Multiple Revenue Streams">Revenue is generated through a high-volume, low-cost subscription model for talent, supplemented by high-margin, value-added services.</HighlightCard>
                                 <HighlightCard icon={TrendingUp} title="High-Demand Market">The global gig economy and the increasing reliance on a flexible, specialized tech workforce are fueling massive market growth.</HighlightCard>
@@ -83,17 +83,17 @@ export const InvestorRelationsPage = ({ onNavigate, onHowItWorksClick }: Investo
                             </div>
                         </div>
                         
-                        <div className="mb-6 bg-blue-50 py-6 rounded-lg">
-                            <h3 className="text-xl font-bold text-center mb-4">Our Modern Revenue Model</h3>
-                            <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-4 px-4">
+                        <div className="mb-4 bg-blue-50 py-4 rounded-lg">
+                            <h3 className="text-lg font-bold text-center mb-3">Our Modern Revenue Model</h3>
+                            <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-3 px-4">
                                 <RevenueCard number="1" title="Skills Profile Subscriptions">Our core recurring revenue. A low-cost monthly subscription unlocks premium tools for engineers to showcase their specialist skills.</RevenueCard>
                                 <RevenueCard number="2" title="Microtransactions">Pay-per-use features like 'Profile Boosts' and '12-Hour Day Passes' allow engineers to increase visibility on demand.</RevenueCard>
                                 <RevenueCard number="3" title="Targeted Advertising">Premium advertising slots for industry-specific manufacturers and training companies to reach their ideal audience.</RevenueCard>
                             </div>
                         </div>
 
-                        <div className="mb-6 bg-white py-6 rounded-lg shadow-md border">
-                             <h3 className="text-xl font-bold text-center mb-4">Interactive Financial Forecast</h3>
+                        <div className="mb-4 bg-white py-4 rounded-lg shadow-md border">
+                             <h3 className="text-lg font-bold text-center mb-3">Interactive Financial Forecast</h3>
                              <RevenueSimulator 
                                 subscriberNumbers={subscriberNumbers}
                                 onSliderChange={handleSliderChange}
@@ -107,8 +107,8 @@ export const InvestorRelationsPage = ({ onNavigate, onHowItWorksClick }: Investo
                              />
                         </div>
 
-                        <div className="text-center bg-blue-600 text-white p-6 rounded-lg">
-                            <h3 className="text-xl font-bold">Join Us in Building the Future</h3>
+                        <div className="text-center bg-blue-600 text-white p-4 rounded-lg">
+                            <h3 className="text-lg font-bold">Join Us in Building the Future</h3>
                             <p className="mt-2 mb-4 max-w-2xl mx-auto text-sm">TechSubbies.com presents a high-growth investment opportunity in a rapidly expanding global market. We are currently seeking £500,000 in seed funding to accelerate product development and user acquisition.</p>
                             <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
                                 <a href="mailto:invest@techsubbies.com" className="inline-block w-full sm:w-auto bg-white text-blue-600 font-bold py-2 px-6 rounded-lg hover:bg-gray-200 transition-transform transform hover:scale-105">Contact Us for Investment Enquiries</a>

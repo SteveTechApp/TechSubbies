@@ -25,25 +25,25 @@ export const AboutUsPage = ({ onNavigate, onHowItWorksClick }: AboutUsPageProps)
                 >
                     <div className="absolute inset-0 bg-blue-800 opacity-70"></div>
                     <div className="relative z-10 max-w-3xl">
-                        <h1 className="text-2xl md:text-4xl font-extrabold mb-2">Connecting Expertise with Opportunity</h1>
-                        <p className="text-sm md:text-base mx-auto">We're building the digital infrastructure for the freelance AV & IT industry, making it easier than ever to find the right talent and the right projects.</p>
+                        <h1 className="text-xl md:text-3xl font-extrabold mb-2">Connecting Expertise with Opportunity</h1>
+                        <p className="text-xs md:text-sm mx-auto">We're building the digital infrastructure for the freelance AV & IT industry, making it easier than ever to find the right talent and the right projects.</p>
                     </div>
                 </section>
 
                 {/* Mission Section */}
-                <section className="py-8 bg-gray-50">
+                <section className="py-4 bg-gray-50">
                     <div className="container mx-auto px-4 text-center max-w-4xl">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Our Mission</h2>
-                        <p className="text-sm text-gray-600">
+                        <h2 className="text-xl font-bold text-gray-800 mb-1">Our Mission</h2>
+                        <p className="text-xs text-gray-600">
                             Our mission is to solve a critical, dual-sided problem in the technology sector. Companies struggle to find qualified, available specialist engineers quickly, leading to project delays. Meanwhile, talented freelance engineers lack a dedicated platform to showcase their niche skills and manage their work pipeline effectively. TechSubbies.com bridges this gap, creating a seamless, efficient marketplace for the freelance tech community.
                         </p>
                     </div>
                 </section>
                 
                 {/* Story Section */}
-                <section className="py-8 bg-white">
+                <section className="py-4 bg-white">
                     <div className="container mx-auto px-4 max-w-5xl">
-                         <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">Our Story</h2>
+                         <h2 className="text-xl font-bold text-center text-gray-800 mb-4">Our Story</h2>
                         <div className="grid md:grid-cols-2 gap-8 items-center">
                             <div className="text-gray-700 space-y-3 text-sm">
                                 <p>Finding the right tech freelancer shouldn't feel like searching for a needle in a haystack. Yet for years, that's what it was: a frantic scramble through old contacts and a costly reliance on slow-moving recruitment agencies. The system was broken.</p>

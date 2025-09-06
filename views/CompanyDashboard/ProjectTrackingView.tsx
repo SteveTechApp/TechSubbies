@@ -12,7 +12,6 @@ const ProgressBar = ({ value, colorClass }: { value: number; colorClass: string 
 const ProjectTrackerCard = ({ project }: { project: Project }) => {
     const { contracts, engineers } = useAppContext();
 
-    // FIX: Destructured `totalBudget` and `spentBudget` to make them available in the component.
     const { milestoneProgress, budgetProgress, assignedEngineers, totalBudget, spentBudget } = useMemo(() => {
         const projectContracts = contracts.filter(c => project.roles.some(r => r.assignedEngineerId === c.engineerId));
 
@@ -63,12 +62,10 @@ const ProjectTrackerCard = ({ project }: { project: Project }) => {
                  <div>
                     <div className="flex justify-between text-sm font-medium text-gray-600 mb-1">
                         <span>Budget Used</span>
-                        {/* FIX: Removed erroneous '£' sign before percentage value. */}
                         <span>{budgetProgress.toFixed(0)}%</span>
                     </div>
                     <ProgressBar value={budgetProgress} colorClass="bg-green-600" />
-                     {/* FIX: Used `spentBudget` instead of `budgetProgress` for correct currency display. */}
-                     <p className="text-xs text-right text-gray-500 mt-1">£{spentBudget.toLocaleString()} / £{totalBudget.toLocaleString()}</p>
+                    <p className="text-xs text-right text-gray-500 mt-1">£{spentBudget.toLocaleString()} / £{totalBudget.toLocaleString()}</p>
                 </div>
             </div>
 

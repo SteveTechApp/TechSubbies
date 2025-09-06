@@ -1,8 +1,9 @@
 import React from 'react';
-import { Logo } from './Logo.tsx';
-import { Page } from '../types/index.ts';
-import { DropdownMenu } from './DropdownMenu.tsx';
-import { Linkedin, XIcon, Instagram, Facebook } from './Icons.tsx';
+import { Logo } from './Logo';
+// FIX: Corrected module import to remove file extension.
+import { Page } from '../types';
+import { DropdownMenu } from './DropdownMenu';
+import { Linkedin, XIcon, Instagram, Facebook } from './Icons';
 
 interface FooterProps {
     onNavigate: (page: Page) => void;
@@ -12,15 +13,15 @@ interface FooterProps {
 export const Footer = ({ onNavigate, onHowItWorksClick }: FooterProps) => {
     const dropdownItemClass = 'block w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100';
     const textColor = 'text-gray-700 hover:text-blue-600';
-    const navButtonClass = `px-4 py-2 font-medium text-xs ${textColor} text-center`;
+    const navButtonClass = `px-3 py-1.5 font-medium text-xs ${textColor} text-center`;
 
     return (
         <footer className="bg-white shadow-md mt-auto border-t border-gray-200 z-40">
-            <div className="container mx-auto p-2 flex flex-col lg:flex-row justify-between items-center gap-2">
+            <div className="container mx-auto p-1 flex flex-col lg:flex-row justify-between items-center gap-1">
                 
-                <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
+                <div className="flex flex-col sm:flex-row items-center gap-2 text-center sm:text-left">
                     <button onClick={() => onNavigate('landing')} aria-label="Go to homepage" className="flex-shrink-0">
-                      <Logo className="text-gray-800 h-7" />
+                      <Logo className="text-gray-800 h-6" />
                     </button>
                     <div className="text-xs text-gray-600">
                         <p>&copy; {new Date().getFullYear()} TechSubbies.com. All Rights Reserved.</p>
@@ -30,7 +31,7 @@ export const Footer = ({ onNavigate, onHowItWorksClick }: FooterProps) => {
                     </div>
                 </div>
 
-                <div className="flex flex-col lg:flex-row items-center gap-3">
+                <div className="flex flex-col lg:flex-row items-center gap-2">
                      <div className="flex items-center space-x-4">
                         <a href="https://www.linkedin.com/company/techsubbies" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600" aria-label="LinkedIn"><Linkedin /></a>
                         <a href="https://x.com/techsubbies" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600" aria-label="X - formerly Twitter"><XIcon /></a>
@@ -38,7 +39,7 @@ export const Footer = ({ onNavigate, onHowItWorksClick }: FooterProps) => {
                         <a href="https://facebook.com/techsubbies" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600" aria-label="Facebook"><Facebook /></a>
                     </div>
                     <nav>
-                        <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-2">
+                        <div className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1">
                             <DropdownMenu triggerText="For Engineers" direction="up">
                                 <button onClick={() => onNavigate('forEngineers')} className={dropdownItemClass}>Explore Features</button>
                                 <button onClick={() => onNavigate('pricing')} className={dropdownItemClass}>View Pricing</button>

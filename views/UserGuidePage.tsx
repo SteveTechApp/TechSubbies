@@ -14,7 +14,7 @@ const FaqAccordionItem = ({ faq, isOpen, onToggle }: { faq: { question: string, 
     <div className="border-b border-gray-200">
         <button
             onClick={onToggle}
-            className="w-full flex justify-between items-center py-3 text-left font-semibold text-base text-gray-800 hover:bg-gray-50 px-2"
+            className="w-full flex justify-between items-center py-2 text-left font-semibold text-sm text-gray-800 hover:bg-gray-50 px-2"
         >
             <span>{faq.question}</span>
             <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${isOpen ? 'transform rotate-180' : ''}`} />
@@ -23,8 +23,8 @@ const FaqAccordionItem = ({ faq, isOpen, onToggle }: { faq: { question: string, 
             className={`grid transition-all duration-500 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
         >
             <div className="overflow-hidden">
-                <div className="pb-3 px-2">
-                    <p className="text-gray-600 text-sm">{faq.answer}</p>
+                <div className="pb-2 px-2">
+                    <p className="text-gray-600 text-xs">{faq.answer}</p>
                 </div>
             </div>
         </div>
@@ -80,32 +80,32 @@ export const HelpCenterPage = ({ onNavigate, onHowItWorksClick }: HelpCenterPage
         <div className="bg-gray-50 flex flex-col min-h-screen">
             <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
             <main className="flex-grow pt-14">
-                 <div className="bg-blue-800 text-white py-10">
+                 <div className="bg-blue-800 text-white py-4">
                     <div className="container mx-auto px-4 text-center max-w-3xl">
-                        <LifeBuoy size={40} className="mx-auto mb-3 text-blue-300" />
-                        <h1 className="text-3xl font-extrabold">Help Center</h1>
-                        <p className="text-base text-blue-200 mt-2">Find answers to common questions about TechSubbies.com.</p>
-                        <div className="mt-5 relative max-w-xl mx-auto">
+                        <LifeBuoy size={32} className="mx-auto mb-2 text-blue-300" />
+                        <h1 className="text-2xl font-extrabold">Help Center</h1>
+                        <p className="text-sm text-blue-200 mt-2">Find answers to common questions about TechSubbies.com.</p>
+                        <div className="mt-4 relative max-w-xl mx-auto">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                             <input
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="Search for answers..."
-                                className="w-full rounded-full py-2.5 pl-12 pr-4 text-gray-800"
+                                className="w-full rounded-full py-2 pl-12 pr-4 text-gray-800"
                             />
                         </div>
                     </div>
                 </div>
                 
-                 <div className="container mx-auto px-4 py-6 max-w-4xl">
-                    <div className="flex justify-center border-b border-gray-300 mb-4">
+                 <div className="container mx-auto px-4 py-4 max-w-4xl">
+                    <div className="flex justify-center border-b border-gray-300 mb-3">
                         <button onClick={() => setActiveTab('engineers')} className={getTabClass('engineers')}><User /> For Engineers</button>
                         <button onClick={() => setActiveTab('companies')} className={getTabClass('companies')}><Building /> For Companies</button>
                         <button onClick={() => setActiveTab('general')} className={getTabClass('general')}>General</button>
                     </div>
 
-                    <div className="bg-white p-4 sm:p-5 rounded-lg shadow-md">
+                    <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md">
                         {activeTab === 'engineers' && renderFaqList(filteredFaqs.engineers)}
                         {activeTab === 'companies' && renderFaqList(filteredFaqs.companies)}
                         {activeTab === 'general' && renderFaqList(filteredFaqs.general)}

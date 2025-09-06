@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { LogIn, Menu, X } from './Icons.tsx';
-import { DropdownMenu } from './DropdownMenu.tsx';
-import { Page } from '../types/index.ts';
-import { Logo } from './Logo.tsx';
+import { LogIn, Menu, X } from './Icons';
+import { DropdownMenu } from './DropdownMenu';
+// FIX: Corrected module import to remove file extension.
+import { Page } from '../types';
+import { Logo } from './Logo';
 
 interface GuestMenuProps {
     onHowItWorksClick: () => void;

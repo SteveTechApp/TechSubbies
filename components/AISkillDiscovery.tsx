@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Skill } from '../types/index.ts';
-import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles.ts';
-import { BrainCircuit, Loader, Plus } from './Icons.tsx';
+import { useAppContext } from '../context/AppContext';
+// FIX: Corrected module import to remove file extension.
+import { Skill } from '../types';
+import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';
+import { BrainCircuit, Loader, Plus } from './Icons';
 
 interface AISkillDiscoveryProps {
     onSkillsAdded: (skills: Skill[]) => void;
@@ -40,7 +41,8 @@ export const AISkillDiscovery = ({ onSkillsAdded }: AISkillDiscoveryProps) => {
 
         if (result.error) {
             setError(result.error);
-        } else if (result?.skills) {
+            // FIX: Ensure result.skills is an array before setting state.
+        } else if (result?.skills && Array.isArray(result.skills)) {
             setDiscoveredSkills(result.skills);
         } else {
             setError('An unexpected error occurred while discovering skills.');

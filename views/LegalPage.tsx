@@ -77,14 +77,14 @@ const LegalContent = ({ documentType }: { documentType: 'terms' | 'privacy' | 's
     const selectedDoc = content[documentType];
 
     return (
-        <div className="bg-white py-8">
+        <div className="bg-white py-3">
             <div className="container mx-auto px-4 max-w-3xl">
-                <h1 className="text-2xl font-extrabold text-gray-800 mb-2">{selectedDoc.title}</h1>
-                <p className="text-gray-500 mb-4 text-sm">Last Updated: {selectedDoc.lastUpdated}</p>
+                <h1 className="text-xl font-extrabold text-gray-800 mb-1">{selectedDoc.title}</h1>
+                <p className="text-gray-500 mb-3 text-sm">Last Updated: {selectedDoc.lastUpdated}</p>
                 <div className="prose max-w-none">
                     {selectedDoc.sections.map(section => (
-                        <div key={section.title} className="mb-4">
-                            <h2 className="text-lg font-bold text-gray-700">{section.title}</h2>
+                        <div key={section.title} className="mb-3">
+                            <h2 className="text-base font-bold text-gray-700">{section.title}</h2>
                             <p className="text-gray-600">{section.text}</p>
                              {section.list && (
                                 <ul className="list-disc pl-6 mt-2 space-y-1">

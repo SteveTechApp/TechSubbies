@@ -1,24 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { EngineerProfile, Skill, ProfileTier } from '../types/index.ts';
-import { EngineerProfileView } from './EngineerProfileView.tsx';
-import { DashboardView } from './EngineerDashboard/DashboardView.tsx';
-import { AvailabilityView } from './EngineerDashboard/AvailabilityView.tsx';
-import { JobSearchView } from './EngineerDashboard/JobSearchView.tsx';
-import { ProfileManagementView } from './EngineerDashboard/ProfileManagementView.tsx';
-import { StoryboardCreatorView } from './EngineerDashboard/StoryboardCreatorView.tsx';
-import { PaymentsView } from './EngineerDashboard/PaymentsView.tsx';
-import { AIToolsView } from './EngineerDashboard/AIToolsView.tsx';
-import { MyNetworkView } from './EngineerDashboard/MyNetworkView.tsx';
-import { MessagesView } from './MessagesView.tsx';
-import { ArrowLeft } from '../components/Icons.tsx';
-import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
-import { AnalyticsView } from './EngineerDashboard/AnalyticsView.tsx';
-import { ContractsView } from './ContractsView.tsx';
-import { ForumView } from './ForumView.tsx';
-import { AICoachView } from './EngineerDashboard/AICoachView.tsx';
-import { InvoicesView } from './InvoicesView.tsx';
-import { SettingsView } from './EngineerDashboard/SettingsView.tsx';
+import { useAppContext } from '../context/AppContext';
+// FIX: Corrected module imports to remove file extensions.
+import { EngineerProfile, Skill, ProfileTier } from '../types';
+import { EngineerProfileView } from './EngineerProfileView';
+import { DashboardView } from './EngineerDashboard/DashboardView';
+import { AvailabilityView } from './EngineerDashboard/AvailabilityView';
+import { JobSearchView } from './EngineerDashboard/JobSearchView';
+import { ProfileManagementView } from './EngineerDashboard/ProfileManagementView';
+import { StoryboardCreatorView } from './EngineerDashboard/StoryboardCreatorView';
+import { PaymentsView } from './EngineerDashboard/PaymentsView';
+import { AIToolsView } from './EngineerDashboard/AIToolsView';
+import { MyNetworkView } from './EngineerDashboard/MyNetworkView';
+import { MessagesView } from './MessagesView';
+import { ArrowLeft } from '../components/Icons';
+import { DashboardSidebar } from '../components/DashboardSidebar';
+import { AnalyticsView } from './EngineerDashboard/AnalyticsView';
+import { ContractsView } from './ContractsView';
+import { ForumView } from './ForumView';
+import { AICoachView } from './EngineerDashboard/AICoachView';
+import { InvoicesView } from './InvoicesView';
+import { SettingsView } from './EngineerDashboard/SettingsView';
 
 
 export const EngineerDashboard = () => {
@@ -134,7 +135,7 @@ export const EngineerDashboard = () => {
     return (
         <div className="flex h-screen overflow-hidden">
             <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-grow p-2 sm:p-3 bg-gray-50 overflow-y-auto custom-scrollbar">
+            <main className="flex-grow p-2 bg-gray-50 overflow-y-auto custom-scrollbar">
                 {renderActiveView()}
             </main>
         </div>

@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { EngineerProfile } from '../../types/index.ts';
-import { ArrowLeft, User, Star, Award, Briefcase, Save, Mail, Link as LinkIcon, ShieldCheck } from '../../components/Icons.tsx';
-import { AccordionSection } from '../../components/AccordionSection.tsx';
-import { SkillsAndRolesSection } from '../../components/ProfileManagement/SkillsAndRolesSection.tsx';
-import { ProfileEssentials } from '../../components/ProfileManagement/ProfileEssentials.tsx';
-import { ProfileCertifications } from '../../components/ProfileManagement/ProfileCertifications.tsx';
-import { ProfilePortfolio } from '../../components/ProfileManagement/ProfilePortfolio.tsx';
-import { ProfileContact } from '../../components/ProfileManagement/ProfileContact.tsx';
-import { ProfileSocials } from '../../components/ProfileManagement/ProfileSocials.tsx';
-import { ProfileCompliance } from '../../components/ProfileManagement/ProfileCompliance.tsx';
+// FIX: Corrected module import to remove file extension.
+import { EngineerProfile } from '../../types';
+import { ArrowLeft, User, Star, Award, Briefcase, Save, Mail, Link as LinkIcon, ShieldCheck } from '../../components/Icons';
+import { AccordionSection } from '../../components/AccordionSection';
+import { SkillsAndRolesSection } from '../../components/ProfileManagement/SkillsAndRolesSection';
+import { ProfileEssentials } from '../../components/ProfileManagement/ProfileEssentials';
+import { ProfileCertifications } from '../../components/ProfileManagement/ProfileCertifications';
+import { ProfilePortfolio } from '../../components/ProfileManagement/ProfilePortfolio';
+import { ProfileContact } from '../../components/ProfileManagement/ProfileContact';
+import { ProfileSocials } from '../../components/ProfileManagement/ProfileSocials';
+import { ProfileCompliance } from '../../components/ProfileManagement/ProfileCompliance';
 
 interface ProfileManagementViewProps {
     profile: EngineerProfile;

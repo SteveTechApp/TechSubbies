@@ -1,7 +1,7 @@
 import React from 'react';
-import { User, Job, EngineerProfile, Application } from '../../types/index.ts';
-import { AIEngineerCostAnalysis } from '../../components/AIEngineerCostAnalysis.tsx';
-import { PlusCircle, Users, Mail } from '../../components/Icons.tsx';
+import { User, Job, EngineerProfile, Application } from '../../types';
+import { StatCard } from '../../components/StatCard';
+import { Briefcase, Users, PlusCircle, Search } from '../../components/Icons';
 
 interface DashboardViewProps {
     user: User;
@@ -11,91 +11,66 @@ interface DashboardViewProps {
     setActiveView: (view: string) => void;
 }
 
-const QuickActionButton = ({ icon: Icon, label, description, onClick }: { icon: React.ComponentType<any>, label: string, description: string, onClick: () => void }) => (
-    <button onClick={onClick} className="flex flex-col p-2 bg-white rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left h-32">
-        <div className="p-1.5 rounded-full inline-block mb-1 bg-blue-100">
-            <Icon size={18} className="text-blue-600" />
-        </div>
-        <h3 className="text-base font-bold text-gray-800">{label}</h3>
-        <p className="mt-1 text-xs text-gray-600">{description}</p>
-    </button>
-);
-
-const StatCard = ({ label, value, onClick }: { label: string, value: number, onClick: () => void }) => (
-    <button onClick={onClick} className="w-full bg-white p-3 rounded-lg shadow text-left hover:shadow-lg hover:-translate-y-0.5 transition-all">
-        <h2 className="font-bold text-sm">{label}</h2>
-        <p className="text-2xl font-extrabold text-blue-600">{value}</p>
-    </button>
-);
-
-const ActivityItem = ({ icon: Icon, text, time }: { icon: React.ComponentType<any>, text: React.ReactNode, time: string }) => (
-    <div className="flex items-start gap-2 py-1">
-        <Icon size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
-        <div className="flex-grow">
-            <p className="text-xs text-gray-700">{text}</p>
-            <p className="text-xs text-gray-400">{time}</p>
-        </div>
-    </div>
-);
-
 export const DashboardView = ({ user, myJobs, engineers, applications, setActiveView }: DashboardViewProps) => {
-    const myJobIds = new Set(myJobs.map(j => j.id));
-    const recentApplications = applications
-        .filter(app => myJobIds.has(app.jobId))
-        .sort((a, b) => b.date.getTime() - a.date.getTime())
-        .slice(0, 3);
-
-    const getApplicantName = (engineerId: string) => engineers.find(e => e.id === engineerId)?.name || 'An engineer';
-    const getJobTitle = (jobId: string) => myJobs.find(j => j.id === jobId)?.title || 'a job';
     
-    const getTimeAgo = (index: number) => ['2 hours ago', 'Yesterday', '3 days ago'][index] || 'A while ago';
-
-    const spotlightEngineer = engineers.find(e => e.profileTier !== 'BASIC' && e.status === 'active');
+    const totalApplicants = applications.filter(app => myJobs.some(j => j.id === app.jobId)).length;
+    
+    const recentApplicants = applications
+        .filter(app => myJobs.some(j => j.id === app.jobId))
+        .sort((a,b) => b.date.getTime() - a.date.getTime())
+        .slice(0, 5)
+        .map(app => ({
+            application: app,
+            engineer: engineers.find(eng => eng.id === app.engineerId),
+            job: myJobs.find(j => j.id === app.jobId)
+        }))
+        .filter(item => item.engineer && item.job);
 
     return (
-      <div className="space-y-3">
         <div>
-            <h1 className="text-xl font-bold">Dashboard for {user?.profile?.name}</h1>
-            <p className="text-gray-500 text-sm">Here's a summary of your hiring activity.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            <StatCard label="Active Jobs" value={myJobs.length} onClick={() => setActiveView('My Jobs')} />
-            <StatCard label="Total Applicants" value={applications.filter(app => myJobIds.has(app.jobId)).length} onClick={() => setActiveView('My Jobs')} />
+            <h1 className="text-3xl font-bold mb-4">Welcome, {user.profile.name}!</h1>
             
-            <div className="bg-white p-3 rounded-lg shadow col-span-1 md:col-span-2">
-                <h2 className="font-bold text-base mb-2">Quick Actions</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <QuickActionButton icon={PlusCircle} label="Post New Job" description="Get your role in front of engineers." onClick={() => setActiveView('Post a Job')} />
-                    <QuickActionButton icon={Users} label="Find Talent" description="Search the engineer database." onClick={() => setActiveView('Find Talent')}/>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <StatCard icon={Briefcase} value={myJobs.length.toString()} label="Active Jobs" colorClass="bg-blue-500" />
+                <StatCard icon={Users} value={totalApplicants.toString()} label="Total Applicants" colorClass="bg-green-500" />
+                <StatCard icon={Users} value={engineers.length.toString()} label="Engineers in Network" colorClass="bg-indigo-500" />
             </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <div className="lg:col-span-2 bg-white p-3 rounded-lg shadow">
-              <h2 className="text-base font-bold mb-2">Engineer Spotlight</h2>
-              {myJobs.length > 0 && spotlightEngineer ?
-                <AIEngineerCostAnalysis job={myJobs[0]} engineer={spotlightEngineer} /> :
-                <p className="text-center text-gray-500 py-8 text-sm">Post a job to see an AI-powered analysis of a matching engineer.</p>
-              }
-            </div>
-            <div className="lg:col-span-1 bg-white p-3 rounded-lg shadow">
-                <h2 className="text-base font-bold mb-2">Recent Activity</h2>
-                <div className="space-y-1">
-                    {recentApplications.length > 0 ? recentApplications.map((app, index) => (
-                         <ActivityItem 
-                            key={`${app.jobId}-${app.engineerId}`}
-                            icon={Mail} 
-                            text={<><span className="font-semibold">{getApplicantName(app.engineerId)}</span> applied for <span className="font-semibold">{getJobTitle(app.jobId)}</span>.</>}
-                            time={getTimeAgo(index)}
-                        />
-                    )) : (
-                        <p className="text-xs text-gray-500 text-center py-4">No recent applications.</p>
+            <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow">
+                    <h2 className="text-xl font-bold mb-4">Recent Applicants</h2>
+                    {recentApplicants.length > 0 ? (
+                        <div className="space-y-4">
+                            {recentApplicants.map(({ application, engineer, job }) => (
+                                <div key={application.jobId + application.engineerId} className="flex items-center p-3 bg-gray-50 rounded-md">
+                                    <img src={engineer!.avatar} alt={engineer!.name} className="w-12 h-12 rounded-full mr-4"/>
+                                    <div className="flex-grow">
+                                        <p><span className="font-bold">{engineer!.name}</span> applied for</p>
+                                        <p className="text-blue-600 font-semibold">{job!.title}</p>
+                                    </div>
+                                    <button onClick={() => setActiveView('My Jobs')} className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-200">View</button>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-gray-500 text-center py-4">No recent applicants.</p>
                     )}
                 </div>
+
+                <div className="bg-white p-6 rounded-lg shadow">
+                    <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
+                    <div className="space-y-3">
+                        <button onClick={() => setActiveView('Post a Job')} className="w-full flex items-center p-4 bg-green-100 rounded-lg hover:bg-green-200 transition-colors">
+                            <PlusCircle className="w-6 h-6 text-green-700 mr-3"/>
+                            <span className="font-semibold text-green-800">Post a New Job</span>
+                        </button>
+                         <button onClick={() => setActiveView('Find Talent')} className="w-full flex items-center p-4 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors">
+                            <Search className="w-6 h-6 text-blue-700 mr-3"/>
+                            <span className="font-semibold text-blue-800">Search for Talent</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-      </div>
     );
 };

@@ -1,25 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from './context/AppContext.tsx';
-import { Role, Page } from './types/index.ts';
-import { LandingPage } from './views/LandingPage.tsx';
-import { EngineerDashboard } from './views/EngineerDashboard.tsx';
-import { CompanyDashboard } from './views/CompanyDashboard.tsx';
-import { ResourcingDashboard } from './views/ResourcingDashboard.tsx';
-import { AdminDashboard } from './views/AdminDashboard.tsx';
-import { LoginSelector } from './views/LoginSelector.tsx';
-import { ForEngineersPage } from './views/ForEngineersPage.tsx';
-import { ForCompaniesPage } from './views/ForCompaniesPage.tsx';
-import { EngineerSignUpWizard } from './views/EngineerSignUpWizard.tsx';
-import { CompanySignUpWizard } from './views/CompanySignUpWizard.tsx';
-import { ResourcingCompanySignUpWizard } from './views/ResourcingCompanySignUpWizard.tsx';
-import { InvestorRelationsPage } from './views/InvestorRelationsPage.tsx';
-import { AboutUsPage } from './views/AboutUsPage.tsx';
-import { LegalPage } from './views/LegalPage.tsx';
-import { PricingPage } from './views/PricingPage.tsx';
-import { HelpCenterPage } from './views/UserGuidePage.tsx';
-import { AIAssistant } from './components/AIAssistant.tsx';
-import { HowItWorksModal } from './components/HowItWorksModal.tsx';
-import { PaymentModal } from './components/PaymentModal.tsx';
+import { useAppContext } from './context/AppContext';
+// FIX: Corrected module imports to remove file extensions.
+import { Role, Page } from './types';
+import { LandingPage } from './views/LandingPage';
+import { EngineerDashboard } from './views/EngineerDashboard';
+import { CompanyDashboard } from './views/CompanyDashboard';
+import { ResourcingDashboard } from './views/ResourcingDashboard';
+import { AdminDashboard } from './views/AdminDashboard';
+import { LoginSelector } from './views/LoginSelector';
+import { ForEngineersPage } from './views/ForEngineersPage';
+import { ForCompaniesPage } from './views/ForCompaniesPage';
+import { EngineerSignUpWizard } from './views/EngineerSignUpWizard';
+import { CompanySignUpWizard } from './views/CompanySignUpWizard';
+import { ResourcingCompanySignUpWizard } from './views/ResourcingCompanySignUpWizard';
+import { InvestorRelationsPage } from './views/InvestorRelationsPage';
+import { AboutUsPage } from './views/AboutUsPage';
+import { LegalPage } from './views/LegalPage';
+import { PricingPage } from './views/PricingPage';
+import { HelpCenterPage } from './views/UserGuidePage';
+import { AIAssistant } from './components/AIAssistant';
+import { HowItWorksModal } from './components/HowItWorksModal';
+import { PaymentModal } from './components/PaymentModal';
 
 const App = () => {
     const { user, purchaseDayPass, setCurrentPageContext } = useAppContext();

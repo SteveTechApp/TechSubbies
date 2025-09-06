@@ -1,12 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
-import { useAppContext } from '../context/AppContext.tsx';
-import { DashboardView } from './ResourcingDashboard/DashboardView.tsx';
-import { ManageEngineersView } from './ResourcingDashboard/ManageEngineersView.tsx';
-import { FindJobsView } from './ResourcingDashboard/FindJobsView.tsx';
-import { MessagesView } from './MessagesView.tsx';
-import { PlacementsView } from './ResourcingDashboard/PlacementsView.tsx';
-import { InvoicesView } from './InvoicesView.tsx';
+import { DashboardSidebar } from '../components/DashboardSidebar';
+import { useAppContext } from '../context/AppContext';
+// FIX: Corrected module import to remove file extension.
+import { DashboardView } from './ResourcingDashboard/DashboardView';
+import { ManageEngineersView } from './ResourcingDashboard/ManageEngineersView';
+import { FindJobsView } from './ResourcingDashboard/FindJobsView';
+import { MessagesView } from './MessagesView';
+import { PlacementsView } from './ResourcingDashboard/PlacementsView';
+import { InvoicesView } from './InvoicesView';
 
 export const ResourcingDashboard = () => {
     const { user, engineers, applications, contracts, setCurrentPageContext } = useAppContext();
@@ -68,7 +69,7 @@ export const ResourcingDashboard = () => {
     return (
         <div className="flex h-screen">
             <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-grow p-2 sm:p-3 bg-gray-50 overflow-y-auto custom-scrollbar">
+            <main className="flex-grow p-2 bg-gray-50 overflow-y-auto custom-scrollbar">
                 {renderActiveView()}
             </main>
         </div>
