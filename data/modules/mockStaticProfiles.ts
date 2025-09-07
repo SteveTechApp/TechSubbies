@@ -1,6 +1,6 @@
-import { EngineerProfile, CompanyProfile, ProfileTier, Discipline, Currency, Role, Language, Country } from '../../types/index.ts';
-import { AVATARS } from '../assets.ts';
-import { JOB_ROLE_DEFINITIONS } from '../jobRoles.ts';
+import { EngineerProfile, CompanyProfile, ProfileTier, Discipline, Currency, Role, Language, Country } from '../../types';
+import { AVATARS } from '../assets';
+import { JOB_ROLE_DEFINITIONS } from '../jobRoles';
 
 const steveSelectedRoles = JOB_ROLE_DEFINITIONS.filter(r => r.name === 'AV Systems Designer').map(roleDef => ({
     roleName: roleDef.name,
@@ -84,7 +84,6 @@ export const MOCK_COMPANY_PROAV: CompanyProfile = {
     status: 'active',
     language: Language.ENGLISH,
     consentToFeature: true,
-// FIX: Added the missing 'currency' property to satisfy the CompanyProfile type.
     warnings: 0, isBanned: false, banHistory: [],
 };
 
@@ -94,7 +93,6 @@ export const MOCK_RESOURCING_COMPANY_1: CompanyProfile = {
     website: 'https://avplacements.com',
     location: 'Manchester, UK',
     country: Country.UK,
-// FIX: Added the missing 'currency' property to satisfy the CompanyProfile type.
     currency: Currency.GBP,
     contact: { email: 'contact@avplacements.com', phone: '0161 496 0123' },
     avatar: 'https://i.pravatar.cc/150?u=avplacements',
@@ -112,7 +110,6 @@ export const MOCK_ADMIN_PROFILE: CompanyProfile = {
     website: 'https://techsubbies.com',
     location: 'Oxfordshire, UK',
     country: Country.UK,
-// FIX: Added the missing 'currency' property to satisfy the CompanyProfile type.
     currency: Currency.GBP,
     contact: { email: 'stevegoodwin1972@gmail.com', phone: 'N/A' },
     avatar: AVATARS.steve,

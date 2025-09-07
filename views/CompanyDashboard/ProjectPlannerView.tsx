@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Project, ProjectRole, Discipline } from '../../types/index.ts';
-import { ProgressTracker } from '../../components/SignUp/ProgressTracker.tsx';
-import { ProjectTimeline } from '../../components/ProjectTimeline.tsx';
-import { ArrowLeft, ArrowRight, Plus, Trash2 } from '../../components/Icons.tsx';
-import { useAppContext } from '../../context/AppContext.tsx';
+import { Project, ProjectRole, Discipline } from '../../types';
+import { ProgressTracker } from '../../components/SignUp/ProgressTracker';
+import { ProjectTimeline } from '../../components/ProjectTimeline';
+import { ArrowLeft, ArrowRight, Plus, Trash2 } from '../../components/Icons';
+import { useAppContext } from '../../context/AppContext';
 
 // --- Step Components ---
 

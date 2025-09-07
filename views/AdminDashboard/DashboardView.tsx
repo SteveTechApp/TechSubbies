@@ -1,8 +1,8 @@
 import React from 'react';
-import { useAppContext } from '../../context/AppContext.tsx';
-import { StatCard } from '../../components/StatCard.tsx';
-import { Role, TransactionType } from '../../types/index.ts';
-import { Users, Briefcase, DollarSign, UserCheck } from '../../components/Icons.tsx';
+import { useAppContext } from '../../context/AppContext';
+import { StatCard } from '../../components/StatCard';
+import { Role, TransactionType } from '../../types';
+import { Users, Briefcase, DollarSign, UserCheck } from '../../components/Icons';
 
 export const DashboardView = ({ setActiveView }: { setActiveView: (view: string) => void }) => {
     const { allUsers, jobs, transactions } = useAppContext();

@@ -1,7 +1,7 @@
 import React from 'react';
-import { Review, UserProfile } from '../types/index.ts';
-import { Star } from './Icons.tsx';
-import { formatDisplayDate } from '../utils/dateFormatter.ts';
+import { Review, UserProfile } from '../types';
+import { Star } from './Icons';
+import { formatDisplayDate } from '../utils/dateFormatter';
 
 interface ReviewCardProps {
     review: Review;

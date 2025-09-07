@@ -1,5 +1,5 @@
 import React from 'react';
-import { EngineerProfile } from '../../types/index.ts';
+import { EngineerProfile } from '../../types';
 
 interface ProfileContactProps {
     formData: EngineerProfile;

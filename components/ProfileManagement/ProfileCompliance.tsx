@@ -1,7 +1,7 @@
 import React from 'react';
-import { EngineerProfile, Compliance } from '../../types/index.ts';
-import { FileUploadInput } from '../FileUploadInput.tsx';
-import { CompetencySlider } from '../CompetencySlider.tsx';
+import { EngineerProfile, Compliance } from '../../types';
+import { FileUploadInput } from '../FileUploadInput';
+import { CompetencySlider } from '../CompetencySlider';
 
 interface ProfileComplianceProps {
     formData: EngineerProfile;

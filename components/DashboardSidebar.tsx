@@ -1,13 +1,12 @@
 import React from 'react';
-import { useAppContext } from '../context/AppContext';
-// FIX: Corrected module import to remove file extension.
-import { Role, ProfileTier } from '../types';
-import { NavLink } from './NavLink';
+import { useAppContext } from '../context/AppContext.tsx';
+import { Role, ProfileTier } from '../types/index.ts';
+import { NavLink } from './NavLink.tsx';
 import { 
     LayoutDashboard, User, CalendarDays, Search, Settings, PlusCircle, Briefcase, 
     Users, Building, BarChart2, SlidersHorizontal, Edit, BrainCircuit, CreditCard, Mail, BarChart, MessageSquare,
     KanbanSquare, DollarSign, Lightbulb, ClipboardList
-} from './Icons';
+} from './Icons.tsx';
 
 interface DashboardSidebarProps {
     activeView: string;

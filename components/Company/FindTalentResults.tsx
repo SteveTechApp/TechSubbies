@@ -1,6 +1,6 @@
 import React from 'react';
-import { EngineerProfile } from '../../types/index.ts';
-import { EngineerCard } from '../EngineerCard.tsx';
+import { EngineerProfile } from '../../types';
+import { EngineerCard } from '../EngineerCard';
 
 interface FindTalentResultsProps {
     engineers: EngineerProfile[];

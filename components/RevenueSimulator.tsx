@@ -1,5 +1,5 @@
 import React from 'react';
-import { ProfileTier } from '../types/index.ts';
+import { ProfileTier } from '../types';
 
 // Define props for the component
 interface RevenueSimulatorProps {

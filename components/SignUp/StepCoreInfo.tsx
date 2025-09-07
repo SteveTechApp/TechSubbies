@@ -1,5 +1,5 @@
 import React from 'react';
-import { Discipline, Country } from '../../types/index.ts';
+import { Discipline, Country } from '../../types';
 
 interface StepCoreInfoProps {
     data: { name: string, email: string, discipline: Discipline, location: string, experience: number, country: Country };

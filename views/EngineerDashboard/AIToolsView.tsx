@@ -1,8 +1,8 @@
 import React from 'react';
-import { EngineerProfile, Skill, ProfileTier } from '../../types/index.ts';
-import { AISkillDiscovery } from '../../components/AISkillDiscovery.tsx';
-import { TrainingRecommendations } from '../../components/TrainingRecommendations.tsx';
-import { BrainCircuit, ArrowLeft, Star } from '../../components/Icons.tsx';
+import { EngineerProfile, Skill, ProfileTier } from '../../types';
+import { AISkillDiscovery } from '../../components/AISkillDiscovery';
+import { TrainingRecommendations } from '../../components/TrainingRecommendations';
+import { BrainCircuit, ArrowLeft, Star } from '../../components/Icons';
 
 interface AIToolsViewProps {
     profile: EngineerProfile;

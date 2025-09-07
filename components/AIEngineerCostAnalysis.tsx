@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext';
-// FIX: Corrected module import to remove file extension.
-import { Job, EngineerProfile } from '../types';
-import { ResultDisplay } from './ResultDisplay';
-import { BrainCircuit, Loader } from './Icons';
+import { useAppContext } from '../context/AppContext.tsx';
+import { Job, EngineerProfile } from '../types/index.ts';
+import { ResultDisplay } from './ResultDisplay.tsx';
+import { BrainCircuit, Loader } from './Icons.tsx';
 
 export interface AnalysisResult {
     skill_match_assessment: string;

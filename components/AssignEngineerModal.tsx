@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { ProjectRole, EngineerProfile } from '../types/index.ts';
-import { X, User } from './Icons.tsx';
+import { useAppContext } from '../context/AppContext';
+import { ProjectRole, EngineerProfile } from '../types';
+import { X, User } from './Icons';
 
 interface AssignEngineerModalProps {
     isOpen: boolean;

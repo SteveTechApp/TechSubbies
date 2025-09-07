@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Role, Contract, ContractStatus } from '../types/index.ts';
-import { ContractDetailsView } from '../components/ContractDetailsView.tsx';
-import { Briefcase, ArrowLeft } from '../components/Icons.tsx';
+import { useAppContext } from '../context/AppContext';
+import { Role, Contract, ContractStatus } from '../types';
+import { ContractDetailsView } from '../components/ContractDetailsView';
+import { Briefcase, ArrowLeft } from '../components/Icons';
 
 const ContractListItem = ({ contract, onSelect, userRole }: { contract: Contract, onSelect: () => void, userRole: Role }) => {
     const { findUserByProfileId } = useAppContext();

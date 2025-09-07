@@ -1,8 +1,8 @@
 import React from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Invoice, Role, InvoiceStatus } from '../types/index.ts';
-import { CreditCard, Download, AlertTriangle } from '../components/Icons.tsx';
-import { PaymentModal } from '../components/PaymentModal.tsx';
+import { useAppContext } from '../context/AppContext';
+import { Invoice, Role, InvoiceStatus } from '../types';
+import { CreditCard, Download, AlertTriangle } from '../components/Icons';
+import { PaymentModal } from '../components/PaymentModal';
 
 const getStatusBadge = (status: InvoiceStatus) => {
     const STATUS_INFO: Record<InvoiceStatus, { text: string, color: string }> = {

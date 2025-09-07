@@ -1,6 +1,6 @@
 import React from 'react';
-import { Conversation, UserProfile } from '../types/index.ts';
-import { formatTimeAgo } from '../utils/dateFormatter.ts';
+import { Conversation, UserProfile } from '../types';
+import { formatTimeAgo } from '../utils/dateFormatter';
 
 interface ConversationListItemProps {
     conversation: Conversation;

@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { DashboardSidebar } from '../components/DashboardSidebar';
-// FIX: Corrected module import to remove file extension.
-import { DashboardView } from './AdminDashboard/DashboardView';
-import { UserManagementView } from './AdminDashboard/UserManagementView';
-import { JobManagementView } from './AdminDashboard/JobManagementView';
-import { PlatformSettingsView } from './AdminDashboard/PlatformSettingsView';
-import { MonetizationView } from './AdminDashboard/MonetizationView';
-import { useAppContext } from '../context/AppContext';
+import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
+import { DashboardView } from './AdminDashboard/DashboardView.tsx';
+import { UserManagementView } from './AdminDashboard/UserManagementView.tsx';
+import { JobManagementView } from './AdminDashboard/JobManagementView.tsx';
+import { PlatformSettingsView } from './AdminDashboard/PlatformSettingsView.tsx';
+import { MonetizationView } from './AdminDashboard/MonetizationView.tsx';
+import { useAppContext } from '../context/AppContext.tsx';
 
 export const AdminDashboard = () => {
     const { setCurrentPageContext } = useAppContext();
@@ -41,7 +40,7 @@ export const AdminDashboard = () => {
     return (
         <div className="flex h-screen overflow-hidden">
             <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-grow p-2 bg-gray-50 overflow-y-auto custom-scrollbar">
+            <main className="flex-grow p-6 bg-gray-50 overflow-y-auto custom-scrollbar">
                 {renderActiveView()}
             </main>
         </div>

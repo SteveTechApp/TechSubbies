@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Job, EngineerProfile, ProfileTier } from '../types/index.ts';
-import { X, Sparkles, Loader, Send, CheckCircle, User } from './Icons.tsx';
+import { useAppContext } from '../context/AppContext';
+import { Job, EngineerProfile, ProfileTier } from '../types';
+import { X, Sparkles, Loader, Send, CheckCircle, User } from './Icons';
 
 interface EngineerInviteCardProps {
     engineer: EngineerProfile;

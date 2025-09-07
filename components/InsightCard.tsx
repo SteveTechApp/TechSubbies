@@ -1,6 +1,6 @@
 import React from 'react';
-import { Insight } from '../types/index.ts';
-import { Lightbulb, Award, Edit, ArrowRight } from './Icons.tsx';
+import { Insight } from '../types';
+import { Lightbulb, Award, Edit, ArrowRight } from './Icons';
 
 interface InsightCardProps {
     insight: Insight;

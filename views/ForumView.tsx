@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { ForumPost } from '../types/index.ts';
-import { ArrowLeft, MessageSquare, Plus, Search } from '../components/Icons.tsx';
-import { ForumPostItem } from '../components/Forum/ForumPostItem.tsx';
-import { ForumPostDetails } from '../components/Forum/ForumPostDetails.tsx';
-import { CreatePostModal } from '../components/Forum/CreatePostModal.tsx';
+import { useAppContext } from '../context/AppContext';
+import { ForumPost } from '../types';
+import { ArrowLeft, MessageSquare, Plus, Search } from '../components/Icons';
+import { ForumPostItem } from '../components/Forum/ForumPostItem';
+import { ForumPostDetails } from '../components/Forum/ForumPostDetails';
+import { CreatePostModal } from '../components/Forum/CreatePostModal';
 
 export const ForumView = ({ setActiveView }: { setActiveView: (view: string) => void }) => {
     const { forumPosts, findUserByProfileId } = useAppContext();

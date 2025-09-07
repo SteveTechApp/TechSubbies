@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Language, Currency } from '../types/index.ts';
-import { Globe, ChevronDown } from './Icons.tsx';
+import { useAppContext } from '../context/AppContext';
+import { Language, Currency } from '../types';
+import { Globe, ChevronDown } from './Icons';
 
 export const LanguageCurrencySelector = () => {
     const { language, setLanguage, currency, setCurrency } = useAppContext();

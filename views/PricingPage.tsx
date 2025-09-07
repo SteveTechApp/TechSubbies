@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Footer } from '../components/Footer.tsx';
-import { Header } from '../components/Header.tsx';
-import { Page, ProfileTier } from '../types/index.ts';
-import { CheckCircle, Star, User, Building } from '../components/Icons.tsx';
-import { useAppContext } from '../context/AppContext.tsx';
+import { Footer } from '../components/Footer';
+import { Header } from '../components/Header';
+import { Page, ProfileTier } from '../types';
+import { CheckCircle, Star, User, Building } from '../components/Icons';
+import { useAppContext } from '../context/AppContext';
 
 interface PricingPageProps {
     onNavigate: (page: Page) => void;

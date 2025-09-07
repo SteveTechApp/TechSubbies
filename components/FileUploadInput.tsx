@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, CheckCircle, Clock } from './Icons.tsx';
+import { Upload, CheckCircle, Clock } from './Icons';
 
 interface FileUploadInputProps {
     label: string;

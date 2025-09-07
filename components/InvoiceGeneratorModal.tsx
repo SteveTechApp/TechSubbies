@@ -1,18 +1,25 @@
 import React, { useState } from 'react';
-import { InvoiceItem, PaymentTerms } from '../types/index.ts';
-import { X, FileText } from './Icons.tsx';
+import { Contract, InvoiceItem, PaymentTerms, MilestoneStatus } from '../types';
+import { X, FileText } from './Icons';
 
 interface InvoiceGeneratorModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSubmit: (paymentTerms: PaymentTerms) => void;
-    items: InvoiceItem[];
+    contract: Contract;
 }
 
-export const InvoiceGeneratorModal = ({ isOpen, onClose, onSubmit, items }: InvoiceGeneratorModalProps) => {
+export const InvoiceGeneratorModal = ({ isOpen, onClose, onSubmit, contract }: InvoiceGeneratorModalProps) => {
     const [paymentTerms, setPaymentTerms] = useState<PaymentTerms>(PaymentTerms.NET14);
 
     if (!isOpen) return null;
+
+    const items: InvoiceItem[] = contract.milestones
+        .filter(m => m.status === MilestoneStatus.APPROVED_PENDING_INVOICE)
+        .map(m => ({
+            description: `Milestone: ${m.description}`,
+            amount: m.amount
+        }));
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

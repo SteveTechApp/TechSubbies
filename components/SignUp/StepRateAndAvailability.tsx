@@ -1,5 +1,5 @@
 import React from 'react';
-import { Currency } from '../../types/index.ts';
+import { Currency } from '../../types';
 
 interface StepRateAndAvailabilityProps {
     data: { currency: Currency, minDayRate: number, maxDayRate: number, availability: string };

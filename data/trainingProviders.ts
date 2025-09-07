@@ -1,4 +1,4 @@
-import { TrainingProvider } from '../types/index.ts';
+import { TrainingProvider } from '../types';
 
 // --- Training Providers Database ---
 export const MOCK_TRAINING_PROVIDERS: TrainingProvider[] = [

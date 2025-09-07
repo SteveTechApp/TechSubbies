@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MousePointer } from './Icons.tsx';
-import { SLIDESHOW_ASSETS } from '../data/assets.ts';
+import { MousePointer } from './Icons';
+import { SLIDESHOW_ASSETS } from '../data/assets';
 
 const SLIDES = [
     {

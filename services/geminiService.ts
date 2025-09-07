@@ -1,7 +1,7 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { EngineerProfile, Job, ProfileTier, User, Message, CompanyProfile, JobSkillRequirement, JobType, ExperienceLevel, Insight, Language } from '../types/index.ts';
-import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles.ts';
-import { MOCK_TRAINING_PROVIDERS } from '../data/trainingProviders.ts';
+import { EngineerProfile, Job, ProfileTier, User, Message, CompanyProfile, JobSkillRequirement, JobType, ExperienceLevel, Insight, Language } from '../types';
+import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';
+import { MOCK_TRAINING_PROVIDERS } from '../data/trainingProviders';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 

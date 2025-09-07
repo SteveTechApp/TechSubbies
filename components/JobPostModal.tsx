@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-// FIX: Corrected module import to remove file extension.
-import { Currency, JobType, ExperienceLevel, JobSkillRequirement, Job } from '../types';
-import { X } from './Icons';
-import { JobPostStep1 } from './JobPost/JobPostStep1';
-import { JobPostStep2 } from './JobPost/JobPostStep2';
+import { Currency, JobType, ExperienceLevel, JobSkillRequirement, Job } from '../types/index.ts';
+import { X } from './Icons.tsx';
+import { JobPostStep1 } from './JobPost/JobPostStep1.tsx';
+import { JobPostStep2 } from './JobPost/JobPostStep2.tsx';
 
 interface JobPostModalProps {
     isOpen: boolean;

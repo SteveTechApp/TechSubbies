@@ -1,9 +1,8 @@
 import React from 'react';
-import { useAppContext } from '../context/AppContext';
-// FIX: Corrected module import to remove file extension.
-import { Job, Role, ProfileTier, EngineerProfile } from '../types';
-import { MapPin, Calendar, DollarSign, Clock, MessageCircle, Briefcase, Layers, Sparkles } from './Icons';
-import { formatDisplayDate } from '../../utils/dateFormatter';
+import { useAppContext } from '../context/AppContext.tsx';
+import { Job, Role, ProfileTier, EngineerProfile } from '../types/index.ts';
+import { MapPin, Calendar, DollarSign, Clock, MessageCircle, Briefcase, Layers, Sparkles } from './Icons.tsx';
+import { formatDisplayDate } from '../utils/dateFormatter.ts';
 
 interface JobCardProps {
     job: Job;

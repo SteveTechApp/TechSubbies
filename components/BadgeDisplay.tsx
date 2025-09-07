@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge } from '../types/index.ts';
+import { Badge } from '../types';
 
 interface BadgeDisplayProps {
     badge: Badge;

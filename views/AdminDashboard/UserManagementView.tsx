@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../../context/AppContext.tsx';
-import { User, Role } from '../../types/index.ts';
-import { Search, User as UserIcon, Building, ShieldCheck } from '../../components/Icons.tsx';
+import { useAppContext } from '../../context/AppContext';
+import { User, Role } from '../../types';
+import { Search, User as UserIcon, Building, ShieldCheck } from '../../components/Icons';
 
 export const UserManagementView = () => {
     const { allUsers, toggleUserStatus } = useAppContext();

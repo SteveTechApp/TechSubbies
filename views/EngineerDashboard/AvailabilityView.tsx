@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
-// FIX: Corrected module import to remove file extension.
-import { EngineerProfile } from '../../types';
-import { ChevronLeft, ChevronRight, ArrowLeft, Link as LinkIcon, Copy, CheckCircle } from '../../components/Icons';
+import { EngineerProfile } from '../../types/index.ts';
+import { ChevronLeft, ChevronRight, ArrowLeft, Link as LinkIcon, Copy, CheckCircle } from '../../components/Icons.tsx';
 
 interface AvailabilityViewProps {
     profile: EngineerProfile;

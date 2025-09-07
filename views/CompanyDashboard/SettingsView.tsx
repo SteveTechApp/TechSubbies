@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { CompanyProfile } from '../../types/index.ts';
-import { Save } from '../../components/Icons.tsx';
+import { CompanyProfile } from '../../types';
+import { Save } from '../../components/Icons';
 
 interface SettingsViewProps {
     profile: CompanyProfile;

@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext';
-// FIX: Corrected module import to remove file extension.
-import { Currency, Discipline, Compliance, IdentityVerification, Country } from '../types';
-import { Logo } from '../components/Logo';
-import { ArrowLeft } from '../components/Icons';
-import { ProgressTracker } from '../components/SignUp/ProgressTracker';
-import { StepCoreInfo } from '../components/SignUp/StepCoreInfo';
-import { StepWorkReadiness } from '../components/SignUp/StepWorkReadiness';
-import { StepIdentity } from '../components/SignUp/StepIdentity';
-import { StepRateAndAvailability } from '../components/SignUp/StepRateAndAvailability';
+import { useAppContext } from '../context/AppContext.tsx';
+import { Currency, Discipline, Compliance, IdentityVerification, Country } from '../types/index.ts';
+import { Logo } from '../components/Logo.tsx';
+import { ArrowLeft } from '../components/Icons.tsx';
+import { ProgressTracker } from '../components/SignUp/ProgressTracker.tsx';
+import { StepCoreInfo } from '../components/SignUp/StepCoreInfo.tsx';
+import { StepWorkReadiness } from '../components/SignUp/StepWorkReadiness.tsx';
+import { StepIdentity } from '../components/SignUp/StepIdentity.tsx';
+import { StepRateAndAvailability } from '../components/SignUp/StepRateAndAvailability.tsx';
 
 interface EngineerSignUpWizardProps {
     onCancel: () => void;

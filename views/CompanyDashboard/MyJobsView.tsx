@@ -1,18 +1,17 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { useAppContext } from '../../context/AppContext';
-// FIX: Corrected module import to remove file extension.
-import { Job, EngineerProfile, Application, ApplicationStatus, ProfileTier } from '../../types';
-import { MapPin, ArrowLeft, User, Mail, Phone, MessageCircle, Star, Briefcase, Sparkles, Loader, Zap } from '../../components/Icons';
-import { ReviewModal } from '../../components/ReviewModal';
-import { CreateContractModal } from '../../components/CreateContractModal';
-import { formatDisplayDate } from '../../utils/dateFormatter';
+import { useAppContext } from '../../context/AppContext.tsx';
+import { Job, EngineerProfile, Application, ApplicationStatus, ProfileTier } from '../../types/index.ts';
+import { MapPin, ArrowLeft, User, Mail, Phone, MessageCircle, Star, Briefcase, Sparkles, Loader, Zap } from '../../components/Icons.tsx';
+import { ReviewModal } from '../../components/ReviewModal.tsx';
+import { CreateContractModal } from '../../components/CreateContractModal.tsx';
+import { formatDisplayDate } from '../../utils/dateFormatter.ts';
 
 const ApplicantCard = ({ profile, application, job, onMessage, onReview, onCreateContract, matchScore }: {
     profile: EngineerProfile; application: Application; job: Job; matchScore?: number;
     onMessage: (profileId: string) => void; onReview: (profile: EngineerProfile) => void;
     onCreateContract: (job: Job, profile: EngineerProfile) => void;
 }) => (
-    <div className={`p-4 bg-white rounded-lg shadow-md border flex flex-col sm:flex-row items-start gap-4 ${application.isSupercharged ? 'border-purple-500 border-2' : ''}`}>
+    <div className={`p-4 bg-white rounded-lg shadow-md border flex flex-col sm:flex-row items-start gap-3 ${application.isSupercharged ? 'border-purple-500 border-2' : ''}`}>
         <img src={profile.avatar} alt={profile.name} className="w-16 h-16 rounded-full border-2 border-gray-200" />
         <div className="flex-grow">
             <div className="flex items-center gap-3">
@@ -31,7 +30,7 @@ const ApplicantCard = ({ profile, application, job, onMessage, onReview, onCreat
                 )}
             </div>
             <p className="text-blue-600 font-semibold">{profile.discipline}</p>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1 text-sm text-gray-500 mt-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1 text-sm text-gray-500 mt-1">
                 <span className="flex items-center"><User size={14} className="mr-1.5"/> {profile.experience} years exp.</span>
                 <span className="flex items-center"><Mail size={14} className="mr-1.5"/> {profile.contact.email}</span>
                 <span className="flex items-center"><Phone size={14} className="mr-1.5"/> {profile.contact.phone}</span>
@@ -120,7 +119,7 @@ export const MyJobsView = ({ myJobs, setActiveView }: { myJobs: Job[]; setActive
                     <p className="text-gray-600 mb-6">{applicantsForSelectedJob.length} applicant(s) for this role.</p>
                      {isMatching && <div className="flex items-center justify-center p-4 bg-blue-50 rounded-md my-4"><Loader className="animate-spin w-5 h-5 mr-3 text-blue-600" /><p className="text-blue-700 font-semibold">Calculating AI match scores for premium & supercharged applicants...</p></div>}
                      {applicantsForSelectedJob.length > 0 ? (
-                        <div className="space-y-4">
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                             {applicantsForSelectedJob.map(({ application, engineer, matchScore }) => 
                                 <ApplicantCard key={engineer.id} profile={engineer} application={application} job={selectedJob} onMessage={handleMessageApplicant} onReview={handleReviewApplicant} onCreateContract={handleCreateContract} matchScore={matchScore} />
                             )}

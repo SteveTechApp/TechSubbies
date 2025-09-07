@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { EngineerProfile, Insight } from '../../types/index.ts';
-import { useAppContext } from '../../context/AppContext.tsx';
-import { Lightbulb, ArrowLeft, Star, Loader } from '../../components/Icons.tsx';
-import { InsightCard } from '../../components/InsightCard.tsx';
+import { EngineerProfile, Insight } from '../../types';
+import { useAppContext } from '../../context/AppContext';
+import { Lightbulb, ArrowLeft, Star, Loader } from '../../components/Icons';
+import { InsightCard } from '../../components/InsightCard';
 
 interface AICoachViewProps {
     profile: EngineerProfile;

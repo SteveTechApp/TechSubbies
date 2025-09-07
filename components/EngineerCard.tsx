@@ -1,8 +1,7 @@
 import React from 'react';
-import { useAppContext } from '../context/AppContext';
-// FIX: Corrected module import to remove file extension.
-import { EngineerProfile, ProfileTier } from '../types';
-import { MapPin, Star, Rocket, Sparkles, Trophy } from './Icons';
+import { useAppContext } from '../context/AppContext.tsx';
+import { EngineerProfile, ProfileTier } from '../types/index.ts';
+import { MapPin, Star, Rocket, Sparkles, Trophy } from './Icons.tsx';
 
 interface EngineerCardProps {
     profile: EngineerProfile;

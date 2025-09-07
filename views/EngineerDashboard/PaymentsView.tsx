@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { EngineerProfile, ProfileTier, Transaction } from '../../types/index.ts';
-import { CreditCard, Download, Star, Rocket, ArrowLeft, ShieldCheck } from '../../components/Icons.tsx';
-import { useAppContext } from '../../context/AppContext.tsx';
-import { PaymentModal } from '../../components/PaymentModal.tsx';
+import { EngineerProfile, ProfileTier, Transaction } from '../../types';
+import { CreditCard, Download, Star, Rocket, ArrowLeft, ShieldCheck } from '../../components/Icons';
+import { useAppContext } from '../../context/AppContext';
+import { PaymentModal } from '../../components/PaymentModal';
 
 interface PaymentsViewProps {
     profile: EngineerProfile;

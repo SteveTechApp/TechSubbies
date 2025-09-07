@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { useAppContext } from '../../context/AppContext.tsx';
-import { Project, ContractStatus, MilestoneStatus } from '../../types/index.ts';
-import { ClipboardList, Users, DollarSign } from '../../components/Icons.tsx';
+import { useAppContext } from '../../context/AppContext';
+import { Project, ContractStatus, MilestoneStatus } from '../../types';
+import { ClipboardList, Users, DollarSign } from '../../components/Icons';
 
 const ProgressBar = ({ value, colorClass }: { value: number; colorClass: string }) => (
     <div className="w-full bg-gray-200 rounded-full h-2.5">

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../../context/AppContext.tsx';
-import { Search, MapPin, Calendar, DollarSign, Home, ArrowUp } from '../../components/Icons.tsx';
-import { formatDisplayDate } from '../../utils/dateFormatter.ts';
+import { useAppContext } from '../../context/AppContext';
+import { Search, MapPin, Calendar, DollarSign, Home, ArrowUp } from '../../components/Icons';
+import { formatDisplayDate } from '../../utils/dateFormatter';
 
 interface JobManagementViewProps {
     setActiveView: (view: string) => void;

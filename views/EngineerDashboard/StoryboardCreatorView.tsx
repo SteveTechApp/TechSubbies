@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
-// FIX: Corrected module import to remove file extension.
-import { EngineerProfile } from '../../types';
-import { Save, Image, Upload, ArrowLeft } from '../../components/Icons';
+import { EngineerProfile } from '../../types/index.ts';
+import { Save, Image, Upload, ArrowLeft } from '../../components/Icons.tsx';
 
 interface StoryboardPanelData {
     id: number;

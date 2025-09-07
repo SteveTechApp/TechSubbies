@@ -1,14 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { Footer } from '../components/Footer.tsx';
-import { Header } from '../components/Header.tsx';
-import { Page, ProfileTier } from '../types/index.ts';
-import { HighlightCard } from '../components/HighlightCard.tsx';
-import { RevenueCard } from '../components/RevenueCard.tsx';
-import { Zap, Layers, TrendingUp, BrainCircuit, Rocket, Users, Download } from '../components/Icons.tsx';
-import { PROSPECTUS_CONTENT } from '../data/prospectusContent.ts';
-import { RevenueSimulator } from '../components/RevenueSimulator.tsx';
-import { FinancialForecast } from '../components/FinancialForecast.tsx';
-import { calculateFinancials } from '../data/financialModel.ts';
+import { Footer } from '../components/Footer';
+import { Header } from '../components/Header';
+import { Page, ProfileTier } from '../types';
+import { HighlightCard } from '../components/HighlightCard';
+import { RevenueCard } from '../components/RevenueCard';
+import { Zap, Layers, TrendingUp, BrainCircuit, Rocket, Users, Download } from '../components/Icons';
+import { PROSPECTUS_CONTENT } from '../data/prospectusContent';
+import { RevenueSimulator } from '../components/RevenueSimulator';
+import { FinancialForecast } from '../components/FinancialForecast';
+import { calculateFinancials } from '../data/financialModel';
 
 
 interface InvestorRelationsPageProps {

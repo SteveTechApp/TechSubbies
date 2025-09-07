@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { ExperienceLevel } from '../types/index.ts';
-import { Loader, Sparkles, BarChart2, DollarSign, Briefcase } from './Icons.tsx';
+import { useAppContext } from '../context/AppContext';
+import { ExperienceLevel } from '../types';
+import { Loader, Sparkles, BarChart2, DollarSign, Briefcase } from './Icons';
 
 interface AIJobHelperProps {
     jobDetails: any;

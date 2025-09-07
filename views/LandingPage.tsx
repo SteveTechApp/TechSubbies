@@ -18,7 +18,6 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
     const [heroImage, setHeroImage] = useState('');
 
     useEffect(() => {
-        // Select a random hero image on component mount
         setHeroImage(HERO_IMAGES.landing[Math.floor(Math.random() * HERO_IMAGES.landing.length)]);
     }, []);
 
@@ -28,7 +27,6 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
         <div className="bg-white flex flex-col min-h-screen">
             <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
             <main className="flex-grow pt-14">
-                {/* Hero Section */}
                 <section 
                     className="relative text-white text-center min-h-[60vh] flex items-center justify-center px-4 bg-cover bg-center"
                     style={{ backgroundImage: `url('${heroImage}')` }}
@@ -48,7 +46,6 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
                     </div>
                 </section>
 
-                {/* "As Featured In" Bar */}
                 {featuredCompanies.length > 0 && (
                     <section className="py-8 bg-gray-100">
                         <div className="container mx-auto px-4 text-center">
@@ -62,7 +59,6 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
                     </section>
                 )}
                 
-                {/* How It Works Section */}
                 <section id="how-it-works" className="py-16 bg-white">
                     <div className="container mx-auto px-4 max-w-7xl">
                         <h2 className="text-3xl font-bold text-center mb-4">A Smarter Way to Connect</h2>
@@ -73,7 +69,6 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
                     </div>
                 </section>
 
-                 {/* Features Section */}
                 <section className="py-16 bg-gray-50">
                     <div className="container mx-auto px-4">
                         <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -101,7 +96,6 @@ export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps)
                     </div>
                 </section>
                 
-                 {/* Final CTA */}
                 <section className="py-16 bg-blue-800 text-white">
                     <div className="container mx-auto px-4 text-center">
                         <h2 className="text-3xl font-bold mb-4">Join the Network Today</h2>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { JobSkillRequirement, SkillImportance } from '../../types/index.ts';
-import { Save, Loader, Sparkles } from '../Icons.tsx';
-import { useAppContext } from '../../context/AppContext.tsx';
+import { JobSkillRequirement, SkillImportance } from '../../types';
+import { Save, Loader, Sparkles } from '../Icons';
+import { useAppContext } from '../../context/AppContext';
 
 interface JobPostStep2Props {
     jobDetails: any;

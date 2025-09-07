@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useAppContext } from '../../context/AppContext.tsx';
-import { X, Send, Loader } from '../Icons.tsx';
+import { useAppContext } from '../../context/AppContext';
+import { X, Send, Loader } from '../Icons';
 
 interface CreatePostModalProps {
     isOpen: boolean;

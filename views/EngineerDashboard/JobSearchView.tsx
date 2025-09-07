@@ -1,9 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../../context/AppContext';
-import { JobCard } from '../../components/JobCard';
-import { Search, MapPin, DollarSign, ArrowLeft, Layers } from '../../components/Icons';
-// FIX: Corrected module import to remove file extension.
-import { ExperienceLevel, ProfileTier, EngineerProfile } from '../../types';
+import { useAppContext } from '../../context/AppContext.tsx';
+import { JobCard } from '../../components/JobCard.tsx';
+import { Search, MapPin, DollarSign, ArrowLeft, Layers } from '../../components/Icons.tsx';
+import { ExperienceLevel, ProfileTier, EngineerProfile } from '../../types/index.ts';
 
 export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string) => void }) => {
     const { user, jobs, isPremium } = useAppContext();
@@ -68,7 +67,6 @@ export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string)
                             <label htmlFor="experienceLevel" className="block text-sm font-medium text-gray-700 flex items-center"><Layers size={14} className="mr-1.5"/> Experience Level</label>
                             <select name="experienceLevel" id="experienceLevel" value={filters.experienceLevel} onChange={handleFilterChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 bg-white">
                                 <option value="any">Any Level</option>
-                                {/* FIX: Correctly mapping over a string enum resolves key/value type errors. */}
                                 {Object.values(ExperienceLevel).map(level => <option key={level} value={level}>{level}</option>)}
                             </select>
                         </div>

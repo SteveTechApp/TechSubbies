@@ -1,4 +1,4 @@
-import { ForumPost, ForumComment, Notification, NotificationType } from '../../types/index.ts';
+import { ForumPost, ForumComment, Notification, NotificationType } from '../../types';
 
 export const MOCK_FORUM_POSTS: ForumPost[] = [
     {

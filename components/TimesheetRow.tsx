@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Timesheet, Contract, Role } from '../types/index.ts';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Loader } from './Icons.tsx';
+import { Timesheet, Contract, Role } from '../types';
+import { useAppContext } from '../context/AppContext';
+import { Loader } from './Icons';
 
 interface TimesheetRowProps {
     timesheet: Timesheet;

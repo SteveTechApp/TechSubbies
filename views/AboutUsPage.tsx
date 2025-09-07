@@ -1,9 +1,9 @@
 import React from 'react';
-import { Footer } from '../components/Footer.tsx';
-import { Header } from '../components/Header.tsx';
-import { Page } from '../types/index.ts';
-import { Users, Briefcase, Zap } from '../components/Icons.tsx';
-import { useAppContext } from '../context/AppContext.tsx';
+import { Footer } from '../components/Footer';
+import { Header } from '../components/Header';
+import { Page } from '../types';
+import { Users, Briefcase, Zap } from '../components/Icons';
+import { useAppContext } from '../context/AppContext';
 
 interface AboutUsPageProps {
     onNavigate: (page: Page) => void;

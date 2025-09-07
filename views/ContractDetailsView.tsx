@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Contract, User, Role, ContractStatus, UserProfile, CompanyProfile, EngineerProfile, Milestone, MilestoneStatus, ContractType, Timesheet } from '../types/index.ts';
-import { useAppContext } from '../context/AppContext.tsx';
-import { FileText, User as UserIcon, Building, Calendar, CheckCircle, Clock, DollarSign, Loader, BrainCircuit } from '../components/Icons.tsx';
-import { SignContractModal } from '../components/SignContractModal.tsx';
-import { formatDisplayDate } from '../utils/dateFormatter.ts';
-import { PaymentModal } from '../components/PaymentModal.tsx';
-import { TimesheetRow } from '../components/TimesheetRow.tsx';
-import { TimesheetSubmitModal } from '../components/TimesheetSubmitModal.tsx';
+import { Contract, User, Role, ContractStatus, UserProfile, CompanyProfile, EngineerProfile, Milestone, MilestoneStatus, ContractType, Timesheet, PaymentTerms } from '../types';
+import { useAppContext } from '../context/AppContext';
+import { FileText, User as UserIcon, Building, Calendar, CheckCircle, Clock, DollarSign, Loader, BrainCircuit } from '../components/Icons';
+import { SignContractModal } from '../components/SignContractModal';
+import { formatDisplayDate } from '../utils/dateFormatter';
+import { PaymentModal } from '../components/PaymentModal';
+import { TimesheetRow } from '../components/TimesheetRow';
+import { TimesheetSubmitModal } from '../components/TimesheetSubmitModal';
+import { InvoiceGeneratorModal } from '../components/InvoiceGeneratorModal';
 
 interface ContractDetailsViewProps {
     contract: Contract;
@@ -28,7 +29,6 @@ const StatusBadge = ({ status, className }: { status: string, className?: string
         [MilestoneStatus.AWAITING_FUNDING]: { text: 'Awaiting Funding', color: 'bg-gray-200 text-gray-700' },
         [MilestoneStatus.FUNDED_IN_PROGRESS]: { text: 'In Progress', color: 'bg-blue-100 text-blue-700' },
         [MilestoneStatus.SUBMITTED_FOR_APPROVAL]: { text: 'Submitted', color: 'bg-yellow-100 text-yellow-700' },
-        // FIX: Added missing status to provide more detail in the UI.
         [MilestoneStatus.APPROVED_PENDING_INVOICE]: { text: 'Approved - Pending Invoice', color: 'bg-teal-100 text-teal-800' },
         [MilestoneStatus.COMPLETED_PAID]: { text: 'Paid', color: 'bg-green-100 text-green-700' },
     };
@@ -38,7 +38,6 @@ const StatusBadge = ({ status, className }: { status: string, className?: string
 
 
 const MilestoneRow = ({ milestone, contract, onFund, userRole }: { milestone: Milestone, contract: Contract, onFund: () => void, userRole: Role }) => {
-    // FIX: Changed `approveMilestonePayout` to `approveMilestone` to match the corrected AppContextType.
     const { submitMilestoneForApproval, approveMilestone } = useAppContext();
     const [isLoading, setIsLoading] = useState(false);
 
@@ -57,7 +56,6 @@ const MilestoneRow = ({ milestone, contract, onFund, userRole }: { milestone: Mi
                 return <button onClick={onFund} className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Fund Milestone</button>;
             }
             if (milestone.status === MilestoneStatus.SUBMITTED_FOR_APPROVAL) {
-                // FIX: Changed function call to `approveMilestone` and updated button text for clarity.
                 return <button onClick={() => handleAction(approveMilestone)} className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700">Approve Milestone</button>;
             }
         }
@@ -121,8 +119,13 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
         setIsTimesheetModalOpen(false);
     };
 
-    const handleGenerateInvoice = () => {
+    const handleOpenInvoiceModal = () => {
         setIsInvoiceModalOpen(true);
+    };
+
+    const handleInvoiceSubmit = (paymentTerms: PaymentTerms) => {
+        generateInvoice(contract.id, paymentTerms);
+        setIsInvoiceModalOpen(false);
     };
 
     return (
@@ -252,7 +255,7 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
                         </button>
                     )}
                      {canGenerateInvoice && (
-                        <button onClick={handleGenerateInvoice} className="px-6 py-2 bg-green-600 text-white font-bold rounded-md hover:bg-green-700">
+                        <button onClick={handleOpenInvoiceModal} className="px-6 py-2 bg-green-600 text-white font-bold rounded-md hover:bg-green-700">
                             Generate Invoice for Approved Milestones
                         </button>
                     )}
@@ -264,6 +267,14 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
                     onClose={() => setIsSignModalOpen(false)}
                     contract={contract}
                     onSubmit={handleSign}
+                />
+            )}
+            {isInvoiceModalOpen && (
+                 <InvoiceGeneratorModal
+                    isOpen={isInvoiceModalOpen}
+                    onClose={() => setIsInvoiceModalOpen(false)}
+                    onSubmit={handleInvoiceSubmit}
+                    contract={contract}
                 />
             )}
         </>

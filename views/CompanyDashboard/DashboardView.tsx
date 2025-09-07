@@ -1,7 +1,7 @@
 import React from 'react';
-import { User, Job, EngineerProfile, Application } from '../../types';
-import { StatCard } from '../../components/StatCard';
-import { Briefcase, Users, PlusCircle, Search } from '../../components/Icons';
+import { User, Job, EngineerProfile, Application } from '../../types/index.ts';
+import { StatCard } from '../../components/StatCard.tsx';
+import { Briefcase, Users, PlusCircle, Search } from '../../components/Icons.tsx';
 
 interface DashboardViewProps {
     user: User;

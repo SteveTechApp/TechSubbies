@@ -1,9 +1,9 @@
 import React from 'react';
-import { useAppContext } from '../context/AppContext';
-import { Page, Role } from '../types';
-import { Logo } from '../components/Logo';
-import { MOCK_USERS, MOCK_USER_FREE_ENGINEER, PRE_AUTH_USER } from '../data/mockData';
-import { User, Briefcase, Building } from '../components/Icons';
+import { useAppContext } from '../context/AppContext.tsx';
+import { Page, Role } from '../types/index.ts';
+import { Logo } from '../components/Logo.tsx';
+import { MOCK_USERS, MOCK_USER_FREE_ENGINEER, PRE_AUTH_USER } from '../data/mockData.ts';
+import { User, Briefcase, Building } from '../components/Icons.tsx';
 
 interface LoginSelectorProps {
     onNavigate: (page: Page) => void;
@@ -13,12 +13,10 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
     const { login } = useAppContext();
 
     const handleLogin = (role: Role) => {
-        // In a real app, this would involve a form and API call.
-        // Here, we log in with the mock user for that role.
         if (role === Role.ENGINEER && PRE_AUTH_USER.email.includes('stevegoodwin')) {
-            login(MOCK_USERS[Role.ENGINEER]); // Login as premium engineer Steve
+            login(MOCK_USERS[Role.ENGINEER]);
         } else if (role === Role.ENGINEER) {
-             login(MOCK_USER_FREE_ENGINEER); // Login as a free tier engineer
+             login(MOCK_USER_FREE_ENGINEER);
         }
         else {
              login(MOCK_USERS[role]);
@@ -35,7 +33,6 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
                         <p className="text-gray-500">Please sign in to your account.</p>
                     </div>
 
-                    {/* This is a simulated login form for the demo */}
                     <div className="space-y-4 mb-6">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Email Address</label>

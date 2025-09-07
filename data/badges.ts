@@ -1,5 +1,5 @@
-import { EngineerProfile, Badge, ConditionContext } from '../types/index.ts';
-import { Award, CheckCircle, Trophy } from '../components/Icons.tsx';
+import { EngineerProfile, Badge, ConditionContext } from '../types';
+import { Award, CheckCircle, Trophy } from '../components/Icons';
 
 export const BADGES: Badge[] = [
     {

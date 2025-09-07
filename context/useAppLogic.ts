@@ -3,12 +3,12 @@ import {
     User, Role, EngineerProfile, CompanyProfile, Job, Application, Review, Conversation, Message, Contract, Transaction,
     ProfileTier, ApplicationStatus, ContractStatus, MilestoneStatus, ContractType, Page, ForumPost, ForumComment, Notification,
     NotificationType, Project, ProjectRole, Invoice, InvoiceStatus, PaymentTerms, Language, Currency, Country, TimesheetStatus,
-    Timesheet, Insight, TransactionType
-} from '../types/index.ts';
+    Timesheet, Insight, TransactionType, InvoiceItem
+} from '../types';
 // FIX: Added missing mock data imports to resolve reference errors.
-import { ALL_MOCK_USERS, MOCK_JOBS, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_CONTRACTS, MOCK_TRANSACTIONS, MOCK_PROJECTS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_NOTIFICATIONS } from '../data/mockData.ts';
-import { eSignatureService } from '../services/eSignatureService.ts';
-import { geminiService } from '../services/geminiService.ts';
+import { ALL_MOCK_USERS, MOCK_JOBS, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_CONTRACTS, MOCK_TRANSACTIONS, MOCK_PROJECTS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_NOTIFICATIONS } from '../data/mockData';
+import { eSignatureService } from '../services/eSignatureService';
+import { geminiService } from '../services/geminiService';
 
 const generateUniqueId = () => `id-${Math.random().toString(36).substring(2, 10)}`;
 
@@ -423,6 +423,76 @@ export const useAppLogic = () => {
         }
     }, [user, applyForJob]);
 
+    const generateInvoice = useCallback((contractId: string, paymentTerms: PaymentTerms) => {
+        const contract = contracts.find(c => c.id === contractId);
+        if (!contract || !user) return;
+
+        const approvedMilestones = contract.milestones.filter(m => m.status === MilestoneStatus.APPROVED_PENDING_INVOICE);
+        if (approvedMilestones.length === 0) {
+            alert("No approved milestones to invoice.");
+            return;
+        }
+
+        const items: InvoiceItem[] = approvedMilestones.map(m => ({
+            description: `Milestone: ${m.description}`,
+            amount: m.amount,
+        }));
+
+        const total = items.reduce((sum, item) => sum + item.amount, 0);
+
+        const getDueDate = (terms: PaymentTerms): Date => {
+            const date = new Date();
+            switch (terms) {
+                case PaymentTerms.NET7: date.setDate(date.getDate() + 7); break;
+                case PaymentTerms.NET14: date.setDate(date.getDate() + 14); break;
+                case PaymentTerms.NET30: date.setDate(date.getDate() + 30); break;
+            }
+            return date;
+        };
+
+        const newInvoice: Invoice = {
+            id: `inv-${generateUniqueId()}`,
+            contractId,
+            companyId: contract.companyId,
+            engineerId: contract.engineerId,
+            issueDate: new Date(),
+            dueDate: getDueDate(paymentTerms),
+            items,
+            total,
+            status: InvoiceStatus.SENT,
+            paymentTerms
+        };
+        setInvoices(prev => [...prev, newInvoice]);
+
+        // Update milestone statuses to Paid
+        const approvedMilestoneIds = new Set(approvedMilestones.map(m => m.id));
+        setContracts(prevContracts => prevContracts.map(c => {
+            if (c.id === contractId) {
+                return {
+                    ...c,
+                    milestones: c.milestones.map(m =>
+                        approvedMilestoneIds.has(m.id) ? { ...m, status: MilestoneStatus.COMPLETED_PAID } : m
+                    )
+                };
+            }
+            return c;
+        }));
+
+        alert(`Invoice #${newInvoice.id.slice(-6)} for £${total.toFixed(2)} generated and sent!`);
+    }, [contracts, user]);
+    
+    const isPremium = (profile: EngineerProfile) => profile.profileTier !== ProfileTier.BASIC;
+
+    const getCareerCoaching = async (): Promise<{ insights?: Insight[]; error?: string; }> => {
+        if (!user || user.role !== Role.ENGINEER) {
+            return { error: 'User is not an engineer.' };
+        }
+        const profile = user.profile as EngineerProfile;
+        // Mock trending skills for the demo
+        const trendingSkills = ['DM NVX', 'Q-SYS', 'Cloud Architecture', 'Cybersecurity for AV', 'MS Teams Rooms Certified'];
+        return geminiService.getCareerCoaching(profile, trendingSkills);
+    };
+
     return {
         user, login, logout, allUsers, engineers, companies, jobs, applications, reviews, conversations, messages,
         contracts, transactions, projects, forumPosts, forumComments, notifications, invoices,
@@ -475,21 +545,7 @@ export const useAppLogic = () => {
              setContracts(prev => prev.map(c => c.id === contractId ? { ...c, timesheets: (c.timesheets || []).map(ts => ts.id === timesheetId ? {...ts, status: TimesheetStatus.APPROVED} : ts) } : c));
         },
         payInvoice: (invoiceId) => setInvoices(prev => prev.map(i => i.id === invoiceId ? {...i, status: InvoiceStatus.PAID} : i)),
-        generateInvoice: (contractId, paymentTerms) => {
-            const newInvoice: Invoice = {
-                id: `inv-${generateUniqueId()}`,
-                contractId,
-                companyId: 'comp-1', 
-                engineerId: user!.profile.id,
-                issueDate: new Date(),
-                dueDate: new Date(new Date().setDate(new Date().getDate() + 14)), 
-                items: [{description: "Completed Work", amount: 500}], 
-                total: 500, 
-                status: InvoiceStatus.SENT,
-                paymentTerms
-            };
-            setInvoices(prev => [...prev, newInvoice]);
-        },
+        generateInvoice,
         inviteEngineerToJob: (jobId: string, engineerId: string) => alert(`Invited engineer ${engineerId} to job ${jobId}`),
         assignEngineerToProjectRole: (projectId, roleId, engineerId) => {
             setProjects(prev => prev.map(p => p.id === projectId ? {...p, roles: p.roles.map(r => r.id === roleId ? {...r, assignedEngineerId: engineerId} : r) } : p));
@@ -520,8 +576,8 @@ export const useAppLogic = () => {
         chatSession,
         currentPageContext, setCurrentPageContext,
         geminiService,
-        isPremium: (profile: EngineerProfile) => profile.profileTier !== ProfileTier.BASIC,
-        getCareerCoaching: () => geminiService.getCareerCoaching(user!.profile as EngineerProfile, ['DM NVX', 'Q-SYS', 'Cloud Architecture']),
+        isPremium,
+        getCareerCoaching,
         language, setLanguage, currency, setCurrency, t, getRegionalPrice,
     };
 };

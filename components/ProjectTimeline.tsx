@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { ProjectRole } from '../types/index.ts';
-import { User } from './Icons.tsx';
+import { ProjectRole } from '../types';
+import { User } from './Icons';
 
 interface ProjectTimelineProps {
     roles: ProjectRole[];

@@ -1,6 +1,6 @@
 import React from 'react';
-import { EngineerProfile } from '../../types/index.ts';
-import { Plus, Trash2 } from '../Icons.tsx';
+import { EngineerProfile } from '../../types';
+import { Plus, Trash2 } from '../Icons';
 
 interface ProfilePortfolioProps {
     formData: EngineerProfile;

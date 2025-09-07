@@ -1,7 +1,7 @@
-import { EngineerProfile, CompanyProfile, ProfileTier, Discipline, Currency, Language, Country } from '../../types/index.ts';
-import { MALE_FIRST_NAMES, FEMALE_FIRST_NAMES, LAST_NAMES, LOCATIONS, COMPANY_NAMES, COMPANY_SUFFIXES } from './mockConstants.ts';
-import { JOB_ROLE_DEFINITIONS } from '../jobRoles.ts';
-import { AVATARS } from '../assets.ts';
+import { EngineerProfile, CompanyProfile, ProfileTier, Discipline, Currency, Language, Country } from '../../types';
+import { MALE_FIRST_NAMES, FEMALE_FIRST_NAMES, LAST_NAMES, LOCATIONS, COMPANY_NAMES, COMPANY_SUFFIXES } from './mockConstants';
+import { JOB_ROLE_DEFINITIONS } from '../jobRoles';
+import { AVATARS } from '../assets';
 
 const getRandom = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
 const getRandomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
@@ -15,7 +15,18 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
         const discipline = getRandom([Discipline.AV, Discipline.IT, Discipline.BOTH]);
         const experience = getRandomInt(3, 25);
         const profileTier = getRandom([ProfileTier.BASIC, ProfileTier.PROFESSIONAL, ProfileTier.SKILLS, ProfileTier.BUSINESS]);
-        const jobRoleDef = getRandom(JOB_ROLE_DEFINITIONS.filter(r => r.category.includes(discipline) || discipline === Discipline.BOTH));
+        
+        let possibleRoles = JOB_ROLE_DEFINITIONS.filter(r => {
+            if (discipline === Discipline.BOTH) return true;
+            if (discipline === Discipline.AV && r.category.includes('Audio Visual')) return true;
+            if (discipline === Discipline.IT && r.category.includes('IT')) return true;
+            return false;
+        });
+
+        if (possibleRoles.length === 0) {
+            possibleRoles = JOB_ROLE_DEFINITIONS; // Fallback if no matching roles for a discipline
+        }
+        const jobRoleDef = getRandom(possibleRoles);
         
         return {
             id: `gen-eng-${i}`,

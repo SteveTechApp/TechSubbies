@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-// FIX: Imported the missing CheckCircle icon.
-import { X, User, Building, FileText, DollarSign, Search, Sparkles, Users, Handshake, CheckCircle } from './Icons';
-// FIX: Corrected module import to remove file extension.
-import { Page } from '../types';
+import { X, User, Building, FileText, DollarSign, Search, Sparkles, Users, Handshake, CheckCircle } from './Icons.tsx';
+import { Page } from '../types/index.ts';
 
 interface HowItWorksModalProps {
     isOpen: boolean;

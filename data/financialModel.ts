@@ -1,4 +1,4 @@
-import { ProfileTier } from '../types/index.ts';
+import { ProfileTier } from '../types';
 
 // Pricing data
 export const TIER_PRICES = {

@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-// FIX: Corrected module import to remove file extension.
-import { EngineerProfile } from '../../types';
-import { ArrowLeft, User, Star, Award, Briefcase, Save, Mail, Link as LinkIcon, ShieldCheck } from '../../components/Icons';
-import { AccordionSection } from '../../components/AccordionSection';
-import { SkillsAndRolesSection } from '../../components/ProfileManagement/SkillsAndRolesSection';
-import { ProfileEssentials } from '../../components/ProfileManagement/ProfileEssentials';
-import { ProfileCertifications } from '../../components/ProfileManagement/ProfileCertifications';
-import { ProfilePortfolio } from '../../components/ProfileManagement/ProfilePortfolio';
-import { ProfileContact } from '../../components/ProfileManagement/ProfileContact';
-import { ProfileSocials } from '../../components/ProfileManagement/ProfileSocials';
-import { ProfileCompliance } from '../../components/ProfileManagement/ProfileCompliance';
+import { EngineerProfile } from '../../types/index.ts';
+import { ArrowLeft, User, Star, Award, Briefcase, Save, Mail, Link as LinkIcon, ShieldCheck } from '../../components/Icons.tsx';
+import { AccordionSection } from '../../components/AccordionSection.tsx';
+import { SkillsAndRolesSection } from '../../components/ProfileManagement/SkillsAndRolesSection.tsx';
+import { ProfileEssentials } from '../../components/ProfileManagement/ProfileEssentials.tsx';
+import { ProfileCertifications } from '../../components/ProfileManagement/ProfileCertifications.tsx';
+import { ProfilePortfolio } from '../../components/ProfileManagement/ProfilePortfolio.tsx';
+import { ProfileContact } from '../../components/ProfileManagement/ProfileContact.tsx';
+import { ProfileSocials } from '../../components/ProfileManagement/ProfileSocials.tsx';
+import { ProfileCompliance } from '../../components/ProfileManagement/ProfileCompliance.tsx';
 
 interface ProfileManagementViewProps {
     profile: EngineerProfile;
@@ -47,14 +46,16 @@ export const ProfileManagementView = ({ profile, onSave, setActiveView }: Profil
             <h1 className="text-3xl font-bold mb-2">Manage Profile</h1>
             <p className="text-gray-500 mb-6">Edit each section of your profile. Click 'Save Changes' when you're done.</p>
             
-            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md space-y-2">
-                <AccordionSection title="Profile Essentials" icon={User} startOpen={true}>
-                    <ProfileEssentials 
-                        formData={profileData}
-                        setFormData={setProfileData}
-                    />
-                </AccordionSection>
-
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md md:grid md:grid-cols-2 md:gap-x-8">
+                <div className="md:col-span-2">
+                    <AccordionSection title="Profile Essentials" icon={User} startOpen={true}>
+                        <ProfileEssentials 
+                            formData={profileData}
+                            setFormData={setProfileData}
+                        />
+                    </AccordionSection>
+                </div>
+                
                 <AccordionSection title="Contact Information" icon={Mail}>
                     <ProfileContact 
                         formData={profileData}
@@ -69,14 +70,16 @@ export const ProfileManagementView = ({ profile, onSave, setActiveView }: Profil
                     />
                 </AccordionSection>
 
-                <AccordionSection title="Skills & Specialist Roles" icon={Star}>
-                    <SkillsAndRolesSection 
-                        profile={profile}
-                        formData={profileData}
-                        setFormData={setProfileData}
-                        setActiveView={setActiveView}
-                    />
-                </AccordionSection>
+                <div className="md:col-span-2">
+                    <AccordionSection title="Skills & Specialist Roles" icon={Star}>
+                        <SkillsAndRolesSection 
+                            profile={profile}
+                            formData={profileData}
+                            setFormData={setProfileData}
+                            setActiveView={setActiveView}
+                        />
+                    </AccordionSection>
+                </div>
 
                 <AccordionSection title="Certifications" icon={Award}>
                     <ProfileCertifications
@@ -93,12 +96,14 @@ export const ProfileManagementView = ({ profile, onSave, setActiveView }: Profil
                     />
                 </AccordionSection>
 
-                <AccordionSection title="Portfolio & Case Studies" icon={Briefcase}>
-                    <ProfilePortfolio 
-                        formData={profileData}
-                        setFormData={setProfileData}
-                    />
-                </AccordionSection>
+                <div className="md:col-span-2">
+                    <AccordionSection title="Portfolio & Case Studies" icon={Briefcase}>
+                        <ProfilePortfolio 
+                            formData={profileData}
+                            setFormData={setProfileData}
+                        />
+                    </AccordionSection>
+                </div>
             </div>
         </div>
     );

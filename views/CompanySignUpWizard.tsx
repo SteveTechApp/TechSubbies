@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Logo } from '../components/Logo.tsx';
-import { ArrowLeft } from '../components/Icons.tsx';
-import { Country } from '../types/index.ts';
+import { useAppContext } from '../context/AppContext';
+import { Logo } from '../components/Logo';
+import { ArrowLeft } from '../components/Icons';
+import { Country } from '../types';
 
 interface CompanySignUpWizardProps {
     onCancel: () => void;

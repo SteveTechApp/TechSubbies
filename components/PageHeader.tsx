@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft } from './Icons.tsx';
+import { ArrowLeft } from './Icons';
 
 interface PageHeaderProps {
     onBack: () => void;

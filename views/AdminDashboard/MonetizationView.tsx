@@ -1,8 +1,8 @@
 import React from 'react';
-import { useAppContext } from '../../context/AppContext.tsx';
-import { StatCard } from '../../components/StatCard.tsx';
-import { TransactionType } from '../../types/index.ts';
-import { DollarSign, Star, Zap, Megaphone, PlusCircle, Save, Image, TrendingUp } from '../../components/Icons.tsx';
+import { useAppContext } from '../../context/AppContext';
+import { StatCard } from '../../components/StatCard';
+import { TransactionType } from '../../types';
+import { DollarSign, Star, Zap, Megaphone, PlusCircle, Save, Image, TrendingUp } from '../../components/Icons';
 
 // Mock data for this simulation
 const MOCK_AD_CAMPAIGNS = [

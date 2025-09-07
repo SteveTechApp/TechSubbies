@@ -1,6 +1,6 @@
 import React from 'react';
-import { EngineerProfile, ProfileTier } from '../types';
-import { PenSquare, Star, Award, ShieldCheck, Briefcase } from './Icons';
+import { EngineerProfile, ProfileTier } from '../types/index.ts';
+import { PenSquare, Star, Award, ShieldCheck, Briefcase } from './Icons.tsx';
 
 interface TopTrumpCardProps {
     profile: EngineerProfile;

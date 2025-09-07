@@ -1,8 +1,8 @@
 // FIX: The AIAssistant component was incomplete and did not return a JSX element, causing a type error.
 // The component has been fully implemented with a draggable floating button and a functional chat window that uses the Gemini API.
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { MessageCircle, X, Loader, Send } from './Icons.tsx';
+import { useAppContext } from '../context/AppContext';
+import { MessageCircle, X, Loader, Send } from './Icons';
 
 interface ChatMessage {
     role: 'user' | 'ai';

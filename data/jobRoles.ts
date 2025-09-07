@@ -1,5 +1,4 @@
-// FIX: Corrected module import to remove file extension.
-import { JobRoleDefinition } from '../types';
+import { JobRoleDefinition } from '../types/index.ts';
 
 // --- Comprehensive Skills & Knowledge Matrix for IT & AV Roles ---
 export const JOB_ROLE_DEFINITIONS: JobRoleDefinition[] = [
@@ -110,22 +109,8 @@ export const JOB_ROLE_DEFINITIONS: JobRoleDefinition[] = [
                  { name: 'Market trends and emerging technologies', description: 'Keeping up-to-date with the latest advancements in AV technology and how they can benefit clients.' }
              ]},
              { category: 'Required Experience', skills: [
-                 { name: '3+ years in technical sales or AV industry', description: 'A proven track record in a role that combines technical knowledge with client-facing responsibilities.' },
-                 { name: 'Demonstrated quota achievement', description: 'A history of meeting or exceeding sales targets and performance goals.' },
-                 { name: 'Client relationship management experience', description: 'Experience in building and maintaining long-term, positive relationships with clients.' },
-                 { name: 'Public speaking and presentation skills', description: 'Comfort and skill in presenting to groups, both in-person and virtually.' }
-             ]},
-             { category: 'Certifications', skills: [
-                 { name: 'CTS or CTS-D preferred', description: 'AVIXA certifications that provide a strong, vendor-neutral technical foundation.' },
-                 { name: 'Sales methodology training (Sandler, SPIN, Challenger)', description: 'Formal training in recognized sales methodologies, indicating a structured approach to selling.' },
-                 { name: 'Manufacturer product certifications', description: 'Certifications that demonstrate deep knowledge of specific product lines.' }
+                 { name: '3+ years in technical sales or AV industry', description: 'A proven track record in a technical sales or pre-sales engineering role within the AV industry.' }
              ]}
         ]
-    },
-    {
-        name: 'Control Systems Programmer (Crestron)',
-        category: 'Audio Visual & Media Technology',
-        skillCategories: [
-             { category: 'Core Programming Skills', skills: [
-                 { name: 'Crestron SIMPL Windows programming', description: 'Core proficiency in Crestron\'s logic-based programming environment for control processors.' },
-                 { name: 'Crestron SIMPL# Pro (C# .NET)', description: 'Advanced skill in using C#
+    }
+];

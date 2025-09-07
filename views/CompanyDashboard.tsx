@@ -1,21 +1,20 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext';
-// FIX: Corrected module imports to remove file extensions.
-import { EngineerProfile, Job, CompanyProfile } from '../types';
-import { DashboardSidebar } from '../components/DashboardSidebar';
-import { JobPostModal } from '../components/JobPostModal';
-import { DashboardView } from './CompanyDashboard/DashboardView';
-import { MyJobsView } from './CompanyDashboard/MyJobsView';
-import { SettingsView } from './CompanyDashboard/SettingsView';
-import { FindTalentView } from './CompanyDashboard/FindTalentView';
-import { EngineerProfileView } from './EngineerProfileView';
-import { MessagesView } from './MessagesView';
-import { ArrowLeft } from '../components/Icons';
-import { ContractsView } from './ContractsView';
-import { InstantInviteModal } from '../components/InstantInviteModal';
-import { ProjectPlannerView } from './CompanyDashboard/ProjectPlannerView';
-import { ProjectTrackingView } from './CompanyDashboard/ProjectTrackingView';
-import { InvoicesView } from './InvoicesView';
+import { useAppContext } from '../context/AppContext.tsx';
+import { EngineerProfile, Job, CompanyProfile } from '../types/index.ts';
+import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
+import { JobPostModal } from '../components/JobPostModal.tsx';
+import { DashboardView } from './CompanyDashboard/DashboardView.tsx';
+import { MyJobsView } from './CompanyDashboard/MyJobsView.tsx';
+import { SettingsView } from './CompanyDashboard/SettingsView.tsx';
+import { FindTalentView } from './CompanyDashboard/FindTalentView.tsx';
+import { EngineerProfileView } from './EngineerProfileView.tsx';
+import { MessagesView } from './MessagesView.tsx';
+import { ArrowLeft } from '../components/Icons.tsx';
+import { ContractsView } from './ContractsView.tsx';
+import { InstantInviteModal } from '../components/InstantInviteModal.tsx';
+import { ProjectPlannerView } from './CompanyDashboard/ProjectPlannerView.tsx';
+import { ProjectTrackingView } from './CompanyDashboard/ProjectTrackingView.tsx';
+import { InvoicesView } from './InvoicesView.tsx';
 
 export const CompanyDashboard = () => {
     const { user, postJob, jobs, engineers, applications, updateCompanyProfile, setCurrentPageContext } = useAppContext();
@@ -121,7 +120,7 @@ export const CompanyDashboard = () => {
     return (
         <div className="flex h-screen">
             <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-grow p-2 bg-gray-50 overflow-hidden">
+            <main className="flex-grow p-6 bg-gray-50 overflow-hidden">
                 {renderActiveView()}
             </main>
             <JobPostModal

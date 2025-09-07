@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Footer } from '../components/Footer';
-import { Header } from '../components/Header';
-// FIX: Corrected module import to remove file extension.
-import { Page, ProfileTier } from '../types';
-import { CheckCircle, BarChart, Star, Rocket, Clapperboard, TrendingUp, Award, DollarSign, Users } from '../components/Icons';
-import { HERO_IMAGES } from '../data/assets';
+import { Footer } from '../components/Footer.tsx';
+import { Header } from '../components/Header.tsx';
+import { Page, ProfileTier } from '../types/index.ts';
+import { CheckCircle, BarChart, Star, Rocket, Clapperboard, TrendingUp, Award, DollarSign, Users } from '../components/Icons.tsx';
+import { HERO_IMAGES } from '../data/assets.ts';
 
 interface ForEngineersPageProps {
     onNavigate: (page: Page) => void;

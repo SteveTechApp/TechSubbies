@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { EngineerProfile, Job } from '../../types/index.ts';
-import { FindTalentFilters } from '../../components/Company/FindTalentFilters.tsx';
-import { FindTalentResults } from '../../components/Company/FindTalentResults.tsx';
+import { EngineerProfile, Job } from '../../types';
+import { FindTalentFilters } from '../../components/Company/FindTalentFilters';
+import { FindTalentResults } from '../../components/Company/FindTalentResults';
 
 interface FindTalentViewProps {
     engineers: EngineerProfile[];

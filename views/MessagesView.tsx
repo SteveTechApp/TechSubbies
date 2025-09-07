@@ -1,8 +1,8 @@
 import React from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { ConversationListItem } from '../components/ConversationListItem.tsx';
-import { ChatWindow } from '../components/ChatWindow.tsx';
-import { Mail } from '../components/Icons.tsx';
+import { useAppContext } from '../context/AppContext';
+import { ConversationListItem } from '../components/ConversationListItem';
+import { ChatWindow } from '../components/ChatWindow';
+import { Mail } from '../components/Icons';
 
 export const MessagesView = () => {
     const { user, conversations, selectedConversationId, setSelectedConversationId, findUserById } = useAppContext();

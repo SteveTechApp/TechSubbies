@@ -1,7 +1,7 @@
 import React from 'react';
-import { Footer } from '../components/Footer.tsx';
-import { Header } from '../components/Header.tsx';
-import { Page } from '../types/index.ts';
+import { Footer } from '../components/Footer';
+import { Header } from '../components/Header';
+import { Page } from '../types';
 
 interface LegalPageProps {
     onNavigate: (page: Page) => void;

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { JobType, ExperienceLevel } from '../../types/index.ts';
-import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles.ts';
-import { ArrowRight, Sparkles } from '../Icons.tsx';
-import { AIJobHelper } from '../AIJobHelper.tsx';
+import { JobType, ExperienceLevel } from '../../types';
+import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles';
+import { ArrowRight, Sparkles } from '../Icons';
+import { AIJobHelper } from '../AIJobHelper';
 
 interface JobPostStep1Props {
     jobDetails: any;

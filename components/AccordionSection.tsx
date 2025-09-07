@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown } from './Icons.tsx';
+import { ChevronDown } from './Icons';
 
 interface AccordionSectionProps {
     title: string;

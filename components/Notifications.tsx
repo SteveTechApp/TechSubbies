@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Bell, Briefcase, Mail, Star } from './Icons.tsx';
-import { Notification, NotificationType } from '../types/index.ts';
-import { formatTimeAgo } from '../utils/dateFormatter.ts';
+import { useAppContext } from '../context/AppContext';
+import { Bell, Briefcase, Mail, Star } from './Icons';
+import { Notification, NotificationType } from '../types';
+import { formatTimeAgo } from '../utils/dateFormatter';
 
 const getIconForType = (type: NotificationType) => {
     switch (type) {

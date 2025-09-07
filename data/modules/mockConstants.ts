@@ -1,4 +1,4 @@
-import { JobType, ExperienceLevel } from '../../types/index.ts';
+import { JobType, ExperienceLevel } from '../../types';
 
 export const MALE_FIRST_NAMES = ['Neil', 'David', 'Aiden', 'Charlie', 'Ethan', 'George', 'Isaac', 'Leo', 'Noah', 'Thomas', 'William', 'Riley', 'Sam'];
 export const FEMALE_FIRST_NAMES = ['Samantha', 'Emily', 'Bella', 'Daisy', 'Freya', 'Hannah', 'Jasmine', 'Mia', 'Olivia', 'Poppy', 'Sophia', 'Zoe'];

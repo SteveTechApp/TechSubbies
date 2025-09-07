@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Conversation } from '../types/index.ts';
-import { Globe } from './Icons.tsx';
+import { useAppContext } from '../context/AppContext';
+import { Conversation } from '../types';
+import { Globe } from './Icons';
 
 interface ChatWindowProps {
     conversation: Conversation;

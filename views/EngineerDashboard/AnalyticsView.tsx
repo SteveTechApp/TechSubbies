@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { EngineerProfile } from '../../types/index.ts';
-import { useAppContext } from '../../context/AppContext.tsx';
-import { BarChart, TrendingUp, Users, Mail, Briefcase } from '../../components/Icons.tsx';
+import { EngineerProfile } from '../../types';
+import { useAppContext } from '../../context/AppContext';
+import { BarChart, TrendingUp, Users, Mail, Briefcase } from '../../components/Icons';
 
 // --- Mock Data Generation ---
 const generateChartData = (days: number, minVal: number, maxVal: number) => {

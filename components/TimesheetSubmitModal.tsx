@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Contract, Timesheet } from '../types/index.ts';
-import { X } from './Icons.tsx';
+import { Contract, Timesheet } from '../types';
+import { X } from './Icons';
 
 interface TimesheetSubmitModalProps {
     isOpen: boolean;

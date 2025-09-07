@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ChevronDown } from './Icons.tsx';
+import { ChevronDown } from './Icons';
 
 interface DropdownMenuProps {
     triggerText: React.ReactNode;
@@ -39,7 +39,7 @@ export const DropdownMenu = ({ triggerText, children, isLanding = false, directi
             onMouseEnter={handleMouseEnter} 
             onMouseLeave={handleMouseLeave}
         >
-            <button className={`flex items-center px-4 py-2 transition-colors font-medium text-xs text-center ${triggerColor}`}>
+            <button className={`flex items-center px-4 py-2 transition-colors font-medium text-sm text-center ${triggerColor}`}>
                 {triggerText}
                 <ChevronDown className={`w-4 h-4 ml-1 transition-transform duration-200 ${isOpen && direction === 'down' ? 'rotate-180' : ''} ${isOpen && direction === 'up' ? '-rotate-180' : ''}`} />
             </button>

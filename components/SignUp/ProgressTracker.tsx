@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Briefcase, PoundSterling, Calendar, ShieldCheck, FileText } from '../Icons.tsx';
+import { User, Briefcase, PoundSterling, Calendar, ShieldCheck, FileText } from '../Icons';
 
 const STEPS = [
     { num: 1, title: 'Core Info', icon: User },

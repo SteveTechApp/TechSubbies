@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Contract, ContractType } from '../types/index.ts';
-import { X, CheckCircle } from './Icons.tsx';
-import { useAppContext } from '../context/AppContext.tsx';
+import { Contract, ContractType } from '../types';
+import { X, CheckCircle } from './Icons';
+import { useAppContext } from '../context/AppContext';
 
 interface SignContractModalProps {
     isOpen: boolean;

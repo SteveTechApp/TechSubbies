@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Job, EngineerProfile, Contract, ContractType, ContractStatus, Currency, Milestone, MilestoneStatus } from '../types/index.ts';
-import { X, FileText, Plus, Trash2 } from './Icons.tsx';
+import { useAppContext } from '../context/AppContext';
+import { Job, EngineerProfile, Contract, ContractType, ContractStatus, Currency, Milestone, MilestoneStatus } from '../types';
+import { X, FileText, Plus, Trash2 } from './Icons';
 
 interface CreateContractModalProps {
     isOpen: boolean;

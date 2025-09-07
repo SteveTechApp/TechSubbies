@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Footer } from '../components/Footer';
-import { Header } from '../components/Header';
-// FIX: Corrected module imports to remove file extensions.
-import { FeatureCard } from '../components/FeatureCard';
-import { PenSquare, Search, Handshake, DollarSign, Users, Briefcase, FileText } from '../components/Icons';
-import { Page } from '../types';
-import { HERO_IMAGES } from '../data/assets';
+import { Footer } from '../components/Footer.tsx';
+import { Header } from '../components/Header.tsx';
+import { FeatureCard } from '../components/FeatureCard.tsx';
+import { PenSquare, Search, Handshake, DollarSign, Users, Briefcase, FileText } from '../components/Icons.tsx';
+import { Page } from '../types/index.ts';
+import { HERO_IMAGES } from '../data/assets.ts';
 
 interface ForCompaniesPageProps {
     onNavigate: (page: Page) => void;

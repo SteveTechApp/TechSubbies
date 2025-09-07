@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { useAppContext } from '../../context/AppContext.tsx';
-import { ApplicationStatus, Job, Role, CompanyProfile, Application } from '../../types/index.ts';
-import { ArrowLeft, Briefcase, CheckCircle, Mail, Download, X } from '../../components/Icons.tsx';
+import { useAppContext } from '../../context/AppContext';
+import { ApplicationStatus, Job, Role, CompanyProfile, Application } from '../../types';
+import { ArrowLeft, Briefcase, CheckCircle, Mail, Download, X } from '../../components/Icons';
 
 interface MyNetworkViewProps {
     setActiveView: (view: string) => void;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { DollarSign, Star, Save } from '../../components/Icons.tsx';
+import { DollarSign, Star, Save } from '../../components/Icons';
 
 export const PlatformSettingsView = () => {
     return (

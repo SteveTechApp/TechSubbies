@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { EngineerProfile, SelectedJobRole, Skill, ProfileTier } from '../../types/index.ts';
-import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles.ts';
-import { Plus, Trash2, Edit, X } from '../Icons.tsx';
-import { EditSkillProfileModal } from '../EditSkillProfileModal.tsx';
+import { EngineerProfile, SelectedJobRole, Skill, ProfileTier } from '../../types';
+import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles';
+import { Plus, Trash2, Edit, X } from '../Icons';
+import { EditSkillProfileModal } from '../EditSkillProfileModal';
 
 const UpgradeCta = ({ requiredTier, onUpgradeClick, message }: { requiredTier: string, onUpgradeClick: () => void, message: string }) => (
     <div className="text-center p-6 bg-gray-100 rounded-lg border-2 border-dashed">

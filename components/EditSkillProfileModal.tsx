@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-// FIX: Corrected module import to remove file extension.
-import { SelectedJobRole, JobRoleDefinition, RatedSkill } from '../types';
-import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';
-import { X, Save, Plus, Trash2 } from './Icons';
+import { SelectedJobRole, JobRoleDefinition, RatedSkill } from '../types/index.ts';
+import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles.ts';
+import { X, Save, Plus, Trash2 } from './Icons.tsx';
 
 interface EditSkillProfileModalProps {
     isOpen: boolean;
@@ -41,7 +40,6 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
         setSearchTerm('');
     }, [isOpen, initialRole]);
 
-     // Close dropdown if clicked outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (addMenuRef.current && !addMenuRef.current.contains(event.target as Node)) {
@@ -60,7 +58,7 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
             setSelectedRoleDef(roleDef);
             const newRole: SelectedJobRole = {
                 roleName: roleDef.name,
-                skills: [], // Start with an empty skill set
+                skills: [],
                 overallScore: 0
             };
             setCurrentRole(newRole);
@@ -84,7 +82,7 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
 
     const addSkill = (skillDef: { name: string; description: string }) => {
         if (!currentRole) return;
-        const newSkill: RatedSkill = { name: skillDef.name, rating: 50 }; // Default rating
+        const newSkill: RatedSkill = { name: skillDef.name, rating: 50 };
         const newSkills = [...currentRole.skills, newSkill];
         const newOverallScore = recalculateScore(newSkills);
         setCurrentRole({ ...currentRole, skills: newSkills, overallScore: newOverallScore });
@@ -173,40 +171,29 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
                                                                     <span className={`text-xs font-semibold ${ratingStyles.text}`}>{ratingStyles.descriptor}</span>
                                                                 </div>
                                                             </div>
-                                                            <input 
-                                                                type="range" min="1" max="100" value={skill.rating} 
-                                                                onChange={e => handleSkillChange(skillDef.name, e.target.value)} 
-                                                                className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer ${ratingStyles.accent}`}
+                                                            <input
+                                                                type="range"
+                                                                min="0"
+                                                                max="100"
+                                                                step="5"
+                                                                value={skill.rating}
+                                                                onChange={(e) => handleSkillChange(skillDef.name, e.target.value)}
+                                                                className={`w-full h-2 rounded-lg appearance-none cursor-pointer ${ratingStyles.accent}`}
                                                             />
                                                         </div>
                                                     );
                                                 })}
                                             </div>
-
-                                            <div className="mt-4 relative" ref={addMenuRef}>
-                                                <button type="button" onClick={() => { setOpenAddMenu(openAddMenu === category.category ? null : category.category); setSearchTerm(''); }} className="flex items-center text-sm font-semibold text-blue-600 hover:text-blue-800">
-                                                    <Plus size={16} className="mr-1"/> Add Skill to {category.category}
+                                            <div className="relative mt-2" ref={addMenuRef}>
+                                                <button type="button" onClick={() => setOpenAddMenu(openAddMenu === category.category ? null : category.category)} className="text-sm font-semibold text-blue-600 hover:underline flex items-center">
+                                                    <Plus size={16} className="mr-1"/> Add a skill from {category.category}
                                                 </button>
                                                 {openAddMenu === category.category && (
-                                                    <div className="absolute top-full left-0 mt-2 w-full sm:w-96 bg-white border rounded-lg shadow-xl z-10 p-2">
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Search skills..."
-                                                            value={searchTerm}
-                                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                                            className="w-full border p-2 rounded-md mb-2"
-                                                        />
-                                                        <ul className="max-h-48 overflow-y-auto custom-scrollbar">
-                                                            {availableSkills.map(skillDef => (
-                                                                <li key={skillDef.name}>
-                                                                    <button type="button" onClick={() => addSkill(skillDef)} className="w-full text-left p-2 rounded-md hover:bg-gray-100 text-sm tooltip-container">
-                                                                        {skillDef.name}
-                                                                        <span className="tooltip-text">{skillDef.description}</span>
-                                                                    </button>
-                                                                </li>
-                                                            ))}
-                                                             {availableSkills.length === 0 && <li className="p-2 text-sm text-gray-500">No skills found.</li>}
-                                                        </ul>
+                                                    <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                                        <input type="text" placeholder="Search skills..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full p-2 border-b" />
+                                                        {availableSkills.map(skillDef => (
+                                                            <button key={skillDef.name} type="button" onClick={() => addSkill(skillDef)} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">{skillDef.name}</button>
+                                                        ))}
                                                     </div>
                                                 )}
                                             </div>
@@ -218,26 +205,19 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
                     )}
                 </main>
                 
-                <footer className="flex-shrink-0 flex justify-between items-center space-x-4 p-6 border-t bg-gray-50 rounded-b-lg">
-                    {currentRole && (
-                        <div className="flex items-center gap-3">
-                            <span className="text-sm font-semibold text-gray-600">Overall Role Score:</span>
-                            <div className={`flex items-baseline gap-2 px-3 py-1 rounded-full transition-colors duration-200 ${overallScoreStyles.bg}`}>
-                                <span className={`text-xl font-bold ${overallScoreStyles.text}`}>{overallScore}</span>
-                                <span className={`text-xs font-semibold ${overallScoreStyles.text}`}>{overallScoreStyles.descriptor}</span>
-                            </div>
-                        </div>
-                    )}
-                    <div className="flex-grow"></div>
-                    <button type="button" onClick={onClose} className="px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
-                    <button 
-                        type="button"
+                <footer className="flex-shrink-0 p-6 border-t bg-gray-50 flex justify-between items-center">
+                    <div className={`flex items-baseline gap-2 px-3 py-1.5 rounded-full ${overallScoreStyles.bg}`}>
+                        <span className="text-xs font-semibold">Overall Score:</span>
+                        <span className={`text-xl font-bold ${overallScoreStyles.text}`}>{overallScore}</span>
+                        <span className={`text-sm font-semibold ${overallScoreStyles.text}`}>{overallScoreStyles.descriptor}</span>
+                    </div>
+                    <button
                         onClick={handleSave}
                         disabled={!canSave}
-                        className="flex items-center px-6 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed"
+                        className="flex items-center px-6 py-2 bg-green-600 text-white font-bold rounded-md hover:bg-green-700 disabled:bg-gray-400"
                     >
                         <Save size={18} className="mr-2" />
-                        {initialRole ? 'Save Changes' : 'Add Role to Profile'}
+                        Save Role
                     </button>
                 </footer>
             </div>

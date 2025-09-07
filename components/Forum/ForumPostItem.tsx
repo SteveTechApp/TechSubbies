@@ -1,8 +1,8 @@
 import React from 'react';
-import { ForumPost, UserProfile } from '../../types/index.ts';
-import { ArrowUp, ArrowDown, MessageSquare } from '../Icons.tsx';
-import { formatTimeAgo } from '../../utils/dateFormatter.ts';
-import { useAppContext } from '../../context/AppContext.tsx';
+import { ForumPost, UserProfile } from '../../types';
+import { ArrowUp, ArrowDown, MessageSquare } from '../Icons';
+import { formatTimeAgo } from '../../utils/dateFormatter';
+import { useAppContext } from '../../context/AppContext';
 
 interface ForumPostItemProps {
     post: ForumPost;

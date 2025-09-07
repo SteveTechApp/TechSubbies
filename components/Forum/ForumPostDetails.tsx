@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../../context/AppContext.tsx';
-import { ForumPost, ForumComment, UserProfile } from '../../types/index.ts';
-import { ArrowUp, ArrowDown } from '../Icons.tsx';
-import { formatTimeAgo } from '../../utils/dateFormatter.ts';
+import { useAppContext } from '../../context/AppContext';
+import { ForumPost, ForumComment, UserProfile } from '../../types';
+import { ArrowUp, ArrowDown } from '../Icons';
+import { formatTimeAgo } from '../../utils/dateFormatter';
 
 interface CommentProps {
     comment: ForumComment;

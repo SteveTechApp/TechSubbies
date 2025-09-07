@@ -1,8 +1,8 @@
-import { Job, CompanyProfile, Currency, JobType, ExperienceLevel } from '../../types/index.ts';
+import { Job, CompanyProfile, Currency, JobType, ExperienceLevel } from '../../types';
 // FIX: Corrected import path for MOCK_COMPANIES to resolve module error.
-import { MOCK_COMPANIES } from './mockGeneratedProfiles.ts';
-import { JOB_ROLE_DEFINITIONS } from '../jobRoles.ts';
-import { LOCATIONS, DURATIONS, JOB_TYPES, EXP_LEVELS } from './mockConstants.ts';
+import { MOCK_COMPANIES } from './mockGeneratedProfiles';
+import { JOB_ROLE_DEFINITIONS } from '../jobRoles';
+import { LOCATIONS, DURATIONS, JOB_TYPES, EXP_LEVELS } from './mockConstants';
 
 const getRandom = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
 const getRandomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;

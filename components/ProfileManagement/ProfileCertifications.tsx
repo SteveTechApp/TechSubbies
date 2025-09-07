@@ -1,6 +1,6 @@
 import React from 'react';
-import { EngineerProfile, ProfileTier } from '../../types/index.ts';
-import { Plus, Trash2, CheckCircle } from '../Icons.tsx';
+import { EngineerProfile, ProfileTier } from '../../types';
+import { Plus, Trash2, CheckCircle } from '../Icons';
 
 interface ProfileCertificationsProps {
     profile: EngineerProfile;

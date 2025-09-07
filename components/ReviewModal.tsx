@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Job, EngineerProfile, Review } from '../types/index.ts';
-import { X, Star } from './Icons.tsx';
-import { useAppContext } from '../context/AppContext.tsx';
+import { Job, EngineerProfile, Review } from '../types';
+import { X, Star } from './Icons';
+import { useAppContext } from '../context/AppContext';
 
 interface ReviewModalProps {
     isOpen: boolean;

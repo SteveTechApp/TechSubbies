@@ -1,8 +1,8 @@
 import React from 'react';
-import { EngineerProfile, ProfileTier } from '../../types';
-import { StatCard } from '../../components/StatCard';
-import { User, Search, Star, Rocket, Briefcase, Mail } from '../../components/Icons';
-import { useAppContext } from '../../context/AppContext';
+import { EngineerProfile, ProfileTier } from '../../types/index.ts';
+import { StatCard } from '../../components/StatCard.tsx';
+import { User, Search, Star, Rocket, Briefcase, Mail } from '../../components/Icons.tsx';
+import { useAppContext } from '../../context/AppContext.tsx';
 
 interface DashboardViewProps {
     engineerProfile: EngineerProfile;

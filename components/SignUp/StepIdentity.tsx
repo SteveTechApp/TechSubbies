@@ -1,6 +1,6 @@
 import React from 'react';
-import { IdentityVerification } from '../../types/index.ts';
-import { FileUploadInput } from '../FileUploadInput.tsx';
+import { IdentityVerification } from '../../types';
+import { FileUploadInput } from '../FileUploadInput';
 
 interface StepIdentityProps {
     data: IdentityVerification;

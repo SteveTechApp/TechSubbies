@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext';
-// FIX: Corrected module import to remove file extension.
-import { EngineerProfile, TrainingProvider } from '../types';
-import { MOCK_TRAINING_PROVIDERS } from '../data/trainingProviders';
-import { Award, Loader, Sparkles } from './Icons';
+import { useAppContext } from '../context/AppContext.tsx';
+import { EngineerProfile, TrainingProvider } from '../types/index.ts';
+import { MOCK_TRAINING_PROVIDERS } from '../data/trainingProviders.ts';
+import { Award, Loader, Sparkles } from './Icons.tsx';
 
 interface Recommendation {
     courseName: string;

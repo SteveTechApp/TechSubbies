@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CreditCard, StripeLogo, Loader } from './Icons.tsx';
+import { X, CreditCard, StripeLogo, Loader } from './Icons';
 
 interface PaymentModalProps {
     isOpen: boolean;

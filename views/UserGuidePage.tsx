@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Footer } from '../components/Footer.tsx';
-import { Header } from '../components/Header.tsx';
-import { Page } from '../types/index.ts';
-import { FAQ_DATA } from '../data/faqData.ts';
-import { LifeBuoy, Search, User, Building, ChevronDown } from '../components/Icons.tsx';
+import { Footer } from '../components/Footer';
+import { Header } from '../components/Header';
+import { Page } from '../types';
+import { FAQ_DATA } from '../data/faqData';
+import { LifeBuoy, Search, User, Building, ChevronDown } from '../components/Icons';
 
 interface HelpCenterPageProps {
     onNavigate: (page: Page) => void;

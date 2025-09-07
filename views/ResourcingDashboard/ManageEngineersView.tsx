@@ -1,9 +1,8 @@
 import React, { useState, useMemo } from 'react';
-// FIX: Corrected module import to remove file extension.
-import { EngineerProfile } from '../../types';
-import { MapPin, Calendar, DollarSign, PlusCircle, Search, MessageCircle } from '../../components/Icons';
-import { useAppContext } from '../../context/AppContext';
-import { formatDisplayDate } from '../../utils/dateFormatter';
+import { EngineerProfile } from '../../types/index.ts';
+import { MapPin, Calendar, DollarSign, PlusCircle, Search, MessageCircle } from '../../components/Icons.tsx';
+import { useAppContext } from '../../context/AppContext.tsx';
+import { formatDisplayDate } from '../../utils/dateFormatter.ts';
 
 const ManagedEngineerCard = ({ profile, onMessage }: { profile: EngineerProfile, onMessage: (profileId: string) => void }) => (
     <div className="bg-white p-4 rounded-lg shadow-md border flex flex-col h-full">

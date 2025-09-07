@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { EngineerProfile, Job, ProfileTier, CompanyProfile } from '../../types/index.ts';
-import { useAppContext } from '../../context/AppContext.tsx';
-import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles.ts';
-import { Search, Sparkles, Loader } from '../../components/Icons.tsx';
-import { getDistance } from '../../utils/locationUtils.ts';
+import { EngineerProfile, Job, ProfileTier, CompanyProfile } from '../../types';
+import { useAppContext } from '../../context/AppContext';
+import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles';
+import { Search, Sparkles, Loader } from '../Icons';
+import { getDistance } from '../../utils/locationUtils';
 
 interface AiMatchResult {
     id: string;

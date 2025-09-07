@@ -129,7 +129,7 @@
       }
       @keyframes slide-fade-out {
         0% { opacity: 1; transform: translateX(0); }
-        100% { opacity: 0; transform: translateX(-20px); }
+        100% { opacity: 0; translateX(-20px); }
       }
       @keyframes cursor-click-path-1 { /* For Skill Rating */
         0% { top: 35%; left: 80%; opacity: 0; }
@@ -223,14 +223,6 @@
   <body class="bg-gray-50">
     <div id="root"></div>
     
-    <script>
-      window.process = {
-        env: {
-          API_KEY: 'PASTE_YOUR_GEMINI_API_KEY_HERE'
-        }
-      };
-    </script>
-
     <script type="text/babel" data-type="module" data-presets="react,typescript" src="./index.tsx"></script>
   </body>
 </html>

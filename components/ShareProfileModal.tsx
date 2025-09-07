@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { X, Copy, CheckCircle, Linkedin, XIcon, Mail } from './Icons.tsx';
+import { X, Copy, CheckCircle, Linkedin, XIcon, Mail } from './Icons';
 
 interface ShareProfileModalProps {
     isOpen: boolean;
@@ -66,18 +65,18 @@ export const ShareProfileModal = ({ isOpen, onClose, profileUrl, profileName }: 
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Share on</label>
-                        <div className="flex justify-around">
-                            {socialLinks.map(({ name, icon: Icon, url }) => (
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Or share directly on</label>
+                        <div className="flex justify-center gap-4">
+                            {socialLinks.map(link => (
                                 <a
-                                    key={name}
-                                    href={url}
+                                    key={link.name}
+                                    href={link.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex flex-col items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors"
+                                    className="p-3 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
+                                    aria-label={`Share on ${link.name}`}
                                 >
-                                    <Icon size={32} />
-                                    <span className="text-xs font-medium">{name}</span>
+                                    <link.icon size={24} className="text-gray-700" />
                                 </a>
                             ))}
                         </div>
