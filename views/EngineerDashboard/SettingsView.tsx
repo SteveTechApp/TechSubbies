@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
-import { EngineerProfile } from '../../types/index.ts';
-import { Save, ArrowLeft, ShieldCheck, AlertTriangle } from '../../components/Icons.tsx';
-import { useAppContext } from '../../context/AppContext.tsx';
+import { EngineerProfile } from '../../types';
+import { Save, ArrowLeft, ShieldCheck, AlertTriangle } from '../../components/Icons';
+import { useAppContext } from '../../context/AppContext';
 
 interface SettingsViewProps {
     profile: EngineerProfile;

@@ -1,9 +1,10 @@
+
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../../context/AppContext.tsx';
-import { Job, EngineerProfile } from '../../types/index.ts';
-import { ApplyAsEngineerModal } from '../../components/ApplyAsEngineerModal.tsx';
-import { Search, MapPin, Calendar, DollarSign, Clock, MessageCircle, Briefcase, Layers } from '../../components/Icons.tsx';
-import { formatDisplayDate } from '../../utils/dateFormatter.ts';
+import { useAppContext } from '../../context/AppContext';
+import { Job, EngineerProfile } from '../../types';
+import { ApplyAsEngineerModal } from '../../components/ApplyAsEngineerModal';
+import { Search, MapPin, Calendar, DollarSign, Clock, Briefcase, Layers, MessageCircle } from '../../components/Icons';
+import { formatDisplayDate } from '../../utils/dateFormatter';
 
 interface ResourcingJobCardProps {
     job: Job;

@@ -1,6 +1,7 @@
+
 import React, { useState, useMemo } from 'react';
-import { EngineerProfile } from '../../types/index.ts';
-import { ChevronLeft, ChevronRight, ArrowLeft, Link as LinkIcon, Copy, CheckCircle } from '../../components/Icons.tsx';
+import { EngineerProfile } from '../../types';
+import { ChevronLeft, ChevronRight, ArrowLeft, Link as LinkIcon, Copy, CheckCircle } from '../../components/Icons';
 
 interface AvailabilityViewProps {
     profile: EngineerProfile;

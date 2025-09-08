@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
-import { DashboardView } from './AdminDashboard/DashboardView.tsx';
-import { UserManagementView } from './AdminDashboard/UserManagementView.tsx';
-import { JobManagementView } from './AdminDashboard/JobManagementView.tsx';
-import { PlatformSettingsView } from './AdminDashboard/PlatformSettingsView.tsx';
-import { MonetizationView } from './AdminDashboard/MonetizationView.tsx';
-import { useAppContext } from '../context/AppContext.tsx';
+import { DashboardSidebar } from '../components/DashboardSidebar';
+import { DashboardView } from './AdminDashboard/DashboardView';
+import { UserManagementView } from './AdminDashboard/UserManagementView';
+import { JobManagementView } from './AdminDashboard/JobManagementView';
+import { PlatformSettingsView } from './AdminDashboard/PlatformSettingsView';
+import { MonetizationView } from './AdminDashboard/MonetizationView';
+import { useAppContext } from '../context/AppContext';
 
 export const AdminDashboard = () => {
     const { setCurrentPageContext } = useAppContext();

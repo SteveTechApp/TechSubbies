@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { DashboardSidebar } from '../components/DashboardSidebar.tsx';
-import { useAppContext } from '../context/AppContext.tsx';
-import { DashboardView } from './ResourcingDashboard/DashboardView.tsx';
-import { ManageEngineersView } from './ResourcingDashboard/ManageEngineersView.tsx';
-import { FindJobsView } from './ResourcingDashboard/FindJobsView.tsx';
-import { MessagesView } from './MessagesView.tsx';
-import { PlacementsView } from './ResourcingDashboard/PlacementsView.tsx';
-import { InvoicesView } from './InvoicesView.tsx';
+import { DashboardSidebar } from '../components/DashboardSidebar';
+import { useAppContext } from '../context/AppContext';
+import { DashboardView } from './ResourcingDashboard/DashboardView';
+import { ManageEngineersView } from './ResourcingDashboard/ManageEngineersView';
+import { FindJobsView } from './ResourcingDashboard/FindJobsView';
+import { MessagesView } from './MessagesView';
+import { PlacementsView } from './ResourcingDashboard/PlacementsView';
+import { InvoicesView } from './InvoicesView';
 
 export const ResourcingDashboard = () => {
     const { user, engineers, applications, contracts, setCurrentPageContext } = useAppContext();

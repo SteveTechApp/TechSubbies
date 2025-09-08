@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Job, EngineerProfile } from '../types/index.ts';
-import { ResultDisplay } from './ResultDisplay.tsx';
-import { BrainCircuit, Loader } from './Icons.tsx';
+import { useAppContext } from '../context/AppContext';
+import { Job, EngineerProfile } from '../types';
+import { ResultDisplay } from './ResultDisplay';
+import { BrainCircuit, Loader } from './Icons';
 
 export interface AnalysisResult {
     skill_match_assessment: string;

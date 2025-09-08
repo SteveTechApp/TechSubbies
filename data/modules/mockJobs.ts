@@ -1,4 +1,4 @@
-import { Job, CompanyProfile, Currency, JobType, ExperienceLevel } from '../../types';
+import { Job, CompanyProfile, Currency, JobType, ExperienceLevel, ResourcingCompanyProfile } from '../../types';
 // FIX: Corrected import path for MOCK_COMPANIES to resolve module error.
 import { MOCK_COMPANIES } from './mockGeneratedProfiles';
 import { JOB_ROLE_DEFINITIONS } from '../jobRoles';
@@ -23,18 +23,17 @@ const MOCK_JOB_1: Job = {
     status: 'active',
     jobType: JobType.CONTRACT,
     experienceLevel: ExperienceLevel.SENIOR,
-    jobRole: 'AV Commissioning Engineer',
+    jobRole: 'AV Systems Engineer',
     skillRequirements: [
-        { name: 'Control system loading & debugging (Crestron Toolbox, Biamp SageVue)', importance: 'essential' },
-        { name: 'DSP configuration (Gain structure, AEC, automixing)', importance: 'essential' },
-        { name: 'Configuring audio networking (Dante Level 3, AVB)', importance: 'essential' },
-        { name: 'AV-over-IP network configuration (IGMP Snooping, QoS/DSCP)', importance: 'essential' },
-        { name: 'EDID management & resolution scaling', importance: 'desirable' },
-        { name: 'As-built documentation creation', importance: 'desirable' },
+        { name: 'System commissioning and testing procedures', importance: 'essential' },
+        { name: 'Troubleshooting complex AV systems', importance: 'essential' },
+        { name: 'Network protocols (TCP/IP, IGMP, PTP)', importance: 'essential' },
+        { name: 'Performance optimization', importance: 'desirable' },
     ],
 };
 
-const generateMockJobs = (count: number, companies: CompanyProfile[]): Job[] => {
+// FIX: Updated the 'companies' parameter type to accept both CompanyProfile and ResourcingCompanyProfile.
+const generateMockJobs = (count: number, companies: (CompanyProfile | ResourcingCompanyProfile)[]): Job[] => {
     if (companies.length === 0) return [];
     return Array.from({ length: count }, (_, i) => {
         const roleDef = getRandom(JOB_ROLE_DEFINITIONS);

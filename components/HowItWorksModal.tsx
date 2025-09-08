@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
-import { X, User, Building, FileText, DollarSign, Search, Sparkles, Users, Handshake, CheckCircle } from './Icons.tsx';
-import { Page } from '../types/index.ts';
+import { X, User, Building, FileText, DollarSign, Search, Sparkles, Users, Handshake, CheckCircle } from './Icons';
+import { Page } from '../types';
 
 interface HowItWorksModalProps {
     isOpen: boolean;

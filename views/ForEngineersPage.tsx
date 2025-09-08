@@ -1,146 +1,101 @@
-import React, { useState, useEffect } from 'react';
-import { Footer } from '../components/Footer.tsx';
-import { Header } from '../components/Header.tsx';
-import { Page, ProfileTier } from '../types/index.ts';
-import { CheckCircle, BarChart, Star, Rocket, Clapperboard, TrendingUp, Award, DollarSign, Users } from '../components/Icons.tsx';
-import { HERO_IMAGES } from '../data/assets.ts';
+
+import React from 'react';
+import { Page } from '../types';
+import { PageHeader } from '../components/PageHeader';
+import { HighlightCard } from '../components/HighlightCard';
+import { Star, Sparkles, Handshake, DollarSign, Users, Briefcase } from '../components/Icons';
 
 interface ForEngineersPageProps {
-    onNavigate: (page: Page) => void;
-    onHowItWorksClick: () => void;
+  onNavigate: (page: Page) => void;
 }
 
-const FeatureListItem = ({ children }: { children: React.ReactNode }) => (
-    <li className="flex items-start">
-        <CheckCircle className="w-5 h-5 text-green-500 mr-3 mt-1 flex-shrink-0" />
-        <span className="text-gray-600">{children}</span>
-    </li>
-);
+export const ForEngineersPage = ({ onNavigate }: ForEngineersPageProps) => {
+  return (
+    <div className="bg-white">
+      <PageHeader onBack={() => onNavigate('landing')} />
 
-const TestimonialCard = ({ quote, name, role, avatar }: { quote: string, name: string, role: string, avatar: string }) => (
-    <div className="bg-blue-700 p-4 rounded-lg text-center h-full flex flex-col">
-        <img src={avatar} alt={name} className="w-14 h-14 rounded-full mx-auto -mt-8 border-4 border-blue-600 shadow-lg"/>
-        <p className="text-blue-200 italic text-xs my-3 flex-grow">"{quote}"</p>
-        <div>
-            <p className="font-bold text-white text-sm">{name}</p>
-            <p className="text-xs text-blue-300">{role}</p>
+      {/* Hero Section */}
+      <section className="relative bg-blue-600 text-white py-20 text-center">
+         <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1581092921462-205273467433?q=80&w=2070&auto=format&fit=crop')` }}></div>
+         <div className="relative container mx-auto px-4">
+            <h1 className="text-4xl md:text-5xl font-extrabold mb-4">Your Skills. Your Rate. Your Contracts.</h1>
+            <p className="text-lg md:text-xl max-w-3xl mx-auto">
+                TechSubbies is built for specialist engineers. Showcase your deep expertise, get matched with high-value jobs, and take control of your freelance career.
+            </p>
         </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold">Features Designed For You</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto mt-4">Stop wasting time on generic job boards. Our platform is built to understand and highlight your unique technical skills.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <HighlightCard icon={Star} title="Detailed Skills Profile">
+              Go beyond a basic CV. Add specialist roles and rate your competency on granular, industry-specific skills to prove your expertise.
+            </HighlightCard>
+            <HighlightCard icon={Sparkles} title="AI-Powered Matching">
+              Our AI reads the fine print. It matches your detailed skills profile to jobs that require your specific knowledge, so you only see relevant opportunities.
+            </HighlightCard>
+            <HighlightCard icon={Handshake} title="Direct Client Access">
+              No recruiters in the middle. Communicate, negotiate, and sign contracts directly with the hiring companies.
+            </HighlightCard>
+            <HighlightCard icon={DollarSign} title="Secure & Prompt Payments">
+                Utilize our escrow system for milestone projects. Once work is approved, payment is released. No more chasing invoices.
+            </HighlightCard>
+             <HighlightCard icon={Users} title="Build Your Network">
+                Every completed contract adds a client to your permanent network, making it easy to get repeat work from companies who trust you.
+            </HighlightCard>
+             <HighlightCard icon={Briefcase} title="One-Click Applications">
+                Your profile is your application. Find a job you like and apply with a single click. We'll handle the rest.
+            </HighlightCard>
+          </div>
+        </div>
+      </section>
+      
+       {/* How It Works Steps */}
+       <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+                <h2 className="text-3xl md:text-4xl font-bold">Your Journey on TechSubbies</h2>
+            </div>
+            <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12">
+                <div className="text-center md:text-left">
+                    <div className="text-5xl font-extrabold text-blue-100 mb-2">01</div>
+                    <h3 className="text-2xl font-bold mb-2">Create Your Profile</h3>
+                    <p className="text-gray-600">Build your free profile in minutes. Upgrade to a premium 'Skills Profile' to add specialist roles and showcase your deep expertise to stand out.</p>
+                </div>
+                 <div className="text-center md:text-left">
+                    <div className="text-5xl font-extrabold text-blue-100 mb-2">02</div>
+                    <h3 className="text-2xl font-bold mb-2">Find & Apply</h3>
+                    <p className="text-gray-600">Search our exclusive job board. Our AI ensures you see the most relevant contracts first. Apply with a single click.</p>
+                </div>
+                 <div className="text-center md:text-left">
+                    <div className="text-5xl font-extrabold text-blue-100 mb-2">03</div>
+                    <h3 className="text-2xl font-bold mb-2">Sign & Work</h3>
+                    <p className="text-gray-600">Receive offers and sign contracts directly on the platform with e-signatures. No more chasing paperwork or emails.</p>
+                </div>
+                 <div className="text-center md:text-left">
+                    <div className="text-5xl font-extrabold text-blue-100 mb-2">04</div>
+                    <h3 className="text-2xl font-bold mb-2">Get Paid & Grow</h3>
+                    <p className="text-gray-600">Submit timesheets or milestones for approval. Get paid securely and on time. Every completed job builds your reputation and network.</p>
+                </div>
+            </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="bg-blue-50 py-20">
+        <div className="container mx-auto px-4 text-center">
+            <h2 className="text-3xl font-bold text-gray-800">Ready to Find Your Next Contract?</h2>
+            <p className="text-gray-600 my-4 max-w-2xl mx-auto">Join a network of elite freelance professionals and connect with the UK's top technology companies.</p>
+            <button onClick={() => onNavigate('engineerSignUp')} className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 mt-2">
+                Sign Up For Free
+            </button>
+        </div>
+      </section>
     </div>
-);
-
-const FeatureDetailCard = ({ icon: Icon, title, children }: { icon: React.ComponentType<any>, title: string, children: React.ReactNode }) => (
-    <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <div className="flex items-center mb-2">
-            <Icon className="w-6 h-6 text-blue-500 mr-2" />
-            <h3 className="text-base font-bold">{title}</h3>
-        </div>
-        <p className="text-gray-600 text-xs">{children}</p>
-    </div>
-);
-
-export const ForEngineersPage = ({ onNavigate, onHowItWorksClick }: ForEngineersPageProps) => {
-    const [heroImage, setHeroImage] = useState('');
-
-    useEffect(() => {
-        setHeroImage(HERO_IMAGES.engineers[Math.floor(Math.random() * HERO_IMAGES.engineers.length)]);
-    }, []);
-
-    return (
-        <div className="bg-gray-50 flex flex-col min-h-screen">
-            <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
-            <main className="flex-grow pt-14">
-                <section className="relative text-white text-center min-h-[40vh] flex items-center justify-center px-4 bg-cover bg-center" style={{ backgroundImage: `url('${heroImage}')` }}>
-                    <div className="absolute inset-0 bg-black opacity-60"></div>
-                    <div className="relative z-10 max-w-4xl">
-                        <h1 className="text-xl md:text-3xl font-extrabold mb-2">Your Career, Supercharged.</h1>
-                        <p className="text-xs md:text-sm mx-auto mb-4">Showcase your specialist skills, get matched with high-value contracts, and take control of your freelance career. All on one dedicated platform.</p>
-                        <button onClick={() => onNavigate('login')} className="bg-blue-600 text-white font-bold py-1.5 px-5 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">Create Your Free Profile</button>
-                    </div>
-                </section>
-                
-                <section className="py-4 bg-white">
-                    <div className="container mx-auto px-4 text-center">
-                         <h2 className="text-xl font-bold text-gray-800 mb-3">How TechSubbies Works For You</h2>
-                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-7xl mx-auto">
-                            <FeatureDetailCard icon={Star} title="Build a Skills Profile">
-                                Go beyond a simple CV. Our Skills Profile lets you add specialist roles and rate your competency on granular, industry-specific skills.
-                            </FeatureDetailCard>
-                            <FeatureDetailCard icon={TrendingUp} title="Get Matched, Not Lost">
-                                Stop hoping your CV gets noticed. Our AI matching engine analyzes your detailed skills against company requirements to put you at the top of the list.
-                            </FeatureDetailCard>
-                             <FeatureDetailCard icon={DollarSign} title="Secure, Fast Payments">
-                                Work with confidence. Our integrated escrow system secures your payment for milestones before you even start work.
-                            </FeatureDetailCard>
-                             <FeatureDetailCard icon={Users} title="Build Your Network">
-                                Every completed contract adds the company to your "My Connections" list, creating a valuable, permanent network of clients.
-                            </FeatureDetailCard>
-                         </div>
-                    </div>
-                </section>
-
-                <section className="py-4 bg-gray-50">
-                    <div className="container mx-auto px-4 max-w-4xl">
-                        <h2 className="text-xl font-bold text-center mb-3">All The Tools You Need</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
-                            <FeatureListItem>
-                                <strong>Free Basic Profile:</strong> Get started with a professional profile, set your availability, and apply for jobs at no cost.
-                            </FeatureListItem>
-                             <FeatureListItem>
-                                <strong>AI-Powered Tools:</strong> (Premium) Let our AI suggest relevant skills to add to your profile or recommend high-value certifications to boost your career.
-                            </FeatureListItem>
-                             <FeatureListItem>
-                                <strong>Profile Boosts:</strong> (Premium) Get a temporary boost to the top of search results for maximum visibility when you need it most.
-                            </FeatureListItem>
-                             <FeatureListItem>
-                                <strong>Visual Case Studies:</strong> (Premium) Use our storyboard creator to build compelling visual walkthroughs of your best projects.
-                            </FeatureListItem>
-                             <FeatureListItem>
-                                <strong>Direct Communication:</strong> Message companies directly to discuss project details and negotiate terms. No recruiters, no middlemen.
-                            </FeatureListItem>
-                            <FeatureListItem>
-                                <strong>Integrated Contracts & Escrow:</strong> Manage your work agreements directly on the platform, from e-signatures to secure, escrow-funded milestone payments.
-                            </FeatureListItem>
-                        </div>
-                    </div>
-                </section>
-                
-                <section className="py-4 bg-blue-600">
-                    <div className="container mx-auto px-4">
-                        <h2 className="text-xl font-bold text-center text-white mb-6">Hear From Our Engineers</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-                           <TestimonialCard 
-                                avatar="https://xsgames.co/randomusers/assets/avatars/male/74.jpg"
-                                name="Neil B."
-                                role="Senior AV Engineer"
-                                quote="The escrow system is a game-changer for freelancers. Knowing the funds are secured before starting a big milestone gives me total peace of mind. It's the most professional setup I've seen."
-                           />
-                           <TestimonialCard 
-                                avatar="https://xsgames.co/randomusers/assets/avatars/male/15.jpg"
-                                name="David C."
-                                role="Cloud & Network Architect"
-                                quote="I used to spend hours sifting through irrelevant job boards. Now, I let the AI matching do the work. I get notified about projects that are a perfect fit for my AWS and Cisco skills."
-                           />
-                           <TestimonialCard 
-                                avatar="https://xsgames.co/randomusers/assets/avatars/female/10.jpg"
-                                name="Samantha G."
-                                role="IT Support Specialist"
-                                quote="The 'My Connections' feature is brilliant. I'm not just finishing jobs; I'm building a real client list that I can see and track right on the platform. It feels like I'm building a proper business."
-                           />
-                        </div>
-                    </div>
-                </section>
-
-                <section className="py-4 bg-gray-800 text-white">
-                    <div className="container mx-auto px-4 text-center">
-                        <h2 className="text-xl font-bold mb-2">Ready to Find Your Next Project?</h2>
-                        <p className="text-sm mb-4">Join the UK's dedicated network for freelance tech professionals.</p>
-                        <button onClick={() => onNavigate('login')} className="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">
-                            Sign Up and Get Started
-                        </button>
-                    </div>
-                </section>
-            </main>
-            <Footer onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
-        </div>
-    );
+  );
 };

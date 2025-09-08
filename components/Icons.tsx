@@ -96,6 +96,7 @@ export const Link = createIcon(<><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0
 export const MousePointer = createIcon(<><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="m13 13 6 6"/></>);
 export const KanbanSquare = createIcon(<><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M8 7v4" /><path d="M12 7v7" /><path d="M16 7v10" /></>);
 export const Megaphone = createIcon(<><path d="m3 11 18-5v10L3 11z"/><path d="M11.5 14.5A2.5 2.5 0 0 1 9 12a2.5 2.5 0 0 1 2.5-2.5"/><path d="M14 13h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z"/></>);
+export const Gift = createIcon(<><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></>);
 export const StripeLogo = ({ className }: { className?: string }) => (
     <svg
         width="48"

@@ -1,9 +1,11 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { EngineerProfile, Job, ProfileTier, CompanyProfile } from '../../types';
 import { useAppContext } from '../../context/AppContext';
 import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles';
 import { Search, Sparkles, Loader } from '../Icons';
-import { getDistance } from '../../utils/locationUtils';
+import { getDistance, findLocationsInRegion } from '../../utils/locationUtils';
+import { LocationAutocomplete } from '../LocationAutocomplete';
 
 interface AiMatchResult {
     id: string;
@@ -19,7 +21,7 @@ interface FindTalentFiltersProps {
 export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTalentFiltersProps) => {
     const { user, geminiService } = useAppContext();
     const [filters, setFilters] = useState({
-        keyword: '', role: 'any', maxRate: 0, minExperience: 0, maxDistance: 0,
+        keyword: '', role: 'any', maxRate: 0, minExperience: 0, maxDistance: 0, location: ''
     });
     const [sort, setSort] = useState('relevance');
     const [aiSelectedJobId, setAiSelectedJobId] = useState('');
@@ -46,10 +48,16 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTal
             return newFilters;
         });
     };
+    
+    const handleLocationChange = (value: string) => {
+        setFilters(prev => ({ ...prev, location: value }));
+    };
 
     useEffect(() => {
         const aiScores = new Map(aiMatchResults.map(r => [r.id, r.match_score]));
-        const companyLocation = (user?.profile as CompanyProfile)?.location || '';
+        
+        const locationSearchText = filters.location.trim();
+        const regionLocations = locationSearchText ? findLocationsInRegion(locationSearchText) : [];
 
         const filtered = engineers
             .map(eng => ({ ...eng, matchScore: aiScores.get(eng.id) }))
@@ -59,11 +67,10 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTal
                 if (eng.experience < filters.minExperience) return false;
                 if (filters.role !== 'any' && !eng.selectedJobRoles?.some(r => r.roleName === filters.role)) return false;
                 
-                 if (filters.maxDistance > 0 && companyLocation) {
-                    const distance = getDistance(companyLocation, eng.location);
-                    if (distance === null || distance > filters.maxDistance) {
-                        return false;
-                    }
+                if (locationSearchText && locationSearchText !== 'Worldwide') {
+                    const engLocation = eng.location;
+                    const inRegion = regionLocations.some(l => engLocation.toLowerCase().includes(l.toLowerCase()));
+                    if (!inRegion) return false;
                 }
                 
                 if (filters.keyword.trim() !== '') {
@@ -89,7 +96,7 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTal
                 }
             });
         onFilterChange(filtered);
-    }, [engineers, filters, sort, aiMatchResults, onFilterChange, user]);
+    }, [engineers, filters, sort, aiMatchResults, onFilterChange]);
 
     const handleAiMatch = async () => {
         if (!aiSelectedJobId) return;
@@ -117,6 +124,10 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTal
                 <div>
                     <label htmlFor="keyword" className="block text-sm font-medium text-gray-700">Keyword</label>
                     <input type="text" id="keyword" name="keyword" value={filters.keyword} onChange={handleFilterChange} placeholder="e.g., Crestron, Cisco" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" />
+                </div>
+                 <div>
+                    <label htmlFor="location" className="block text-sm font-medium text-gray-700">Location</label>
+                    <LocationAutocomplete value={filters.location} onValueChange={handleLocationChange} />
                 </div>
                 <div>
                     <label htmlFor="role" className="block text-sm font-medium text-gray-700">Specialist Role</label>

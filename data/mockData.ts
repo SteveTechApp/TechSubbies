@@ -1,3 +1,4 @@
+
 import { User, Role } from '../types';
 // FIX: Corrected module imports after refactoring mockProfiles.ts to solve module resolution error.
 import { MOCK_ENGINEERS, MOCK_COMPANIES } from './modules/mockGeneratedProfiles';
@@ -34,7 +35,7 @@ const MOCK_COMPANY_1 = MOCK_COMPANIES.find(c => c.id === 'comp-1')!;
 export const MOCK_USER_FREE_ENGINEER: User = { id: 'user-free', role: Role.ENGINEER, profile: MOCK_FREE_ENGINEER };
 
 export const MOCK_USERS: { [key in Role]: User } = {
-    [Role.ENGINEER]: { id: 'user-1', role: Role.ENGINEER, profile: MOCK_ENGINEERS.find(e => e.id === 'eng-1')! },
+    [Role.ENGINEER]: { id: 'user-steve', role: Role.ENGINEER, profile: MOCK_ENGINEER_STEVE },
     [Role.COMPANY]: { id: 'user-2', role: Role.COMPANY, profile: MOCK_COMPANY_1 },
     [Role.RESOURCING_COMPANY]: { id: 'user-3', role: Role.RESOURCING_COMPANY, profile: MOCK_RESOURCING_COMPANY_1 },
     [Role.ADMIN]: { id: 'user-4', role: Role.ADMIN, profile: MOCK_ADMIN_PROFILE },
@@ -60,4 +61,7 @@ export const ALL_MOCK_USERS: User[] = [
 // Add Steve's user object separately if he's not in the generated engineers
 if (!ALL_MOCK_USERS.some(u => u.profile.id === 'eng-steve')) {
     ALL_MOCK_USERS.push({ id: 'user-eng-steve', role: Role.ENGINEER, profile: MOCK_ENGINEER_STEVE });
+}
+if (!ALL_MOCK_USERS.some(u => u.profile.id === 'eng-free')) {
+    ALL_MOCK_USERS.push({ id: 'user-eng-free', role: Role.ENGINEER, profile: MOCK_FREE_ENGINEER });
 }

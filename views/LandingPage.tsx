@@ -1,112 +1,119 @@
-import React, { useState, useEffect } from 'react';
-import { Footer } from '../components/Footer.tsx';
-import { Header } from '../components/Header.tsx';
-import { Page } from '../types/index.ts';
-import { Search, User, Building, Zap } from '../components/Icons.tsx';
-import { FeatureSlideshow } from '../components/FeatureSlideshow.tsx';
-import { HERO_IMAGES } from '../data/assets.ts';
-import { HighlightCard } from '../components/HighlightCard.tsx';
-import { useAppContext } from '../context/AppContext.tsx';
+import React from 'react';
+import { useAppContext } from '../context/AppContext';
+import { Page } from '../types';
+import { FeatureCard } from '../components/FeatureCard';
+import { Search, Sparkles, Handshake } from '../components/Icons';
+import { FeatureSlideshow } from '../components/FeatureSlideshow';
+import { TestimonialCard } from '../components/TestimonialCard';
+import { AVATARS } from '../data/assets';
 
 interface LandingPageProps {
-    onNavigate: (page: Page) => void;
-    onHowItWorksClick: () => void;
+  onNavigate: (page: Page) => void;
 }
 
-export const LandingPage = ({ onNavigate, onHowItWorksClick }: LandingPageProps) => {
-    const { companies } = useAppContext();
-    const [heroImage, setHeroImage] = useState('');
+export const LandingPage = ({ onNavigate }: LandingPageProps) => {
+  const { user } = useAppContext();
 
-    useEffect(() => {
-        setHeroImage(HERO_IMAGES.landing[Math.floor(Math.random() * HERO_IMAGES.landing.length)]);
-    }, []);
-
-    const featuredCompanies = companies.filter(c => c.consentToFeature);
-
-    return (
-        <div className="bg-white flex flex-col min-h-screen">
-            <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
-            <main className="flex-grow pt-14">
-                <section 
-                    className="relative text-white text-center min-h-[60vh] flex items-center justify-center px-4 bg-cover bg-center"
-                    style={{ backgroundImage: `url('${heroImage}')` }}
-                >
-                    <div className="absolute inset-0 bg-black opacity-60"></div>
-                    <div className="relative z-10 max-w-4xl">
-                        <h1 className="text-3xl md:text-5xl font-extrabold mb-4">The Network for Freelance Tech Talent</h1>
-                        <p className="text-lg md:text-xl mx-auto mb-8">Instantly connect with verified AV & IT engineers with confirmed availability. Post your contract for free and find the right skills, right now.</p>
-                        <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-                            <button onClick={() => onNavigate('login')} className="w-full sm:w-auto bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">
-                                Find Talent For Free
-                            </button>
-                            <button onClick={() => onNavigate('login')} className="w-full sm:w-auto bg-transparent border-2 border-white text-white font-bold py-3 px-8 rounded-lg hover:bg-white hover:text-black transition-colors">
-                                Find Work
-                            </button>
-                        </div>
-                    </div>
-                </section>
-
-                {featuredCompanies.length > 0 && (
-                    <section className="py-8 bg-gray-100">
-                        <div className="container mx-auto px-4 text-center">
-                            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-6">Trusted by leading companies</h2>
-                            <div className="flex justify-center items-center gap-8 flex-wrap">
-                               {featuredCompanies.map(company => (
-                                   <img key={company.id} src={company.logo} alt={company.name} className="h-10 object-contain" title={company.name} />
-                               ))}
-                            </div>
-                        </div>
-                    </section>
-                )}
-                
-                <section id="how-it-works" className="py-16 bg-white">
-                    <div className="container mx-auto px-4 max-w-7xl">
-                        <h2 className="text-3xl font-bold text-center mb-4">A Smarter Way to Connect</h2>
-                        <p className="text-center text-gray-600 mb-12 max-w-3xl mx-auto">TechSubbies isn't another job board. It's a skill-matching engine designed for the speed and precision today's tech projects demand.</p>
-                        <div className="w-full aspect-[16/9] lg:aspect-[2/1] max-w-5xl mx-auto">
-                           <FeatureSlideshow />
-                        </div>
-                    </div>
-                </section>
-
-                <section className="py-16 bg-gray-50">
-                    <div className="container mx-auto px-4">
-                        <div className="grid md:grid-cols-2 gap-12 items-center">
-                            <div className="text-center md:text-left">
-                                <h2 className="text-3xl font-bold mb-4">For Companies</h2>
-                                <p className="text-gray-600 mb-6">Stop searching, start building. Get direct access to the talent you need, exactly when you need it.</p>
-                                <ul className="space-y-4 text-left">
-                                    <li className="flex items-start"><Building className="w-6 h-6 text-blue-500 mr-3 flex-shrink-0 mt-1" /><span><strong>Post Contracts for Free:</strong> No placement fees, no hidden costs. Attract the best talent by creating a vibrant marketplace.</span></li>
-                                    <li className="flex items-start"><Zap className="w-6 h-6 text-blue-500 mr-3 flex-shrink-0 mt-1" /><span><strong>AI Smart Match:</strong> Instantly get a ranked list of the best-fit candidates based on their detailed, rated skills.</span></li>
-                                    <li className="flex items-start"><User className="w-6 h-6 text-blue-500 mr-3 flex-shrink-0 mt-1" /><span><strong>Build Your Talent Pool:</strong> Add your best freelancers to a private list for direct invitations to future projects.</span></li>
-                                </ul>
-                                 <button onClick={() => onNavigate('forCompanies')} className="mt-8 bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700">Learn More</button>
-                            </div>
-                             <div className="text-center md:text-left">
-                                <h2 className="text-3xl font-bold mb-4">For Engineers</h2>
-                                <p className="text-gray-600 mb-6">Showcase your specialist skills, get matched with high-value contracts, and build your freelance business.</p>
-                                <ul className="space-y-4 text-left">
-                                     <li className="flex items-start"><Search className="w-6 h-6 text-blue-500 mr-3 flex-shrink-0 mt-1" /><span><strong>Build a Skills Profile:</strong> Go beyond a CV. Add specialist roles and rate your competency on granular skills to stand out.</span></li>
-                                     <li className="flex items-start"><User className="w-6 h-6 text-blue-500 mr-3 flex-shrink-0 mt-1" /><span><strong>Direct Communication:</strong> Talk directly with hiring managers. No recruiters, no middlemen.</span></li>
-                                     <li className="flex items-start"><Building className="w-6 h-6 text-blue-500 mr-3 flex-shrink-0 mt-1" /><span><strong>Build Your Client Network:</strong> Every completed contract adds a permanent connection to your private network.</span></li>
-                                </ul>
-                                <button onClick={() => onNavigate('forEngineers')} className="mt-8 bg-gray-800 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-900">Learn More</button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-                
-                <section className="py-16 bg-blue-800 text-white">
-                    <div className="container mx-auto px-4 text-center">
-                        <h2 className="text-3xl font-bold mb-4">Join the Network Today</h2>
-                        <p className="text-blue-200 mb-8">Whether you're hiring or looking for your next contract, TechSubbies is your dedicated platform.</p>
-                        <button onClick={() => onNavigate('login')} className="bg-white text-blue-800 font-bold py-3 px-8 rounded-lg hover:bg-gray-200 transition-transform transform hover:scale-105">
-                            Get Started
-                        </button>
-                    </div>
-                </section>
-            </main>
-            <Footer onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
+  return (
+    <div className="bg-white">
+      {/* Hero Section */}
+      <section className="relative bg-gray-800 text-white pt-32 pb-20 text-center">
+        <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=2070&auto=format&fit=crop')` }}></div>
+        <div className="relative container mx-auto px-4">
+          <h1 className="text-4xl md:text-6xl font-extrabold mb-4 animate-fade-in-up">The UK's Specialist Freelance Network</h1>
+          <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto mb-8 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            AI-powered matching connects expert AV &amp; IT engineers with the UK's leading tech companies. No recruiters. No placement fees. Just direct connections.
+          </p>
+          <div className="flex justify-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <button
+              onClick={() => onNavigate(user ? (user.profile.role === 'Engineer' ? 'engineerDashboard' : 'companyDashboard') : 'engineerSignUp')}
+              className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105"
+            >
+              Find Work
+            </button>
+            <button
+              onClick={() => onNavigate(user ? (user.profile.role === 'Engineer' ? 'engineerDashboard' : 'companyDashboard') : 'companySignUp')}
+              className="bg-white text-blue-700 font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-transform transform hover:scale-105"
+            >
+              Find Talent
+            </button>
+          </div>
         </div>
-    );
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Why TechSubbies?</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto mb-12">We're not another job board. We're a technology platform built for the specifics of the specialist tech industry.</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <FeatureCard icon={Search} title="Precision Search">
+              Companies find engineers based on granular, rated skills, not just keywords. Engineers get matched with jobs that truly fit their expertise.
+            </FeatureCard>
+            <FeatureCard icon={Sparkles} title="AI Smart Match">
+              Our Gemini-powered AI instantly ranks the best candidates for your job, complete with a percentage match score. Hiring decisions in minutes, not weeks.
+            </FeatureCard>
+            <FeatureCard icon={Handshake} title="Direct Connections">
+              No recruiters, no middlemen, no placement fees. Companies post jobs for free and connect directly with the freelance talent they need.
+            </FeatureCard>
+          </div>
+        </div>
+      </section>
+
+       {/* How It Works (Visual) Section */}
+       <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">The Future of Freelance Hiring</h2>
+                <p className="text-gray-600 max-w-3xl mx-auto">See how our unique skills-first approach creates the perfect match between client needs and engineer expertise.</p>
+            </div>
+            <div className="max-w-4xl mx-auto h-[30rem] md:h-[40rem]">
+                <FeatureSlideshow />
+            </div>
+        </div>
+      </section>
+      
+       {/* Testimonials Section */}
+      <section className="py-20 bg-blue-50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Trusted by the Industry</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+             <TestimonialCard
+              text="TechSubbies is a game-changer. The AI matching gave me the top 3 candidates for a complex Crestron role in under an hour. We had a contract signed the same day."
+              author="Steve G., Project Manager"
+              company="Pro AV Solutions"
+              avatar={AVATARS.steve}
+            />
+            <TestimonialCard
+              text="As a freelance engineer, the Skills Profile is incredible. I can finally showcase my deep expertise in Biamp and Dante, and I'm getting invites for jobs that are a perfect fit."
+              author="Neil B., AV Engineer"
+              company="Freelance Contractor"
+              avatar={AVATARS.neil}
+            />
+             <TestimonialCard
+              text="We've cut our hiring time by 80%. No more sifting through irrelevant CVs. We post a job, get a ranked list of matched engineers, and start conversations. It's that simple."
+              author="Emily C., Operations Director"
+              company="Nexus IT"
+              avatar={AVATARS.emily}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-20 bg-gray-800 text-white">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Join?</h2>
+          <p className="text-gray-300 max-w-2xl mx-auto mb-8">Whether you're looking for your next contract or searching for specialist talent, get started for free today.</p>
+           <button
+              onClick={() => onNavigate('engineerSignUp')}
+              className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105"
+            >
+              Create Your Profile
+            </button>
+        </div>
+      </section>
+
+    </div>
+  );
 };

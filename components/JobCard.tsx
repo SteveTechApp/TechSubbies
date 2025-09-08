@@ -1,68 +1,68 @@
 import React from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Job, Role, ProfileTier, EngineerProfile } from '../types/index.ts';
-import { MapPin, Calendar, DollarSign, Clock, MessageCircle, Briefcase, Layers, Sparkles } from './Icons.tsx';
-import { formatDisplayDate } from '../utils/dateFormatter.ts';
+import { Job, CompanyProfile } from '../types';
+import { useAppContext } from '../context/AppContext';
+import { MapPin, DollarSign, Clock, Layers, Briefcase, Calendar } from './Icons';
+import { formatDisplayDate } from '../utils/dateFormatter';
 
 interface JobCardProps {
     job: Job;
-    setActiveView?: (view: string) => void;
+    setActiveView: (view: string) => void;
 }
 
 export const JobCard = ({ job, setActiveView }: JobCardProps) => {
-    const { user, applyForJob, superchargeApplication, startConversationAndNavigate } = useAppContext();
-    const canMessage = user?.role === Role.ENGINEER && setActiveView;
-    const isFreeTier = user?.role === Role.ENGINEER && (user.profile as EngineerProfile).profileTier === ProfileTier.BASIC;
+    const { companies, applyForJob, user, applications } = useAppContext();
+    const company = companies.find(c => c.id === job.companyId) as CompanyProfile | undefined;
+    
+    const hasApplied = user ? applications.some(app => app.jobId === job.id && app.engineerId === user.profile.id) : false;
 
-    const handleMessageClick = (e: React.MouseEvent) => {
-        e.stopPropagation(); 
-        if (canMessage) {
-            startConversationAndNavigate(job.companyId, () => setActiveView('Messages'));
+    if (!company) return null;
+
+    const handleApply = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (user && user.profile.role === 'Engineer' && !hasApplied) {
+            applyForJob(job.id, user.profile.id);
+            alert(`Successfully applied for: ${job.title}`);
         }
+    };
+    
+    const handleViewJob = () => {
+        // In a more complex app, this would navigate to a full job details page.
+        // For this demo, we can just log it.
+        console.log("Viewing job details for:", job.title);
+        alert("This would normally navigate to a full job details view.");
     };
 
     return (
-        <div className="bg-white p-5 rounded-lg shadow-md border border-gray-200 flex flex-col">
-            <div className="flex justify-between items-start gap-4">
+        <div 
+            onClick={handleViewJob}
+            className="bg-white p-4 rounded-lg shadow-md border border-gray-200 hover:shadow-xl hover:border-blue-500 transition-all cursor-pointer"
+        >
+            <div className="flex items-start gap-4">
+                <img src={company.logo || company.avatar} alt={company.name} className="w-12 h-12 rounded-lg object-contain bg-white p-1 border flex-shrink-0" />
                 <div className="flex-grow">
-                    <h3 className="text-xl font-bold text-blue-700">{job.title}</h3>
-                    <p className="text-gray-500">Posted on {formatDisplayDate(job.postedDate)}</p>
+                    <h3 className="text-lg font-bold text-blue-700">{job.title}</h3>
+                    <p className="text-sm font-semibold text-gray-600">{company.name}</p>
                 </div>
-                <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                    <button 
-                        onClick={() => applyForJob(job.id, undefined, false)}
-                        className="bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 whitespace-nowrap w-full"
-                    >
-                        Apply Now
-                    </button>
-                    {isFreeTier && (
-                         <button 
-                            onClick={() => superchargeApplication(job)}
-                            className="bg-purple-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-purple-700 transition-transform transform hover:scale-105 whitespace-nowrap w-full flex items-center justify-center"
-                        >
-                            <Sparkles size={16} className="mr-2"/> Supercharge (£1.99)
-                        </button>
-                    )}
-                    {canMessage && (
-                         <button 
-                            onClick={handleMessageClick}
-                            className="flex items-center justify-center bg-gray-200 text-gray-700 font-semibold py-2 px-5 rounded-lg hover:bg-gray-300 transition-colors whitespace-nowrap text-sm w-full"
-                        >
-                            <MessageCircle size={16} className="mr-2"/> Message Company
-                        </button>
-                    )}
-                </div>
+                <button
+                    onClick={handleApply}
+                    disabled={hasApplied}
+                    className={`px-4 py-2 text-sm font-bold rounded-md transition-colors ${
+                        hasApplied
+                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                            : 'bg-green-600 text-white hover:bg-green-700'
+                    }`}
+                >
+                    {hasApplied ? 'Applied' : 'Apply Now'}
+                </button>
             </div>
-            <div className="my-4 text-gray-700 flex-grow">
-                <p>{job.description.substring(0, 200)}...</p>
-            </div>
-            <div className="flex flex-wrap gap-x-6 gap-y-2 text-gray-600 border-t pt-3">
-                <span className="flex items-center"><MapPin size={16} className="mr-2 text-gray-400"/> {job.location}</span>
-                <span className="flex items-center"><DollarSign size={16} className="mr-2 text-gray-400"/> {job.currency}{job.dayRate} / day</span>
-                <span className="flex items-center"><Clock size={16} className="mr-2 text-gray-400"/> {job.duration}</span>
-                <span className="flex items-center"><Calendar size={16} className="mr-2 text-gray-400"/> Starts: {formatDisplayDate(job.startDate)}</span>
-                <span className="flex items-center"><Briefcase size={16} className="mr-2 text-gray-400"/> {job.jobType}</span>
-                <span className="flex items-center"><Layers size={16} className="mr-2 text-gray-400"/> {job.experienceLevel}</span>
+            <p className="text-sm text-gray-700 mt-3 line-clamp-2">{job.description}</p>
+            <div className="mt-3 pt-3 border-t border-gray-100 flex flex-wrap gap-x-4 gap-y-2 text-gray-600 text-sm">
+                 <span className="flex items-center"><MapPin size={14} className="mr-1.5 text-gray-400"/> {job.location}</span>
+                <span className="flex items-center"><DollarSign size={14} className="mr-1.5 text-gray-400"/> {job.currency}{job.dayRate} / day</span>
+                <span className="flex items-center"><Clock size={14} className="mr-1.5 text-gray-400"/> {job.duration}</span>
+                <span className="flex items-center"><Layers size={14} className="mr-1.5 text-gray-400"/> {job.experienceLevel}</span>
+                <span className="flex items-center"><Briefcase size={14} className="mr-1.5 text-gray-400"/> {job.jobType}</span>
+                <span className="flex items-center"><Calendar size={14} className="mr-1.5 text-gray-400"/> Starts: {formatDisplayDate(job.startDate)}</span>
             </div>
         </div>
     );

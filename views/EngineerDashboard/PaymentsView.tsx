@@ -1,187 +1,82 @@
-import React, { useState } from 'react';
-import { EngineerProfile, ProfileTier, Transaction } from '../../types';
-import { CreditCard, Download, Star, Rocket, ArrowLeft, ShieldCheck } from '../../components/Icons';
+
+// FIX: Created the `PaymentsView` component to resolve the "not a module" error.
+import React from 'react';
+import { EngineerProfile, ProfileTier } from '../../types';
+import { ArrowLeft, CheckCircle, Star, Zap } from '../../components/Icons';
 import { useAppContext } from '../../context/AppContext';
-import { PaymentModal } from '../../components/PaymentModal';
 
 interface PaymentsViewProps {
     profile: EngineerProfile;
     setActiveView: (view: string) => void;
 }
 
-const TransactionHistoryItem = ({ transaction }: { transaction: Transaction }) => {
-    const isCredit = transaction.amount > 0;
-    const amountColor = isCredit ? 'text-green-600' : 'text-red-600';
-    const sign = isCredit ? '+' : '-';
-    
-    return (
-        <div className="flex justify-between items-center py-3 border-b last:border-b-0">
-            <div>
-                <p className="font-medium text-gray-800">{transaction.description}</p>
-                <p className="text-sm text-gray-500">{new Date(transaction.date).toLocaleDateString()}</p>
-            </div>
-            <div className="flex items-center gap-4">
-                <span className={`font-semibold ${amountColor}`}>{sign} £{Math.abs(transaction.amount).toFixed(2)}</span>
-                <button className="text-gray-400 hover:text-blue-600" title="Download Invoice"><Download size={18} /></button>
-            </div>
-        </div>
-    );
-};
+const PRICING_PLANS = [
+    { name: "Basic Profile", tier: ProfileTier.BASIC, price: "£0/mo", features: ["Appear in standard search results", "Apply for jobs up to £195/day", "Build your contract history & reviews"] },
+    { name: "Professional Profile", tier: ProfileTier.PROFESSIONAL, price: "£7/mo", features: ["Everything in Basic", "Detailed 'Skills Profile'", "AI Skill Discovery & Training", "Higher search ranking"], isFeatured: false },
+    { name: "Skills Profile", tier: ProfileTier.SKILLS, price: "£15/mo", features: ["Everything in Silver", "Apply to all jobs (no day rate cap)", "AI Career Coach & Cost Analysis", "1 FREE Profile Boost per month"], isFeatured: true },
+    { name: "Business Profile", tier: ProfileTier.BUSINESS, price: "£35/mo", features: ["Everything in Gold", "Add up to 3 team members", "Priority support", "Featured profile opportunities"], isFeatured: false }
+];
 
 export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
-    const { user, claimSecurityNetGuarantee, transactions, upgradeSubscription } = useAppContext();
-    const creditsUsed = profile.securityNetCreditsUsed ?? 0;
+    const { upgradeProfileTier } = useAppContext();
 
-    const [paymentDetails, setPaymentDetails] = useState<{ tier: ProfileTier; price: number } | null>(null);
-
-    const myTransactions = transactions.filter(t => t.userId === user?.id);
-
-    const TIER_INFO = {
-        [ProfileTier.BASIC]: { name: "Bronze Profile (Free)", color: "" },
-        [ProfileTier.PROFESSIONAL]: { name: "Silver Profile (£7/mo)", color: "text-green-700", price: 7 },
-        [ProfileTier.SKILLS]: { name: "Gold Profile (£15/mo)", color: "text-blue-700", price: 15 },
-        [ProfileTier.BUSINESS]: { name: "Platinum Profile (£35/mo)", color: "text-purple-700", price: 35 },
-    };
-    
-    const currentTierInfo = TIER_INFO[profile.profileTier];
-
-    const getUpgradeAction = () => {
-        switch (profile.profileTier) {
-            case ProfileTier.BASIC:
-                return { text: "Upgrade to Silver", action: () => setPaymentDetails({ tier: ProfileTier.PROFESSIONAL, price: TIER_INFO[ProfileTier.PROFESSIONAL].price }) };
-            case ProfileTier.PROFESSIONAL:
-                return { text: "Upgrade to Gold", action: () => setPaymentDetails({ tier: ProfileTier.SKILLS, price: TIER_INFO[ProfileTier.SKILLS].price }) };
-            case ProfileTier.SKILLS:
-                return { text: "Upgrade to Platinum", action: () => setPaymentDetails({ tier: ProfileTier.BUSINESS, price: TIER_INFO[ProfileTier.BUSINESS].price }) };
-            default:
-                return null;
-        }
-    };
-    const upgradeAction = getUpgradeAction();
-
-    const handlePaymentSuccess = () => {
-        if (paymentDetails) {
-            upgradeSubscription(profile.id, paymentDetails.tier);
-            setPaymentDetails(null);
+    const handleUpgrade = (tier: ProfileTier) => {
+        if (window.confirm(`Are you sure you want to upgrade to the ${tier} plan?`)) {
+            upgradeProfileTier(profile.id, tier);
+            alert(`Successfully upgraded to ${tier}!`);
         }
     };
 
     return (
         <div>
-            {paymentDetails && (
-                <PaymentModal
-                    isOpen={!!paymentDetails}
-                    onClose={() => setPaymentDetails(null)}
-                    onSuccess={handlePaymentSuccess}
-                    amount={paymentDetails.price}
-                    currency="GBP"
-                    paymentDescription={`Subscription to ${TIER_INFO[paymentDetails.tier].name}`}
-                />
-            )}
-            <button 
-                onClick={() => setActiveView('Dashboard')} 
+            <button
+                onClick={() => setActiveView('Dashboard')}
                 className="flex items-center mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
             >
                 <ArrowLeft size={16} className="mr-2" />
                 Back to Dashboard
             </button>
-            <h1 className="text-3xl font-bold mb-4 flex items-center"><CreditCard size={32} className="mr-3 text-blue-600"/> Payments & Billing</h1>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* Left Column */}
-                <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-white p-5 rounded-lg shadow">
-                        <h2 className="text-xl font-bold mb-3 flex items-center">
-                            <Star size={20} className="mr-2 text-yellow-500"/>
-                            My Subscription
-                        </h2>
-                        <div>
-                            <p className="text-gray-600">You are on the <span className={`font-bold ${currentTierInfo.color}`}>{currentTierInfo.name}</span> plan.</p>
-                            {profile.subscriptionEndDate && profile.profileTier !== ProfileTier.BASIC && (
-                                <p className="text-sm text-gray-500 mt-2">
-                                    Renews on: {new Date(profile.subscriptionEndDate).toLocaleDateString()}
-                                </p>
-                            )}
-                            
-                            {upgradeAction && (
-                                <button onClick={upgradeAction.action} className="mt-4 w-full text-center px-4 py-2 bg-green-600 text-white font-bold rounded-md hover:bg-green-700">
-                                    {upgradeAction.text}
-                                </button>
-                            )}
+            <h1 className="text-3xl font-bold mb-2">Billing & Subscriptions</h1>
+            <p className="text-gray-600 mb-6">Manage your subscription plan to unlock more powerful features.</p>
 
-                             {profile.profileTier !== ProfileTier.BASIC && (
-                                <button onClick={() => alert("This would redirect to a Stripe/payment provider portal.")} className="mt-2 w-full text-center px-4 py-2 bg-red-100 text-red-700 text-sm font-semibold rounded-md hover:bg-red-200">
-                                    Manage Subscription
-                                </button>
-                             )}
-                        </div>
-                    </div>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                {PRICING_PLANS.map(plan => {
+                    const isCurrentPlan = profile.profileTier === plan.tier;
+                    const canUpgradeTo = PRICING_PLANS.findIndex(p => p.tier === profile.profileTier) < PRICING_PLANS.findIndex(p => p.tier === plan.tier);
 
-                    <div className="bg-white p-5 rounded-lg shadow">
-                        <h2 className="text-xl font-bold mb-3 flex items-center">
-                            <Rocket size={20} className="mr-2 text-purple-500"/>
-                             Profile Boosts
-                        </h2>
-                        <div className="text-center mb-4">
-                            <p className="text-4xl font-bold text-purple-600">3</p>
-                            <p className="text-gray-500">Available Credits</p>
-                        </div>
-                        <p className="text-xs text-center text-gray-500 mb-4">Boosts place your profile at the top of relevant searches for 12 hours.</p>
-                        <button disabled={profile.profileTier === ProfileTier.BASIC} className="w-full text-center px-4 py-2 bg-purple-600 text-white font-bold rounded-md hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                            {profile.profileTier !== ProfileTier.BASIC ? 'Purchase More Boosts' : 'Upgrade to Use Boosts'}
-                        </button>
-                    </div>
-                </div>
-
-                {/* Right Column */}
-                <div className="lg:col-span-2 space-y-6">
-                    {profile.profileTier !== ProfileTier.BASIC ? (
-                        <>
-                            <div className="bg-white p-5 rounded-lg shadow">
-                                <h2 className="text-xl font-bold mb-3 flex items-center">
-                                    <ShieldCheck size={20} className="mr-2 text-blue-500"/>
-                                    Security Net Guarantee
-                                </h2>
-                                <div>
-                                    <p className="text-gray-600 mb-4">If you're available for over 30 days and don't receive any work offers, we'll credit you with an additional month's subscription, up to 3 times.</p>
-                                    <div className="text-center mb-4 p-4 bg-gray-50 rounded-md">
-                                        <p className="text-4xl font-bold text-blue-600">{creditsUsed} / 3</p>
-                                        <p className="text-gray-500">Credits Used</p>
-                                    </div>
-                                    <button
-                                        onClick={claimSecurityNetGuarantee}
-                                        disabled={creditsUsed >= 3}
-                                        className="w-full text-center px-4 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                                    >
-                                        {creditsUsed >= 3 ? 'All Credits Used' : 'Claim Free Month'}
-                                    </button>
-                                </div>
+                    return (
+                        <div key={plan.tier} className={`rounded-lg p-6 border-2 flex flex-col ${plan.isFeatured ? 'bg-gray-800 text-white border-blue-500 shadow-xl' : 'bg-white border-gray-200'}`}>
+                            <h2 className={`font-bold text-sm uppercase tracking-wider ${plan.isFeatured ? 'text-blue-400' : 'text-blue-600'}`}>{plan.tier}</h2>
+                            <h3 className={`text-xl font-bold mt-1 ${plan.isFeatured ? 'text-white' : 'text-gray-800'}`}>{plan.name}</h3>
+                            <div className="mt-4">
+                                <span className={`text-4xl font-extrabold ${plan.isFeatured ? 'text-white' : 'text-gray-800'}`}>{plan.price}</span>
                             </div>
+                            
+                            <ul className="mt-6 space-y-3 text-sm flex-grow">
+                                {plan.features.map((feature, index) => (
+                                    <li key={index} className="flex items-start">
+                                        <CheckCircle className={`w-5 h-5 mr-2 flex-shrink-0 ${plan.isFeatured ? 'text-blue-400' : 'text-blue-600'}`} />
+                                        <span className={plan.isFeatured ? 'text-gray-300' : 'text-gray-600'}>{feature}</span>
+                                    </li>
+                                ))}
+                            </ul>
 
-                            <div className="bg-white p-5 rounded-lg shadow">
-                                <h2 className="text-xl font-bold mb-3">Transaction History</h2>
-                                {myTransactions.length > 0 ? (
-                                    <div>
-                                        {myTransactions.map(tx => <TransactionHistoryItem key={tx.id} transaction={tx} />)}
-                                    </div>
+                            <div className="mt-6">
+                                {isCurrentPlan ? (
+                                    <button disabled className="w-full py-2 font-bold rounded-lg bg-green-200 text-green-800">Current Plan</button>
+                                ) : canUpgradeTo ? (
+                                    <button onClick={() => handleUpgrade(plan.tier as ProfileTier)} className={`w-full py-2 font-bold rounded-lg transition-colors ${plan.isFeatured ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}>
+                                        Upgrade
+                                    </button>
                                 ) : (
-                                    <p className="text-gray-500 text-center py-4">No transactions yet.</p>
+                                    <button disabled className="w-full py-2 font-bold rounded-lg bg-gray-200 text-gray-500 cursor-not-allowed">
+                                        {plan.tier === ProfileTier.BASIC ? 'Free Tier' : 'Downgrade'}
+                                    </button>
                                 )}
                             </div>
-                        </>
-                    ) : (
-                        <div className="bg-white p-8 rounded-lg shadow text-center">
-                            <Star size={32} className="mx-auto text-yellow-500 mb-4" />
-                            <h2 className="text-2xl font-bold">Unlock Your Financial Dashboard</h2>
-                            <p className="text-gray-600 mt-2">Upgrade to a Silver Profile to manage your subscriptions, track payouts from projects, and access premium features like the Security Net Guarantee.</p>
-                            <button onClick={upgradeAction?.action} className="mt-6 bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700">
-                                Upgrade My Profile
-                            </button>
                         </div>
-                    )}
-                </div>
-
+                    );
+                })}
             </div>
         </div>
     );

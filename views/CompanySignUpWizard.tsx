@@ -1,8 +1,10 @@
+
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Logo } from '../components/Logo';
 import { ArrowLeft } from '../components/Icons';
 import { Country } from '../types';
+import { LocationAutocomplete } from '../components/LocationAutocomplete';
 
 interface CompanySignUpWizardProps {
     onCancel: () => void;
@@ -27,6 +29,10 @@ export const CompanySignUpWizard = ({ onCancel }: CompanySignUpWizardProps) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
         setError('');
+    };
+    
+    const handleLocationChange = (value: string) => {
+        setFormData(prev => ({ ...prev, location: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -100,8 +106,8 @@ export const CompanySignUpWizard = ({ onCancel }: CompanySignUpWizardProps) => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block font-medium text-sm mb-1">Location (City, Country)</label>
-                                <input type="text" name="location" value={formData.location} onChange={handleChange} placeholder="e.g., London, UK" className="w-full border p-2 rounded" />
+                                <label className="block font-medium text-sm mb-1">Location</label>
+                                <LocationAutocomplete value={formData.location} onValueChange={handleLocationChange} />
                             </div>
                         </div>
                          <div>

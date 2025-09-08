@@ -1,8 +1,9 @@
+
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Skill } from '../types/index.ts';
-import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles.ts';
-import { BrainCircuit, Loader, Plus } from './Icons.tsx';
+import { useAppContext } from '../context/AppContext';
+import { Skill } from '../types';
+import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';
+import { BrainCircuit, Loader, Plus } from './Icons';
 
 interface AISkillDiscoveryProps {
     onSkillsAdded: (skills: Skill[]) => void;

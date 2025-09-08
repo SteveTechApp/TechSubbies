@@ -1,116 +1,106 @@
-import React, { useState, useEffect } from 'react';
-import { useAppContext } from './context/AppContext.tsx';
-import { Role, Page } from './types/index.ts';
-import { LandingPage } from './views/LandingPage.tsx';
-import { EngineerDashboard } from './views/EngineerDashboard.tsx';
-import { CompanyDashboard } from './views/CompanyDashboard.tsx';
-import { ResourcingDashboard } from './views/ResourcingDashboard.tsx';
-import { AdminDashboard } from './views/AdminDashboard.tsx';
-import { LoginSelector } from './views/LoginSelector.tsx';
-import { ForEngineersPage } from './views/ForEngineersPage.tsx';
-import { ForCompaniesPage } from './views/ForCompaniesPage.tsx';
-import { EngineerSignUpWizard } from './views/EngineerSignUpWizard.tsx';
-import { CompanySignUpWizard } from './views/CompanySignUpWizard.tsx';
-import { ResourcingCompanySignUpWizard } from './views/ResourcingCompanySignUpWizard.tsx';
-import { InvestorRelationsPage } from './views/InvestorRelationsPage.tsx';
-import { AboutUsPage } from './views/AboutUsPage.tsx';
-import { LegalPage } from './views/LegalPage.tsx';
-import { PricingPage } from './views/PricingPage.tsx';
-import { HelpCenterPage } from './views/UserGuidePage.tsx';
-import { AIAssistant } from './components/AIAssistant.tsx';
-import { HowItWorksModal } from './components/HowItWorksModal.tsx';
-import { PaymentModal } from './components/PaymentModal.tsx';
+import React, { useState } from 'react';
+import { useAppContext } from './context/AppContext';
+import { Header } from './components/Header';
+import { Footer } from './components/Footer';
+import { LandingPage } from './views/LandingPage';
+import { LoginSelector } from './views/LoginSelector';
+import { EngineerDashboard } from './views/EngineerDashboard';
+import { CompanyDashboard } from './views/CompanyDashboard';
+import { AdminDashboard } from './views/AdminDashboard';
+import { ResourcingDashboard } from './views/ResourcingDashboard';
+import { HowItWorksModal } from './components/HowItWorksModal';
+import { EngineerSignUpWizard } from './views/EngineerSignUpWizard';
+import { CompanySignUpWizard } from './views/CompanySignUpWizard';
+import { ForEngineersPage } from './views/ForEngineersPage';
+import { ForCompaniesPage } from './views/ForCompaniesPage';
+import { PricingPage } from './views/PricingPage';
+import { AboutUsPage } from './views/AboutUsPage';
+import { InvestorPage } from './views/InvestorPage';
+import { LegalPage } from './views/LegalPage';
+import { AIAssistant } from './components/AIAssistant';
+import { UserGuidePage } from './views/UserGuidePage';
+import { ResourcingCompanySignUpWizard } from './views/ResourcingCompanySignUpWizard';
 
-const App = () => {
-    const { user, purchaseDayPass, setCurrentPageContext } = useAppContext();
-    const [page, setPage] = useState<Page>('landing');
-    const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
-    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-    useEffect(() => {
-        if (!user) {
-            setCurrentPageContext(page);
-        }
-        window.scrollTo(0, 0);
-    }, [page, user, setCurrentPageContext]);
+function App() {
+  const { user, currentPage, setCurrentPage } = useAppContext();
+  const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
 
-    const onNavigate = (targetPage: Page) => {
-        setPage(targetPage);
-    };
-    
-    const handleHowItWorksClick = () => setIsHowItWorksOpen(true);
-    
-    const handleDayPassPurchase = () => {
-        purchaseDayPass();
-        setIsPaymentModalOpen(false);
-    };
+  const onNavigate = (page: any) => {
+    setCurrentPage(page);
+    window.scrollTo(0, 0);
+  };
 
-    const renderPage = () => {
-        if (user) {
-            switch (user.role) {
-                case Role.ENGINEER:
-                    return <EngineerDashboard />;
-                case Role.COMPANY:
-                    return <CompanyDashboard />;
-                case Role.RESOURCING_COMPANY:
-                    return <ResourcingDashboard />;
-                case Role.ADMIN:
-                    return <AdminDashboard />;
-                default:
-                    return <p>Loading dashboard...</p>;
-            }
-        }
+  const renderPage = () => {
+    if (user) {
+      switch (user.role) {
+        case 'Engineer':
+          return <EngineerDashboard />;
+        case 'Company':
+          return <CompanyDashboard />;
+        case 'Admin':
+          return <AdminDashboard />;
+        case 'ResourcingCompany':
+            return <ResourcingDashboard />;
+        default:
+          return <LandingPage onNavigate={onNavigate} />;
+      }
+    }
 
-        const pageProps = { onNavigate, onHowItWorksClick: handleHowItWorksClick };
+    switch (currentPage) {
+      case 'landing':
+        return <LandingPage onNavigate={onNavigate} />;
+      case 'login':
+        return <LoginSelector onNavigate={onNavigate} />;
+      case 'engineerSignUp':
+        return <EngineerSignUpWizard onCancel={() => onNavigate('login')} />;
+      case 'companySignUp':
+        return <CompanySignUpWizard onCancel={() => onNavigate('login')} />;
+      case 'resourcingCompanySignUp':
+        return <ResourcingCompanySignUpWizard onCancel={() => onNavigate('login')} />;
+      case 'forEngineers':
+          return <ForEngineersPage onNavigate={onNavigate} />;
+      case 'forCompanies':
+          return <ForCompaniesPage onNavigate={onNavigate} />;
+      case 'pricing':
+          return <PricingPage onNavigate={onNavigate} />;
+      case 'aboutUs':
+          return <AboutUsPage onNavigate={onNavigate} />;
+      case 'investors':
+          return <InvestorPage onNavigate={onNavigate} />;
+      case 'helpCenter':
+        return <UserGuidePage onNavigate={onNavigate} />;
+      case 'terms':
+          return <LegalPage page="terms" onNavigate={onNavigate} />;
+      case 'privacy':
+          return <LegalPage page="privacy" onNavigate={onNavigate} />;
+      case 'security':
+          return <LegalPage page="security" onNavigate={onNavigate} />;
+      default:
+        return <LandingPage onNavigate={onNavigate} />;
+    }
+  };
+  
+  const showHeaderFooter = !user && !['login', 'engineerSignUp', 'companySignUp', 'resourcingCompanySignUp'].includes(currentPage);
+  const mainContentClass = showHeaderFooter ? "pt-20" : "";
 
-        switch (page) {
-            case 'login':
-                return <LoginSelector onNavigate={onNavigate} />;
-            case 'engineerSignUp':
-                return <EngineerSignUpWizard onCancel={() => onNavigate('login')} />;
-            case 'companySignUp':
-                return <CompanySignUpWizard onCancel={() => onNavigate('login')} />;
-            case 'resourcingCompanySignUp':
-                return <ResourcingCompanySignUpWizard onCancel={() => onNavigate('login')} />;
-            case 'forEngineers':
-                return <ForEngineersPage {...pageProps} />;
-            case 'forCompanies':
-                return <ForCompaniesPage {...pageProps} />;
-            case 'investors':
-                return <InvestorRelationsPage {...pageProps} />;
-            case 'aboutUs':
-                return <AboutUsPage {...pageProps} />;
-            case 'terms':
-                return <LegalPage documentType="terms" {...pageProps} />;
-            case 'privacy':
-                return <LegalPage documentType="privacy" {...pageProps} />;
-            case 'security':
-                return <LegalPage documentType="security" {...pageProps} />;
-            case 'pricing':
-                return <PricingPage {...pageProps} />;
-            case 'helpCenter':
-                return <HelpCenterPage {...pageProps} />;
-            case 'landing':
-            default:
-                return <LandingPage {...pageProps} />;
-        }
-    };
+  return (
+    <div className="flex flex-col min-h-screen font-sans">
+      {showHeaderFooter && <Header onNavigate={onNavigate} onHowItWorksClick={() => setIsHowItWorksOpen(true)} />}
+      <main className={`flex-grow ${mainContentClass}`}>
+        {renderPage()}
+      </main>
+      {showHeaderFooter && <Footer onNavigate={onNavigate} onHowItWorksClick={() => setIsHowItWorksOpen(true)} />}
 
-    return (
-        <>
-            {renderPage()}
-            <AIAssistant />
-            <HowItWorksModal isOpen={isHowItWorksOpen} onClose={() => setIsHowItWorksOpen(false)} onNavigate={onNavigate} />
-            <PaymentModal
-                isOpen={isPaymentModalOpen}
-                onClose={() => setIsPaymentModalOpen(false)}
-                onSuccess={handleDayPassPurchase}
-                amount={2.99}
-                currency="GBP"
-                paymentDescription="12-Hour Premium Access Pass"
-            />
-        </>
-    );
-};
+      <HowItWorksModal
+        isOpen={isHowItWorksOpen}
+        onClose={() => setIsHowItWorksOpen(false)}
+        onNavigate={onNavigate}
+      />
+      
+      {user && <AIAssistant />}
+    </div>
+  );
+}
 
 export default App;

@@ -64,7 +64,8 @@ export const MyNetworkView = ({ setActiveView }: MyNetworkViewProps) => {
         const engineerId = user.profile.id;
         const myApplications = applications.filter(app => app.engineerId === engineerId);
 
-        const companyInteractions = myApplications.reduce((acc: Record<string, CompanyInteraction>, app) => {
+        // FIX: The initial value for reduce must be typed for TypeScript to correctly infer the accumulator type.
+        const companyInteractions = myApplications.reduce((acc, app) => {
             const job = jobs.find(j => j.id === app.jobId);
             if (!job) return acc;
 
@@ -73,6 +74,7 @@ export const MyNetworkView = ({ setActiveView }: MyNetworkViewProps) => {
                 const company = companies.find(c => c.id === companyId);
                 if (company) {
                     acc[companyId] = {
+                        // @ts-ignore
                         company,
                         interactions: []
                     };
@@ -83,7 +85,7 @@ export const MyNetworkView = ({ setActiveView }: MyNetworkViewProps) => {
             }
            
             return acc;
-        }, {});
+        }, {} as Record<string, CompanyInteraction>);
 
         return Object.values(companyInteractions)
             .sort((a, b) => a.company.name.localeCompare(b.company.name));

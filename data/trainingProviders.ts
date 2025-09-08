@@ -1,3 +1,4 @@
+
 import { TrainingProvider } from '../types';
 
 // --- Training Providers Database ---
@@ -21,5 +22,4 @@ export const MOCK_TRAINING_PROVIDERS: TrainingProvider[] = [
     // Sponsored / Private IT Training
     { name: 'Global Knowledge IT Training', url: 'https://www.globalknowledge.com/', specialties: ['IT Skills', 'Cisco', 'Microsoft', 'Cybersecurity'], type: 'Sponsored' },
     { name: 'QA IT Training', url: 'https://www.qa.com/', specialties: ['IT Skills', 'Project Management', 'Agile', 'Microsoft'], type: 'Sponsored' },
-    { name: 'Netgear Training', url: 'https://www.netgear.com/business/services/training/', specialties: ['Netgear', 'Networking'], type: 'Sponsored' }
 ];

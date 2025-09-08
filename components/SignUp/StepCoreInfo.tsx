@@ -1,5 +1,7 @@
+
 import React from 'react';
 import { Discipline, Country } from '../../types';
+import { LocationAutocomplete } from '../LocationAutocomplete';
 
 interface StepCoreInfoProps {
     data: { name: string, email: string, discipline: Discipline, location: string, experience: number, country: Country };
@@ -13,6 +15,10 @@ export const StepCoreInfo = ({ data, setData }: StepCoreInfoProps) => {
         const isNumberField = name === 'experience';
         // Ensure that parsing an empty string results in 0, not NaN, to prevent app crashes.
         setData((prev: any) => ({ ...prev, [name]: isNumberField ? (parseInt(value, 10) || 0) : value }));
+    };
+    
+    const handleLocationChange = (value: string) => {
+        setData((prev: any) => ({ ...prev, location: value }));
     };
 
     return (
@@ -47,8 +53,8 @@ export const StepCoreInfo = ({ data, setData }: StepCoreInfoProps) => {
                         </select>
                     </div>
                     <div>
-                        <label className="block font-medium mb-1">Location (City, Country)</label>
-                        <input type="text" name="location" value={data.location} onChange={handleChange} placeholder="e.g., London, UK" className="w-full border p-2 rounded" />
+                        <label className="block font-medium mb-1">Location</label>
+                        <LocationAutocomplete value={data.location} onValueChange={handleLocationChange} />
                     </div>
                 </div>
 

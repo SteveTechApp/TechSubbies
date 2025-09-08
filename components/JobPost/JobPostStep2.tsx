@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { JobSkillRequirement, SkillImportance } from '../../types';
 import { Save, Loader, Sparkles } from '../Icons';

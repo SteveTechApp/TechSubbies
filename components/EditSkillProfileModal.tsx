@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { SelectedJobRole, JobRoleDefinition, RatedSkill } from '../types/index.ts';
-import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles.ts';
-import { X, Save, Plus, Trash2 } from './Icons.tsx';
+import { SelectedJobRole, JobRoleDefinition, RatedSkill } from '../types';
+import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';
+import { X, Save, Plus, Trash2 } from './Icons';
 
 interface EditSkillProfileModalProps {
     isOpen: boolean;

@@ -1,7 +1,8 @@
+
 import React from 'react';
-import { EngineerProfile, Application, Contract } from '../../types/index.ts';
-import { StatCard } from '../../components/StatCard.tsx';
-import { Users, Search, Briefcase, PlusCircle } from '../../components/Icons.tsx';
+import { EngineerProfile, Application, Contract } from '../../types';
+import { StatCard } from '../../components/StatCard';
+import { Users, Search, Briefcase, PlusCircle } from '../../components/Icons';
 
 interface DashboardViewProps {
     managedEngineers: EngineerProfile[];

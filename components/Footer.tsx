@@ -1,8 +1,9 @@
+
 import React from 'react';
-import { Logo } from './Logo.tsx';
-import { Page } from '../types/index.ts';
-import { DropdownMenu } from './DropdownMenu.tsx';
-import { Linkedin, XIcon, Instagram, Facebook } from './Icons.tsx';
+import { Logo } from './Logo';
+import { Page } from '../types';
+import { DropdownMenu } from './DropdownMenu';
+import { Linkedin, XIcon, Instagram, Facebook } from './Icons';
 
 interface FooterProps {
     onNavigate: (page: Page) => void;

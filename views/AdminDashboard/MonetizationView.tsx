@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { StatCard } from '../../components/StatCard';
@@ -17,10 +18,11 @@ export const MonetizationView = () => {
     // Calculate revenue streams from transactions
     const subscriptionRevenue = transactions.filter(t => t.type === TransactionType.SUBSCRIPTION).reduce((sum, t) => sum + Math.abs(t.amount), 0);
     const boostRevenue = transactions.filter(t => t.type === TransactionType.BOOST_PURCHASE).reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const superchargeRevenue = transactions.filter(t => t.type === TransactionType.SUPERCHARGE).reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    // FIX: Corrected TransactionType from SUPERCHARGE to ONE_OFF_PURCHASE as it does not exist in the enum. Renamed variable for clarity.
+    const oneOffPurchaseRevenue = transactions.filter(t => t.type === TransactionType.ONE_OFF_PURCHASE).reduce((sum, t) => sum + Math.abs(t.amount), 0);
     const adRevenue = MOCK_AD_CAMPAIGNS.reduce((sum, ad) => sum + ad.spend, 0);
 
-    const totalRevenue = subscriptionRevenue + boostRevenue + superchargeRevenue + adRevenue;
+    const totalRevenue = subscriptionRevenue + boostRevenue + oneOffPurchaseRevenue + adRevenue;
 
     return (
         <div>
@@ -31,7 +33,7 @@ export const MonetizationView = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard icon={TrendingUp} value={`£${totalRevenue.toLocaleString()}`} label="Total Revenue" colorClass="bg-green-500" />
                 <StatCard icon={Star} value={`£${subscriptionRevenue.toLocaleString()}`} label="Subscription Revenue" colorClass="bg-blue-500" />
-                <StatCard icon={Zap} value={`£${(boostRevenue + superchargeRevenue).toLocaleString()}`} label="Microtransaction Revenue" colorClass="bg-purple-500" />
+                <StatCard icon={Zap} value={`£${(boostRevenue + oneOffPurchaseRevenue).toLocaleString()}`} label="Microtransaction Revenue" colorClass="bg-purple-500" />
                 <StatCard icon={Megaphone} value={`£${adRevenue.toLocaleString()}`} label="Advertising Revenue" colorClass="bg-orange-500" />
             </div>
 

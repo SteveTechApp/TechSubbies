@@ -1,121 +1,86 @@
-import { EngineerProfile, CompanyProfile, ProfileTier, Discipline, Currency, Role, Language, Country } from '../../types';
-import { AVATARS } from '../assets';
-import { JOB_ROLE_DEFINITIONS } from '../jobRoles';
 
-const steveSelectedRoles = JOB_ROLE_DEFINITIONS.filter(r => r.name === 'AV Systems Designer').map(roleDef => ({
-    roleName: roleDef.name,
-    skills: roleDef.skillCategories.flatMap(cat => cat.skills).slice(0, 10).map(skill => ({ name: skill.name, rating: Math.floor(Math.random() * 21) + 75 })),
-    overallScore: 92
-}));
+// FIX: Created file to house static mock profiles, resolving "not a module" error.
+import {
+    AdminProfile, ResourcingCompanyProfile, EngineerProfile, Role, Discipline,
+    ProfileTier, Currency, Country,
+} from '../../types';
+import { BADGES } from '../badges';
 
-export const MOCK_ENGINEER_STEVE: EngineerProfile = {
-    id: 'eng-steve',
-    name: 'Steve Goodwin',
-    avatar: AVATARS.steve,
-    description: 'AV/IT Systems Design Consultant with 30 years of experience. Founder of TechSubbies.com. Specializing in bridging the gap between complex technology and user-friendly solutions.',
-    discipline: Discipline.BOTH,
-    location: 'Oxfordshire, UK',
-    country: Country.UK,
-    experience: 30,
-    profileTier: ProfileTier.BUSINESS,
-    minDayRate: 800,
-    maxDayRate: 1200,
-    currency: Currency.GBP,
-    availability: new Date('2024-09-01'),
-    skills: [{ name: 'System Design', rating: 98 }, { name: 'Project Management', rating: 95 }, { name: 'Client Consultation', rating: 99 }],
-    selectedJobRoles: steveSelectedRoles,
-    certifications: [{ name: 'CTS-D', verified: true }, { name: 'Crestron Master', verified: true }],
-    compliance: { professionalIndemnity: { hasCoverage: true, isVerified: true, amount: 2000000 }, publicLiability: { hasCoverage: true, isVerified: true, amount: 5000000 }, siteSafe: true, cscsCard: true, ownPPE: true, hasOwnTransport: true, hasOwnTools: true, powerToolCompetency: 75, accessEquipmentTrained: 80, firstAidTrained: true, carriesSpares: true },
-    identity: { documentType: 'passport', isVerified: true },
-    caseStudies: [{ id: 'cs-1', name: 'Corporate HQ Audiovisual Masterplan', url: '#' }],
-    socials: [{ name: 'LinkedIn', url: '#' }],
-    isBoosted: false,
-    joinDate: new Date('2023-01-15'),
-    profileViews: 1258, searchAppearances: 4320, jobInvites: 75,
-    reputation: 99,
-    complianceScore: 98,
+export const MOCK_RESOURCING_COMPANY_1: ResourcingCompanyProfile = {
+    id: 'res-1',
+    name: 'AV Placements Ltd',
+    avatar: 'https://i.imgur.com/3Y1Z4g2.png',
+    logo: 'https://i.imgur.com/3Y1Z4g2.png',
+    role: Role.RESOURCING_COMPANY,
+    website: 'https://www.avplacements.com',
+    location: 'Reading, UK',
     status: 'active',
-    language: Language.ENGLISH,
-    badges: [],
-    contact: { email: 'steve.goodwin@example.com', phone: '07123456789' },
-    warnings: 0, isBanned: false, banHistory: [],
+    managedEngineerIds: ['eng-2', 'eng-3'],
+    contact: {
+        name: 'John Carter',
+        email: 'john.carter@avplacements.com',
+    }
+};
+
+export const MOCK_ADMIN_PROFILE: AdminProfile = {
+    id: 'admin-1',
+    name: 'Platform Admin',
+    avatar: 'https://i.imgur.com/JQpB9z2.png',
+    role: Role.ADMIN,
+    status: 'active',
+    permissions: ['all'],
 };
 
 export const MOCK_FREE_ENGINEER: EngineerProfile = {
-     id: 'eng-free',
-    name: 'Emily Carter',
-    avatar: AVATARS.emily,
-    description: 'Eager and reliable IT Support Engineer with a growing interest in AV technologies. Looking for opportunities to expand my skillset on exciting projects.',
-    discipline: Discipline.IT,
-    location: 'Reading, UK',
+    id: 'eng-free',
+    name: 'John Smith',
+    avatar: 'https://xsgames.co/randomusers/assets/avatars/male/46.jpg',
+    status: 'active',
+    role: Role.ENGINEER,
+    discipline: Discipline.AV,
+    location: 'Bristol, UK',
     country: Country.UK,
-    experience: 2,
+    description: 'Experienced AV technician looking for contract work in the South West. Reliable and hardworking.',
+    experience: 5,
     profileTier: ProfileTier.BASIC,
     minDayRate: 150,
     maxDayRate: 195,
     currency: Currency.GBP,
-    availability: new Date(),
-    skills: [{ name: 'IT Support', rating: 80 }, { name: 'Networking', rating: 70 }],
-    selectedJobRoles: [],
-    certifications: [],
-    compliance: { professionalIndemnity: { hasCoverage: false, isVerified: false, amount: 0 }, publicLiability: { hasCoverage: true, isVerified: false, amount: 1000000 }, siteSafe: false, cscsCard: false, ownPPE: true, hasOwnTransport: true, hasOwnTools: true, powerToolCompetency: 50, accessEquipmentTrained: 25, firstAidTrained: false, carriesSpares: false },
+    availability: new Date('2024-08-15'),
+    skills: [],
+    compliance: { professionalIndemnity: { hasCoverage: false, isVerified: false }, publicLiability: { hasCoverage: true, amount: 1000000, isVerified: false }, siteSafe: true, cscsCard: true, ownPPE: true, hasOwnTransport: true, hasOwnTools: true, powerToolCompetency: 70, accessEquipmentTrained: 60, firstAidTrained: false, carriesSpares: false },
     identity: { documentType: 'none', isVerified: false },
-    joinDate: new Date('2024-05-10'),
-    profileViews: 45, searchAppearances: 210, jobInvites: 3,
-    reputation: 60,
-    complianceScore: 40,
-    status: 'active',
-    language: Language.ENGLISH,
+    profileViews: 12, searchAppearances: 150, jobInvites: 1, isBoosted: false, reputation: 65, complianceScore: 60,
+    calendarSyncUrl: 'https://techsubbies.com/cal/eng-free.ics',
     badges: [],
-    contact: { email: 'emily.carter@example.com', phone: '07123456789' },
-    warnings: 0, isBanned: false, banHistory: [],
+    contact: { email: 'john.smith.demo@techsubbies.com', phone: '07123456789' }
 };
 
-export const MOCK_COMPANY_PROAV: CompanyProfile = {
-    id: 'comp-1',
-    name: 'Pro AV Solutions',
-    website: 'https://proavsolutions.com',
-    location: 'London, UK',
-    country: Country.UK,
-    currency: Currency.GBP,
-    contact: { email: 'contact@proav.com', phone: '020 7946 0991' },
-    avatar: 'https://i.pravatar.cc/150?u=proav',
-    logo: 'https://logo.clearbit.com/proav.com', 
+export const MOCK_ENGINEER_STEVE: EngineerProfile = {
+    id: 'eng-steve',
+    name: 'Steve Goodwin',
+    avatar: 'https://i.imgur.com/L45aA6d.jpg',
     status: 'active',
-    language: Language.ENGLISH,
-    consentToFeature: true,
-    warnings: 0, isBanned: false, banHistory: [],
-};
-
-export const MOCK_RESOURCING_COMPANY_1: CompanyProfile = {
-    id: 'res-1',
-    name: 'AV Placements Ltd',
-    website: 'https://avplacements.com',
-    location: 'Manchester, UK',
+    role: Role.ENGINEER,
+    discipline: Discipline.AV,
+    location: 'Oxford, UK',
     country: Country.UK,
+    description: 'Freelance AV Project Manager & Commissioning Engineer with 20+ years of experience delivering high-spec corporate and residential projects.',
+    experience: 22,
+    profileTier: ProfileTier.SKILLS,
+    minDayRate: 500,
+    maxDayRate: 650,
     currency: Currency.GBP,
-    contact: { email: 'contact@avplacements.com', phone: '0161 496 0123' },
-    avatar: 'https://i.pravatar.cc/150?u=avplacements',
-    logo: 'https://logo.clearbit.com/avplacements.co.uk',
-    status: 'active',
-    language: Language.ENGLISH,
-    consentToFeature: true,
-    warnings: 1, isBanned: false, banHistory: [],
-};
-
-
-export const MOCK_ADMIN_PROFILE: CompanyProfile = {
-    id: 'admin-1',
-    name: 'Steve Goodwin (Admin)',
-    website: 'https://techsubbies.com',
-    location: 'Oxfordshire, UK',
-    country: Country.UK,
-    currency: Currency.GBP,
-    contact: { email: 'stevegoodwin1972@gmail.com', phone: 'N/A' },
-    avatar: AVATARS.steve,
-    logo: '',
-    status: 'active',
-    language: Language.ENGLISH,
-    consentToFeature: false,
-    warnings: 0, isBanned: false, banHistory: [],
+    availability: new Date('2024-09-01'),
+    skills: [{ name: 'Project Management', rating: 95 }, { name: 'Crestron', rating: 90 }, { name: 'Biamp', rating: 85 }],
+    selectedJobRoles: [
+        { roleName: 'AV Systems Engineer', skills: [{ name: 'Troubleshooting complex AV systems', rating: 95 }, { name: 'System commissioning and testing procedures', rating: 98 }], overallScore: 97 }
+    ],
+    certifications: [{ name: 'CTS-I', verified: true }, { name: 'Crestron Master Programmer', verified: true }],
+    compliance: { professionalIndemnity: { hasCoverage: true, amount: 2000000, isVerified: true }, publicLiability: { hasCoverage: true, amount: 5000000, isVerified: true }, siteSafe: true, cscsCard: true, ownPPE: true, hasOwnTransport: true, hasOwnTools: true, powerToolCompetency: 80, accessEquipmentTrained: 75, firstAidTrained: true, carriesSpares: true },
+    identity: { documentType: 'passport', isVerified: true },
+    profileViews: 128, searchAppearances: 950, jobInvites: 15, isBoosted: false, reputation: 98, complianceScore: 95,
+    calendarSyncUrl: 'https://techsubbies.com/cal/eng-steve.ics',
+    badges: [BADGES['verified-id'], BADGES['contracts-10'], BADGES['top-contributor'], BADGES['cts-certified']],
+    contact: { email: 'steve.goodwin.demo@techsubbies.com', phone: '07123456789' }
 };

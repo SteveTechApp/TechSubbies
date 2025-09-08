@@ -1,53 +1,48 @@
-import { EngineerProfile, Badge, ConditionContext } from '../types';
-import { Award, CheckCircle, Trophy } from '../components/Icons';
 
-export const BADGES: Badge[] = [
-    {
-        id: 'founding-member',
-        name: 'Founding Member',
-        description: 'Joined TechSubbies.com in its first year (2023).',
-        icon: Award,
-        color: 'bg-purple-100 text-purple-800',
-        condition: (profile: EngineerProfile) => new Date(profile.joinDate).getFullYear() <= 2023
-    },
-    {
-        id: 'verified-specialist',
-        name: 'Verified Specialist',
-        description: 'Has at least one verified certification on their profile.',
-        icon: CheckCircle,
+import { Badge } from '../types';
+import { Award, CheckCircle, ShieldCheck, Star, Briefcase, TrendingUp } from '../components/Icons';
+
+export const BADGES: { [key: string]: Badge } = {
+    'verified-id': {
+        id: 'verified-id',
+        name: 'ID Verified',
+        description: 'This user has verified their identity with a government-issued document.',
+        icon: ShieldCheck,
         color: 'bg-green-100 text-green-800',
-        condition: (profile: EngineerProfile) => profile.certifications.some(c => c.verified)
     },
-    {
-        id: 'contracts-1',
-        name: '1+ Contract Completed',
-        description: 'Successfully completed at least one contract through the platform.',
-        icon: Trophy,
-        color: 'bg-blue-100 text-blue-800',
-        condition: (profile: EngineerProfile, context: ConditionContext) => context.completedContracts >= 1
-    },
-    {
-        id: 'contracts-5',
-        name: '5+ Contracts Completed',
-        description: 'Successfully completed five or more contracts through the platform.',
-        icon: Trophy,
-        color: 'bg-blue-100 text-blue-800',
-        condition: (profile: EngineerProfile, context: ConditionContext) => context.completedContracts >= 5
-    },
-    {
-        id: 'contracts-10',
-        name: '10+ Contracts Completed',
-        description: 'A seasoned veteran who has completed ten or more contracts.',
-        icon: Trophy,
-        color: 'bg-blue-100 text-blue-800',
-        condition: (profile: EngineerProfile, context: ConditionContext) => context.completedContracts >= 10
-    },
-    {
+    'top-contributor': {
         id: 'top-contributor',
-        name: 'Top Contributor',
-        description: 'Highly active and valued member of the Tech Forum community.',
-        icon: Award,
+        name: 'Top Rated',
+        description: 'Maintains an average rating of 4.8 stars or higher across all completed contracts.',
+        icon: Star,
         color: 'bg-yellow-100 text-yellow-800',
-        condition: (profile: EngineerProfile, context: ConditionContext) => context.forumScore >= 50
     },
-];
+    'contracts-10': {
+        id: 'contracts-10',
+        name: '10+ Contracts',
+        description: 'Successfully completed 10 or more contracts on the platform.',
+        icon: Briefcase,
+        color: 'bg-blue-100 text-blue-800',
+    },
+    'rising-star': {
+        id: 'rising-star',
+        name: 'Rising Star',
+        description: 'Received excellent reviews on their first three contracts.',
+        icon: TrendingUp,
+        color: 'bg-purple-100 text-purple-800',
+    },
+    'insurance-verified': {
+        id: 'insurance-verified',
+        name: 'Insurance Verified',
+        description: 'Professional Indemnity and Public Liability insurance documents have been verified.',
+        icon: CheckCircle,
+        color: 'bg-teal-100 text-teal-800',
+    },
+     'cts-certified': {
+        id: 'cts-certified',
+        name: 'CTS Certified',
+        description: 'Holds a valid Certified Technology Specialist (CTS) certification from AVIXA.',
+        icon: Award,
+        color: 'bg-orange-100 text-orange-800',
+    }
+};

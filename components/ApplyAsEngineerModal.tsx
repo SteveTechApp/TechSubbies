@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
-import { Job, EngineerProfile } from '../types/index.ts';
-import { X } from './Icons.tsx';
+import { Job, EngineerProfile } from '../types';
+import { X, MessageCircle } from './Icons';
 
 interface ApplyAsEngineerModalProps {
     isOpen: boolean;

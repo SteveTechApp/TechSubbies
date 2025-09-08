@@ -1,4 +1,5 @@
-import { JobRoleDefinition } from '../types/index.ts';
+
+import { JobRoleDefinition } from '../types';
 
 // --- Comprehensive Skills & Knowledge Matrix for IT & AV Roles ---
 export const JOB_ROLE_DEFINITIONS: JobRoleDefinition[] = [
@@ -81,35 +82,11 @@ export const JOB_ROLE_DEFINITIONS: JobRoleDefinition[] = [
         category: 'Audio Visual & Media Technology',
         skillCategories: [
              { category: 'Technical Skills', skills: [
-                 { name: 'AV system architecture understanding', description: 'Ability to grasp and articulate how different AV components work together to form a cohesive system.' },
-                 { name: 'ROI calculation and cost-benefit analysis', description: 'Skill in demonstrating the financial value and return on investment of a proposed AV solution to a client.' },
-                 { name: 'Solution design and specification', description: 'Translating client needs into a specific bill of materials and a high-level system design.' },
-                 { name: 'Competitive analysis and positioning', description: 'Understanding the strengths and weaknesses of competitor products and solutions.' },
-                 { name: 'Technical presentation skills', description: 'Clearly and confidently presenting complex technical solutions to both technical and non-technical audiences.' },
-                 { name: 'Proof of concept development', description: 'Setting up and demonstrating a small-scale version of the proposed solution to prove its viability.' },
-                 { name: 'Integration complexity assessment', description: 'Ability to identify potential challenges and risks in integrating a new AV system with existing infrastructure.' },
-                 { name: 'Scalability planning', description: 'Designing solutions that can grow and adapt to the client\'s future needs.' }
-             ]},
-             { category: 'Sales Skills', skills: [
-                 { name: 'Consultative selling methodology', description: 'Using a question-based approach to understand client needs deeply before proposing a solution.' },
-                 { name: 'Discovery questioning techniques', description: 'Skill in asking effective questions to uncover a client\'s underlying problems and goals.' },
-                 { name: 'Objection handling strategies', description: 'Effectively addressing and resolving client concerns or objections during the sales process.' },
-                 { name: 'Proposal writing and presentation', description: 'Creating clear, persuasive proposals that articulate the value and scope of the proposed solution.' },
-                 { name: 'Contract negotiation basics', description: 'Understanding the key elements of a sales contract and being able to negotiate terms effectively.' },
-                 { name: 'CRM system proficiency (Salesforce, HubSpot)', description: 'Using Customer Relationship Management software to manage leads, opportunities, and client interactions.' },
-                 { name: 'Lead qualification (BANT, MEDDIC)', description: 'Using established frameworks to determine if a potential client is a good fit and ready to buy.' },
-                 { name: 'Sales process management', description: 'Effectively managing a sales opportunity through all stages, from initial contact to closing the deal.' }
-             ]},
-             { category: 'Industry Knowledge', skills: [
-                 { name: 'Vertical market understanding (corporate, education, healthcare)', description: 'Knowledge of the specific needs, challenges, and terminology of different industries.' },
-                 { name: 'Regulatory requirements by industry', description: 'Awareness of any specific regulations (e.g., HIPAA in healthcare) that might impact AV system design.' },
-                 { name: 'Budget cycles and procurement processes', description: 'Understanding how and when different types of organizations allocate budgets and make purchasing decisions.' },
-                 { name: 'Decision-making hierarchies', description: 'Ability to identify and engage with the key stakeholders and decision-makers in a client organization.' },
-                 { name: 'Competitive landscape analysis', description: 'Staying informed about the offerings and strategies of competing AV integrators and manufacturers.' },
-                 { name: 'Market trends and emerging technologies', description: 'Keeping up-to-date with the latest advancements in AV technology and how they can benefit clients.' }
-             ]},
-             { category: 'Required Experience', skills: [
-                 { name: '3+ years in technical sales or AV industry', description: 'A proven track record in a technical sales or pre-sales engineering role within the AV industry.' }
+                 { name: 'Product Demonstrations', description: 'Skillfully demonstrating AV hardware and software capabilities to potential clients.' },
+                 { name: 'Needs Analysis', description: 'Conducting thorough needs analysis to understand client requirements and propose appropriate solutions.' },
+                 { name: 'System Scoping', description: 'Defining the scope of a project, including hardware, software, and labor requirements.' },
+                 { name: 'Proposal Writing', description: 'Creating detailed and persuasive technical proposals and statements of work (SOWs).' },
+                 { name: 'Competitive Analysis', description: 'Understanding the competitive landscape and positioning products effectively.' }
              ]}
         ]
     }

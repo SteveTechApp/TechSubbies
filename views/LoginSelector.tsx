@@ -1,9 +1,10 @@
+
 import React from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { Page, Role } from '../types/index.ts';
-import { Logo } from '../components/Logo.tsx';
-import { MOCK_USERS, MOCK_USER_FREE_ENGINEER, PRE_AUTH_USER } from '../data/mockData.ts';
-import { User, Briefcase, Building } from '../components/Icons.tsx';
+import { useAppContext } from '../context/AppContext';
+import { Page, Role } from '../types';
+import { Logo } from '../components/Logo';
+import { MOCK_USERS, MOCK_USER_FREE_ENGINEER, PRE_AUTH_USER } from '../data/mockData';
+import { User, Briefcase, Building } from '../components/Icons';
 
 interface LoginSelectorProps {
     onNavigate: (page: Page) => void;

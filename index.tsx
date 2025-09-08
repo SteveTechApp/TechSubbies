@@ -1,8 +1,9 @@
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { AppProvider } from './context/AppContext.tsx';
-import App from './App.tsx';
-import { ErrorBoundary } from './components/ErrorBoundary.tsx';
+import { AppProvider } from './context/AppContext';
+import App from './App';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const rootElement = document.getElementById('root');
 

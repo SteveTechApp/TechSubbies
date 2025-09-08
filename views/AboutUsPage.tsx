@@ -1,73 +1,90 @@
+
 import React from 'react';
-import { Footer } from '../components/Footer';
-import { Header } from '../components/Header';
 import { Page } from '../types';
-import { Users, Briefcase, Zap } from '../components/Icons';
-import { useAppContext } from '../context/AppContext';
+import { TestimonialCard } from '../components/TestimonialCard';
+import { AVATARS } from '../data/assets';
+import { Handshake, Sparkles, Globe } from '../components/Icons';
 
 interface AboutUsPageProps {
-    onNavigate: (page: Page) => void;
-    onHowItWorksClick: () => void;
+  onNavigate: (page: Page) => void;
 }
 
-export const AboutUsPage = ({ onNavigate, onHowItWorksClick }: AboutUsPageProps) => {
-    const { allUsers } = useAppContext();
-    const founder = allUsers.find(u => u.profile.id === 'eng-steve');
-    
-    return (
-        <div className="bg-white flex flex-col min-h-screen">
-            <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
-            <main className="flex-grow pt-14">
-                {/* Hero Section */}
-                <section 
-                    className="relative text-white text-center min-h-[40vh] flex items-center justify-center px-4 bg-cover bg-center"
-                    style={{ backgroundImage: `url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=2084&auto=format=fit=crop')` }}
-                >
-                    <div className="absolute inset-0 bg-blue-800 opacity-70"></div>
-                    <div className="relative z-10 max-w-3xl">
-                        <h1 className="text-xl md:text-3xl font-extrabold mb-2">Connecting Expertise with Opportunity</h1>
-                        <p className="text-xs md:text-sm mx-auto">We're building the digital infrastructure for the freelance AV & IT industry, making it easier than ever to find the right talent and the right projects.</p>
-                    </div>
-                </section>
-
-                {/* Mission Section */}
-                <section className="py-4 bg-gray-50">
-                    <div className="container mx-auto px-4 text-center max-w-4xl">
-                        <h2 className="text-xl font-bold text-gray-800 mb-1">Our Mission</h2>
-                        <p className="text-xs text-gray-600">
-                            Our mission is to solve a critical, dual-sided problem in the technology sector. Companies struggle to find qualified, available specialist engineers quickly, leading to project delays. Meanwhile, talented freelance engineers lack a dedicated platform to showcase their niche skills and manage their work pipeline effectively. TechSubbies.com bridges this gap, creating a seamless, efficient marketplace for the freelance tech community.
-                        </p>
-                    </div>
-                </section>
-                
-                {/* Story Section */}
-                <section className="py-4 bg-white">
-                    <div className="container mx-auto px-4 max-w-5xl">
-                         <h2 className="text-xl font-bold text-center text-gray-800 mb-4">Our Story</h2>
-                        <div className="grid md:grid-cols-2 gap-8 items-center">
-                            <div className="text-gray-700 space-y-3 text-sm">
-                                <p>Finding the right tech freelancer shouldn't feel like searching for a needle in a haystack. Yet for years, that's what it was: a frantic scramble through old contacts and a costly reliance on slow-moving recruitment agencies. The system was broken.</p>
-                                <p>After three decades designing and consulting on major tech projects, our founder, Steve Goodwin, knew there had to be a better way. He saw brilliant engineers sidelined and projects delayed simply because the right connections weren't being made efficiently.</p>
-                                <p className="font-semibold text-gray-800">Our vision is simple: to build a smarter connection. TechSubbies.com is a purpose-built skill-matching engine, not a traditional recruitment site. It’s a fast, fair, and focused tool designed to foster direct relationships for contract-based projects. We built this as the digital backbone for the freelance tech industry, but its powerful, flexible core is designed to be reskinned for other high-skill verticals like freelance medical or nursing. We're not just a platform; we are the new standard for deploying specialized expertise on demand.</p>
-                            </div>
-                            <div>
-                                {founder && (
-                                    <>
-                                        <img 
-                                            src={founder.profile.avatar}
-                                            alt={`${founder.profile.name}, Founder of TechSubbies.com`}
-                                            className="rounded-lg shadow-2xl w-full h-auto object-contain bg-gray-100 p-4"
-                                        />
-                                        <p className="text-center mt-2 text-sm text-gray-500 font-semibold">{founder.profile.name}, Founder & CEO</p>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-            </main>
-            <Footer onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
+export const AboutUsPage = ({ onNavigate }: AboutUsPageProps) => {
+  return (
+    <div className="bg-white">
+      {/* Hero Section */}
+      <section className="relative bg-gray-800 text-white py-20 text-center">
+        <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070&auto=format&fit=crop')` }}></div>
+        <div className="relative container mx-auto px-4">
+          <h1 className="text-4xl md:text-5xl font-extrabold mb-4">Our Mission</h1>
+          <p className="text-lg md:text-xl max-w-3xl mx-auto">
+            To build the most efficient, transparent, and trusted platform for connecting specialist technical freelancers with the companies that need them.
+          </p>
         </div>
-    );
+      </section>
+
+      {/* Values Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold">What Drives Us</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div className="text-center">
+              <div className="p-4 bg-blue-100 rounded-full inline-block mb-4"><Handshake className="w-10 h-10 text-blue-600" /></div>
+              <h3 className="text-xl font-bold mb-2">Direct Connections</h3>
+              <p className="text-gray-600">We believe in empowering direct relationships. No recruiters, no middlemen, just pure connection between talent and opportunity.</p>
+            </div>
+            <div className="text-center">
+              <div className="p-4 bg-blue-100 rounded-full inline-block mb-4"><Sparkles className="w-10 h-10 text-blue-600" /></div>
+              <h3 className="text-xl font-bold mb-2">Technological Innovation</h3>
+              <p className="text-gray-600">We leverage technology like AI not as a gimmick, but to solve real-world hiring problems, making matching faster, smarter, and more accurate.</p>
+            </div>
+            <div className="text-center">
+              <div className="p-4 bg-blue-100 rounded-full inline-block mb-4"><Globe className="w-10 h-10 text-blue-600" /></div>
+              <h3 className="text-xl font-bold mb-2">Building a Community</h3>
+              <p className="text-gray-600">TechSubbies is more than a platform; it's a community for professionals to share knowledge, grow their skills, and build lasting careers.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Testimonials Section */}
+      <section className="py-20 bg-blue-50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Trusted by the Industry</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+             <TestimonialCard
+              text="TechSubbies is a game-changer. The AI matching gave me the top 3 candidates for a complex Crestron role in under an hour. We had a contract signed the same day."
+              author="Steve G., Project Manager"
+              company="Pro AV Solutions"
+              avatar={AVATARS.steve}
+            />
+            <TestimonialCard
+              text="As a freelance engineer, the Skills Profile is incredible. I can finally showcase my deep expertise in Biamp and Dante, and I'm getting invites for jobs that are a perfect fit."
+              author="Neil B., AV Engineer"
+              company="Freelance Contractor"
+              avatar={AVATARS.neil}
+            />
+             <TestimonialCard
+              text="We've cut our hiring time by 80%. No more sifting through irrelevant CVs. We post a job, get a ranked list of matched engineers, and start conversations. It's that simple."
+              author="Emily C., Operations Director"
+              company="Nexus IT"
+              avatar={AVATARS.emily}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="bg-gray-800 text-white py-20 text-center">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold">Join the Network</h2>
+          <button onClick={() => onNavigate('login')} className="mt-6 bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">
+            Get Started
+          </button>
+        </div>
+      </section>
+    </div>
+  );
 };

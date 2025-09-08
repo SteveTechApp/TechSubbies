@@ -1,7 +1,8 @@
+
 import React from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { EngineerProfile, ProfileTier } from '../types/index.ts';
-import { MapPin, Star, Rocket, Sparkles, Trophy } from './Icons.tsx';
+import { useAppContext } from '../context/AppContext';
+import { EngineerProfile, ProfileTier } from '../types';
+import { MapPin, Star, Rocket, Sparkles, Trophy } from './Icons';
 
 interface EngineerCardProps {
     profile: EngineerProfile;

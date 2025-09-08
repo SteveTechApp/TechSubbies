@@ -1,8 +1,11 @@
+
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../../context/AppContext.tsx';
-import { JobCard } from '../../components/JobCard.tsx';
-import { Search, MapPin, DollarSign, ArrowLeft, Layers } from '../../components/Icons.tsx';
-import { ExperienceLevel, ProfileTier, EngineerProfile } from '../../types/index.ts';
+import { useAppContext } from '../../context/AppContext';
+import { JobCard } from '../../components/JobCard';
+import { Search, DollarSign, ArrowLeft, Layers } from '../../components/Icons';
+import { ExperienceLevel, EngineerProfile } from '../../types';
+import { LocationAutocomplete } from '../../components/LocationAutocomplete';
+import { findLocationsInRegion, getDistance } from '../../utils/locationUtils';
 
 export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string) => void }) => {
     const { user, jobs, isPremium } = useAppContext();
@@ -11,17 +14,27 @@ export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string)
         location: '',
         maxRate: 0,
         experienceLevel: 'any',
+        proximitySearch: false,
     });
     
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
+        const { name, value, type } = e.target;
+        const isCheckbox = type === 'checkbox';
+        
         setFilters(prev => ({
             ...prev,
-            [name]: name === 'maxRate' ? (parseInt(value, 10) || 0) : value,
+            [name]: isCheckbox ? (e.target as HTMLInputElement).checked : (name === 'maxRate' ? (parseInt(value, 10) || 0) : value),
         }));
+    };
+    
+    const handleLocationChange = (value: string) => {
+        setFilters(prev => ({ ...prev, location: value }));
     };
 
     const filteredJobs = useMemo(() => {
+        if (!user) return [];
+        const userLocation = user.profile.location;
+
         return jobs.filter(job => {
             if (job.status !== 'active') return false;
 
@@ -29,8 +42,16 @@ export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string)
                 job.title.toLowerCase().includes(filters.keyword.toLowerCase()) ||
                 job.description.toLowerCase().includes(filters.keyword.toLowerCase());
 
-            const locationMatch = filters.location === '' ||
-                job.location.toLowerCase().includes(filters.location.toLowerCase());
+            const locationSearchText = filters.location.trim();
+            const jobLocation = job.location;
+            let locationMatch = true;
+            if (filters.proximitySearch) {
+                const distance = getDistance(userLocation, jobLocation);
+                locationMatch = distance !== null && distance <= 100;
+            } else if (locationSearchText && locationSearchText !== 'Worldwide') {
+                const regionLocations = findLocationsInRegion(locationSearchText);
+                locationMatch = regionLocations.some(l => jobLocation.toLowerCase().includes(l.toLowerCase()));
+            }
             
             const rateMatch = filters.maxRate === 0 || (parseInt(job.dayRate, 10) || 0) <= filters.maxRate;
             
@@ -38,7 +59,7 @@ export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string)
 
             return keywordMatch && locationMatch && rateMatch && levelMatch;
         });
-    }, [jobs, filters]);
+    }, [jobs, user, filters]);
 
     const premiumAccess = user && 'profileTier' in user.profile && isPremium(user.profile as EngineerProfile);
     
@@ -60,14 +81,18 @@ export const JobSearchView = ({ setActiveView }: { setActiveView: (view: string)
                             <input type="text" id="keyword" name="keyword" value={filters.keyword} onChange={handleFilterChange} placeholder="e.g., Crestron, Cisco, AWS" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2" />
                         </div>
                         <div>
-                            <label htmlFor="location" className="block text-sm font-medium text-gray-700 flex items-center"><MapPin size={14} className="mr-1.5"/> Location</label>
-                            <input type="text" id="location" name="location" value={filters.location} onChange={handleFilterChange} placeholder="e.g., London, Remote" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2" />
+                            <label className="block text-sm font-medium text-gray-700">Location</label>
+                            <LocationAutocomplete value={filters.location} onValueChange={handleLocationChange} />
+                            <label className="flex items-center mt-2 text-sm">
+                                <input type="checkbox" name="proximitySearch" checked={filters.proximitySearch} onChange={handleFilterChange} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                <span className="ml-2 text-gray-700">Search within 100 miles of my location</span>
+                            </label>
                         </div>
                         <div>
                             <label htmlFor="experienceLevel" className="block text-sm font-medium text-gray-700 flex items-center"><Layers size={14} className="mr-1.5"/> Experience Level</label>
                             <select name="experienceLevel" id="experienceLevel" value={filters.experienceLevel} onChange={handleFilterChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 bg-white">
                                 <option value="any">Any Level</option>
-                                {Object.values(ExperienceLevel).map(level => <option key={level} value={level}>{level}</option>)}
+                                {Object.values(ExperienceLevel).map((level) => <option key={level} value={level}>{level}</option>)}
                             </select>
                         </div>
                         <div>

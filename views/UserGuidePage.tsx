@@ -1,119 +1,74 @@
-import React, { useState, useMemo } from 'react';
-import { Footer } from '../components/Footer';
-import { Header } from '../components/Header';
+
+import React, { useState } from 'react';
 import { Page } from '../types';
 import { FAQ_DATA } from '../data/faqData';
-import { LifeBuoy, Search, User, Building, ChevronDown } from '../components/Icons';
+import { ChevronDown, User, Building, LifeBuoy } from '../components/Icons';
 
-interface HelpCenterPageProps {
-    onNavigate: (page: Page) => void;
-    onHowItWorksClick: () => void;
+interface UserGuidePageProps {
+  onNavigate: (page: Page) => void;
 }
 
-const FaqAccordionItem = ({ faq, isOpen, onToggle }: { faq: { question: string, answer: string }, isOpen: boolean, onToggle: () => void }) => (
-    <div className="border-b border-gray-200">
-        <button
-            onClick={onToggle}
-            className="w-full flex justify-between items-center py-2 text-left font-semibold text-sm text-gray-800 hover:bg-gray-50 px-2"
-        >
-            <span>{faq.question}</span>
-            <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${isOpen ? 'transform rotate-180' : ''}`} />
-        </button>
-        <div 
-            className={`grid transition-all duration-500 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
-        >
-            <div className="overflow-hidden">
-                <div className="pb-2 px-2">
-                    <p className="text-gray-600 text-xs">{faq.answer}</p>
+const FaqItem = ({ question, answer }: { question: string, answer: string }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    return (
+        <div className="border-b">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full flex justify-between items-center text-left py-4"
+            >
+                <span className="font-semibold text-lg text-gray-800">{question}</span>
+                <ChevronDown className={`w-6 h-6 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {isOpen && (
+                <div className="pb-4 pr-6 text-gray-600 animate-fade-in-up" style={{ animationDuration: '0.3s' }}>
+                    <p>{answer}</p>
                 </div>
-            </div>
-        </div>
-    </div>
-);
-
-
-export const HelpCenterPage = ({ onNavigate, onHowItWorksClick }: HelpCenterPageProps) => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [activeTab, setActiveTab] = useState('engineers');
-    const [openFaq, setOpenFaq] = useState<string | null>(null);
-
-    const filteredFaqs = useMemo(() => {
-        if (!searchTerm) {
-            return FAQ_DATA;
-        }
-        const lowercasedTerm = searchTerm.toLowerCase();
-        const filter = (faqs: any[]) => faqs.filter(faq =>
-            faq.question.toLowerCase().includes(lowercasedTerm) ||
-            faq.answer.toLowerCase().includes(lowercasedTerm)
-        );
-        return {
-            engineers: filter(FAQ_DATA.engineers),
-            companies: filter(FAQ_DATA.companies),
-            general: filter(FAQ_DATA.general),
-        };
-    }, [searchTerm]);
-    
-    const getTabClass = (tabName: string) => `px-4 py-2 font-semibold text-sm rounded-t-lg transition-colors duration-200 flex items-center gap-2 border-b-2 ${activeTab === tabName ? 'bg-white text-blue-600 border-blue-600' : 'bg-transparent text-gray-500 border-transparent hover:bg-gray-100 hover:border-gray-300'}`;
-
-    const handleToggleFaq = (question: string) => {
-        setOpenFaq(prev => prev === question ? null : question);
-    };
-
-    const renderFaqList = (faqs: { question: string, answer: string }[]) => (
-        <div className="space-y-1">
-            {faqs.length > 0 ? (
-                faqs.map(faq => (
-                    <FaqAccordionItem 
-                        key={faq.question} 
-                        faq={faq}
-                        isOpen={openFaq === faq.question}
-                        onToggle={() => handleToggleFaq(faq.question)}
-                    />
-                ))
-            ) : (
-                 <p className="text-center py-8 text-gray-500">No results found for "{searchTerm}".</p>
             )}
         </div>
     );
+};
+
+export const UserGuidePage = ({ onNavigate }: UserGuidePageProps) => {
+    const [activeTab, setActiveTab] = useState<'engineers' | 'companies' | 'general'>('engineers');
+
+    const getTabClass = (tabName: string) => `w-full sm:w-auto px-6 py-3 text-center font-semibold border-b-2 transition-colors flex items-center justify-center gap-2 ${ activeTab === tabName ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-800' }`;
+    
+    const renderFaqs = () => {
+        const faqs = FAQ_DATA[activeTab];
+        return (
+            <div className="space-y-4">
+                {faqs.map((faq, index) => <FaqItem key={index} {...faq} />)}
+            </div>
+        );
+    };
 
     return (
-        <div className="bg-gray-50 flex flex-col min-h-screen">
-            <Header onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
-            <main className="flex-grow pt-14">
-                 <div className="bg-blue-800 text-white py-4">
-                    <div className="container mx-auto px-4 text-center max-w-3xl">
-                        <LifeBuoy size={32} className="mx-auto mb-2 text-blue-300" />
-                        <h1 className="text-2xl font-extrabold">Help Center</h1>
-                        <p className="text-sm text-blue-200 mt-2">Find answers to common questions about TechSubbies.com.</p>
-                        <div className="mt-4 relative max-w-xl mx-auto">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Search for answers..."
-                                className="w-full rounded-full py-2 pl-12 pr-4 text-gray-800"
-                            />
-                        </div>
-                    </div>
-                </div>
-                
-                 <div className="container mx-auto px-4 py-4 max-w-4xl">
-                    <div className="flex justify-center border-b border-gray-300 mb-3">
-                        <button onClick={() => setActiveTab('engineers')} className={getTabClass('engineers')}><User /> For Engineers</button>
-                        <button onClick={() => setActiveTab('companies')} className={getTabClass('companies')}><Building /> For Companies</button>
-                        <button onClick={() => setActiveTab('general')} className={getTabClass('general')}>General</button>
-                    </div>
-
-                    <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md">
-                        {activeTab === 'engineers' && renderFaqList(filteredFaqs.engineers)}
-                        {activeTab === 'companies' && renderFaqList(filteredFaqs.companies)}
-                        {activeTab === 'general' && renderFaqList(filteredFaqs.general)}
-                    </div>
+        <div className="bg-gray-50 min-h-screen">
+            <div className="container mx-auto px-4 py-12">
+                <div className="text-center mb-12">
+                    <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800">Help Center</h1>
+                    <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+                        Find answers to the most common questions about using TechSubbies.com.
+                    </p>
                 </div>
 
-            </main>
-            <Footer onNavigate={onNavigate} onHowItWorksClick={onHowItWorksClick} />
+                <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
+                    <nav className="flex flex-col sm:flex-row border-b border-gray-200">
+                        <button onClick={() => setActiveTab('engineers')} className={getTabClass('engineers')}>
+                            <User /> For Engineers
+                        </button>
+                        <button onClick={() => setActiveTab('companies')} className={getTabClass('companies')}>
+                            <Building /> For Companies
+                        </button>
+                        <button onClick={() => setActiveTab('general')} className={getTabClass('general')}>
+                            <LifeBuoy /> General
+                        </button>
+                    </nav>
+                    <div className="p-6 md:p-8">
+                        {renderFaqs()}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

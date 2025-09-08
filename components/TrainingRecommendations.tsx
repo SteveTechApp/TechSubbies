@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext.tsx';
-import { EngineerProfile, TrainingProvider } from '../types/index.ts';
-import { MOCK_TRAINING_PROVIDERS } from '../data/trainingProviders.ts';
-import { Award, Loader, Sparkles } from './Icons.tsx';
+import { useAppContext } from '../context/AppContext';
+import { EngineerProfile, TrainingProvider } from '../types';
+import { MOCK_TRAINING_PROVIDERS } from '../data/trainingProviders';
+import { Award, Loader, Sparkles } from './Icons';
 
 interface Recommendation {
     courseName: string;
