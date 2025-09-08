@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { EngineerProfile, Role } from '../types';
-import { MessageCircle, Star, Trophy, Share2 } from '../components/Icons';
+import { MessageCircle, Star, Trophy, Share2, Handshake } from '../components/Icons';
 import { TopTrumpCard } from '../components/TopTrumpCard';
 import { ReviewCard } from '../components/ReviewCard';
 import { useAppContext } from '../context/AppContext';
@@ -15,7 +14,7 @@ interface EngineerProfileViewProps {
 }
 
 export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerProfileViewProps) => {
-    const { user, startConversationAndNavigate, reviews, allUsers } = useAppContext();
+    const { user, startConversationAndNavigate, reviews, allUsers, proposeCollaboration } = useAppContext();
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
     if (!profile) {
@@ -23,10 +22,18 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerPro
     }
 
     const canMessage = user && (user.role === Role.COMPANY || user.role === Role.RESOURCING_COMPANY);
+    const isEngineerViewing = user && user.role === Role.ENGINEER && user.profile.id !== profile.id;
     
     const handleNavigateToMessages = () => {
       // This is a placeholder; actual navigation is handled by the calling dashboard.
       console.log("Navigating to messages...");
+    };
+
+    const handleProposeCollaboration = () => {
+        if (!profile) return;
+        // The callback could be used by the parent dashboard to switch to the 'Messages' view.
+        const navigateCallback = () => console.log("Navigation to messages should be handled by the parent dashboard.");
+        proposeCollaboration(profile.id, navigateCallback);
     };
 
     const profileReviews = reviews
@@ -42,15 +49,24 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerPro
 
     return (
         <div className="relative font-sans max-w-4xl mx-auto py-4">
-            {canMessage && (
-                 <div className="absolute top-8 right-0 sm:right-4 z-20 flex items-center gap-2">
-                     <button
-                        onClick={() => setIsShareModalOpen(true)}
-                        className="flex items-center px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-100 shadow-lg border"
-                        aria-label={`Share ${profile.name}'s profile`}
+            <div className="absolute top-8 right-0 sm:right-4 z-20 flex items-center gap-2">
+                 <button
+                    onClick={() => setIsShareModalOpen(true)}
+                    className="flex items-center px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-100 shadow-lg border"
+                    aria-label={`Share ${profile.name}'s profile`}
+                >
+                    <Share2 size={16} className="mr-2" /> Share
+                </button>
+                {isEngineerViewing && (
+                    <button
+                        onClick={handleProposeCollaboration}
+                        className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-lg"
+                        aria-label={`Propose collaboration with ${profile.name}`}
                     >
-                        <Share2 size={16} className="mr-2" /> Share
+                        <Handshake size={16} className="mr-2" /> Propose Collaboration
                     </button>
+                )}
+                {canMessage && (
                     <button
                         onClick={() => startConversationAndNavigate(profile.id, handleNavigateToMessages)}
                         className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-lg"
@@ -58,8 +74,8 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerPro
                     >
                         <MessageCircle size={16} className="mr-2" /> Message
                     </button>
-                </div>
-            )}
+                )}
+            </div>
            
             <TopTrumpCard profile={profile} isEditable={isEditable} onEdit={onEdit} />
 

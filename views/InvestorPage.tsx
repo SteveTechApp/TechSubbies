@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo } from 'react';
 import { Page, ProfileTier } from '../types';
 import { RevenueSimulator } from '../components/RevenueSimulator';
@@ -33,7 +34,7 @@ export const InvestorPage = ({ onNavigate }: InvestorPageProps) => {
                 <div className="container mx-auto px-4">
                     <h1 className="text-4xl md:text-5xl font-extrabold">Investing in the Future of Work</h1>
                     <p className="mt-4 text-lg text-gray-300 max-w-3xl mx-auto">
-                        TechSubbies.com is a technology-first platform designed to disrupt the £48bn UK recruitment industry by directly connecting specialist freelance talent with the companies that need them.
+                        TechSubbies.com is a technology-first platform designed to disrupt the multi-billion pound technical recruitment industry worldwide by directly connecting specialist freelance talent with the companies that need them.
                     </p>
                 </div>
             </section>

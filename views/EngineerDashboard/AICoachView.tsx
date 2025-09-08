@@ -21,7 +21,7 @@ export const AICoachView = ({ profile, setActiveView }: AICoachViewProps) => {
         setIsLoading(true);
         setError('');
         setInsights(null);
-        const result = await getCareerCoaching();
+        const result = await getCareerCoaching(profile);
         if (result.error) {
             setError(result.error);
         } else if (result.insights) {

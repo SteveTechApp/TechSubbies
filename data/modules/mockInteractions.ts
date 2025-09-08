@@ -1,6 +1,4 @@
-
-
-import { Application, Review, Conversation, Message, ApplicationStatus, Contract, ContractStatus, ContractType, Currency, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Project, Discipline, TimesheetStatus } from '../../types';
+import { Application, Review, Conversation, Message, ApplicationStatus, Contract, ContractStatus, ContractType, Currency, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Project, Discipline, TimesheetStatus, CollaborationPost } from '../../types';
 
 export const MOCK_APPLICATIONS: Application[] = [
     { jobId: 'job-1', engineerId: 'eng-1', date: new Date('2024-06-20'), status: ApplicationStatus.COMPLETED, reviewed: true },
@@ -111,4 +109,33 @@ export const MOCK_PROJECTS: Project[] = [
             { id: 'role-5', title: 'On-site IT Support', discipline: Discipline.IT, startDate: new Date('2024-11-15'), endDate: new Date('2024-12-15'), assignedEngineerId: 'eng-2' },
         ],
     },
+];
+
+export const MOCK_COLLABORATION_POSTS: CollaborationPost[] = [
+    {
+        id: 'collab-1',
+        postedByEngineerId: 'eng-steve',
+        title: 'Need Crestron Programmer for Overflow Work',
+        description: 'Looking for an experienced Crestron programmer to assist with a large corporate project for the next 4-6 weeks. Must be proficient in SIMPL and C#. Remote work possible for the right candidate.',
+        location: 'London / Remote',
+        rate: '500',
+        currency: Currency.GBP,
+        duration: '4-6 weeks',
+        startDate: new Date('2024-09-01'),
+        postedDate: new Date('2024-07-25'),
+        status: 'open',
+    },
+    {
+        id: 'collab-2',
+        postedByEngineerId: 'gen-eng-1', // David Greene from mock generation
+        title: 'Partner for Small Business IT Rollout',
+        description: 'Seeking a freelance IT engineer to partner on a multi-site retail IT installation project. Work involves network setup, POS installation, and user training. Must have own transport and tools.',
+        location: 'Manchester, UK',
+        rate: '350',
+        currency: Currency.GBP,
+        duration: '3 weeks',
+        startDate: new Date('2024-08-15'),
+        postedDate: new Date('2024-07-22'),
+        status: 'open',
+    }
 ];

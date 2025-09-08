@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TechSubbies.com | The UK's Specialist Freelance Network</title>
+    <title>TechSubbies.com | The Global Specialist Freelance Network</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
@@ -51,13 +51,13 @@
       }
 
       @keyframes cursor-click-path-2 { /* For slide 2: Company job posting */
-        0%, 100% { top: 10%; left: 25%; opacity: 0; transform: scale(1); }
-        10% { top: 10%; left: 25%; opacity: 1; }
-        30% { top: 52%; left: 69%; } /* Move to 'Essential' button */
-        35%, 45% { top: 52%; left: 69%; transform: scale(0.9); } /* Click effect */
-        55% { top: 67%; left: 69%; transform: scale(1); } /* Move to next 'Essential' button */
-        60%, 70% { top: 67%; left: 69%; transform: scale(0.9); } /* Click effect */
-        80% { top: 67%; left: 69%; opacity: 0; transform: scale(1); }
+        0%, 100% { top: 15%; left: 20%; opacity: 0; transform: scale(1); }
+        10% { top: 15%; left: 20%; opacity: 1; }
+        30% { top: 58%; left: 88%; } /* Move to 'Desirable' button on 2nd skill */
+        35%, 45% { top: 58%; left: 88%; transform: scale(0.9); } /* Click effect */
+        55% { top: 72%; left: 88%; transform: scale(1); } /* Move to 'Desirable' button on 3rd skill */
+        60%, 70% { top: 72%; left: 88%; transform: scale(0.9); } /* Click effect */
+        80% { top: 72%; left: 88%; opacity: 0; transform: scale(1); }
       }
       .animate-cursor-2 {
         animation: cursor-click-path-2 8s ease-in-out infinite;
@@ -82,7 +82,10 @@
     "react-dom/": "https://esm.sh/react-dom@18.2.0/",
     "react/": "https://esm.sh/react@18.2.0/",
     "lit": "https://esm.sh/lit@^3.3.1",
-    "@/i18n": "./i18n.js"
+    "framer-motion": "https://esm.sh/framer-motion@11.3.12",
+    "@/i18n": "./i18n.js",
+    "jspdf": "https://esm.sh/jspdf@2.5.1",
+    "html2canvas": "https://esm.sh/html2canvas@1.4.1"
   }
 }
 </script>

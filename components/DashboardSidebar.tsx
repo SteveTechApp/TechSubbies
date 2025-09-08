@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Role } from '../types';
@@ -22,7 +21,8 @@ import {
     KanbanSquare,
     Clapperboard,
     LifeBuoy,
-    Gift
+    Gift,
+    Handshake
 } from './Icons';
 
 interface DashboardSidebarProps {
@@ -35,6 +35,7 @@ const ENGINEER_LINKS = [
     { label: 'Manage Profile', icon: User },
     { label: 'Job Search', icon: Search },
     { label: 'My Network', icon: Users },
+    { label: 'Find a Partner', icon: Handshake },
     { label: 'Availability', icon: CalendarDays },
     { label: 'Contracts', icon: Briefcase },
     { label: 'Invoices', icon: DollarSign },

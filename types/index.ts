@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 // Enums and simple types first
@@ -248,6 +247,7 @@ export interface EngineerProfile extends UserProfile {
     country: Country;
     description: string;
     experience: number;
+    experienceLevel: ExperienceLevel;
     profileTier: ProfileTier;
     minDayRate: number;
     maxDayRate: number;
@@ -373,6 +373,20 @@ export interface Contract {
     milestones: Milestone[];
     timesheets?: Timesheet[];
     jobTitle?: string;
+}
+
+export interface CollaborationPost {
+    id: string;
+    postedByEngineerId: string;
+    title: string;
+    description: string;
+    location: string;
+    rate: string;
+    currency: Currency;
+    duration: string;
+    startDate: Date;
+    postedDate: Date;
+    status: 'open' | 'closed';
 }
 
 export interface Transaction {

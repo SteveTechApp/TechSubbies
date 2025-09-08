@@ -1,7 +1,7 @@
 // FIX: Created file to house static mock profiles, resolving "not a module" error.
 import {
     AdminProfile, ResourcingCompanyProfile, EngineerProfile, Role, Discipline,
-    ProfileTier, Currency, Country,
+    ProfileTier, Currency, Country, ExperienceLevel,
 } from '../../types';
 import { BADGES } from '../badges';
 
@@ -43,6 +43,7 @@ export const MOCK_FREE_ENGINEER: EngineerProfile = {
     country: Country.UK,
     description: 'Experienced AV technician looking for contract work in the South West. Reliable and hardworking.',
     experience: 5,
+    experienceLevel: ExperienceLevel.MID_LEVEL,
     profileTier: ProfileTier.BASIC,
     minDayRate: 150,
     maxDayRate: 195,
@@ -71,6 +72,7 @@ export const MOCK_ENGINEER_STEVE: EngineerProfile = {
     country: Country.UK,
     description: 'Freelance AV Project Manager & Commissioning Engineer with 20+ years of experience delivering high-spec corporate and residential projects.',
     experience: 22,
+    experienceLevel: ExperienceLevel.EXPERT,
     profileTier: ProfileTier.SKILLS,
     minDayRate: 500,
     maxDayRate: 650,

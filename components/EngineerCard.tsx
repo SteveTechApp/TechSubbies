@@ -83,7 +83,10 @@ export const EngineerCard = ({ profile, onClick, matchScore }: EngineerCardProps
             
             <div className="flex-grow">
                 <h3 className="text-lg font-bold text-gray-800 truncate">{profile.name}</h3>
-                <p className="text-blue-600 font-semibold text-sm">{profile.discipline}</p>
+                <div className="flex items-baseline gap-2">
+                    <p className="text-blue-600 font-semibold text-sm">{profile.discipline}</p>
+                    <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{profile.experienceLevel}</span>
+                </div>
                 <p className="text-sm text-gray-500 flex items-center mt-1"><MapPin size={14} className="mr-1"/> {profile.location}</p>
             </div>
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { EngineerProfile, ProfileTier, Skill } from '../types';
@@ -20,6 +19,7 @@ import { InvoicesView } from './InvoicesView';
 import { AICoachView } from './EngineerDashboard/AICoachView';
 import { LoyaltyView } from './EngineerDashboard/LoyaltyView';
 import { SettingsView } from './EngineerDashboard/SettingsView';
+import { FindPartnerView } from './EngineerDashboard/FindPartnerView';
 
 export const EngineerDashboard = () => {
     const { user, updateEngineerProfile, setCurrentPageContext, boostProfile } = useAppContext();
@@ -77,6 +77,8 @@ export const EngineerDashboard = () => {
                 return <JobSearchView setActiveView={setActiveView} />;
             case 'My Network':
                 return <MyNetworkView setActiveView={setActiveView} />;
+            case 'Find a Partner':
+                return <FindPartnerView setActiveView={setActiveView} />;
             case 'Availability':
                 return <AvailabilityView profile={engineerProfile} onUpdateAvailability={(date) => handleSaveProfile({ availability: date })} setActiveView={setActiveView} />;
             case 'AI Tools':

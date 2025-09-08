@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Page } from '../types';
 import { PageHeader } from '../components/PageHeader';
@@ -20,7 +21,7 @@ export const ForCompaniesPage = ({ onNavigate }: ForCompaniesPageProps) => {
         <div className="relative container mx-auto px-4">
           <h1 className="text-4xl md:text-5xl font-extrabold mb-4">Find & Hire Elite Tech Talent. Instantly.</h1>
           <p className="text-lg md:text-xl max-w-3xl mx-auto">
-            Post jobs for free and let our AI instantly match you with the UK's top freelance AV & IT engineers based on deep-skill analysis.
+            Post jobs for free and let our AI instantly match you with the world's top freelance AV & IT engineers based on deep-skill analysis.
           </p>
         </div>
       </section>
@@ -59,7 +60,7 @@ export const ForCompaniesPage = ({ onNavigate }: ForCompaniesPageProps) => {
       <section className="bg-blue-600 py-20">
         <div className="container mx-auto px-4 text-center text-white">
           <h2 className="text-3xl font-bold">Ready to Find Your Next Hire?</h2>
-          <p className="my-4 max-w-2xl mx-auto text-blue-100">Join the UK's leading companies who are building their flexible workforce on TechSubbies.</p>
+          <p className="my-4 max-w-2xl mx-auto text-blue-100">Join the world's leading companies who are building their flexible workforce on TechSubbies.</p>
           <button onClick={() => onNavigate('companySignUp')} className="bg-white text-blue-700 font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-transform transform hover:scale-105 mt-2">
             Post a Job For Free
           </button>

@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { Discipline, Country } from '../../types';
+import { Discipline, Country, ExperienceLevel } from '../../types';
 import { LocationAutocomplete } from '../LocationAutocomplete';
 
 interface StepCoreInfoProps {
-    data: { name: string, email: string, discipline: Discipline, location: string, experience: number, country: Country };
+    data: { name: string, email: string, discipline: Discipline, location: string, experience: number, country: Country, experienceLevel: ExperienceLevel };
     setData: (data: any) => void;
 }
 
@@ -58,9 +58,17 @@ export const StepCoreInfo = ({ data, setData }: StepCoreInfoProps) => {
                     </div>
                 </div>
 
-                <div>
-                    <label className="block font-medium mb-1">Years of Experience</label>
-                    <input type="number" name="experience" value={data.experience} onChange={handleChange} className="w-full border p-2 rounded" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block font-medium mb-1">Years of Experience</label>
+                        <input type="number" name="experience" value={data.experience} onChange={handleChange} className="w-full border p-2 rounded" />
+                    </div>
+                     <div>
+                        <label className="block font-medium mb-1">Experience Level</label>
+                        <select name="experienceLevel" value={data.experienceLevel} onChange={handleChange} className="w-full border p-2 rounded bg-white h-[42px]">
+                            {Object.values(ExperienceLevel).map(level => <option key={level} value={level}>{level}</option>)}
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>

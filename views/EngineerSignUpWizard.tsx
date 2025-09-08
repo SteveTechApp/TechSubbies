@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Currency, Discipline, Compliance, IdentityVerification, Country } from '../types';
+import { Currency, Discipline, Compliance, IdentityVerification, Country, ExperienceLevel } from '../types';
 import { Logo } from '../components/Logo';
 import { ArrowLeft } from '../components/Icons';
 import { ProgressTracker } from '../components/SignUp/ProgressTracker';
@@ -21,6 +21,7 @@ export const EngineerSignUpWizard = ({ onCancel }: EngineerSignUpWizardProps) =>
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         name: '', email: '', discipline: Discipline.AV, location: '', experience: 5,
+        experienceLevel: ExperienceLevel.MID_LEVEL,
         country: Country.UK, // Add country to initial state
         minDayRate: 150, maxDayRate: 180, currency: Currency.GBP, availability: new Date().toISOString().split('T')[0],
         compliance: {

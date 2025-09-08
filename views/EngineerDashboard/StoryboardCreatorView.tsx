@@ -1,7 +1,7 @@
-
 import React, { useState, useCallback } from 'react';
 import { EngineerProfile } from '../../types';
 import { Save, Image, Upload, ArrowLeft } from '../../components/Icons';
+import { useAppContext } from '../../context/AppContext';
 
 interface StoryboardPanelData {
     id: number;
@@ -89,6 +89,7 @@ const StoryboardPanel = ({ panel, onUpdate }: StoryboardPanelProps) => {
 };
 
 export const StoryboardCreatorView = ({ profile, setActiveView }: { profile: EngineerProfile, setActiveView: (view: string) => void; }) => {
+    const { saveStoryboardAsCaseStudy } = useAppContext();
     const [panels, setPanels] = useState<StoryboardPanelData[]>(initialPanels);
     const [title, setTitle] = useState('My Visual Case Study');
 
@@ -99,8 +100,8 @@ export const StoryboardCreatorView = ({ profile, setActiveView }: { profile: Eng
     }, []);
     
     const handleSave = () => {
-        console.log({ title, panels });
-        alert(`Storyboard "${title}" saved! (Check console for data)`);
+        saveStoryboardAsCaseStudy(title, panels);
+        alert(`Storyboard "${title}" saved as a Case Study in your profile!`);
         setActiveView('Manage Profile');
     };
 

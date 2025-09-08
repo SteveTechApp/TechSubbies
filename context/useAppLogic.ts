@@ -5,14 +5,17 @@ import {
     ForumPost, ForumComment, Notification, ProfileTier, Language, Currency, ApplicationStatus,
     ContractStatus, Invoice, InvoiceStatus, PaymentTerms, Timesheet, Insight,
     // FIX: Added missing type imports for enums and product-related types.
-    MilestoneStatus, TimesheetStatus, Product, ProductFeatures,
+    MilestoneStatus, TimesheetStatus, Product, ProductFeatures, CaseStudy,
+    // FIX: Added CollaborationPost to the import list to support partner-finding features.
+    CollaborationPost,
 } from '../types';
 import {
     MOCK_USERS, MOCK_ENGINEERS, MOCK_COMPANIES, MOCK_JOBS,
     MOCK_APPLICATIONS, MOCK_REVIEWS, ALL_MOCK_USERS,
     MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_CONTRACTS,
     MOCK_TRANSACTIONS, MOCK_PROJECTS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS,
-    MOCK_NOTIFICATIONS
+    // FIX: Imported collaboration posts mock data to initialize the new state.
+    MOCK_NOTIFICATIONS, MOCK_COLLABORATION_POSTS
 } from '../data/mockData';
 import { geminiService } from '../services/geminiService';
 import i18n from '@/i18n';
@@ -46,6 +49,8 @@ export const useAppLogic = () => {
     // --- FORUM STATE ---
     const [forumPosts, setForumPosts] = useState<ForumPost[]>(MOCK_FORUM_POSTS);
     const [forumComments, setForumComments] = useState<ForumComment[]>(MOCK_FORUM_COMMENTS);
+    // FIX: Added state for collaboration posts, which was missing.
+    const [collaborationPosts, setCollaborationPosts] = useState<CollaborationPost[]>(MOCK_COLLABORATION_POSTS);
 
     // --- UI/CONTEXT STATE ---
     const [currentPageContext, setCurrentPageContext] = useState<string>('Landing Page');
@@ -82,6 +87,8 @@ export const useAppLogic = () => {
             country: formData.country,
             description: 'Newly registered freelance engineer ready for work.',
             experience: formData.experience,
+            // FIX: Added missing 'experienceLevel' property to align with EngineerProfile type.
+            experienceLevel: formData.experienceLevel,
             profileTier: ProfileTier.BASIC,
             minDayRate: formData.minDayRate,
             maxDayRate: formData.maxDayRate,
@@ -151,6 +158,55 @@ export const useAppLogic = () => {
             alert("Your profile has been reactivated and is now visible in searches.");
         }
     };
+    // FIX: Implemented the missing 'proposeCollaboration' function.
+    const proposeCollaboration = (otherProfileId: string, navigateCallback: () => void) => {
+        if (!user) return;
+        const otherUser = findUserByProfileId(otherProfileId);
+        if (!otherUser) return;
+
+        // Monetization check
+        const currentUserProfile = user.profile as EngineerProfile;
+        const isPremium = currentUserProfile.profileTier !== ProfileTier.BASIC;
+        const hasCredits = currentUserProfile.platformCredits > 0;
+
+        if (!isPremium && !hasCredits) {
+            alert("This is a premium feature. Please upgrade your profile or purchase credits to propose collaborations.");
+            return;
+        }
+
+        if (!isPremium && hasCredits) {
+            if (!window.confirm("This action will use one of your Platform Credits. Continue?")) {
+                return;
+            }
+            updateEngineerProfile(currentUserProfile.id, { platformCredits: currentUserProfile.platformCredits - 1 });
+        }
+
+        const participantIds = [user.id, otherUser.id].sort();
+        let existingConvo = conversations.find(c => c.participantIds.join(',') === participantIds.join(','));
+        let convoId: string;
+
+        if (existingConvo) {
+            convoId = existingConvo.id;
+        } else {
+            const newConvo: Conversation = {
+                id: `convo-${generateUniqueId()}`,
+                participantIds: participantIds,
+                lastMessageTimestamp: new Date(),
+                lastMessageText: "", // will be updated by the message
+            };
+            setConversations(prev => [newConvo, ...prev]);
+            convoId = newConvo.id;
+        }
+        
+        setSelectedConversationId(convoId);
+
+        const collaborationMessage = `Hi ${otherUser.profile.name.split(' ')[0]}, I saw your profile and I think we could be a good fit for a collaboration on a future project. Let me know if you'd be interested in connecting.`;
+
+        sendMessage(convoId, collaborationMessage);
+        
+        alert(`Collaboration proposal sent to ${otherUser.profile.name}!`);
+        navigateCallback();
+    };
 
 
     // --- JOB & APPLICATION ACTIONS ---
@@ -190,6 +246,26 @@ export const useAppLogic = () => {
     };
     const declineOffer = (jobId: string, engineerId: string) => {
         setApplications(prev => prev.map(app => app.jobId === jobId && app.engineerId === engineerId ? { ...app, status: ApplicationStatus.DECLINED } : app));
+    };
+    // FIX: Implemented the missing 'postCollaboration' function.
+    const postCollaboration = (postData: Omit<CollaborationPost, 'id' | 'postedByEngineerId' | 'postedDate' | 'status'>) => {
+        if (!user || user.role !== Role.ENGINEER) return;
+
+        const currentUserProfile = user.profile as EngineerProfile;
+        if (currentUserProfile.profileTier === ProfileTier.BASIC) {
+            alert("Posting collaboration opportunities is a premium feature. Please upgrade your profile.");
+            return;
+        }
+
+        const newPost: CollaborationPost = {
+            id: `collab-${generateUniqueId()}`,
+            postedByEngineerId: user.profile.id,
+            postedDate: new Date(),
+            status: 'open',
+            ...postData,
+        };
+        setCollaborationPosts(prev => [newPost, ...prev]);
+        alert('Collaboration post created successfully!');
     };
 
     // --- CONTRACT & PAYMENT ACTIONS ---
@@ -381,17 +457,27 @@ export const useAppLogic = () => {
         setNotifications(prev => prev.map(n => n.userId === userId ? { ...n, isRead: true } : n));
     };
     
+    // --- STORYBOARD / CASE STUDY ACTIONS ---
+    const saveStoryboardAsCaseStudy = (title: string, panels: any[]) => {
+        if (!user || user.role !== Role.ENGINEER) return;
+
+        const newCaseStudy: CaseStudy = {
+            id: `sb-${generateUniqueId()}`,
+            name: title,
+            // In a real app, the panels data would be saved and this URL would point to a viewer page.
+            // For this demo, a placeholder URL indicates it's an internal storyboard.
+            url: `techsubbies://storyboard/${generateUniqueId()}`
+        };
+
+        const currentProfile = user.profile as EngineerProfile;
+        const updatedCaseStudies = [...(currentProfile.caseStudies || []), newCaseStudy];
+        updateEngineerProfile(currentProfile.id, { caseStudies: updatedCaseStudies });
+    };
 
     // --- AI ACTIONS ---
-    const getCareerCoaching = async (): Promise<{ insights?: Insight[], error?: string }> => {
-        await new Promise(res => setTimeout(res, 1500)); // Simulate API delay
-        return {
-            insights: [
-                { type: 'Upskill', suggestion: 'Jobs for "AV Systems Engineer" often list "Dante Level 3" as a requirement. Adding this skill could increase your match score for these roles.', callToAction: { text: 'Explore training options', view: 'AI Tools' } },
-                { type: 'Profile Enhancement', suggestion: 'Your profile bio is a bit short. Expanding on your project management experience could attract more senior roles.', callToAction: { text: 'Edit my profile', view: 'Manage Profile' } },
-                { type: 'Certification', suggestion: 'Considering your experience with Cisco networks, a "CCNA" certification could significantly boost your day rate for IT-focused AV roles.', callToAction: { text: 'View my certifications', view: 'Manage Profile' } },
-            ]
-        };
+    const getCareerCoaching = async (profile: EngineerProfile): Promise<{ insights?: Insight[], error?: string }> => {
+        if (!profile) return { error: "Profile not available for analysis." };
+        return geminiService.getCareerCoaching(profile);
     };
     const getApplicantDeepDive = async (job: Job, engineer: EngineerProfile): Promise<{ analysis?: any, error?: string }> => {
         await new Promise(res => setTimeout(res, 2000));
@@ -480,6 +566,8 @@ export const useAppLogic = () => {
         user, page, engineers, companies, jobs, applications, reviews, contracts, allUsers, transactions,
         conversations, messages, selectedConversationId, isAiReplying, forumPosts, forumComments,
         projects, notifications, invoices,
+        // FIX: Exposed collaborationPosts state.
+        collaborationPosts,
         currentPageContext, applicantForDeepDive, language, currency,
         chatSession,
 
@@ -492,13 +580,16 @@ export const useAppLogic = () => {
         // ACTIONS
         login, logout,
         createAndLoginEngineer, createAndLoginCompany, createAndLoginResourcingCompany,
-        updateEngineerProfile, updateCompanyProfile, boostProfile, reactivateProfile,
-        postJob, applyForJob, applyForJobWithCredit, inviteEngineerToJob, sendOffer, acceptOffer, declineOffer,
+        // FIX: Exposed proposeCollaboration action.
+        updateEngineerProfile, updateCompanyProfile, boostProfile, reactivateProfile, proposeCollaboration,
+        // FIX: Exposed postCollaboration action.
+        postJob, applyForJob, applyForJobWithCredit, inviteEngineerToJob, sendOffer, acceptOffer, declineOffer, postCollaboration,
         createContract, signContract, fundMilestone, submitMilestoneForApproval, approveMilestone,
         submitTimesheet, approveTimesheet, generateInvoice, payInvoice,
         startConversationAndNavigate, sendMessage,
         createForumPost, addForumComment, voteOnPost, voteOnComment,
         markNotificationsAsRead,
+        saveStoryboardAsCaseStudy,
         getCareerCoaching, getApplicantDeepDive, analyzeProductForFeatures,
         toggleUserStatus, toggleJobStatus,
         upgradeProfileTier, purchasePlatformCredits, redeemLoyaltyPoints, reportUser,

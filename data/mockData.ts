@@ -1,10 +1,9 @@
-
 import { User, Role } from '../types';
 // FIX: Corrected module imports after refactoring mockProfiles.ts to solve module resolution error.
 import { MOCK_ENGINEERS, MOCK_COMPANIES } from './modules/mockGeneratedProfiles';
 import { MOCK_RESOURCING_COMPANY_1, MOCK_ADMIN_PROFILE, MOCK_FREE_ENGINEER, MOCK_ENGINEER_STEVE } from './modules/mockStaticProfiles';
 import { MOCK_JOBS } from './modules/mockJobs';
-import { MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_CONTRACTS, MOCK_TRANSACTIONS, MOCK_PROJECTS } from './modules/mockInteractions';
+import { MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_CONTRACTS, MOCK_TRANSACTIONS, MOCK_PROJECTS, MOCK_COLLABORATION_POSTS } from './modules/mockInteractions';
 import { MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_NOTIFICATIONS } from './modules/mockForum';
 
 
@@ -24,7 +23,8 @@ export {
     MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_NOTIFICATIONS,
     MOCK_CONTRACTS,
     MOCK_TRANSACTIONS,
-    MOCK_PROJECTS
+    MOCK_PROJECTS,
+    MOCK_COLLABORATION_POSTS
 };
 
 

@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { EngineerProfile, Job, ProfileTier, CompanyProfile } from '../../types';
+import { EngineerProfile, Job, ProfileTier, CompanyProfile, ExperienceLevel } from '../../types';
 import { useAppContext } from '../../context/AppContext';
 import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles';
 import { Search, Sparkles, Loader } from '../Icons';
@@ -21,7 +21,7 @@ interface FindTalentFiltersProps {
 export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTalentFiltersProps) => {
     const { user, geminiService } = useAppContext();
     const [filters, setFilters] = useState({
-        keyword: '', role: 'any', maxRate: 0, minExperience: 0, maxDistance: 0, location: ''
+        keyword: '', role: 'any', maxRate: 0, minExperience: 0, maxDistance: 0, location: '', experienceLevel: 'any'
     });
     const [sort, setSort] = useState('relevance');
     const [aiSelectedJobId, setAiSelectedJobId] = useState('');
@@ -42,6 +42,7 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTal
                     break;
                 case 'keyword':
                 case 'role':
+                case 'experienceLevel':
                     newFilters[name] = value;
                     break;
             }
@@ -66,6 +67,7 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTal
                 if (eng.minDayRate > filters.maxRate && filters.maxRate > 0) return false;
                 if (eng.experience < filters.minExperience) return false;
                 if (filters.role !== 'any' && !eng.selectedJobRoles?.some(r => r.roleName === filters.role)) return false;
+                if (filters.experienceLevel !== 'any' && eng.experienceLevel !== filters.experienceLevel) return false;
                 
                 if (locationSearchText && locationSearchText !== 'Worldwide') {
                     const engLocation = eng.location;
@@ -134,6 +136,13 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTal
                     <select name="role" id="role" value={filters.role} onChange={handleFilterChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-white">
                         <option value="any">Any Role</option>
                         {specialistRoles.map(r => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                </div>
+                <div>
+                    <label htmlFor="experienceLevel" className="block text-sm font-medium text-gray-700">Experience Level</label>
+                    <select name="experienceLevel" id="experienceLevel" value={filters.experienceLevel} onChange={handleFilterChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-white">
+                        <option value="any">Any Level</option>
+                        {Object.values(ExperienceLevel).map(level => <option key={level} value={level}>{level}</option>)}
                     </select>
                 </div>
                  <div>

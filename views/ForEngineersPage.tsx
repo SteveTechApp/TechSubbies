@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Page } from '../types';
 import { PageHeader } from '../components/PageHeader';
@@ -90,7 +91,7 @@ export const ForEngineersPage = ({ onNavigate }: ForEngineersPageProps) => {
       <section className="bg-blue-50 py-20">
         <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold text-gray-800">Ready to Find Your Next Contract?</h2>
-            <p className="text-gray-600 my-4 max-w-2xl mx-auto">Join a network of elite freelance professionals and connect with the UK's top technology companies.</p>
+            <p className="text-gray-600 my-4 max-w-2xl mx-auto">Join a network of elite freelance professionals and connect with the world's top technology companies.</p>
             <button onClick={() => onNavigate('engineerSignUp')} className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 mt-2">
                 Sign Up For Free
             </button>

@@ -1,5 +1,5 @@
 // FIX: Created file to house generated mock profiles, resolving "not a module" error.
-import { EngineerProfile, CompanyProfile, Role, Discipline, ProfileTier, Currency, Country, ResourcingCompanyProfile } from '../../types';
+import { EngineerProfile, CompanyProfile, Role, Discipline, ProfileTier, Currency, Country, ResourcingCompanyProfile, ExperienceLevel } from '../../types';
 import { MALE_FIRST_NAMES, FEMALE_FIRST_NAMES, LAST_NAMES, LOCATIONS, COMPANY_NAMES, COMPANY_SUFFIXES } from './mockConstants';
 import { MOCK_RESOURCING_COMPANY_1, MOCK_ENGINEER_STEVE, MOCK_FREE_ENGINEER } from './mockStaticProfiles';
 import { BADGES } from '../badges';
@@ -18,6 +18,12 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
         const minRate = getRandomInt(15, 40) * 10;
         const maxRate = minRate + getRandomInt(5, 15) * 10;
 
+        let experienceLevel: ExperienceLevel;
+        if (experience < 3) experienceLevel = ExperienceLevel.JUNIOR;
+        else if (experience <= 7) experienceLevel = ExperienceLevel.MID_LEVEL;
+        else if (experience <= 15) experienceLevel = ExperienceLevel.SENIOR;
+        else experienceLevel = ExperienceLevel.EXPERT;
+
         engineers.push({
             id: `gen-eng-${i}`,
             name,
@@ -29,6 +35,7 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
             country: Country.UK,
             description: `A skilled and reliable ${name} with ${experience} years of experience in the industry.`,
             experience,
+            experienceLevel,
             profileTier: tier,
             minDayRate: minRate,
             maxDayRate: tier === ProfileTier.BASIC ? Math.min(maxRate, 195) : maxRate,

@@ -24,14 +24,6 @@ export const HERO_IMAGES = {
   ],
 };
 
-// --- High-Fidelity Slideshow Mockups ---
-export const SLIDESHOW_ASSETS = {
-    slide1: 'https://i.imgur.com/Y38B9h1.png', // Engineer skill rating
-    slide2: 'https://i.imgur.com/gK92uDR.png', // Company job posting
-    slide3: 'https://i.imgur.com/uNf5P4I.png', // AI match results
-    slide4: 'https://i.imgur.com/r122zW5.png', // Direct messaging
-};
-
 // --- User Avatars ---
 export const AVATARS = {
     steve: 'https://i.imgur.com/L45aA6d.jpg',

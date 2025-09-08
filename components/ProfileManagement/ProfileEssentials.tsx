@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { EngineerProfile, Discipline } from '../../types';
+import { EngineerProfile, Discipline, ExperienceLevel } from '../../types';
 import { LocationAutocomplete } from '../LocationAutocomplete';
 
 interface ProfileEssentialsProps {
@@ -34,7 +34,7 @@ export const ProfileEssentials = ({ formData, setFormData }: ProfileEssentialsPr
                     <LocationAutocomplete value={formData.location} onValueChange={handleLocationChange} />
                 </div>
             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label className="block font-medium mb-1 text-sm">Primary Discipline</label>
                     <select name="discipline" value={formData.discipline} onChange={handleChange} className="w-full border p-2 rounded bg-white h-[42px]">
@@ -46,6 +46,12 @@ export const ProfileEssentials = ({ formData, setFormData }: ProfileEssentialsPr
                 <div>
                     <label className="block font-medium mb-1 text-sm">Years of Experience</label>
                     <input type="number" name="experience" value={formData.experience} onChange={handleChange} className="w-full border p-2 rounded" />
+                </div>
+                <div>
+                    <label className="block font-medium mb-1 text-sm">Experience Level</label>
+                    <select name="experienceLevel" value={formData.experienceLevel} onChange={handleChange} className="w-full border p-2 rounded bg-white h-[42px]">
+                        {Object.values(ExperienceLevel).map(level => <option key={level} value={level}>{level}</option>)}
+                    </select>
                 </div>
             </div>
              <div>

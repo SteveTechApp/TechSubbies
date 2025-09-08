@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Page } from '../types';
@@ -28,9 +29,9 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
       <section className="relative bg-gray-800 text-white pt-32 pb-20 text-center">
         <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=2070&auto=format&fit=crop')` }}></div>
         <div className="relative container mx-auto px-4">
-          <h1 className="text-4xl md:text-6xl font-extrabold mb-4 fade-in-up">The UK's Specialist Freelance Network</h1>
+          <h1 className="text-4xl md:text-6xl font-extrabold mb-4 fade-in-up">The Global Specialist Freelance Network</h1>
           <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto mb-8 fade-in-up" style={{ animationDelay: '0.2s' }}>
-            AI-powered matching connects expert AV &amp; IT engineers with the UK's leading tech companies. No recruiters. No placement fees. Just direct connections.
+            AI-powered matching connects expert AV &amp; IT engineers with the world's leading tech companies. No recruiters. No placement fees. Just direct connections.
           </p>
           <div className="flex justify-center gap-4 fade-in-up" style={{ animationDelay: '0.4s' }}>
             <button

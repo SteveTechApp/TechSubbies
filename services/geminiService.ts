@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 // FIX: Added Product and ProductFeatures to the import list.
-import { EngineerProfile, Job, JobSkillRequirement, Skill, Product, ProductFeatures } from "../types";
+import { EngineerProfile, Job, JobSkillRequirement, Skill, Product, ProductFeatures, Insight } from "../types";
 import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';
 
 class GeminiService {
@@ -112,6 +112,46 @@ class GeminiService {
                 }
             }
         };
+        return this.generateWithSchema(prompt, schema);
+    }
+    
+    // Method used in AICoachView.tsx
+    async getCareerCoaching(profile: EngineerProfile): Promise<{ insights?: Insight[], error?: string }> {
+        const prompt = `Analyze this AV/IT engineer's profile against current market trends for freelance contracts. Provide 3 actionable insights to help them advance their career and increase their day rate. For each insight, suggest a type ('Upskill', 'Certification', 'Profile Enhancement'), a specific suggestion, and a call-to-action with text and a relevant dashboard view from this list: ['AI Tools', 'Manage Profile', 'Job Search'].
+
+        Engineer Profile:
+        - Experience: ${profile.experience} years
+        - Discipline: ${profile.discipline}
+        - Current Certifications: ${profile.certifications?.map(c => c.name).join(', ') || 'None'}
+        - Skills: ${profile.skills?.map(s => s.name).join(', ') || 'None'}
+        - Specialist Roles: ${profile.selectedJobRoles?.map(r => r.roleName).join(', ') || 'None'}
+
+        Respond in JSON format.`;
+
+        const schema = {
+            type: Type.OBJECT,
+            properties: {
+                insights: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            type: { type: Type.STRING, enum: ['Upskill', 'Certification', 'Profile Enhancement'] },
+                            suggestion: { type: Type.STRING },
+                            callToAction: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    text: { type: Type.STRING },
+                                    view: { type: Type.STRING }
+                                }
+                            }
+                        },
+                        required: ['type', 'suggestion', 'callToAction']
+                    }
+                }
+            }
+        };
+
         return this.generateWithSchema(prompt, schema);
     }
 

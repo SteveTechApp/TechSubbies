@@ -1,30 +1,151 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MousePointer } from './Icons';
-import { SLIDESHOW_ASSETS } from '../data/assets';
+
+// --- Slide Content Components ---
+
+const Slide1Content = () => (
+    <div className="w-full h-full p-8 flex items-center justify-center bg-gray-200 font-sans">
+        <div className="w-[480px] bg-white rounded-lg shadow-xl p-6 scale-90 transform">
+            <h3 className="font-bold text-lg text-gray-800">Neil B. - Skills Profile</h3>
+            <p className="text-sm text-gray-500">Premium Member</p>
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h4 className="font-semibold text-blue-800">Specialist Role: AV Systems Engineer <button className="float-right text-xs bg-gray-200 px-2 py-1 rounded-md text-gray-600 font-medium hover:bg-gray-300">Edit</button></h4>
+                <div className="mt-3 space-y-3 text-sm">
+                    <div>
+                        <div className="flex justify-between font-medium text-gray-700"><span>System Commissioning</span><span>95</span></div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1"><div className="bg-green-500 h-2.5 rounded-full" style={{width: '95%'}}></div></div>
+                    </div>
+                    <div>
+                        <div className="flex justify-between font-medium text-gray-700"><span>Troubleshooting</span><span>90</span></div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1"><div className="bg-green-500 h-2.5 rounded-full" style={{width: '90%'}}></div></div>
+                    </div>
+                    <div>
+                        <div className="flex justify-between font-medium text-gray-700"><span>Crestron Programming</span><span>80</span></div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1"><div className="bg-blue-500 h-2.5 rounded-full" style={{width: '80%'}}></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
+const Slide2Content = () => (
+    <div className="w-full h-full p-8 flex items-center justify-center bg-gray-200 font-sans">
+        <div className="w-[480px] bg-white rounded-lg shadow-xl p-6 scale-90 transform">
+            <h3 className="font-bold text-lg text-gray-800">Post a Job - Define Skills</h3>
+            <p className="text-sm text-gray-500">Required skills for: <span className="font-semibold">AV Systems Engineer</span></p>
+            <div className="mt-4 space-y-2 text-sm p-4 bg-gray-50 rounded-lg border">
+                <div className="flex justify-between items-center bg-white p-2 rounded-md">
+                    <span className="font-medium text-gray-700">System Commissioning</span>
+                    <div className="flex gap-2">
+                        <button className="bg-yellow-400 text-xs px-3 py-1 rounded-full font-bold text-yellow-900 ring-2 ring-yellow-500">Essential</button>
+                        <button className="bg-gray-200 text-xs px-3 py-1 rounded-full font-medium text-gray-600 hover:bg-gray-300">Desirable</button>
+                    </div>
+                </div>
+                <div className="flex justify-between items-center bg-white p-2 rounded-md">
+                    <span className="font-medium text-gray-700">Troubleshooting</span>
+                    <div className="flex gap-2">
+                        <button className="bg-yellow-400 text-xs px-3 py-1 rounded-full font-bold text-yellow-900">Essential</button>
+                        <button className="bg-gray-200 text-xs px-3 py-1 rounded-full font-medium text-gray-600 hover:bg-gray-300">Desirable</button>
+                    </div>
+                </div>
+                <div className="flex justify-between items-center bg-white p-2 rounded-md">
+                    <span className="font-medium text-gray-700">Crestron Programming</span>
+                    <div className="flex gap-2">
+                        <button className="bg-gray-200 text-xs px-3 py-1 rounded-full font-medium text-gray-600 hover:bg-gray-300">Essential</button>
+                        <button className="bg-blue-200 text-xs px-3 py-1 rounded-full font-bold text-blue-800 ring-2 ring-blue-400">Desirable</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
+const Slide3Content = () => (
+    <div className="w-full h-full p-8 flex items-center justify-center bg-gray-200 font-sans">
+        <div className="w-[480px] h-full bg-white rounded-lg shadow-xl p-6 scale-90 transform overflow-hidden">
+            <h3 className="font-bold text-lg text-gray-800">Applicants: Senior AV Engineer</h3>
+            <p className="text-sm text-gray-500">Showing top results based on AI Smart Match</p>
+            <div className="mt-4 space-y-3">
+                <div className="p-3 border-2 border-green-400 rounded-lg flex items-center justify-between bg-green-50">
+                    <div className="flex items-center gap-3">
+                        <img src="https://xsgames.co/randomusers/assets/avatars/male/74.jpg" alt="Neil B." className="w-12 h-12 rounded-full"/>
+                        <div>
+                            <p className="font-bold text-gray-800">Neil B.</p>
+                            <p className="text-xs text-blue-700 font-semibold">AV Systems Engineer</p>
+                        </div>
+                    </div>
+                    <div className="bg-green-500 text-white font-bold text-lg px-3 py-1.5 rounded-full">97%</div>
+                </div>
+                <div className="p-3 border rounded-lg flex items-center justify-between bg-white">
+                     <div className="flex items-center gap-3">
+                        <img src="https://xsgames.co/randomusers/assets/avatars/female/10.jpg" alt="Samantha G." className="w-12 h-12 rounded-full"/>
+                        <div>
+                            <p className="font-bold text-gray-800">Samantha G.</p>
+                            <p className="text-xs text-blue-700 font-semibold">AV Technician</p>
+                        </div>
+                    </div>
+                    <div className="bg-blue-500 text-white font-bold text-lg px-3 py-1.5 rounded-full">82%</div>
+                </div>
+                <div className="p-3 border rounded-lg flex items-center justify-between bg-white">
+                     <div className="flex items-center gap-3">
+                        <img src="https://xsgames.co/randomusers/assets/avatars/male/46.jpg" alt="John S." className="w-12 h-12 rounded-full"/>
+                        <div>
+                            <p className="font-bold text-gray-800">John S.</p>
+                            <p className="text-xs text-blue-700 font-semibold">Install Engineer</p>
+                        </div>
+                    </div>
+                    <div className="bg-yellow-500 text-white font-bold text-lg px-3 py-1.5 rounded-full">68%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
+const Slide4Content = () => (
+    <div className="w-full h-full p-8 flex items-center justify-center bg-gray-200 font-sans">
+        <div className="w-[480px] bg-white rounded-lg shadow-xl p-6 scale-90 transform text-center">
+            <div className="flex items-center justify-center space-x-8">
+                <div className="text-center">
+                    <img src="https://i.imgur.com/L45aA6d.jpg" alt="Company representative" className="w-20 h-20 rounded-full mx-auto border-4 border-blue-500"/>
+                    <p className="font-bold mt-2">Company</p>
+                </div>
+                <div className="font-mono text-3xl font-bold text-gray-400 animate-pulse">&lt;--&gt;</div>
+                <div className="text-center">
+                    <img src="https://xsgames.co/randomusers/assets/avatars/male/74.jpg" alt="Freelance engineer" className="w-20 h-20 rounded-full mx-auto border-4 border-green-500"/>
+                    <p className="font-bold mt-2">Engineer</p>
+                </div>
+            </div>
+            <h3 className="mt-6 text-2xl font-extrabold text-gray-800">Direct Connections</h3>
+            <p className="text-gray-600">No recruiters. No placement fees. Just the right talent for the job.</p>
+        </div>
+    </div>
+);
+
 
 const SLIDES = [
     {
         title: "1. Showcase Your Expertise",
         description: "Engineers add a 'Specialist Role' to their premium profile and rate their competency on the granular, industry-specific skills that matter.",
-        image: SLIDESHOW_ASSETS.slide1,
+        content: <Slide1Content />,
         animationClass: "animate-cursor-1",
     },
     {
         title: "2. Define Your Exact Needs",
         description: "Companies post jobs for free, selecting a role that auto-populates required skills. They then mark each one as 'Essential' or 'Desirable'.",
-        image: SLIDESHOW_ASSETS.slide2,
+        content: <Slide2Content />,
         animationClass: "animate-cursor-2",
     },
     {
         title: "3. Get an Instant AI Match",
         description: "The platform's AI analyzes engineer skills against the job's requirements, instantly generating a ranked list of candidates with a precise match score.",
-        image: SLIDESHOW_ASSETS.slide3,
+        content: <Slide3Content />,
         animationClass: "animate-cursor-3",
     },
     {
         title: "4. Connect Directly. No Middlemen.",
         description: "The result is a fast, fair, and focused connection that saves everyone time and money. It's the modern way to hire freelance tech talent.",
-        image: SLIDESHOW_ASSETS.slide4,
+        content: <Slide4Content />,
         animationClass: "", // No animation on the final slide
     },
 ];
@@ -70,7 +191,9 @@ export const FeatureSlideshow = () => {
                             pointerEvents: activeSlide === index ? 'auto' : 'none',
                         }}
                     >
-                        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${slide.image})` }} />
+                        <div className="absolute inset-0">
+                            {slide.content}
+                        </div>
                         {/* Conditionally render the cursor animation only for the active slide to ensure it restarts */}
                         {slide.animationClass && activeSlide === index && (
                             <div className="absolute inset-0">
