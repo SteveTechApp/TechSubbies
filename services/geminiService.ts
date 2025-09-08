@@ -1,128 +1,284 @@
-// FIX: Corrected imports to include necessary types for mock implementation and function signatures.
-import { GoogleGenAI, Type, Chat, GenerateContentResponse, SendMessageParameters } from "@google/genai";
-import { EngineerProfile, Job, JobSkillRequirement, Skill, ExperienceLevel } from "../types";
-import { JOB_ROLE_DEFINITIONS } from "../data/jobRoles";
-import { AnalysisResult } from "../components/AIEngineerCostAnalysis";
+import { GoogleGenAI, Type, Chat } from "@google/genai";
+// FIX: Added Product and ProductFeatures to the import list.
+import { EngineerProfile, Job, JobSkillRequirement, Skill, Product, ProductFeatures } from "../types";
+import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';
 
 class GeminiService {
     private ai: GoogleGenAI;
-    public chatSession: Chat;
+    public chat: Chat | null = null;
 
     constructor() {
         if (!process.env.API_KEY) {
-            console.error("API_KEY environment variable not set. Using a mock implementation.");
-            // @ts-ignore
-            this.ai = {
-                chats: {
-                    // FIX: Updated mock to match the expected signature and return type of the Gemini API.
-                    create: () => ({
-                        sendMessage: async (params: SendMessageParameters): Promise<GenerateContentResponse> => {
-                            await this.mockApiDelay();
-                            const messageText = typeof params.message === 'string' ? params.message : 'a complex prompt';
-                            // FIX: Simplified the mock response to only include the 'text' property and cast it.
-                            // This resolves obscure type errors caused by the complex GenerateContentResponse interface.
-                            const response = {
-                                text: `This is a mocked AI response to: "${messageText}"`,
-                            };
-                            return response as GenerateContentResponse;
-                        }
-                    } as Chat) // FIX: Cast the mock chat session object to the Chat type to resolve the type error.
-                }
-            };
-        } else {
-             this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            console.error("API_KEY environment variable not set.");
+            // Allow app to load, features will fail gracefully.
+            this.ai = null!; 
+            return;
         }
-        
-        this.chatSession = this.ai.chats.create({
-            model: 'gemini-2.5-flash',
+        this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        this.chat = this.ai.chats.create({
+            model: "gemini-2.5-flash",
             config: {
-                systemInstruction: "You are a helpful AI assistant for the TechSubbies.com platform, a freelance marketplace for AV and IT engineers. Your goal is to provide concise, helpful, and context-aware answers to user questions. Be friendly and professional.",
+                systemInstruction: "You are a helpful AI assistant for the TechSubbies.com platform, a freelance network for AV and IT engineers. Be concise and helpful.",
             }
         });
     }
 
-    private mockApiDelay(ms = 1000) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    // --- MOCK IMPLEMENTATIONS ---
-
-    async generateSkillsForRole(roleName: string): Promise<{ skills?: Skill[], error?: string }> {
-        await this.mockApiDelay();
+    private async generateWithSchema(prompt: string, schema: any): Promise<any> {
+        if (!this.ai) return { error: "Gemini Service not initialized. Check API Key." };
         try {
-            const roleDef = JOB_ROLE_DEFINITIONS.find(r => r.name === roleName);
-            if (!roleDef) {
-                return { error: `Could not find definition for role: ${roleName}` };
+            const response = await this.ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: schema,
+                },
+            });
+
+            const jsonStr = response.text.trim();
+            if (!jsonStr) {
+                throw new Error("Empty response from AI model.");
             }
-            const allSkills = roleDef.skillCategories.flatMap(sc => sc.skills);
-            const selectedSkills = allSkills.sort(() => 0.5 - Math.random()).slice(0, 10);
-            const skills: Skill[] = selectedSkills.map(s => ({
-                name: s.name,
-                rating: Math.floor(Math.random() * 50) + 25, // Random rating between 25 and 75
-            }));
-            return { skills };
-        } catch (e: any) {
-            return { error: e.message };
+            return JSON.parse(jsonStr);
+        } catch (error: any) {
+            console.error("Error generating content with schema:", error);
+            const errorMessage = error.message || "Failed to get a valid response from the AI model.";
+            return { error: errorMessage };
         }
     }
-
-    async analyzeEngineerCost(jobDescription: string, engineer: EngineerProfile): Promise<AnalysisResult | { error: string }> {
-        await this.mockApiDelay(1500);
-        const avgRate = (engineer.minDayRate + engineer.maxDayRate) / 2;
-        const confidence = Math.round(Math.random() * 20 + 75); // 75-95%
-        return {
-            skill_match_assessment: `The engineer's skills in ${engineer.skills?.slice(0, 2).map(s => s.name).join(', ')} are a strong fit for the job requirements.`,
-            rate_justification: `Their average day rate of £${avgRate} is within the expected market range for an engineer with ${engineer.experience} years of experience.`,
-            overall_recommendation: "This engineer represents good value for the cost. Recommend proceeding with an interview.",
-            confidence_score: confidence,
+    
+    // Method used in AISkillDiscovery.tsx
+    async generateSkillsForRole(role: string): Promise<{ skills?: Skill[], error?: string }> {
+        const prompt = `Based on the job role "${role}", suggest 5-8 relevant, granular technical skills an engineer should have. Provide a default competency rating between 40-70 for each skill.`;
+        const schema = {
+            type: Type.OBJECT,
+            properties: {
+                skills: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            name: { type: Type.STRING },
+                            rating: { type: Type.INTEGER },
+                        }
+                    }
+                }
+            }
         };
-    }
-
-    async getTrainingRecommendations(profile: EngineerProfile): Promise<{ recommendations?: any[], error?: string }> {
-        await this.mockApiDelay(1500);
-        return {
-            recommendations: [
-                { courseName: "Advanced Crestron DM NVX-D Certification", reason: "Your profile shows strong Crestron skills but lacks the latest network AV certification, which is in high demand for corporate projects.", keywords: ["Crestron", "DM NVX"], providerName: "Crestron Technical Institute" },
-                { courseName: "Cisco CCNA 200-301", reason: "Adding a formal networking certification like CCNA would complement your AV expertise and open up more complex integration roles.", keywords: ["Cisco", "Networking"], providerName: "Cisco Networking Academy" },
-                { courseName: "AVIXA CTS-D (Design Specialization)", reason: "With your years of experience, pursuing the CTS-D certification would validate your design skills and allow you to command a higher day rate on design-and-build projects.", keywords: ["CTS", "CTS-D"], providerName: "AVIXA Training" },
-            ]
-        };
-    }
-
-    async findBestMatchesForJob(job: Job, engineers: EngineerProfile[]): Promise<{ matches?: {id: string, match_score: number}[], error?: string }> {
-        await this.mockApiDelay(2000);
-        const matches = engineers
-            .map(eng => ({
-                id: eng.id,
-                match_score: Math.floor(Math.random() * (98 - 65 + 1)) + 65, // Random score between 65 and 98
-            }))
-            .sort((a, b) => b.match_score - a.match_score);
-        return { matches };
+        return this.generateWithSchema(prompt, schema);
     }
     
-    async analyzeJobDescription(title: string, description: string): Promise<any> {
-        await this.mockApiDelay(1500);
-        return {
-            improved_description: `${description}\n\nKey Responsibilities:\n- Commissioning and testing of AV systems.\n- Troubleshooting and resolving issues on-site.\n- Maintaining clear documentation.`,
-            suggested_job_role: "AV Commissioning Engineer",
-            // FIX: `ExperienceLevel` was not defined. Imported it from types.
-            suggested_experience_level: ExperienceLevel.SENIOR,
-            suggested_day_rate: { min_rate: 500, max_rate: 600 },
-            suggested_titles: [ "Senior AV Engineer", "AV Commissioning Lead", "Site Lead (AV)" ]
-        };
-    }
-    
-    async suggestSkillsForJobRole(roleName: string): Promise<{ skills?: JobSkillRequirement[], error?: string }> {
-        await this.mockApiDelay(800);
-        const roleDef = JOB_ROLE_DEFINITIONS.find(r => r.name === roleName);
-        if (!roleDef) return { error: "Role not found" };
+    // Method used in AIEngineerCostAnalysis.tsx
+    async analyzeEngineerCost(jobDescription: string, engineer: EngineerProfile): Promise<any> {
+        const engineerSkills = [...(engineer.skills?.map(s => `${s.name} (${s.rating})`) || []), ...(engineer.selectedJobRoles?.flatMap(r => r.skills.map(s => `${s.name} (${s.rating})`)) || [])].join(', ');
+        const prompt = `Analyze the cost-effectiveness of an engineer for a specific job.
+        Job Description: "${jobDescription}"
+        Engineer Profile: Name: ${engineer.name}, Experience: ${engineer.experience} years, Day Rate Range: £${engineer.minDayRate}-£${engineer.maxDayRate}, Skills: ${engineerSkills}.
         
-        const allSkills = roleDef.skillCategories.flatMap(sc => sc.skills.map(s => s.name));
-        const skills: JobSkillRequirement[] = allSkills.slice(0, 10).map((name, index) => ({
-            name,
-            importance: index < 4 ? 'essential' : 'desirable',
-        }));
-        return { skills };
+        Provide a JSON response assessing skill match, justifying the rate, giving an overall recommendation, and a confidence score.`;
+        
+         const schema = {
+            type: Type.OBJECT,
+            properties: {
+                skill_match_assessment: { type: Type.STRING },
+                rate_justification: { type: Type.STRING },
+                overall_recommendation: { type: Type.STRING },
+                confidence_score: { type: Type.INTEGER },
+            }
+        };
+        return this.generateWithSchema(prompt, schema);
+    }
+
+    // Method used in TrainingRecommendations.tsx
+    async getTrainingRecommendations(profile: EngineerProfile): Promise<any> {
+        const existingCerts = profile.certifications?.map(c => c.name).join(', ') || 'None';
+        const prompt = `Analyze this AV/IT engineer's profile and suggest 2-3 specific, valuable training courses or certifications that would likely increase their day rate or job opportunities. For each, provide a brief reason.
+        Profile: Experience: ${profile.experience} years, Discipline: ${profile.discipline}, Existing Certs: ${existingCerts}, Skills: ${profile.skills?.map(s=>s.name).join(', ')}.`;
+
+        const schema = {
+            type: Type.OBJECT,
+            properties: {
+                recommendations: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            courseName: { type: Type.STRING },
+                            reason: { type: Type.STRING },
+                            keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            providerName: { type: Type.STRING }
+                        }
+                    }
+                }
+            }
+        };
+        return this.generateWithSchema(prompt, schema);
+    }
+
+    // Method used in AIJobHelper.tsx
+    async analyzeJobDescription(title: string, description: string): Promise<any> {
+        const prompt = `Analyze and improve the following job description for a freelance tech role.
+        Original Title: "${title}"
+        Original Description: "${description}"
+
+        Based on the text, provide:
+        1. An improved, clearer, and more engaging description.
+        2. A suggested standardized job role from this list: [${JOB_ROLE_DEFINITIONS.map(r => `"${r.name}"`).join(', ')}].
+        3. A suggested experience level (Junior, Mid-level, Senior, Expert).
+        4. A suggested market-rate day rate range (min and max).
+        5. Three alternative, compelling job titles.`;
+        
+        const schema = {
+            type: Type.OBJECT,
+            properties: {
+                improved_description: { type: Type.STRING },
+                suggested_job_role: { type: Type.STRING },
+                suggested_experience_level: { type: Type.STRING },
+                suggested_day_rate: {
+                    type: Type.OBJECT,
+                    properties: { min_rate: { type: Type.INTEGER }, max_rate: { type: Type.INTEGER } }
+                },
+                suggested_titles: { type: Type.ARRAY, items: { type: Type.STRING } }
+            }
+        };
+        return this.generateWithSchema(prompt, schema);
+    }
+    
+     // Method used in JobPostStep2.tsx
+    async suggestSkillsForJobRole(jobRole: string): Promise<{ skills?: JobSkillRequirement[], error?: string }> {
+         const roleDef = JOB_ROLE_DEFINITIONS.find(r => r.name === jobRole);
+         if (roleDef) {
+             const skills = roleDef.skillCategories.flatMap(cat => cat.skills).slice(0, 10);
+             const suggestedSkills = skills.map((skill, index) => ({
+                 name: skill.name,
+                 importance: index < 4 ? 'essential' : 'desirable'
+             } as JobSkillRequirement));
+             return { skills: suggestedSkills };
+         }
+         return { error: 'Could not find definition for the selected role.' };
+    }
+    
+    // Method used in InstantInviteModal.tsx
+    async findBestMatchesForJob(job: Job, engineers: EngineerProfile[]): Promise<any> {
+        const engineerProfiles = engineers.map(e => `ID: ${e.id}, Role: ${e.selectedJobRoles?.[0]?.roleName || e.discipline}, Skills: ${e.skills.map(s => `${s.name} (${s.rating})`).join(', ')}, Experience: ${e.experience}yrs, Rate: £${e.minDayRate}-${e.maxDayRate}`).join('\n');
+        const jobReqs = `Title: ${job.title}, Required Skills: ${job.skillRequirements.map(s => `${s.name} (${s.importance})`).join(', ')}`;
+        
+        const prompt = `From the following list of engineers, find the top 5 best matches for the job. Provide only a JSON array of objects with "id" and "match_score" (0-100). Prioritize essential skills and relevant experience.
+        
+        Job Requirements:
+        ${jobReqs}
+        
+        Available Engineers:
+        ${engineerProfiles}`;
+        
+         const schema = {
+            type: Type.OBJECT,
+            properties: {
+                matches: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            id: { type: Type.STRING },
+                            match_score: { type: Type.INTEGER }
+                        }
+                    }
+                }
+            }
+        };
+        return this.generateWithSchema(prompt, schema);
+    }
+    
+     // Method for Forum Moderation
+    async moderateForumPost(title: string, content: string): Promise<{ is_safe: boolean, reason: string }> {
+        const prompt = `Analyze the following forum post for violations. The forum is for technical AV/IT discussion only. Prohibited content includes job listings, advertisements, requests for work, spam, or abusive language.
+        
+        Title: "${title}"
+        Content: "${content}"
+        
+        Is this post safe for the forum? Respond in JSON format.`;
+
+        const schema = {
+            type: Type.OBJECT,
+            properties: {
+                is_safe: { type: Type.BOOLEAN },
+                reason: { type: Type.STRING, description: "If not safe, provide a brief reason for rejection." }
+            }
+        };
+        const result = await this.generateWithSchema(prompt, schema);
+        if (result.error) {
+            // Default to safe if AI fails, to avoid blocking legitimate posts.
+            return { is_safe: true, reason: 'AI moderation failed.' };
+        }
+        return result;
+    }
+    
+    // Simple mock for AI auto-reply
+    getAutoReply(incomingMessage: string): string {
+        const lowerCaseMessage = incomingMessage.toLowerCase();
+        if (lowerCaseMessage.includes("bonjour") || lowerCaseMessage.includes("comment vas tu")) {
+            return "Bonjour! Je vais bien, merci. Comment puis-je vous aider avec votre projet AV?";
+        }
+        if (lowerCaseMessage.includes("spec sheet") || lowerCaseMessage.includes("quote")) {
+            return "Great, I've received that. I will review it and get back to you with a quote shortly.";
+        }
+        if (lowerCaseMessage.includes("available")) {
+            return "Thanks for confirming. My availability is up-to-date on my profile, but let me know the exact dates you have in mind.";
+        }
+        return "Acknowledged. I will get back to you on this as soon as possible.";
+    }
+
+    // FIX: Added function to analyze product features, used by ProductCard.tsx.
+    // Method for AI Product Feature Analysis
+    async analyzeProductForFeatures(product: Product): Promise<ProductFeatures | { error: string }> {
+        const prompt = `Analyze the following product description and extract its key technical features.
+        Product SKU: ${product.sku}
+        Product Name: ${product.name}
+        Description: "${product.description}"
+        
+        Provide a JSON response with the following structure:
+        - maxResolution (e.g., "4K60 4:4:4", "1080p")
+        - ioPorts (inputs and outputs with type and count)
+        - controlMethods (e.g., "RS232", "IR", "Web GUI")
+        - keyFeatures (a list of important features like "Video Wall", "PoE", "USB 2.0")
+        - idealApplication (a short description of where this product is best used)
+        `;
+        
+        const schema = {
+            type: Type.OBJECT,
+            properties: {
+                maxResolution: { type: Type.STRING },
+                ioPorts: {
+                    type: Type.OBJECT,
+                    properties: {
+                        inputs: {
+                            type: Type.ARRAY,
+                            items: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    type: { type: Type.STRING },
+                                    count: { type: Type.INTEGER }
+                                }
+                            }
+                        },
+                        outputs: {
+                            type: Type.ARRAY,
+                            items: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    type: { type: Type.STRING },
+                                    count: { type: Type.INTEGER }
+                                }
+                            }
+                        }
+                    }
+                },
+                controlMethods: { type: Type.ARRAY, items: { type: Type.STRING } },
+                keyFeatures: { type: Type.ARRAY, items: { type: Type.STRING } },
+                idealApplication: { type: Type.STRING }
+            }
+        };
+        return this.generateWithSchema(prompt, schema);
     }
 }
 

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Page } from '../types';
@@ -21,7 +20,7 @@ export const Header = ({ onNavigate, onHowItWorksClick }: HeaderProps) => {
     return (
         <header className={headerClasses}>
             <button onClick={() => onNavigate('landing')} aria-label="Go to homepage">
-              <Logo className={`${logoColorClass} h-10 sm:h-12`} />
+              <Logo className={`${logoColorClass} h-12`} />
             </button>
             <nav className="flex items-center gap-2">
                 {user ? (

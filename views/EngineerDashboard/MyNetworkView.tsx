@@ -1,6 +1,8 @@
+
 import React, { useMemo } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import { ApplicationStatus, Job, Role, CompanyProfile, Application } from '../../types';
+// FIX: Added ResourcingCompanyProfile to correctly handle both types of company profiles.
+import { ApplicationStatus, Job, Role, CompanyProfile, Application, ResourcingCompanyProfile } from '../../types';
 import { ArrowLeft, Briefcase, CheckCircle, Mail, Download, X } from '../../components/Icons';
 
 interface MyNetworkViewProps {
@@ -8,7 +10,8 @@ interface MyNetworkViewProps {
 }
 
 interface CompanyInteraction {
-    company: CompanyProfile;
+    // FIX: The type is updated to allow for both company profile types, preventing type errors.
+    company: CompanyProfile | ResourcingCompanyProfile;
     interactions: {
         job: Job;
         application: Application;
@@ -64,8 +67,9 @@ export const MyNetworkView = ({ setActiveView }: MyNetworkViewProps) => {
         const engineerId = user.profile.id;
         const myApplications = applications.filter(app => app.engineerId === engineerId);
 
-        // FIX: The initial value for reduce must be typed for TypeScript to correctly infer the accumulator type.
-        const companyInteractions = myApplications.reduce((acc, app) => {
+        // FIX: The `reduce` accumulator was untyped, causing TypeScript to infer it as `unknown`.
+        // By adding types to the accumulator and the initial value, we ensure correct type inference.
+        const companyInteractions = myApplications.reduce((acc: Record<string, CompanyInteraction>, app) => {
             const job = jobs.find(j => j.id === app.jobId);
             if (!job) return acc;
 
@@ -74,8 +78,7 @@ export const MyNetworkView = ({ setActiveView }: MyNetworkViewProps) => {
                 const company = companies.find(c => c.id === companyId);
                 if (company) {
                     acc[companyId] = {
-                        // @ts-ignore
-                        company,
+                        company: company,
                         interactions: []
                     };
                 }

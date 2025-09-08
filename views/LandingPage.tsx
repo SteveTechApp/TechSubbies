@@ -1,18 +1,26 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Page } from '../types';
 import { FeatureCard } from '../components/FeatureCard';
-import { Search, Sparkles, Handshake } from '../components/Icons';
+import { Search, Sparkles, Handshake, ArrowRight } from '../components/Icons';
 import { FeatureSlideshow } from '../components/FeatureSlideshow';
 import { TestimonialCard } from '../components/TestimonialCard';
 import { AVATARS } from '../data/assets';
+import { FeaturedJobCard } from '../components/FeaturedJobCard';
 
 interface LandingPageProps {
   onNavigate: (page: Page) => void;
 }
 
 export const LandingPage = ({ onNavigate }: LandingPageProps) => {
-  const { user } = useAppContext();
+  const { user, jobs } = useAppContext();
+
+  const featuredJobs = useMemo(() => {
+    return jobs
+        .filter(job => job.status === 'active')
+        .sort((a, b) => parseInt(b.dayRate, 10) - parseInt(a.dayRate, 10))
+        .slice(0, 3);
+  }, [jobs]);
 
   return (
     <div className="bg-white">
@@ -20,11 +28,11 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
       <section className="relative bg-gray-800 text-white pt-32 pb-20 text-center">
         <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=2070&auto=format&fit=crop')` }}></div>
         <div className="relative container mx-auto px-4">
-          <h1 className="text-4xl md:text-6xl font-extrabold mb-4 animate-fade-in-up">The UK's Specialist Freelance Network</h1>
-          <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto mb-8 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <h1 className="text-4xl md:text-6xl font-extrabold mb-4 fade-in-up">The UK's Specialist Freelance Network</h1>
+          <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto mb-8 fade-in-up" style={{ animationDelay: '0.2s' }}>
             AI-powered matching connects expert AV &amp; IT engineers with the UK's leading tech companies. No recruiters. No placement fees. Just direct connections.
           </p>
-          <div className="flex justify-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+          <div className="flex justify-center gap-4 fade-in-up" style={{ animationDelay: '0.4s' }}>
             <button
               onClick={() => onNavigate(user ? (user.profile.role === 'Engineer' ? 'engineerDashboard' : 'companyDashboard') : 'engineerSignUp')}
               className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105"
@@ -73,6 +81,28 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
         </div>
       </section>
       
+      {/* Featured Jobs Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Featured Contracts</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto mb-12">
+            Here are some of the high-value contracts available right now. Create a profile to apply and get matched with more.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {featuredJobs.map(job => (
+                <FeaturedJobCard key={job.id} job={job} onNavigate={onNavigate} />
+            ))}
+          </div>
+           <button
+              onClick={() => onNavigate(user ? (user.profile.role === 'Engineer' ? 'engineerDashboard' : 'companyDashboard') : 'login')}
+              className="mt-12 bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 inline-flex items-center group"
+          >
+              Explore All Jobs
+              <ArrowRight size={20} className="ml-2 transition-transform group-hover:translate-x-1" />
+          </button>
+        </div>
+      </section>
+
        {/* Testimonials Section */}
       <section className="py-20 bg-blue-50">
         <div className="container mx-auto px-4">

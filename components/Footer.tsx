@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Logo } from './Logo';
 import { Page } from '../types';
@@ -13,17 +12,17 @@ interface FooterProps {
 export const Footer = ({ onNavigate, onHowItWorksClick }: FooterProps) => {
     const dropdownItemClass = 'block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100';
     const textColor = 'text-gray-700 hover:text-blue-600';
-    const navButtonClass = `px-3 py-1.5 font-medium text-sm ${textColor} text-center`;
+    const navButtonClass = `px-3 py-1.5 font-medium text-base ${textColor} text-center`;
 
     return (
         <footer className="bg-white shadow-md mt-auto border-t border-gray-200 z-40">
-            <div className="container mx-auto p-4 flex flex-col lg:flex-row justify-between items-center gap-4">
+            <div className="container mx-auto p-6 flex flex-col lg:flex-row justify-between items-center gap-6">
                 
                 <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
                     <button onClick={() => onNavigate('landing')} aria-label="Go to homepage" className="flex-shrink-0">
-                      <Logo className="text-gray-800 h-8" />
+                      <Logo className="text-gray-800 h-10" />
                     </button>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-base text-gray-600">
                         <p>&copy; {new Date().getFullYear()} TechSubbies.com. All Rights Reserved.</p>
                         <p className="mt-1 sm:mt-0">
                             Contact: <a href="mailto:contact@techsubbies.com" className="hover:underline">contact@techsubbies.com</a> | <a href="tel:+441234567890" className="hover:underline">+44 1234 567890</a>

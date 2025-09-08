@@ -1,4 +1,3 @@
-
 // FIX: Created file to house generated mock profiles, resolving "not a module" error.
 import { EngineerProfile, CompanyProfile, Role, Discipline, ProfileTier, Currency, Country, ResourcingCompanyProfile } from '../../types';
 import { MALE_FIRST_NAMES, FEMALE_FIRST_NAMES, LAST_NAMES, LOCATIONS, COMPANY_NAMES, COMPANY_SUFFIXES } from './mockConstants';
@@ -41,13 +40,16 @@ const generateMockEngineers = (count: number): EngineerProfile[] => {
             profileViews: getRandomInt(20, 200),
             searchAppearances: getRandomInt(300, 2500),
             jobInvites: getRandomInt(0, 20),
-            isBoosted: i === 0, // Boost the first engineer
             reputation: getRandomInt(70, 99),
             complianceScore: getRandomInt(50, 98),
             resourcingCompanyId: (i === 1 || i === 2) ? 'res-1' : undefined,
             calendarSyncUrl: `https://techsubbies.com/cal/gen-eng-${i}.ics`,
             badges: i === 0 ? [BADGES['rising-star']] : [],
-            contact: { email: `${name.replace(' ', '.').toLowerCase()}@email.com`, phone: '07123456789' }
+            contact: { email: `${name.replace(' ', '.').toLowerCase()}@email.com`, phone: '07123456789' },
+            platformCredits: getRandomInt(0, 5),
+            loyaltyPoints: getRandomInt(0, 1000),
+            referralCode: `REF${name.split(' ')[0].toUpperCase()}${getRandomInt(100,999)}`,
+            hasReceivedCompletionBonus: Math.random() > 0.5,
         });
     }
     return engineers;

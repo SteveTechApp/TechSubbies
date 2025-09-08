@@ -1,6 +1,4 @@
-
 import React, { createContext, useContext, ReactNode } from 'react';
-// FIX: Corrected import path to be a module.
 import { useAppLogic } from './useAppLogic';
 import type { AppContextType } from '../types';
 

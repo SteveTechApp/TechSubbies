@@ -4,60 +4,14 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TechSubbies.com | Find Freelance Tech Talent</title>
-
-    <!-- SEO Meta Tags -->
-    <meta name="description" content="The platform for companies to find and hire expert freelance Tech (AV & IT) engineers with verified availability. No placement fees. No hassle." />
-    <meta name="keywords" content="freelance IT engineer, freelance AV engineer, tech subcontractor, network engineer, Crestron, Cisco, live events, tech talent, find talent" />
-    <meta name="author" content="TechSubbies.com" />
-
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://techsubbies.com/" />
-    <meta property="og:title" content="TechSubbies.com | Find Freelance Tech Talent" />
-    <meta property="og:description" content="The platform for companies to find and hire expert freelance Tech (AV & IT) engineers with verified availability. No placement fees. No hassle." />
-    <meta property="og:image" content="https://i.imgur.com/8Qtm93t.jpeg" />
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://techsubbies.com/" />
-    <meta property="twitter:title" content="TechSubbies.com | Find Freelance Tech Talent" />
-    <meta property="twitter:description" content="The platform for companies to find and hire expert freelance Tech (AV & IT) engineers with verified availability. No placement fees. No hassle." />
-    <meta property="twitter:image" content="https://i.imgur.com/8Qtm93t.jpeg" />
-
+    <title>TechSubbies.com | The UK's Specialist Freelance Network</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-      /* --- General Animations --- */
-      @keyframes fadeInUp {
-        from {
-          opacity: 0;
-          transform: translateY(15px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-      .fade-in-up {
-        animation: fadeInUp 0.5s ease-out forwards;
-        opacity: 0; /* Start hidden */
-      }
-      @keyframes slow-zoom {
-        from {
-          transform: scale(1);
-        }
-        to {
-          transform: scale(1.05);
-        }
-      }
-      .slow-zoom {
-        animation: slow-zoom 20s ease-in-out infinite alternate;
-      }
-
       /* --- Custom Scrollbar --- */
       .custom-scrollbar::-webkit-scrollbar {
         width: 8px;
+        height: 8px;
       }
       .custom-scrollbar::-webkit-scrollbar-track {
         background: #f1f5f9; /* bg-slate-100 */
@@ -70,142 +24,54 @@
         background: #64748b; /* bg-slate-500 */
       }
 
-      /* --- TopTrump Card Flip Animation --- */
-      .flip-card {
-        perspective: 1500px;
-        background-color: transparent;
-      }
-      .flip-card-inner {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        transition: transform 0.7s;
-        transform-style: preserve-3d;
-      }
-      .flip-card.flipped .flip-card-inner {
-        transform: rotateY(180deg);
-      }
-      .flip-card-front,
-      .flip-card-back {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        -webkit-backface-visibility: hidden; /* Safari */
-        backface-visibility: hidden;
-      }
-      .flip-card-back {
-        transform: rotateY(180deg);
-      }
-
-      /* --- AI Assistant Chat Widget --- */
-      @keyframes slide-up-fade-in {
+      /* Animation for modal/tray */
+      @keyframes slide-up {
         from {
-          opacity: 0;
-          transform: translateY(20px);
+          transform: translateY(100%);
         }
         to {
-          opacity: 1;
           transform: translateY(0);
         }
       }
-      .chat-widget-animate {
-        animation: slide-up-fade-in 0.3s ease-out forwards;
-      }
-       .chat-message-user {
-        align-self: flex-end;
-        background-color: #2563eb; /* bg-blue-600 */
-        color: white;
-      }
-      .chat-message-ai {
-        align-self: flex-start;
-        background-color: #e5e7eb; /* bg-gray-200 */
-        color: #1f2937; /* text-gray-800 */
+      .animate-slide-up {
+        animation: slide-up 0.3s ease-out forwards;
       }
 
-       /* --- Feature Slideshow Animations --- */
-      @keyframes slide-fade-in {
-        0% { opacity: 0; transform: translateX(20px); }
-        100% { opacity: 1; transform: translateX(0); }
+      /* Keyframes for FeatureSlideshow cursor animations */
+      @keyframes cursor-click-path-1 { /* For slide 1: Engineer skill profile */
+        0%, 100% { top: 10%; left: 20%; opacity: 0; transform: scale(1); }
+        10% { top: 10%; left: 20%; opacity: 1; }
+        30% { top: 37%; left: 82%; } /* Move to 'Edit' button on a role */
+        35%, 45% { top: 37%; left: 82%; transform: scale(0.9); } /* Click effect */
+        50% { top: 37%; left: 82%; transform: scale(1); opacity: 0; } /* Disappear as modal would open */
+        90% { opacity: 0; }
       }
-      @keyframes slide-fade-out {
-        0% { opacity: 1; transform: translateX(0); }
-        100% { opacity: 0; translateX(-20px); }
-      }
-      @keyframes cursor-click-path-1 { /* For Skill Rating */
-        0% { top: 35%; left: 80%; opacity: 0; }
-        10% { top: 35%; left: 80%; opacity: 1; }
-        30% { top: 58%; left: 48%; }
-        35% { transform: scale(0.9); }
-        40% { transform: scale(1); }
-        90% { top: 58%; left: 48%; opacity: 1; }
-        100% { opacity: 0; }
-      }
-       @keyframes cursor-click-path-2 { /* For Job Posting */
-        0% { top: 30%; left: 80%; opacity: 0; }
-        10% { top: 30%; left: 80%; opacity: 1; }
-        30% { top: 58%; left: 35%; }
-        35% { transform: scale(0.9); }
-        40% { transform: scale(1); }
-        60% { top: 58%; left: 65%; }
-        65% { transform: scale(0.9); }
-        70% { transform: scale(1); }
-        90% { top: 58%; left: 65%; opacity: 1; }
-        100% { opacity: 0; }
-      }
-       @keyframes cursor-click-path-3 { /* For AI Match */
-        0% { top: 60%; left: 80%; opacity: 0; }
-        10% { top: 60%; left: 80%; opacity: 1; }
-        30% { top: 40%; left: 18%; }
-        35% { transform: scale(0.9); }
-        40% { transform: scale(1); }
-        90% { top: 40%; left: 18%; opacity: 1; }
-        100% { opacity: 0; }
+      .animate-cursor-1 {
+        animation: cursor-click-path-1 8s ease-in-out infinite;
       }
 
-      /* --- Tooltip Styles --- */
-      .tooltip-container {
-        position: relative;
-        display: inline-block;
-        border-bottom: 1px dotted #9ca3af; /* A subtle indicator that it's interactive */
-        cursor: help;
+      @keyframes cursor-click-path-2 { /* For slide 2: Company job posting */
+        0%, 100% { top: 10%; left: 25%; opacity: 0; transform: scale(1); }
+        10% { top: 10%; left: 25%; opacity: 1; }
+        30% { top: 52%; left: 69%; } /* Move to 'Essential' button */
+        35%, 45% { top: 52%; left: 69%; transform: scale(0.9); } /* Click effect */
+        55% { top: 67%; left: 69%; transform: scale(1); } /* Move to next 'Essential' button */
+        60%, 70% { top: 67%; left: 69%; transform: scale(0.9); } /* Click effect */
+        80% { top: 67%; left: 69%; opacity: 0; transform: scale(1); }
       }
-      .tooltip-text {
-        visibility: hidden;
-        width: 250px;
-        background-color: #1f2937; /* bg-gray-800 */
-        color: #fff;
-        text-align: center;
-        border-radius: 6px;
-        padding: 8px;
-        position: absolute;
-        z-index: 10;
-        bottom: 125%; /* Position above the element */
-        left: 50%;
-        margin-left: -125px; /* Use half of the width to center */
-        opacity: 0;
-        transition: opacity 0.3s;
-        font-size: 0.75rem; /* text-xs */
-        font-weight: normal; /* Reset font-weight from label */
-        line-height: 1.25; /* Add some line-height */
-        pointer-events: none; /* Prevent tooltip from interfering with mouse */
+      .animate-cursor-2 {
+        animation: cursor-click-path-2 8s ease-in-out infinite;
       }
-      .tooltip-container:hover .tooltip-text {
-        visibility: visible;
-        opacity: 1;
+      
+      @keyframes cursor-click-path-3 { /* For slide 3: AI match results */
+        0%, 100% { top: 22%; left: 50%; opacity: 0; }
+        10% { top: 22%; left: 50%; opacity: 1; }
+        90% { top: 85%; left: 50%; opacity: 1; } /* Scroll down */
+        95% { top: 85%; left: 50%; opacity: 0; }
       }
-
-      /* NEW: Checker Plate Background */
-      .checker-plate-background {
-        background-color: #e2e8f0; /* bg-slate-200 */
-        background-image:
-            linear-gradient(45deg, #cbd5e1 25%, transparent 25%),
-            linear-gradient(-45deg, #cbd5e1 25%, transparent 25%),
-            linear-gradient(45deg, transparent 75%, #cbd5e1 75%),
-            linear-gradient(-45deg, transparent 75%, #cbd5e1 75%);
-        background-size: 20px 20px;
-        background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+      .animate-cursor-3 {
+        animation: cursor-click-path-3 8s ease-in-out infinite;
       }
-
     </style>
   <script type="importmap">
 {
@@ -215,14 +81,14 @@
     "@google/genai": "https://esm.sh/@google/genai@^1.15.0",
     "react-dom/": "https://esm.sh/react-dom@18.2.0/",
     "react/": "https://esm.sh/react@18.2.0/",
-    "lit": "https://esm.sh/lit@^3.3.1"
+    "lit": "https://esm.sh/lit@^3.3.1",
+    "@/i18n": "./i18n.js"
   }
 }
 </script>
 </head>
-  <body class="bg-gray-50">
+  <body class="bg-gray-100">
     <div id="root"></div>
-    
     <script type="text/babel" data-type="module" data-presets="react,typescript" src="./index.tsx"></script>
   </body>
 </html>

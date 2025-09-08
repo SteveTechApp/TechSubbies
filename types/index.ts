@@ -1,13 +1,17 @@
 
-import { Chat } from "@google/genai";
-import React from "react";
+import React from 'react';
 
-// --- Enums ---
+// Enums and simple types first
+export type Page = 
+    | 'landing' | 'forEngineers' | 'forCompanies' | 'pricing' | 'investors' | 'aboutUs'
+    | 'login' | 'engineerSignUp' | 'companySignUp' | 'resourcingCompanySignUp'
+    | 'engineerDashboard' | 'companyDashboard' | 'adminDashboard' | 'resourcingDashboard'
+    | 'terms' | 'privacy' | 'security' | 'helpCenter' | 'investorRelations' | 'userGuide';
 
 export enum Role {
     ENGINEER = 'Engineer',
     COMPANY = 'Company',
-    RESOURCING_COMPANY = 'ResourcingCompany',
+    RESOURCING_COMPANY = 'Resourcing Company',
     ADMIN = 'Admin',
 }
 
@@ -21,45 +25,45 @@ export enum ProfileTier {
 export enum Currency {
     GBP = '£',
     USD = '$',
-    EUR = '€',
 }
 
 export enum Language {
-    EN_GB = 'English (UK)',
-    EN_US = 'English (US)',
-    FR = 'French',
-    DE = 'German',
-    ES = 'Spanish',
-}
-
-export enum Country {
-    UK = 'United Kingdom',
-    US = 'United States',
-    CA = 'Canada',
-    FR = 'France',
-    DE = 'Germany',
+    ENGLISH = 'English (UK)',
+    SPANISH = 'Español',
+    FRENCH = 'Français',
 }
 
 export enum JobType {
     CONTRACT = 'Contract',
     PERMANENT = 'Permanent',
-    TEMP_TO_PERM = 'Temp-to-Perm',
 }
 
 export enum ExperienceLevel {
     JUNIOR = 'Junior',
     MID_LEVEL = 'Mid-level',
     SENIOR = 'Senior',
-    EXPERT = 'Expert / Principal',
+    EXPERT = 'Expert',
+}
+
+export enum Discipline {
+    AV = 'AV Engineer',
+    IT = 'IT Engineer',
+    BOTH = 'AV & IT Engineer',
+}
+
+export enum Country {
+    UK = 'United Kingdom',
+    US = 'United States',
+    CA = 'Canada',
+    DE = 'Germany',
 }
 
 export enum ApplicationStatus {
     APPLIED = 'Applied',
     VIEWED = 'Viewed',
-    SHORTLISTED = 'Shortlisted',
     OFFERED = 'Offered',
     ACCEPTED = 'Accepted',
-    REJECTED = 'Rejected',
+    DECLINED = 'Declined',
     COMPLETED = 'Completed',
 }
 
@@ -70,7 +74,6 @@ export enum ContractStatus {
     ACTIVE = 'Active',
     COMPLETED = 'Completed',
     CANCELLED = 'Cancelled',
-    DISPUTED = 'Disputed',
 }
 
 export enum ContractType {
@@ -80,7 +83,7 @@ export enum ContractType {
 
 export enum MilestoneStatus {
     AWAITING_FUNDING = 'Awaiting Funding',
-    FUNDED_IN_PROGRESS = 'Funded & In Progress',
+    FUNDED_IN_PROGRESS = 'In Progress',
     SUBMITTED_FOR_APPROVAL = 'Submitted for Approval',
     APPROVED_PENDING_INVOICE = 'Approved - Pending Invoice',
     COMPLETED_PAID = 'Completed & Paid',
@@ -90,29 +93,22 @@ export enum TimesheetStatus {
     SUBMITTED = 'submitted',
     APPROVED = 'approved',
     PAID = 'paid',
-    REJECTED = 'rejected',
 }
 
 export enum TransactionType {
     SUBSCRIPTION = 'Subscription',
-    BOOST_PURCHASE = 'Boost Purchase',
-    ONE_OFF_PURCHASE = 'One-off Purchase',
     ESCROW_FUNDING = 'Escrow Funding',
     PAYOUT = 'Payout',
     PLATFORM_FEE = 'Platform Fee',
+    PLATFORM_CREDIT_PURCHASE = 'Platform Credit Purchase',
+    AI_DEEP_DIVE_PURCHASE = 'AI Deep Dive Purchase',
 }
 
 export enum NotificationType {
-    MESSAGE = 'message',
-    JOB_OFFER = 'job_offer',
-    NEW_JOB_MATCH = 'new_job_match',
-    CONTRACT_UPDATE = 'contract_update',
-}
-
-export enum Discipline {
-    AV = 'AV Engineer',
-    IT = 'IT Engineer',
-    BOTH = 'AV & IT Engineer',
+    NEW_JOB_MATCH = 'NEW_JOB_MATCH',
+    JOB_OFFER = 'JOB_OFFER',
+    MESSAGE = 'MESSAGE',
+    CONTRACT_UPDATE = 'CONTRACT_UPDATE',
 }
 
 export enum PaymentTerms {
@@ -121,101 +117,17 @@ export enum PaymentTerms {
     NET30 = 'Net 30',
 }
 
-// --- Interfaces & Types ---
-
-export type Page = 
-    'landing' | 'login' | 'engineerSignUp' | 'companySignUp' | 'resourcingCompanySignUp' |
-    'engineerDashboard' | 'companyDashboard' | 'adminDashboard' | 'resourcingDashboard' |
-    'forEngineers' | 'forCompanies' | 'pricing' | 'aboutUs' | 'investors' | 'helpCenter' |
-    'terms' | 'privacy' | 'security' | 'investorRelations' | 'userGuide';
-
-export interface User {
-    id: string;
-    role: Role;
-    profile: UserProfile;
+export enum InvoiceStatus {
+    DRAFT = 'Draft',
+    SENT = 'Sent',
+    PAID = 'Paid',
+    OVERDUE = 'Overdue',
+    DISPUTED = 'Disputed',
 }
 
-export type UserProfile = EngineerProfile | CompanyProfile | ResourcingCompanyProfile | AdminProfile;
+export type SkillImportance = 'essential' | 'desirable';
 
-export interface BaseProfile {
-    id: string;
-    name: string;
-    avatar: string;
-    status: 'active' | 'inactive' | 'suspended';
-    role: Role;
-}
-
-export interface EngineerProfile extends BaseProfile {
-    role: Role.ENGINEER;
-    discipline: Discipline;
-    location: string;
-    country: Country;
-    description: string;
-    experience: number;
-    profileTier: ProfileTier;
-    minDayRate: number;
-    maxDayRate: number;
-    currency: Currency;
-    availability: Date | string;
-    skills?: Skill[];
-    selectedJobRoles?: SelectedJobRole[];
-    certifications?: Certification[];
-    caseStudies?: CaseStudy[];
-    reviews?: string[]; // review IDs
-    compliance: Compliance;
-    identity: IdentityVerification;
-    profileViews: number;
-    searchAppearances: number;
-    jobInvites: number;
-    isBoosted?: boolean;
-    reputation: number; // 0-100 score
-    complianceScore: number; // 0-100 score
-    resourcingCompanyId?: string; // ID of the resourcing company managing this engineer
-    calendarSyncUrl?: string;
-    jobDigestOptIn?: boolean;
-    jobAlertsEnabled?: boolean;
-    badges: Badge[];
-    matchScore?: number; // Added for AI matching
-    contact: {
-        email: string;
-        phone: string;
-        website?: string;
-        linkedin?: string;
-    };
-}
-
-export interface CompanyProfile extends BaseProfile {
-    role: Role.COMPANY;
-    website: string;
-    location: string;
-    logo?: string;
-    consentToFeature?: boolean;
-    contact: {
-        email: string;
-        name: string;
-    };
-}
-
-// FIX: `ResourcingCompanyProfile` cannot extend `CompanyProfile` due to incompatible `role` literal types.
-// It should be a sibling type, also extending a base type if needed, but for simplicity here it will extend `BaseProfile`
-// and share the common fields with `CompanyProfile`.
-export interface ResourcingCompanyProfile extends BaseProfile {
-    role: Role.RESOURCING_COMPANY;
-    website: string;
-    location: string;
-    logo?: string;
-    consentToFeature?: boolean;
-    contact: {
-        email: string;
-        name: string;
-    };
-    managedEngineerIds: string[];
-}
-
-export interface AdminProfile extends BaseProfile {
-    role: Role.ADMIN;
-    permissions: string[];
-}
+// Interfaces
 
 export interface Skill {
     name: string;
@@ -230,51 +142,21 @@ export interface SelectedJobRole {
     overallScore: number;
 }
 
+export interface JobRoleSkill {
+    name: string;
+    description: string;
+}
+
+export interface JobRoleSkillCategory {
+    category: string;
+    skills: JobRoleSkill[];
+}
+
 export interface JobRoleDefinition {
     name: string;
     category: string;
-    skillCategories: {
-        category: string;
-        skills: {
-            name: string;
-            description: string;
-        }[];
-    }[];
+    skillCategories: JobRoleSkillCategory[];
 }
-
-export interface Certification {
-    name: string;
-    verified: boolean;
-    documentUrl?: string;
-}
-
-export interface CaseStudy {
-    id: string;
-    name: string;
-    url: string;
-}
-
-export interface IdentityVerification {
-    documentType: 'passport' | 'drivers_license' | 'none';
-    documentUrl?: string;
-    isVerified: boolean;
-}
-
-export interface Compliance {
-    professionalIndemnity: { hasCoverage: boolean; amount?: number; certificateUrl?: string; isVerified: boolean; };
-    publicLiability: { hasCoverage: boolean; amount?: number; certificateUrl?: string; isVerified: boolean; };
-    siteSafe: boolean; // aka SSSTS
-    cscsCard: boolean;
-    ownPPE: boolean;
-    hasOwnTransport: boolean;
-    hasOwnTools: boolean;
-    powerToolCompetency: number; // 0-100
-    accessEquipmentTrained: number; // 0-100
-    firstAidTrained: boolean;
-    carriesSpares: boolean;
-}
-
-export type SkillImportance = 'essential' | 'desirable';
 
 export interface JobSkillRequirement {
     name: string;
@@ -295,8 +177,127 @@ export interface Job {
     status: 'active' | 'inactive' | 'filled';
     jobType: JobType;
     experienceLevel: ExperienceLevel;
-    jobRole: string; // From JOB_ROLE_DEFINITIONS
+    jobRole: string;
     skillRequirements: JobSkillRequirement[];
+}
+
+export interface ContactDetails {
+    email: string;
+    phone?: string;
+    website?: string;
+    linkedin?: string;
+}
+
+export interface Insurance {
+    hasCoverage: boolean;
+    amount?: number;
+    certificateUrl?: string;
+    isVerified: boolean;
+}
+
+export interface Compliance {
+    professionalIndemnity: Insurance;
+    publicLiability: Insurance;
+    siteSafe: boolean;
+    cscsCard: boolean;
+    ownPPE: boolean;
+    hasOwnTransport: boolean;
+    hasOwnTools: boolean;
+    powerToolCompetency: number; // 0-100
+    accessEquipmentTrained: number; // 0-100
+    firstAidTrained: boolean;
+    carriesSpares: boolean;
+}
+
+export interface IdentityVerification {
+    documentType: 'passport' | 'drivers_license' | 'none';
+    documentUrl?: string;
+    isVerified: boolean;
+}
+
+export interface Badge {
+    id: string;
+    name: string;
+    description: string;
+    icon: React.ComponentType<any>;
+    color: string;
+}
+
+export interface CaseStudy {
+    id: string;
+    name: string;
+    url: string;
+}
+
+export interface Certification {
+    name: string;
+    verified: boolean;
+}
+
+export interface UserProfile {
+    id: string;
+    name: string;
+    avatar: string;
+    status: 'active' | 'inactive';
+    role: Role;
+    location: string;
+}
+
+export interface EngineerProfile extends UserProfile {
+    discipline: Discipline;
+    country: Country;
+    description: string;
+    experience: number;
+    profileTier: ProfileTier;
+    minDayRate: number;
+    maxDayRate: number;
+    currency: Currency;
+    availability: Date;
+    skills: Skill[];
+    selectedJobRoles?: SelectedJobRole[];
+    certifications?: Certification[];
+    compliance: Compliance;
+    identity: IdentityVerification;
+    profileViews: number;
+    searchAppearances: number;
+    jobInvites: number;
+    reputation: number; // 0-100
+    complianceScore: number; // 0-100
+    resourcingCompanyId?: string;
+    calendarSyncUrl: string;
+    badges: Badge[];
+    contact: ContactDetails;
+    caseStudies?: CaseStudy[];
+    isBoosted?: boolean;
+    platformCredits: number;
+    loyaltyPoints: number;
+    hasReceivedCompletionBonus?: boolean;
+    lastMonthlyCreditDate?: Date;
+    referralCode?: string;
+    jobDigestOptIn?: boolean;
+    jobAlertsEnabled?: boolean;
+    matchScore?: number;
+}
+
+export interface CompanyProfile extends UserProfile {
+    website: string;
+    logo?: string;
+    contact: { name: string; email: string; };
+    consentToFeature?: boolean;
+}
+
+export interface ResourcingCompanyProfile extends CompanyProfile {
+    managedEngineerIds: string[];
+}
+
+export interface AdminProfile extends UserProfile {
+    permissions: string[];
+}
+
+export interface User {
+    id: string;
+    role: Role;
+    profile: EngineerProfile | CompanyProfile | ResourcingCompanyProfile | AdminProfile;
 }
 
 export interface Application {
@@ -305,6 +306,7 @@ export interface Application {
     date: Date;
     status: ApplicationStatus;
     reviewed: boolean;
+    isFeatured?: boolean;
 }
 
 export interface Review {
@@ -312,15 +314,15 @@ export interface Review {
     jobId: string;
     companyId: string;
     engineerId: string;
-    peerRating: number; // 1-5, for technical skill etc.
-    customerRating: number; // 1-5, for communication etc.
+    peerRating: number; // 1-5
+    customerRating: number; // 1-5
     comment: string;
     date: Date;
 }
 
 export interface Conversation {
     id: string;
-    participantIds: string[]; // user IDs
+    participantIds: string[];
     lastMessageTimestamp: Date;
     lastMessageText: string;
 }
@@ -328,28 +330,16 @@ export interface Conversation {
 export interface Message {
     id: string;
     conversationId: string;
-    senderId: string; // user ID
+    senderId: string;
     text: string;
-    originalText?: string;
     timestamp: Date;
     isRead: boolean;
+    originalText?: string;
 }
 
-export interface Contract {
-    id: string;
-    jobId: string;
-    companyId: string;
-    engineerId: string;
-    type: ContractType;
-    description: string;
-    amount: number | string;
-    currency: Currency;
-    status: ContractStatus;
-    engineerSignature: { name: string; date: Date } | null;
-    companySignature: { name: string; date: Date } | null;
-    milestones: Milestone[];
-    timesheets?: Timesheet[];
-    jobTitle?: string;
+export interface Signature {
+    name: string;
+    date: Date;
 }
 
 export interface Milestone {
@@ -363,9 +353,26 @@ export interface Timesheet {
     id: string;
     contractId: string;
     engineerId: string;
-    period: string; // e.g., "Week ending 2024-08-02"
+    period: string;
     days: number;
     status: TimesheetStatus;
+}
+
+export interface Contract {
+    id: string;
+    jobId: string;
+    companyId: string;
+    engineerId: string;
+    type: ContractType;
+    description: string;
+    amount: number | string;
+    currency: Currency;
+    status: ContractStatus;
+    engineerSignature: Signature | null;
+    companySignature: Signature | null;
+    milestones: Milestone[];
+    timesheets?: Timesheet[];
+    jobTitle?: string;
 }
 
 export interface Transaction {
@@ -378,19 +385,44 @@ export interface Transaction {
     date: Date;
 }
 
-export interface Notification {
+export interface ProjectRole {
     id: string;
-    userId: string;
-    type: NotificationType;
-    text: string;
-    link?: string; // A view to navigate to
-    isRead: boolean;
-    timestamp: Date;
+    title: string;
+    discipline: Discipline;
+    startDate: Date;
+    endDate: Date;
+    assignedEngineerId: string | null;
+    phase?: string;
+}
+
+export interface Project {
+    id: string;
+    companyId: string;
+    name: string;
+    description: string;
+    status: 'planning' | 'in-progress' | 'completed';
+    roles: ProjectRole[];
+}
+
+export interface TrainingProvider {
+    name: string;
+    url: string;
+    specialties: string[];
+    type: 'Manufacturer' | 'Industry Standard' | 'Sponsored';
+}
+
+export interface Insight {
+    type: 'Upskill' | 'Certification' | 'Profile Enhancement';
+    suggestion: string;
+    callToAction: {
+        text: string;
+        view: string; // A view name from the app
+    };
 }
 
 export interface ForumPost {
     id: string;
-    authorId: string; // User ID
+    authorId: string;
     title: string;
     content: string;
     tags: string[];
@@ -411,38 +443,14 @@ export interface ForumComment {
     downvotes: number;
 }
 
-export interface TrainingProvider {
-    name: string;
-    url: string;
-    specialties: string[];
-    type: 'Manufacturer' | 'Industry Standard' | 'Sponsored';
-}
-
-export interface Badge {
+export interface Notification {
     id: string;
-    name: string;
-    description: string;
-    icon: React.ComponentType<any>;
-    color: string;
-}
-
-export interface Project {
-    id: string;
-    companyId: string;
-    name: string;
-    description: string;
-    status: 'planning' | 'active' | 'completed';
-    roles: ProjectRole[];
-}
-
-export interface ProjectRole {
-    id: string;
-    title: string;
-    discipline: Discipline;
-    startDate: Date;
-    endDate: Date;
-    assignedEngineerId: string | null;
-    phase?: string;
+    userId: string;
+    type: NotificationType;
+    text: string;
+    link: string; // View name to navigate to
+    isRead: boolean;
+    timestamp: Date;
 }
 
 export interface InvoiceItem {
@@ -455,30 +463,38 @@ export interface Invoice {
     contractId: string;
     companyId: string;
     engineerId: string;
-    issueDate: Date;
-    dueDate: Date;
     items: InvoiceItem[];
     total: number;
+    issueDate: Date;
+    dueDate: Date;
     status: InvoiceStatus;
     paymentTerms: PaymentTerms;
 }
 
-export enum InvoiceStatus {
-    DRAFT = 'Draft',
-    SENT = 'Sent',
-    PAID = 'Paid',
-    OVERDUE = 'Overdue',
-    DISPUTED = 'Disputed',
+export interface Product {
+    sku: string;
+    name: string;
+    description: string;
+    category: string;
+    subCategory: string;
+    matchScore?: number;
 }
 
-export interface Insight {
-    type: 'Upskill' | 'Certification' | 'Profile Enhancement';
-    suggestion: string;
-    callToAction: {
-        text: string;
-        view: string; // The view to navigate to
+export interface IOPort {
+    type: string;
+    count: number;
+}
+
+export interface ProductFeatures {
+    maxResolution: string;
+    ioPorts: {
+        inputs: IOPort[];
+        outputs: IOPort[];
     };
+    controlMethods: string[];
+    keyFeatures: string[];
+    idealApplication: string;
 }
 
 // Opaque type for the return value of useAppLogic
-export type AppContextType = ReturnType<typeof import('./useAppLogic').useAppLogic>;
+export type AppContextType = ReturnType<typeof import('../context/useAppLogic').useAppLogic>;

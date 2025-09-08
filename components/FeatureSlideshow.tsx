@@ -7,19 +7,19 @@ const SLIDES = [
         title: "1. Showcase Your Expertise",
         description: "Engineers add a 'Specialist Role' to their premium profile and rate their competency on the granular, industry-specific skills that matter.",
         image: SLIDESHOW_ASSETS.slide1,
-        animationClass: "animate-[cursor-click-path-1_5s_ease-in-out_infinite]",
+        animationClass: "animate-cursor-1",
     },
     {
         title: "2. Define Your Exact Needs",
         description: "Companies post jobs for free, selecting a role that auto-populates required skills. They then mark each one as 'Essential' or 'Desirable'.",
         image: SLIDESHOW_ASSETS.slide2,
-        animationClass: "animate-[cursor-click-path-2_7s_ease-in-out_infinite]",
+        animationClass: "animate-cursor-2",
     },
     {
         title: "3. Get an Instant AI Match",
         description: "The platform's AI analyzes engineer skills against the job's requirements, instantly generating a ranked list of candidates with a precise match score.",
         image: SLIDESHOW_ASSETS.slide3,
-        animationClass: "animate-[cursor-click-path-3_5s_ease-in-out_infinite]",
+        animationClass: "animate-cursor-3",
     },
     {
         title: "4. Connect Directly. No Middlemen.",

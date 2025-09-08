@@ -1,105 +1,107 @@
 import React, { useState } from 'react';
 import { useAppContext } from './context/AppContext';
+import { Page, Role } from './types';
+
+// Components
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
-import { LandingPage } from './views/LandingPage';
-import { LoginSelector } from './views/LoginSelector';
-import { EngineerDashboard } from './views/EngineerDashboard';
-import { CompanyDashboard } from './views/CompanyDashboard';
-import { AdminDashboard } from './views/AdminDashboard';
-import { ResourcingDashboard } from './views/ResourcingDashboard';
 import { HowItWorksModal } from './components/HowItWorksModal';
-import { EngineerSignUpWizard } from './views/EngineerSignUpWizard';
-import { CompanySignUpWizard } from './views/CompanySignUpWizard';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { AIAssistant } from './components/AIAssistant';
+import { ApplicantDeepDiveModal } from './components/Company/ApplicantDeepDiveModal';
+
+// Views
+import { LandingPage } from './views/LandingPage';
 import { ForEngineersPage } from './views/ForEngineersPage';
 import { ForCompaniesPage } from './views/ForCompaniesPage';
 import { PricingPage } from './views/PricingPage';
 import { AboutUsPage } from './views/AboutUsPage';
 import { InvestorPage } from './views/InvestorPage';
+import { LoginSelector } from './views/LoginSelector';
 import { LegalPage } from './views/LegalPage';
-import { AIAssistant } from './components/AIAssistant';
-import { UserGuidePage } from './views/UserGuidePage';
+import { EngineerSignUpWizard } from './views/EngineerSignUpWizard';
+import { CompanySignUpWizard } from './views/CompanySignUpWizard';
 import { ResourcingCompanySignUpWizard } from './views/ResourcingCompanySignUpWizard';
+import { UserGuidePage } from './views/UserGuidePage';
+import { InvestorRelationsPage } from './views/InvestorRelationsPage';
+
+// Dashboards
+import { EngineerDashboard } from './views/EngineerDashboard';
+import { CompanyDashboard } from './views/CompanyDashboard';
+import { ResourcingDashboard } from './views/ResourcingDashboard';
+import { AdminDashboard } from './views/AdminDashboard';
 
 
 function App() {
-  const { user, currentPage, setCurrentPage } = useAppContext();
+  const { user, page, setPage, applicantForDeepDive, setApplicantForDeepDive } = useAppContext();
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
 
-  const onNavigate = (page: any) => {
-    setCurrentPage(page);
+  const handleNavigate = (newPage: Page) => {
+    setPage(newPage);
     window.scrollTo(0, 0);
   };
+  
+  const handleCancelSignUp = () => {
+    setPage('login');
+  }
 
   const renderPage = () => {
     if (user) {
       switch (user.role) {
-        case 'Engineer':
-          return <EngineerDashboard />;
-        case 'Company':
-          return <CompanyDashboard />;
-        case 'Admin':
-          return <AdminDashboard />;
-        case 'ResourcingCompany':
-            return <ResourcingDashboard />;
-        default:
-          return <LandingPage onNavigate={onNavigate} />;
+        case Role.ENGINEER: return <EngineerDashboard />;
+        case Role.COMPANY: return <CompanyDashboard />;
+        case Role.RESOURCING_COMPANY: return <ResourcingDashboard />;
+        case Role.ADMIN: return <AdminDashboard />;
+        default: setPage('landing'); return null; // Should not happen
       }
     }
 
-    switch (currentPage) {
-      case 'landing':
-        return <LandingPage onNavigate={onNavigate} />;
-      case 'login':
-        return <LoginSelector onNavigate={onNavigate} />;
-      case 'engineerSignUp':
-        return <EngineerSignUpWizard onCancel={() => onNavigate('login')} />;
-      case 'companySignUp':
-        return <CompanySignUpWizard onCancel={() => onNavigate('login')} />;
-      case 'resourcingCompanySignUp':
-        return <ResourcingCompanySignUpWizard onCancel={() => onNavigate('login')} />;
-      case 'forEngineers':
-          return <ForEngineersPage onNavigate={onNavigate} />;
-      case 'forCompanies':
-          return <ForCompaniesPage onNavigate={onNavigate} />;
-      case 'pricing':
-          return <PricingPage onNavigate={onNavigate} />;
-      case 'aboutUs':
-          return <AboutUsPage onNavigate={onNavigate} />;
-      case 'investors':
-          return <InvestorPage onNavigate={onNavigate} />;
-      case 'helpCenter':
-        return <UserGuidePage onNavigate={onNavigate} />;
-      case 'terms':
-          return <LegalPage page="terms" onNavigate={onNavigate} />;
-      case 'privacy':
-          return <LegalPage page="privacy" onNavigate={onNavigate} />;
-      case 'security':
-          return <LegalPage page="security" onNavigate={onNavigate} />;
-      default:
-        return <LandingPage onNavigate={onNavigate} />;
+    switch (page) {
+      case 'landing': return <LandingPage onNavigate={handleNavigate} />;
+      case 'forEngineers': return <ForEngineersPage onNavigate={handleNavigate} />;
+      case 'forCompanies': return <ForCompaniesPage onNavigate={handleNavigate} />;
+      case 'pricing': return <PricingPage onNavigate={handleNavigate} />;
+      case 'investors': return <InvestorPage onNavigate={handleNavigate} />;
+      case 'investorRelations': return <InvestorRelationsPage onNavigate={handleNavigate} />;
+      case 'aboutUs': return <AboutUsPage onNavigate={handleNavigate} />;
+      case 'login': return <LoginSelector onNavigate={handleNavigate} />;
+      case 'engineerSignUp': return <EngineerSignUpWizard onCancel={handleCancelSignUp} />;
+      case 'companySignUp': return <CompanySignUpWizard onCancel={handleCancelSignUp} />;
+      case 'resourcingCompanySignUp': return <ResourcingCompanySignUpWizard onCancel={handleCancelSignUp} />;
+      case 'terms': return <LegalPage page="terms" onNavigate={handleNavigate} />;
+      case 'privacy': return <LegalPage page="privacy" onNavigate={handleNavigate} />;
+      case 'security': return <LegalPage page="security" onNavigate={handleNavigate} />;
+      case 'helpCenter': case 'userGuide': return <UserGuidePage onNavigate={handleNavigate} />;
+      default: return <LandingPage onNavigate={handleNavigate} />;
     }
   };
   
-  const showHeaderFooter = !user && !['login', 'engineerSignUp', 'companySignUp', 'resourcingCompanySignUp'].includes(currentPage);
-  const mainContentClass = showHeaderFooter ? "pt-20" : "";
+  const isDashboard = !!user;
+  const isSignUp = ['engineerSignUp', 'companySignUp', 'resourcingCompanySignUp'].includes(page);
+  const showHeaderFooter = !isDashboard && !isSignUp;
 
   return (
-    <div className="flex flex-col min-h-screen font-sans">
-      {showHeaderFooter && <Header onNavigate={onNavigate} onHowItWorksClick={() => setIsHowItWorksOpen(true)} />}
-      <main className={`flex-grow ${mainContentClass}`}>
-        {renderPage()}
-      </main>
-      {showHeaderFooter && <Footer onNavigate={onNavigate} onHowItWorksClick={() => setIsHowItWorksOpen(true)} />}
-
-      <HowItWorksModal
-        isOpen={isHowItWorksOpen}
-        onClose={() => setIsHowItWorksOpen(false)}
-        onNavigate={onNavigate}
-      />
-      
-      {user && <AIAssistant />}
-    </div>
+    <ErrorBoundary>
+      <div className="flex flex-col min-h-screen bg-gray-100">
+        {showHeaderFooter && <Header onNavigate={handleNavigate} onHowItWorksClick={() => setIsHowItWorksOpen(true)} />}
+        <main className={`flex-grow ${showHeaderFooter ? 'pt-20' : ''}`}>
+          {renderPage()}
+        </main>
+        {showHeaderFooter && <Footer onNavigate={handleNavigate} onHowItWorksClick={() => setIsHowItWorksOpen(true)} />}
+        
+        <HowItWorksModal isOpen={isHowItWorksOpen} onClose={() => setIsHowItWorksOpen(false)} onNavigate={handleNavigate} />
+        <AIAssistant />
+        
+        {applicantForDeepDive && (
+            <ApplicantDeepDiveModal
+                isOpen={!!applicantForDeepDive}
+                onClose={() => setApplicantForDeepDive(null)}
+                job={applicantForDeepDive.job}
+                engineer={applicantForDeepDive.engineer}
+            />
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
 

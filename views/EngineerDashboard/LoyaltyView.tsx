@@ -1,27 +1,50 @@
-
-// FIX: Created the `LoyaltyView` component to resolve the "not a module" error.
-import React from 'react';
-import { EngineerProfile, ProfileTier } from '../../types';
-import { ArrowLeft, Gift, ShieldCheck, Zap } from '../../components/Icons';
+import React, { useState } from 'react';
+import { EngineerProfile } from '../../types';
+import { ArrowLeft, Gift, ShieldCheck, Zap, Star } from '../../components/Icons';
+import { useAppContext } from '../../context/AppContext';
 
 interface LoyaltyViewProps {
     profile: EngineerProfile;
     setActiveView: (view: string) => void;
 }
 
-const FeatureCard = ({ icon: Icon, title, children, colorClass }: { icon: React.ComponentType<any>, title: string, children: React.ReactNode, colorClass: string }) => (
-    <div className={`p-6 rounded-lg border-l-4 ${colorClass}`}>
+const RewardCard = ({ icon: Icon, title, children, color, action, actionText }: { icon: React.ComponentType<any>, title: string, children: React.ReactNode, color: string, action?: () => void, actionText?: string }) => (
+    <div className={`p-6 rounded-lg border-l-4 bg-${color}-50 border-${color}-500`}>
         <div className="flex items-center mb-2">
-            <Icon className="w-8 h-8 mr-3" />
-            <h3 className="text-xl font-bold">{title}</h3>
+            <Icon className={`w-8 h-8 mr-3 text-${color}-600`} />
+            <h3 className={`text-xl font-bold text-${color}-900`}>{title}</h3>
         </div>
-        <p className="text-gray-600">{children}</p>
+        <div className="text-gray-600 pl-11">
+            {children}
+            {action && actionText && (
+                <button onClick={action} className={`mt-3 font-bold text-${color}-700 hover:text-${color}-900`}>
+                    {actionText}
+                </button>
+            )}
+        </div>
     </div>
 );
 
 export const LoyaltyView = ({ profile, setActiveView }: LoyaltyViewProps) => {
+    const { redeemLoyaltyPoints } = useAppContext();
+    const [referralCodeCopied, setReferralCodeCopied] = useState(false);
 
-    const canAccess = profile.profileTier !== ProfileTier.BASIC;
+    const handleRedeem = () => {
+        const pointsToRedeem = 100; // Example: redeem 100 points
+        if (profile.loyaltyPoints >= pointsToRedeem) {
+            redeemLoyaltyPoints(pointsToRedeem);
+        } else {
+            alert("You need at least 100 points to redeem a credit.");
+        }
+    };
+    
+    const handleCopyReferral = () => {
+        if(profile.referralCode) {
+            navigator.clipboard.writeText(profile.referralCode);
+            setReferralCodeCopied(true);
+            setTimeout(() => setReferralCodeCopied(false), 2000);
+        }
+    }
 
     return (
         <div>
@@ -32,42 +55,52 @@ export const LoyaltyView = ({ profile, setActiveView }: LoyaltyViewProps) => {
                 <ArrowLeft size={16} className="mr-2" />
                 Back to Dashboard
             </button>
-            <h1 className="text-3xl font-bold mb-2 flex items-center">
-                <Gift size={32} className="mr-3 text-red-500" /> Loyalty & Rewards
-            </h1>
-            <p className="text-gray-600 mb-6">We reward our active and subscribed members. Here's what you have access to.</p>
-
-            {canAccess ? (
-                <div className="space-y-6">
-                    <FeatureCard icon={ShieldCheck} title="Security Net Guarantee" colorClass="border-blue-500 bg-blue-50 text-blue-900">
-                        If you are available for 30 consecutive days and receive no job offers, we will credit your account with a free month of your current subscription tier. This can be claimed up to 3 times per year.
-                    </FeatureCard>
-
-                    <FeatureCard icon={Zap} title="Monthly Profile Boost" colorClass="border-purple-500 bg-purple-50 text-purple-900">
-                        As a <span className="font-bold">Gold</span> or <span className="font-bold">Platinum</span> member, you receive free Profile Boost credits each month to push your profile to the top of search results.
-                        <ul className="list-disc list-inside mt-2 text-sm">
-                            <li>Gold Members: 1 Free Boost per month</li>
-                            <li>Platinum Members: 3 Free Boosts per month</li>
-                        </ul>
-                    </FeatureCard>
-                </div>
-            ) : (
-                <div className="mt-6 bg-gradient-to-br from-red-400 to-pink-500 p-8 rounded-lg shadow-lg text-center text-white">
-                     <div className="inline-block bg-white/20 p-3 rounded-full mb-4">
-                        <Gift size={32} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <main className="lg:col-span-2 space-y-6">
+                    <RewardCard icon={ShieldCheck} title="Security Net Guarantee" color="blue">
+                        <p>If you're available for 30 consecutive days and receive no job offers, we'll credit your account with a free month of your current subscription tier. (Max 3 claims/year).</p>
+                    </RewardCard>
+                     <RewardCard icon={Star} title="Profile Completion Bonus" color="green">
+                        <p>Complete your profile by adding at least one Specialist Role and one Certification to earn a one-time bonus of <strong>2 FREE Platform Credits</strong>.</p>
+                        {profile.hasReceivedCompletionBonus ? (
+                             <p className="font-bold text-green-700 mt-2">Bonus Claimed!</p>
+                        ) : (
+                             <p className="font-bold text-gray-500 mt-2">You have not claimed this bonus yet.</p>
+                        )}
+                    </RewardCard>
+                    <RewardCard icon={Gift} title="Referral Program" color="red">
+                         <p>Refer a friend to TechSubbies! When they sign up and complete their first contract, you'll receive <strong>5 FREE Platform Credits</strong> as a thank you.</p>
+                         <div className="mt-3">
+                            <p className="text-xs font-semibold text-gray-500">Your Unique Referral Code:</p>
+                            <div className="flex items-center gap-2 mt-1">
+                                <input type="text" readOnly value={profile.referralCode || 'N/A'} className="font-mono bg-gray-100 p-2 rounded-md w-full sm:w-auto"/>
+                                <button onClick={handleCopyReferral} className="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-md hover:bg-red-700">
+                                    {referralCodeCopied ? 'Copied!' : 'Copy'}
+                                </button>
+                            </div>
+                         </div>
+                    </RewardCard>
+                </main>
+                <aside className="lg:col-span-1 space-y-6">
+                    <div className="bg-white p-6 rounded-lg shadow text-center">
+                        <h3 className="text-lg font-bold">Loyalty Points</h3>
+                        <p className="text-5xl font-extrabold text-purple-600 my-2">{profile.loyaltyPoints}</p>
+                        <p className="text-sm text-gray-500 mb-4">Earn points for being an active member of the community.</p>
+                        <button onClick={handleRedeem} disabled={profile.loyaltyPoints < 100} className="w-full bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 disabled:bg-gray-400">
+                            Redeem 100 Points for 1 Credit
+                        </button>
                     </div>
-                    <h2 className="text-2xl font-bold mb-2">Unlock Exclusive Loyalty Rewards</h2>
-                    <p className="max-w-xl mx-auto mb-6">
-                        Our loyalty program, including the Security Net Guarantee and free Profile Boosts, is available to all subscribed members. Upgrade your profile to get rewarded for being part of the network.
-                    </p>
-                    <button
-                        onClick={() => setActiveView('Billing')}
-                        className="bg-white text-red-600 font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-transform transform hover:scale-105 shadow-md"
-                    >
-                        View Subscription Plans
-                    </button>
-                </div>
-            )}
+                     <div className="bg-white p-6 rounded-lg shadow">
+                        <h3 className="text-lg font-bold mb-3">How to Earn Points</h3>
+                        <ul className="space-y-2 text-sm text-gray-700">
+                            <li className="flex justify-between"><span>Daily Login</span> <span className="font-bold text-green-600">+10 Pts</span></li>
+                            <li className="flex justify-between"><span>Complete a Contract</span> <span className="font-bold text-green-600">+100 Pts</span></li>
+                            <li className="flex justify-between"><span>Receive a 5-Star Review</span> <span className="font-bold text-green-600">+50 Pts</span></li>
+                            <li className="flex justify-between"><span>Post in the Forum</span> <span className="font-bold text-green-600">+20 Pts</span></li>
+                        </ul>
+                    </div>
+                </aside>
+            </div>
         </div>
     );
 };

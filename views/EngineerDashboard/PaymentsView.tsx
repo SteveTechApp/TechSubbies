@@ -1,8 +1,7 @@
-
 // FIX: Created the `PaymentsView` component to resolve the "not a module" error.
 import React from 'react';
 import { EngineerProfile, ProfileTier } from '../../types';
-import { ArrowLeft, CheckCircle, Star, Zap } from '../../components/Icons';
+import { ArrowLeft, CheckCircle, Star, Zap, CreditCard } from '../../components/Icons';
 import { useAppContext } from '../../context/AppContext';
 
 interface PaymentsViewProps {
@@ -13,12 +12,12 @@ interface PaymentsViewProps {
 const PRICING_PLANS = [
     { name: "Basic Profile", tier: ProfileTier.BASIC, price: "£0/mo", features: ["Appear in standard search results", "Apply for jobs up to £195/day", "Build your contract history & reviews"] },
     { name: "Professional Profile", tier: ProfileTier.PROFESSIONAL, price: "£7/mo", features: ["Everything in Basic", "Detailed 'Skills Profile'", "AI Skill Discovery & Training", "Higher search ranking"], isFeatured: false },
-    { name: "Skills Profile", tier: ProfileTier.SKILLS, price: "£15/mo", features: ["Everything in Silver", "Apply to all jobs (no day rate cap)", "AI Career Coach & Cost Analysis", "1 FREE Profile Boost per month"], isFeatured: true },
+    { name: "Skills Profile", tier: ProfileTier.SKILLS, price: "£15/mo", features: ["Everything in Gold", "Apply to all jobs (no day rate cap)", "AI Career Coach & Cost Analysis", "1 FREE Platform Credit per month"], isFeatured: true },
     { name: "Business Profile", tier: ProfileTier.BUSINESS, price: "£35/mo", features: ["Everything in Gold", "Add up to 3 team members", "Priority support", "Featured profile opportunities"], isFeatured: false }
 ];
 
 export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
-    const { upgradeProfileTier } = useAppContext();
+    const { upgradeProfileTier, purchasePlatformCredits } = useAppContext();
 
     const handleUpgrade = (tier: ProfileTier) => {
         if (window.confirm(`Are you sure you want to upgrade to the ${tier} plan?`)) {
@@ -26,6 +25,12 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
             alert(`Successfully upgraded to ${tier}!`);
         }
     };
+
+    const CREDIT_BUNDLES = [
+        { amount: 1, price: 1.99, popular: false },
+        { amount: 5, price: 8.99, popular: true },
+        { amount: 10, price: 15.99, popular: false },
+    ];
 
     return (
         <div>
@@ -38,45 +43,54 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
             </button>
             <h1 className="text-3xl font-bold mb-2">Billing & Subscriptions</h1>
             <p className="text-gray-600 mb-6">Manage your subscription plan to unlock more powerful features.</p>
-
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {PRICING_PLANS.map(plan => {
-                    const isCurrentPlan = profile.profileTier === plan.tier;
-                    const canUpgradeTo = PRICING_PLANS.findIndex(p => p.tier === profile.profileTier) < PRICING_PLANS.findIndex(p => p.tier === plan.tier);
-
-                    return (
-                        <div key={plan.tier} className={`rounded-lg p-6 border-2 flex flex-col ${plan.isFeatured ? 'bg-gray-800 text-white border-blue-500 shadow-xl' : 'bg-white border-gray-200'}`}>
-                            <h2 className={`font-bold text-sm uppercase tracking-wider ${plan.isFeatured ? 'text-blue-400' : 'text-blue-600'}`}>{plan.tier}</h2>
-                            <h3 className={`text-xl font-bold mt-1 ${plan.isFeatured ? 'text-white' : 'text-gray-800'}`}>{plan.name}</h3>
-                            <div className="mt-4">
-                                <span className={`text-4xl font-extrabold ${plan.isFeatured ? 'text-white' : 'text-gray-800'}`}>{plan.price}</span>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                 {/* Subscriptions */}
+                <div className="bg-white p-6 rounded-lg shadow">
+                     <h2 className="text-xl font-bold mb-4">Subscription Plans</h2>
+                     {PRICING_PLANS.map(plan => {
+                        const isCurrentPlan = profile.profileTier === plan.tier;
+                        const canUpgradeTo = PRICING_PLANS.findIndex(p => p.tier === profile.profileTier) < PRICING_PLANS.findIndex(p => p.tier === plan.tier);
+                        return (
+                            <div key={plan.tier} className={`p-3 border rounded-md mb-3 ${isCurrentPlan ? 'border-blue-500 bg-blue-50' : ''}`}>
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <h3 className="font-bold">{plan.name} <span className="text-sm font-normal text-gray-500">{plan.price}</span></h3>
+                                        <p className="text-xs text-gray-600">{plan.features.slice(1,3).join(' • ')}</p>
+                                    </div>
+                                    {isCurrentPlan ? (
+                                        <span className="px-3 py-1 bg-green-200 text-green-800 text-xs font-bold rounded-full">Current Plan</span>
+                                    ) : canUpgradeTo ? (
+                                        <button onClick={() => handleUpgrade(plan.tier as ProfileTier)} className="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-md hover:bg-blue-700">Upgrade</button>
+                                    ) : ( <span className="text-xs text-gray-400"></span>)}
+                                </div>
                             </div>
-                            
-                            <ul className="mt-6 space-y-3 text-sm flex-grow">
-                                {plan.features.map((feature, index) => (
-                                    <li key={index} className="flex items-start">
-                                        <CheckCircle className={`w-5 h-5 mr-2 flex-shrink-0 ${plan.isFeatured ? 'text-blue-400' : 'text-blue-600'}`} />
-                                        <span className={plan.isFeatured ? 'text-gray-300' : 'text-gray-600'}>{feature}</span>
-                                    </li>
-                                ))}
-                            </ul>
+                        )
+                    })}
+                </div>
 
-                            <div className="mt-6">
-                                {isCurrentPlan ? (
-                                    <button disabled className="w-full py-2 font-bold rounded-lg bg-green-200 text-green-800">Current Plan</button>
-                                ) : canUpgradeTo ? (
-                                    <button onClick={() => handleUpgrade(plan.tier as ProfileTier)} className={`w-full py-2 font-bold rounded-lg transition-colors ${plan.isFeatured ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}>
-                                        Upgrade
-                                    </button>
-                                ) : (
-                                    <button disabled className="w-full py-2 font-bold rounded-lg bg-gray-200 text-gray-500 cursor-not-allowed">
-                                        {plan.tier === ProfileTier.BASIC ? 'Free Tier' : 'Downgrade'}
-                                    </button>
-                                )}
+                {/* Platform Credits */}
+                <div className="bg-white p-6 rounded-lg shadow">
+                    <h2 className="text-xl font-bold mb-2 flex items-center"><CreditCard className="mr-2 text-green-500"/> Platform Credits</h2>
+                    <p className="text-sm text-gray-600 mb-4">Use credits for one-off premium actions like featuring your job applications.</p>
+                    <div className="p-4 bg-gray-100 rounded-lg text-center mb-4">
+                        <p className="text-sm text-gray-500">Your current balance</p>
+                        <p className="text-4xl font-bold text-gray-800">{profile.platformCredits}</p>
+                        <p className="text-sm text-gray-500">Credits</p>
+                    </div>
+                     <div className="space-y-3">
+                        {CREDIT_BUNDLES.map(bundle => (
+                            <div key={bundle.amount} className={`p-3 border rounded-md flex justify-between items-center ${bundle.popular ? 'border-green-500 bg-green-50' : ''}`}>
+                                <div>
+                                    <h3 className="font-bold">{bundle.amount} Credit{bundle.amount > 1 ? 's' : ''}</h3>
+                                    <p className="text-xs text-gray-600">Price: £{bundle.price}</p>
+                                </div>
+                                <button onClick={() => purchasePlatformCredits(bundle.amount)} className="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-md hover:bg-green-700">Purchase</button>
                             </div>
-                        </div>
-                    );
-                })}
+                        ))}
+                    </div>
+                </div>
+
             </div>
         </div>
     );
