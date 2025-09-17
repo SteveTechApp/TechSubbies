@@ -40,6 +40,11 @@ export const GuestMenu = ({ onHowItWorksClick, onNavigate }: GuestMenuProps) => 
                     <button onClick={() => onNavigate('forCompanies')} className={dropdownItemClass}>Why It's Free</button>
                     <button onClick={() => onNavigate('login')} className={dropdownItemClass}>Post a Job</button>
                 </DropdownMenu>
+                 <DropdownMenu triggerText="For Resourcing">
+                    <button onClick={() => onNavigate('forResourcingCompanies')} className={dropdownItemClass}>Explore Features</button>
+                    <button onClick={() => onNavigate('pricing')} className={dropdownItemClass}>View Pricing</button>
+                    <button onClick={() => onNavigate('resourcingCompanySignUp')} className={dropdownItemClass}>Sign Up</button>
+                </DropdownMenu>
                 <button onClick={onHowItWorksClick} className={navButtonClass}>How It Works</button>
                 <button onClick={() => onNavigate('pricing')} className={navButtonClass}>Pricing</button>
                 <button onClick={() => onNavigate('investors')} className={navButtonClass}>Investors</button>
@@ -69,6 +74,7 @@ export const GuestMenu = ({ onHowItWorksClick, onNavigate }: GuestMenuProps) => 
                     <nav className="flex flex-col flex-grow space-y-5 text-center">
                         <button onClick={() => handleMobileNav('forEngineers')} className={mobileLinkClass}>For Engineers</button>
                         <button onClick={() => handleMobileNav('forCompanies')} className={mobileLinkClass}>For Companies</button>
+                        <button onClick={() => handleMobileNav('forResourcingCompanies')} className={mobileLinkClass}>For Resourcing</button>
                         <button onClick={handleMobileHowItWorks} className={mobileLinkClass}>How It Works</button>
                         <button onClick={() => handleMobileNav('pricing')} className={mobileLinkClass}>Pricing</button>
                         <button onClick={() => handleMobileNav('investors')} className={mobileLinkClass}>Investors</button>

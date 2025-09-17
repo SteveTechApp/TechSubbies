@@ -5,7 +5,8 @@ export type Page =
     | 'landing' | 'forEngineers' | 'forCompanies' | 'pricing' | 'investors' | 'aboutUs'
     | 'login' | 'engineerSignUp' | 'companySignUp' | 'resourcingCompanySignUp'
     | 'engineerDashboard' | 'companyDashboard' | 'adminDashboard' | 'resourcingDashboard'
-    | 'terms' | 'privacy' | 'security' | 'helpCenter' | 'investorRelations' | 'userGuide';
+    | 'terms' | 'privacy' | 'security' | 'helpCenter' | 'investorRelations' | 'userGuide'
+    | 'forResourcingCompanies' | 'howItWorks' | 'tutorials';
 
 export enum Role {
     ENGINEER = 'Engineer',
@@ -228,9 +229,23 @@ export interface CaseStudy {
     url: string;
 }
 
+export interface CertificationDocument {
+    id: string;
+    name: string;
+    url: string;
+    verified: boolean;
+}
+
 export interface Certification {
     name: string;
-    verified: boolean;
+    verified: boolean; // Overall cert verification
+    documents?: CertificationDocument[];
+}
+
+export interface UploadedCV {
+    fileName: string;
+    fileUrl: string;
+    isSearchable: boolean;
 }
 
 export interface UserProfile {
@@ -277,6 +292,7 @@ export interface EngineerProfile extends UserProfile {
     jobDigestOptIn?: boolean;
     jobAlertsEnabled?: boolean;
     matchScore?: number;
+    cv?: UploadedCV;
 }
 
 export interface CompanyProfile extends UserProfile {
@@ -494,6 +510,7 @@ export interface Product {
     matchScore?: number;
 }
 
+// FIX: Defined the IOPort interface to represent product input/output ports, resolving type errors.
 export interface IOPort {
     type: string;
     count: number;

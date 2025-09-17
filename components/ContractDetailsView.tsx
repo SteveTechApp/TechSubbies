@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { Contract, User, Role, ContractStatus, UserProfile, CompanyProfile, EngineerProfile, Milestone, MilestoneStatus, ContractType, Timesheet, PaymentTerms } from '../types';
 import { useAppContext } from '../context/AppContext';
-import { FileText, User as UserIcon, Building, Calendar, CheckCircle, Clock, DollarSign, Loader, BrainCircuit, Download } from './Icons';
+import { FileText, User as UserIcon, Building, Calendar, CheckCircle, Clock, DollarSign, Loader, BrainCircuit } from './Icons';
 import { SignContractModal } from './SignContractModal';
 import { formatDisplayDate } from '../utils/dateFormatter';
 import { PaymentModal } from './PaymentModal';
 import { TimesheetRow } from './TimesheetRow';
 import { TimesheetSubmitModal } from './TimesheetSubmitModal';
 import { InvoiceGeneratorModal } from './InvoiceGeneratorModal';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 interface ContractDetailsViewProps {
     contract: Contract;
@@ -87,7 +85,6 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
     const [fundingMilestone, setFundingMilestone] = useState<Milestone | null>(null);
     const [isTimesheetModalOpen, setIsTimesheetModalOpen] = useState(false);
     const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
-    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
 
     const engineerUser = findUserByProfileId(contract.engineerId);
@@ -101,7 +98,6 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
     
     const canEngineerSign = user.profile.id === engineer.id && contract.status === ContractStatus.PENDING_SIGNATURE && !contract.engineerSignature;
     const canCompanySign = (user.profile.id === company.id || user.role === Role.ADMIN) && contract.status === ContractStatus.SIGNED && !contract.companySignature;
-    const canExportPdf = (user.role === Role.COMPANY || user.role === Role.ADMIN) && contract.status === ContractStatus.ACTIVE;
 
     const approvedMilestones = contract.milestones.filter(m => m.status === MilestoneStatus.APPROVED_PENDING_INVOICE);
     const canGenerateInvoice = user.role === Role.ENGINEER && approvedMilestones.length > 0;
@@ -132,112 +128,6 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
         setIsInvoiceModalOpen(false);
     };
     
-    const handleExportPdf = async () => {
-        setIsGeneratingPdf(true);
-        const reportElement = document.createElement('div');
-        
-        const getFinancialsHtml = () => {
-            if (contract.type === ContractType.SOW) {
-                const total = contract.milestones.reduce((sum, m) => sum + Number(m.amount), 0);
-                return `
-                    <h3 style="font-size: 1.2rem; margin-top: 20px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Project Milestones</h3>
-                    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-                        <thead>
-                            <tr style="background-color: #f2f2f2;">
-                                <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Description</th>
-                                <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${contract.milestones.map(m => `
-                                <tr>
-                                    <td style="padding: 8px; border: 1px solid #ddd;">${m.description}</td>
-                                    <td style="padding: 8px; text-align: right; border: 1px solid #ddd;">${contract.currency}${m.amount.toLocaleString()}</td>
-                                </tr>
-                            `).join('')}
-                            <tr style="font-weight: bold;">
-                                <td style="padding: 8px; text-align: right; border: 1px solid #ddd;">Total Project Value</td>
-                                <td style="padding: 8px; text-align: right; border: 1px solid #ddd;">${contract.currency}${total.toLocaleString()}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                `;
-            } else {
-                return `
-                     <h3 style="font-size: 1.2rem; margin-top: 20px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Financial Terms</h3>
-                     <p><strong>Day Rate:</strong> ${contract.currency}${contract.amount}</p>
-                `;
-            }
-        };
-
-        const getSignatureHtml = (sig: {name: string, date: Date} | null, role: string) => {
-             if (sig) {
-                return `<p><strong>Signed by ${role}:</strong> ${sig.name} on ${new Date(sig.date).toLocaleDateString()}</p>`;
-            }
-            return `<div style="margin-top: 30px; border-top: 1px solid #333; width: 60%;"><p style="margin-top: 5px;">Signature (${role})</p></div>`;
-        }
-
-        reportElement.innerHTML = `
-            <div style="width: 210mm; padding: 20mm; font-family: Arial, sans-serif; color: #333; background-color: white;">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #eee; padding-bottom: 10px;">
-                <img src="${company.logo || company.avatar}" alt="Company Logo" style="max-height: 50px; max-width: 180px; object-fit: contain;">
-                <div style="text-align: right;">
-                  <h2 style="margin: 0; font-size: 1.5rem;">${company.name}</h2>
-                  <p style="margin: 5px 0 0;">${company.contact.email}</p>
-                  <p style="margin: 5px 0 0;">${company.website}</p>
-                </div>
-              </div>
-
-              <h1 style="text-align: center; margin: 40px 0; color: #1e40af;">Service Agreement</h1>
-
-              <div style="display: flex; justify-content: space-between; margin: 30px 0;">
-                 <div><strong>Client:</strong><br/>${company.name}</div>
-                 <div><strong>Contractor:</strong><br/>${engineer.name}</div>
-              </div>
-              
-              <p><strong>Job Title:</strong> ${contract.jobTitle}</p>
-              <p><strong>Contract ID:</strong> ${contract.id}</p>
-
-              <h3 style="font-size: 1.2rem; margin-top: 20px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Agreement Terms</h3>
-              <div style="font-size: 0.9rem; white-space: pre-wrap; margin-top: 10px;">${contract.description}</div>
-
-              ${getFinancialsHtml()}
-
-              <div style="margin-top: 50px;">
-                <h3 style="font-size: 1.2rem;">Signatures</h3>
-                ${getSignatureHtml(contract.engineerSignature, 'Contractor')}
-                ${getSignatureHtml(contract.companySignature, 'Client')}
-              </div>
-              
-              <p style="text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 10px; margin-top: 40px; position: absolute; bottom: 20mm; width: calc(100% - 40mm);">
-                Generated by TechSubbies.com on ${new Date().toLocaleDateString()}
-              </p>
-            </div>
-        `;
-        
-        reportElement.style.position = 'absolute';
-        reportElement.style.left = '-9999px';
-        document.body.appendChild(reportElement);
-
-        const canvas = await html2canvas(reportElement.children[0] as HTMLElement, { scale: 2 });
-        const imgData = canvas.toDataURL('image/png');
-        
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        const imgWidth = canvas.width;
-        const imgHeight = canvas.height;
-        const ratio = imgWidth / imgHeight;
-        const width = pdfWidth;
-        const height = width / ratio;
-
-        pdf.addImage(imgData, 'PNG', 0, 0, width, height);
-        pdf.save(`Contract_${contract.jobTitle?.replace(/\s/g, '_')}_${company.name.replace(/\s/g, '')}.pdf`);
-        
-        document.body.removeChild(reportElement);
-        setIsGeneratingPdf(false);
-    };
-
 
     return (
         <>
@@ -355,12 +245,6 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
                 </div>
 
                 <div className="mt-6 pt-6 border-t flex justify-end gap-3 flex-wrap">
-                    {canExportPdf && (
-                         <button onClick={handleExportPdf} disabled={isGeneratingPdf} className="flex items-center px-6 py-2 bg-gray-600 text-white font-bold rounded-md hover:bg-gray-700 disabled:bg-gray-400">
-                             {isGeneratingPdf ? <Loader className="animate-spin w-5 h-5 mr-2" /> : <Download size={18} className="mr-2" />}
-                             {isGeneratingPdf ? 'Generating...' : 'Export PDF'}
-                        </button>
-                    )}
                     {canEngineerSign && (
                         <button onClick={() => setIsSignModalOpen(true)} className="px-6 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700">
                             Review & Sign Contract

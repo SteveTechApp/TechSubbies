@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Page } from '../types';
 import { FAQ_DATA } from '../data/faqData';
@@ -50,6 +49,16 @@ export const UserGuidePage = ({ onNavigate }: UserGuidePageProps) => {
                     <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
                         Find answers to the most common questions about using TechSubbies.com.
                     </p>
+                </div>
+                
+                <div className="max-w-4xl mx-auto mb-8 bg-blue-600 text-white p-6 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-between">
+                    <div>
+                        <h2 className="text-2xl font-bold">Prefer to watch?</h2>
+                        <p className="text-blue-100">Check out our new video tutorials for a guided walkthrough of key features.</p>
+                    </div>
+                    <button onClick={() => onNavigate('tutorials')} className="mt-4 sm:mt-0 bg-white text-blue-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-100 transition-transform transform hover:scale-105 flex-shrink-0">
+                        View Tutorials
+                    </button>
                 </div>
 
                 <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg">

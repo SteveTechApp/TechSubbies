@@ -50,6 +50,11 @@ export const MOCK_FREE_ENGINEER: EngineerProfile = {
     currency: Currency.GBP,
     availability: new Date('2024-08-15'),
     skills: [],
+    cv: {
+        fileName: 'John_Smith_AV_Tech_CV.pdf',
+        fileUrl: '/mock-cv/john-smith.pdf',
+        isSearchable: false,
+    },
     compliance: { professionalIndemnity: { hasCoverage: false, isVerified: false }, publicLiability: { hasCoverage: true, amount: 1000000, isVerified: false }, siteSafe: true, cscsCard: true, ownPPE: true, hasOwnTransport: true, hasOwnTools: true, powerToolCompetency: 70, accessEquipmentTrained: 60, firstAidTrained: false, carriesSpares: false },
     identity: { documentType: 'none', isVerified: false },
     profileViews: 12, searchAppearances: 150, jobInvites: 1, reputation: 65, complianceScore: 60,
@@ -80,9 +85,45 @@ export const MOCK_ENGINEER_STEVE: EngineerProfile = {
     availability: new Date('2024-09-01'),
     skills: [{ name: 'Project Management', rating: 95 }, { name: 'Crestron', rating: 90 }, { name: 'Biamp', rating: 85 }],
     selectedJobRoles: [
-        { roleName: 'AV Systems Engineer', skills: [{ name: 'Troubleshooting complex AV systems', rating: 95 }, { name: 'System commissioning and testing procedures', rating: 98 }], overallScore: 97 }
+        { 
+            roleName: 'AV Systems Engineer', 
+            skills: [
+                { name: 'Troubleshooting complex AV systems', rating: 95 }, 
+                { name: 'System commissioning and testing procedures', rating: 98 },
+                { name: 'Performance optimization', rating: 90 }
+            ], 
+            overallScore: 94 
+        }
     ],
-    certifications: [{ name: 'CTS-I', verified: true }, { name: 'Crestron Master Programmer', verified: true }],
+    cv: {
+        fileName: 'Steve_Goodwin_AV_PM_CV.pdf',
+        fileUrl: '/mock-cv/steve-goodwin.pdf',
+        isSearchable: true,
+    },
+    certifications: [
+        { 
+            name: 'CTS-I', 
+            verified: true, 
+            documents: [
+                { id: 'doc1', name: 'CTSI_Certificate_2023.pdf', url: '#', verified: true },
+                { id: 'doc2', name: 'Digital_Badge.png', url: '#', verified: true }
+            ]
+        }, 
+        { 
+            name: 'Crestron Master Programmer', 
+            verified: true,
+            documents: [
+                { id: 'doc3', name: 'CMP_Certificate.pdf', url: '#', verified: true }
+            ]
+        },
+        {
+            name: 'Dante Level 3',
+            verified: false,
+            documents: [
+                { id: 'doc4', name: 'dante-level3-exam-results.pdf', url: '#', verified: false }
+            ]
+        }
+    ],
     compliance: { professionalIndemnity: { hasCoverage: true, amount: 2000000, isVerified: true }, publicLiability: { hasCoverage: true, amount: 5000000, isVerified: true }, siteSafe: true, cscsCard: true, ownPPE: true, hasOwnTransport: true, hasOwnTools: true, powerToolCompetency: 80, accessEquipmentTrained: 75, firstAidTrained: true, carriesSpares: true },
     identity: { documentType: 'passport', isVerified: true },
     profileViews: 128, searchAppearances: 950, jobInvites: 15, reputation: 98, complianceScore: 95,

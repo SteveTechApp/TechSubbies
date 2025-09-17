@@ -13,39 +13,39 @@ export const AboutUsPage = ({ onNavigate }: AboutUsPageProps) => {
   return (
     <div className="bg-white">
       {/* Hero Section */}
-      <section className="relative bg-gray-800 text-white py-20 text-center">
-        <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070&auto=format&fit=crop')` }}></div>
-        <div className="relative container mx-auto px-4">
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-4">Our Mission</h1>
-          <p className="text-lg md:text-xl max-w-3xl mx-auto">
-            To build the most efficient, transparent, and trusted platform for connecting specialist technical freelancers with the companies that need them.
-          </p>
+      <section className="bg-gray-800 text-white py-20">
+        <div className="container mx-auto px-4 text-center">
+            <img 
+                src={AVATARS.steve} 
+                alt="Steve Goodwin, Founder & CEO" 
+                className="w-32 h-32 rounded-full mx-auto mb-6 border-4 border-blue-400 shadow-lg"
+            />
+            <h1 className="text-4xl md:text-5xl font-extrabold mb-2">Steve Goodwin</h1>
+            <p className="text-xl text-blue-300 font-semibold mb-4">Founder & CEO</p>
+            <p className="text-lg md:text-xl max-w-3xl mx-auto text-gray-300">
+                "After 25+ years in the AV industry, I've seen the hiring process from every angle—as an integrator, a distributor, and for manufacturers. I built TechSubbies to solve the problems I witnessed firsthand."
+            </p>
         </div>
       </section>
 
-      {/* Values Section */}
+      {/* Founder's Story Section */}
       <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold">What Drives Us</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="text-center">
-              <div className="p-4 bg-blue-100 rounded-full inline-block mb-4"><Handshake className="w-10 h-10 text-blue-600" /></div>
-              <h3 className="text-xl font-bold mb-2">Direct Connections</h3>
-              <p className="text-gray-600">We believe in empowering direct relationships. No recruiters, no middlemen, just pure connection between talent and opportunity.</p>
+        <div className="container mx-auto px-4 max-w-4xl">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">A Vision Forged by Industry Experience</h2>
+            <div className="prose lg:prose-lg max-w-none text-gray-700 space-y-6">
+                <p>
+                    Steve Goodwin's journey to founding TechSubbies.com wasn't forged in a startup incubator; it was built over a quarter-century of deep, hands-on experience within the professional AV industry. He's not just a CEO; he's an industry veteran who has seen the challenges of technical staffing from every possible perspective.
+                </p>
+                <p>
+                    Throughout his extensive career, Steve has held key leadership roles across the entire supply chain. As an integrator, he understood the critical need for reliable, skilled engineers on the ground. As a Technical Director for a major distributor, he saw the gap between product potential and field expertise. And while working for leading manufacturers, he recognized the challenge of ensuring their cutting-edge technology was supported by a qualified freelance workforce.
+                </p>
+                <p>
+                   This unique 360-degree view gave him unparalleled insight into the industry's biggest bottleneck: finding the right specialist for the right job, quickly and efficiently. He grew frustrated with the slow, expensive, and often inaccurate traditional recruitment model, where high fees benefited middlemen rather than the clients and the engineers themselves.
+                </p>
+                 <p>
+                    TechSubbies.com is the culmination of that experience. It's a platform built on a deep understanding of what the industry truly needs: a direct, transparent, and technology-driven way for companies to connect with verified, skilled freelance talent. Steve's mission is to leverage technology to solve a problem he has lived with for decades, empowering both companies and engineers to build better, more efficiently, and more profitably.
+                </p>
             </div>
-            <div className="text-center">
-              <div className="p-4 bg-blue-100 rounded-full inline-block mb-4"><Sparkles className="w-10 h-10 text-blue-600" /></div>
-              <h3 className="text-xl font-bold mb-2">Technological Innovation</h3>
-              <p className="text-gray-600">We leverage technology like AI not as a gimmick, but to solve real-world hiring problems, making matching faster, smarter, and more accurate.</p>
-            </div>
-            <div className="text-center">
-              <div className="p-4 bg-blue-100 rounded-full inline-block mb-4"><Globe className="w-10 h-10 text-blue-600" /></div>
-              <h3 className="text-xl font-bold mb-2">Building a Community</h3>
-              <p className="text-gray-600">TechSubbies is more than a platform; it's a community for professionals to share knowledge, grow their skills, and build lasting careers.</p>
-            </div>
-          </div>
         </div>
       </section>
       

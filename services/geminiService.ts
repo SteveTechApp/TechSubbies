@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 // FIX: Added Product and ProductFeatures to the import list.
-import { EngineerProfile, Job, JobSkillRequirement, Skill, Product, ProductFeatures, Insight } from "../types";
+import { EngineerProfile, Job, JobSkillRequirement, Skill, Product, ProductFeatures, Insight, ExperienceLevel } from "../types";
 import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';
 
 class GeminiService {
@@ -253,6 +253,77 @@ class GeminiService {
         return result;
     }
     
+    // Method for CV Querying
+    async queryCV(cvContent: string, query: string): Promise<{ answer?: string, error?: string }> {
+        if (!this.ai) return { error: "Gemini Service not initialized. Check API Key." };
+        try {
+            const prompt = `You are an expert technical recruiter analyzing a CV. Based ONLY on the CV text provided below, answer the user's query concisely. If the information is not in the CV, state that clearly.
+
+            CV TEXT:
+            ---
+            ${cvContent}
+            ---
+
+            USER QUERY: "${query}"`;
+            
+            const response = await this.ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+            });
+            
+            const answer = response.text.trim();
+            if (!answer) {
+                throw new Error("Empty response from AI model.");
+            }
+            return { answer };
+        } catch (error: any) {
+            console.error("Error querying CV:", error);
+            return { error: error.message || "Failed to get a valid response from the AI model." };
+        }
+    }
+
+    // New method for Tutorial Videos
+    async generateTutorialVideo(topic: string): Promise<{ title: string; script: string; videoUrl: string; error?: string }> {
+        // FIX: The returned object must match the function's return type. Added missing properties to the error case.
+        if (!this.ai) return { title: '', script: '', videoUrl: '', error: "Gemini Service not initialized. Check API Key." };
+
+        const prompt = `You are a scriptwriter for short, engaging platform tutorial videos (under 60 seconds). Create a script for a video titled "${topic}". The script should be broken down into short, clear steps. The tone should be friendly, clear, and encouraging.
+
+        Respond in JSON format with a "title" and a "script" (a single string with newlines for breaks).`;
+
+        const schema = {
+            type: Type.OBJECT,
+            properties: {
+                title: { type: Type.STRING },
+                script: { type: Type.STRING },
+            }
+        };
+
+        try {
+            const response = await this.generateWithSchema(prompt, schema);
+            if (response.error) {
+                return { ...response, title: '', script: '', videoUrl: '' };
+            }
+            
+            let mockVideoUrl = 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4';
+            if (topic.toLowerCase().includes('job')) {
+                mockVideoUrl = 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
+            } else if (topic.toLowerCase().includes('ai')) {
+                mockVideoUrl = 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4';
+            }
+
+            return {
+                title: response.title,
+                script: response.script,
+                videoUrl: mockVideoUrl
+            };
+        } catch (error: any) {
+            console.error("Error generating tutorial video:", error);
+            const errorMessage = error.message || "Failed to get a valid response from the AI model.";
+            return { error: errorMessage, title: '', script: '', videoUrl: '' };
+        }
+    }
+
     // Simple mock for AI auto-reply
     getAutoReply(incomingMessage: string): string {
         const lowerCaseMessage = incomingMessage.toLowerCase();

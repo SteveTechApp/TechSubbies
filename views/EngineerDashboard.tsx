@@ -48,7 +48,7 @@ export const EngineerDashboard = () => {
                 }
             });
             handleSaveProfile({ skills: updatedSkills });
-            alert(`${newSkills.length} skills added to your profile! Don't forget to save changes.`);
+            alert(`${newSkills.length} skills added to your profile! For best results, add these skills to a Specialist Role in the 'Manage Profile' section.`);
             setActiveView('Manage Profile');
         }
     };

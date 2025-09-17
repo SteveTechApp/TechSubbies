@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { EngineerProfile, ProfileTier } from '../types';
 import { PenSquare, Star, Award, ShieldCheck, Briefcase } from './Icons';

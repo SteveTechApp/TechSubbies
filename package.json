@@ -1,5 +1,5 @@
 {
-  "name": "techsubbies.com-|-the-global-specialist-freelance-network",
+  "name": "techsubbies.com-|-the-global-tech-freelancer-network",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -13,12 +13,11 @@
     "@google/genai": "^1.15.0",
     "react-dom": "18.2.0",
     "lit": "^3.3.1",
-    "framer-motion": "11.3.12",
-    "jspdf": "2.5.1",
-    "html2canvas": "1.4.1"
+    "framer-motion": "11.3.12"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }

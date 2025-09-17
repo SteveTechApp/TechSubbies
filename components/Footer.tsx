@@ -48,6 +48,11 @@ export const Footer = ({ onNavigate, onHowItWorksClick }: FooterProps) => {
                                 <button onClick={() => onNavigate('forCompanies')} className={dropdownItemClass}>Why It's Free</button>
                                 <button onClick={() => onNavigate('login')} className={dropdownItemClass}>Post a Job</button>
                             </DropdownMenu>
+                            <DropdownMenu triggerText="For Resourcing" direction="up">
+                                <button onClick={() => onNavigate('forResourcingCompanies')} className={dropdownItemClass}>Explore Features</button>
+                                <button onClick={() => onNavigate('pricing')} className={dropdownItemClass}>View Pricing</button>
+                                <button onClick={() => onNavigate('resourcingCompanySignUp')} className={dropdownItemClass}>Sign Up</button>
+                            </DropdownMenu>
                             <button
                                 onClick={onHowItWorksClick}
                                 className={navButtonClass}
@@ -58,6 +63,7 @@ export const Footer = ({ onNavigate, onHowItWorksClick }: FooterProps) => {
                                 <button onClick={() => onNavigate('aboutUs')} className={dropdownItemClass}>About Us</button>
                                 <button onClick={() => onNavigate('investors')} className={dropdownItemClass}>For Investors</button>
                                 <button onClick={() => onNavigate('helpCenter')} className={dropdownItemClass}>Help Center</button>
+                                <button onClick={() => onNavigate('tutorials')} className={dropdownItemClass}>Video Tutorials</button>
                             </DropdownMenu>
                              <DropdownMenu triggerText="Legal" direction="up">
                                 <button onClick={() => onNavigate('terms')} className={dropdownItemClass}>Terms of Service</button>

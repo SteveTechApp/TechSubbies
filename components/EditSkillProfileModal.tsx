@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { SelectedJobRole, JobRoleDefinition, RatedSkill } from '../types';
 import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';

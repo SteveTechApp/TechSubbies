@@ -116,3 +116,4 @@ export const Trophy = createIcon(<><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><pat
 export const Bed = createIcon(<><path d="M2 4v16" /><path d="M2 10h20" /><path d="M6 4v16" /><path d="M14 4h8" /><path d="M14 8h8" /><path d="M14 12h8" /><path d="M14 16h8" /></>);
 export const Plane = createIcon(<><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8l-8.2 1.8a.5.5 0 0 0-.3.9l3 3L3 17l3 3 5.3-5.3 3 3a.5.5 0 0 0 .9-.3z" /></>);
 export const UtensilsCrossed = createIcon(<><path d="m16 2-2.3 2.3a3 3 0 0 0 0 4.2l1.8 1.8a3 3 0 0 0 4.2 0L22 8" /><path d="M15 15 3.3 3.3a4.2 4.2 0 0 0 0 6l7.3 7.3c.7.7 1.8.7 2.5 0l7.3-7.3a4.2 4.2 0 0 0-6-6L15 15Z" /></>);
+export const PlayCircle = createIcon(<><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></>);

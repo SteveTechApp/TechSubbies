@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useAppContext } from './context/AppContext';
 import { Page, Role } from './types';
 
 // Components
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
-import { HowItWorksModal } from './components/HowItWorksModal';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AIAssistant } from './components/AIAssistant';
 import { ApplicantDeepDiveModal } from './components/Company/ApplicantDeepDiveModal';
@@ -24,6 +23,9 @@ import { CompanySignUpWizard } from './views/CompanySignUpWizard';
 import { ResourcingCompanySignUpWizard } from './views/ResourcingCompanySignUpWizard';
 import { UserGuidePage } from './views/UserGuidePage';
 import { InvestorRelationsPage } from './views/InvestorRelationsPage';
+import { ForResourcingCompaniesPage } from './views/ForResourcingCompaniesPage';
+import { HowItWorksPage } from './views/HowItWorksPage';
+import { TutorialsPage } from './views/TutorialsPage';
 
 // Dashboards
 import { EngineerDashboard } from './views/EngineerDashboard';
@@ -34,7 +36,6 @@ import { AdminDashboard } from './views/AdminDashboard';
 
 function App() {
   const { user, page, setPage, applicantForDeepDive, setApplicantForDeepDive } = useAppContext();
-  const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
 
   const handleNavigate = (newPage: Page) => {
     setPage(newPage);
@@ -60,6 +61,7 @@ function App() {
       case 'landing': return <LandingPage onNavigate={handleNavigate} />;
       case 'forEngineers': return <ForEngineersPage onNavigate={handleNavigate} />;
       case 'forCompanies': return <ForCompaniesPage onNavigate={handleNavigate} />;
+      case 'forResourcingCompanies': return <ForResourcingCompaniesPage onNavigate={handleNavigate} />;
       case 'pricing': return <PricingPage onNavigate={handleNavigate} />;
       case 'investors': return <InvestorPage onNavigate={handleNavigate} />;
       case 'investorRelations': return <InvestorRelationsPage onNavigate={handleNavigate} />;
@@ -72,6 +74,8 @@ function App() {
       case 'privacy': return <LegalPage page="privacy" onNavigate={handleNavigate} />;
       case 'security': return <LegalPage page="security" onNavigate={handleNavigate} />;
       case 'helpCenter': case 'userGuide': return <UserGuidePage onNavigate={handleNavigate} />;
+      case 'howItWorks': return <HowItWorksPage onNavigate={handleNavigate} />;
+      case 'tutorials': return <TutorialsPage onNavigate={handleNavigate} />;
       default: return <LandingPage onNavigate={handleNavigate} />;
     }
   };
@@ -83,13 +87,12 @@ function App() {
   return (
     <ErrorBoundary>
       <div className="flex flex-col min-h-screen bg-gray-100">
-        {showHeaderFooter && <Header onNavigate={handleNavigate} onHowItWorksClick={() => setIsHowItWorksOpen(true)} />}
+        {showHeaderFooter && <Header onNavigate={handleNavigate} onHowItWorksClick={() => handleNavigate('howItWorks')} />}
         <main className={`flex-grow ${showHeaderFooter ? 'pt-20' : ''}`}>
           {renderPage()}
         </main>
-        {showHeaderFooter && <Footer onNavigate={handleNavigate} onHowItWorksClick={() => setIsHowItWorksOpen(true)} />}
+        {showHeaderFooter && <Footer onNavigate={handleNavigate} onHowItWorksClick={() => handleNavigate('howItWorks')} />}
         
-        <HowItWorksModal isOpen={isHowItWorksOpen} onClose={() => setIsHowItWorksOpen(false)} onNavigate={handleNavigate} />
         <AIAssistant />
         
         {applicantForDeepDive && (
