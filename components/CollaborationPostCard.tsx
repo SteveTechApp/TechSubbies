@@ -1,6 +1,8 @@
 import React from 'react';
+// FIX: Corrected import path for types.
 import { CollaborationPost } from '../types';
-import { useAppContext } from '../context/AppContext';
+// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
+import { useAppContext } from '../context/InteractionContext';
 import { MapPin, DollarSign, Clock, Handshake, Calendar } from './Icons';
 import { formatDisplayDate } from '../utils/dateFormatter';
 

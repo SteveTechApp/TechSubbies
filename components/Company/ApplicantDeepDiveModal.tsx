@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+// FIX: Corrected import path for types.
 import { Job, EngineerProfile } from '../../types';
 import { X, BrainCircuit, Loader, CheckCircle, AlertTriangle, Lightbulb } from '../Icons';
-import { useAppContext } from '../../context/AppContext';
+// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
+import { useAppContext } from '../../context/InteractionContext';
 
 interface ApplicantDeepDiveModalProps {
     isOpen: boolean;

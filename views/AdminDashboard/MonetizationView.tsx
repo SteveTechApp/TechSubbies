@@ -1,5 +1,6 @@
 import React from 'react';
-import { useAppContext } from '../../context/AppContext';
+// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
+import { useAppContext } from '../../context/InteractionContext';
 import { StatCard } from '../../components/StatCard';
 import { TransactionType } from '../../types';
 import { DollarSign, Star, Zap, Megaphone, PlusCircle, Save, Image, TrendingUp } from '../../components/Icons';

@@ -113,7 +113,8 @@ export const PricingPage = ({ onNavigate }: ForEngineersPageProps) => {
                                 </div>
                                 <p className={`mt-4 text-sm h-16 ${plan.isFeatured ? 'text-gray-300' : 'text-gray-600'}`}>{plan.description}</p>
                                 
-                                <button onClick={() => onNavigate('engineerSignUp')} className={`w-full py-3 mt-6 font-bold rounded-lg transition-colors ${plan.isFeatured ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}>
+                                {/* FIX: Replaced string literal with Page enum for type safety. */}
+                                <button onClick={() => onNavigate(Page.ENGINEER_SIGNUP)} className={`w-full py-3 mt-6 font-bold rounded-lg transition-colors ${plan.isFeatured ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}>
                                     {plan.cta}
                                 </button>
 
@@ -140,7 +141,8 @@ export const PricingPage = ({ onNavigate }: ForEngineersPageProps) => {
                             </div>
                              <p className="mt-2 text-2xl font-bold text-gray-700">+ £5 <span className="text-base font-medium text-gray-500">/ engineer / month</span></p>
                             <p className="mt-4 text-sm h-16 text-gray-600">The complete solution for managing your roster of freelance talent and finding them work on the platform.</p>
-                            <button onClick={() => onNavigate('resourcingCompanySignUp')} className="w-full py-3 mt-6 font-bold rounded-lg transition-colors bg-blue-600 text-white hover:bg-blue-700">
+                            {/* FIX: Replaced string literal with Page enum for type safety. */}
+                            <button onClick={() => onNavigate(Page.RESOURCING_SIGNUP)} className="w-full py-3 mt-6 font-bold rounded-lg transition-colors bg-blue-600 text-white hover:bg-blue-700">
                                 Get Started
                             </button>
                             <ul className="mt-8 space-y-3 text-sm">

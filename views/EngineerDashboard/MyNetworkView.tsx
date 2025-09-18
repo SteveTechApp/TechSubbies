@@ -1,159 +1,77 @@
-
 import React, { useMemo } from 'react';
-import { useAppContext } from '../../context/AppContext';
-// FIX: Added ResourcingCompanyProfile to correctly handle both types of company profiles.
-import { ApplicationStatus, Job, Role, CompanyProfile, Application, ResourcingCompanyProfile } from '../../types';
-import { ArrowLeft, Briefcase, CheckCircle, Mail, Download, X } from '../../components/Icons';
-
-interface MyNetworkViewProps {
-    setActiveView: (view: string) => void;
-}
+import { useAppContext } from '../../context/InteractionContext';
+import { Contract, CompanyProfile, ResourcingCompanyProfile } from '../../types';
+import { Briefcase, MessageCircle, Link as LinkIcon } from '../../components/Icons';
 
 interface CompanyInteraction {
-    // FIX: The type is updated to allow for both company profile types, preventing type errors.
     company: CompanyProfile | ResourcingCompanyProfile;
-    interactions: {
-        job: Job;
-        application: Application;
-    }[];
+    contracts: Contract[];
 }
 
-// Helper to generate an .ics file for calendar integration
-const generateIcsFile = (job: Job, companyName: string) => {
-    if (!job.startDate) return;
-
-    const formatDate = (date: Date) => {
-        return date.toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z';
-    };
-
-    const startDate = new Date(job.startDate);
-    // Mock end date based on duration for demo
-    const endDate = new Date(startDate);
-    if (job.duration.includes('week')) {
-        endDate.setDate(startDate.getDate() + parseInt(job.duration) * 7);
-    } else {
-        endDate.setDate(startDate.getDate() + 30); // Default to 1 month
-    }
-    
-    const icsContent = [
-        'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//TechSubbies.com//EN',
-        'BEGIN:VEVENT',
-        `UID:${job.id}@techsubbies.com`,
-        `DTSTAMP:${formatDate(new Date())}`,
-        `DTSTART;VALUE=DATE:${formatDate(startDate).slice(0,8)}`,
-        `DTEND;VALUE=DATE:${formatDate(endDate).slice(0,8)}`,
-        `SUMMARY:Project: ${job.title}`,
-        `DESCRIPTION:Work contract for ${job.title} with ${companyName}. Details on TechSubbies.com.`,
-        `LOCATION:${job.location}`,
-        'END:VEVENT',
-        'END:VCALENDAR'
-    ].join('\r\n');
-
-    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `techsubbies_${job.title.replace(/\s/g, '_')}.ics`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-};
-
-export const MyNetworkView = ({ setActiveView }: MyNetworkViewProps) => {
-    const { user, applications, jobs, companies, acceptOffer, declineOffer } = useAppContext();
+export const MyNetworkView = ({ setActiveView }: { setActiveView: (view: string) => void }) => {
+    const { user, contracts, companies, startConversationAndNavigate } = useAppContext();
 
     const networkData = useMemo(() => {
-        if (!user || user.role !== Role.ENGINEER) return [];
-
-        const engineerId = user.profile.id;
-        const myApplications = applications.filter(app => app.engineerId === engineerId);
-
-        // FIX: The `reduce` accumulator was untyped, causing TypeScript to infer it as `unknown`.
-        // By adding types to the accumulator and the initial value, we ensure correct type inference.
-        const companyInteractions = myApplications.reduce((acc: Record<string, CompanyInteraction>, app) => {
-            const job = jobs.find(j => j.id === app.jobId);
-            if (!job) return acc;
-
-            const companyId = job.companyId;
-            if (!acc[companyId]) {
+        if (!user) return [];
+        
+        // FIX: Refactored reducer logic to improve TypeScript type inference.
+        // The previous logic using a mutable `let entry` was confusing the compiler's
+        // control flow analysis, leading to properties being typed as `unknown`.
+        // This more explicit approach resolves the error.
+        const interactionsByCompanyId = contracts
+            .filter(c => c.engineerId === user.profile.id)
+            .reduce((acc: Record<string, CompanyInteraction>, contract) => {
+                const companyId = contract.companyId;
                 const company = companies.find(c => c.id === companyId);
                 if (company) {
-                    acc[companyId] = {
-                        company: company,
-                        interactions: []
-                    };
+                    if (!acc[companyId]) {
+                        acc[companyId] = { company, contracts: [] };
+                    }
+                    acc[companyId].contracts.push(contract);
                 }
-            }
-            if(acc[companyId]) {
-                 acc[companyId].interactions.push({ job, application: app });
-            }
-           
-            return acc;
-        }, {} as Record<string, CompanyInteraction>);
+                return acc;
+            }, {});
 
-        return Object.values(companyInteractions)
-            .sort((a, b) => a.company.name.localeCompare(b.company.name));
+        return Object.values(interactionsByCompanyId).sort((a, b) => b.contracts.length - a.contracts.length);
 
-    }, [user, applications, jobs, companies]);
+    }, [user, contracts, companies]);
+    
+    const handleMessage = (companyProfileId: string) => {
+        startConversationAndNavigate(companyProfileId, () => setActiveView('Messages'));
+    };
 
     return (
         <div>
-            <button
-                onClick={() => setActiveView('Dashboard')}
-                className="flex items-center mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-            >
-                <ArrowLeft size={16} className="mr-2" />
-                Back to Dashboard
-            </button>
-            <h1 className="text-3xl font-bold mb-4">My Network</h1>
-            <p className="text-gray-600 mb-6">Here are the companies you've applied to or worked with through the platform.</p>
-
-            <div className="space-y-6">
-                {networkData.length > 0 ? networkData.map(({ company, interactions }) => (
-                    <div key={company.id} className="bg-white p-5 rounded-lg shadow-md border">
-                        <div className="flex items-center mb-4 pb-4 border-b">
-                            <img src={company.avatar} alt={company.name} className="w-16 h-16 rounded-full mr-4" />
+            <h1 className="text-3xl font-bold mb-6">My Network</h1>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {networkData.map(({ company, contracts }) => (
+                    <div key={company.id} className="bg-white p-5 rounded-lg shadow-md border flex flex-col">
+                        <div className="flex items-center mb-3 pb-3 border-b">
+                            <img src={company.avatar} alt={company.name} className="w-16 h-16 rounded-lg mr-4 object-contain" />
                             <div>
-                                <h2 className="text-2xl font-bold text-gray-800">{company.name}</h2>
-                                <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{company.website}</a>
+                                <h3 className="text-lg font-bold text-gray-800">{company.name}</h3>
+                                <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline flex items-center">
+                                    <LinkIcon size={12} className="mr-1"/> Website
+                                </a>
                             </div>
                         </div>
-                        <h3 className="text-lg font-semibold mb-2">Your Interactions:</h3>
-                        <div className="space-y-3">
-                            {interactions.map(({ job, application }) => (
-                                <div key={job.id} className="p-3 bg-gray-50 rounded-md flex flex-col sm:flex-row justify-between sm:items-center">
-                                    <div className="mb-2 sm:mb-0">
-                                        <p className="font-semibold">{job.title}</p>
-                                        <p className="text-sm text-gray-500">Applied on: {new Date(application.date).toLocaleDateString()}</p>
-                                    </div>
-                                    <div className="flex items-center gap-2 self-end sm:self-center">
-                                         {application.status === ApplicationStatus.OFFERED ? (
-                                            <>
-                                                <button onClick={() => declineOffer(job.id, user!.profile.id)} className="px-3 py-1 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 font-bold flex items-center"> <X size={14} className="mr-1.5"/> Decline</button>
-                                                <button onClick={() => { acceptOffer(job.id, user!.profile.id); generateIcsFile(job, company.name); }} className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 font-bold flex items-center"><Download size={14} className="mr-1.5"/> Accept & Add to Calendar</button>
-                                            </>
-                                        ) : (
-                                            <span className={`flex items-center text-sm font-semibold px-3 py-1 rounded-full ${
-                                                application.status === ApplicationStatus.COMPLETED || application.status === ApplicationStatus.ACCEPTED ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                                            }`}>
-                                                {application.status === ApplicationStatus.COMPLETED ? <CheckCircle size={16} className="mr-1.5" /> : <Briefcase size={16} className="mr-1.5" />}
-                                                {application.status}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
+                        <div className="flex-grow">
+                            <p className="text-sm text-gray-500 mb-2">You have completed <span className="font-bold">{contracts.length}</span> contract(s) with this company:</p>
+                            <ul className="text-sm space-y-1">
+                                {contracts.slice(0, 3).map(c => (
+                                    <li key={c.id} className="flex items-center text-gray-700">
+                                        <Briefcase size={14} className="mr-2 text-gray-400"/> {c.jobTitle || 'Contract'}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                        <div className="mt-4 pt-4 border-t">
+                            <button onClick={() => handleMessage(company.id)} className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-md text-sm hover:bg-blue-700">
+                                <MessageCircle size={16} className="mr-2"/> Message {company.name}
+                            </button>
                         </div>
                     </div>
-                )) : (
-                    <div className="text-center py-12 bg-white rounded-lg shadow-md border-2 border-dashed">
-                        <Mail size={40} className="mx-auto text-gray-400 mb-4" />
-                        <h3 className="text-xl font-bold text-gray-700">Your network is waiting to be built.</h3>
-                        <p className="text-gray-500 mt-2">Apply for jobs to start building your professional network on TechSubbies.</p>
-                        <button onClick={() => setActiveView('Job Search')} className="mt-4 bg-blue-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-blue-700">
-                            Find Work Now
-                        </button>
-                    </div>
-                )}
+                ))}
             </div>
         </div>
     );

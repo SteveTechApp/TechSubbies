@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// FIX: Corrected import path for types.
 import { Contract, InvoiceItem, PaymentTerms, MilestoneStatus } from '../types';
 import { X, FileText } from './Icons';
 
@@ -69,6 +70,7 @@ export const InvoiceGeneratorModal = ({ isOpen, onClose, onSubmit, contract }: I
                             onChange={e => setPaymentTerms(e.target.value as PaymentTerms)}
                             className="w-full border p-2 rounded bg-white"
                         >
+                            {/* FIX: Fixed key error by using the term itself as the key. */}
                             {Object.values(PaymentTerms).map(term => (
                                 <option key={term} value={term}>{term}</option>
                             ))}

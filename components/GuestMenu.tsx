@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+// FIX: Corrected import path for icons.
 import { LogIn, Menu, X } from './Icons';
 import { DropdownMenu } from './DropdownMenu';
+// FIX: Corrected import path for types.
 import { Page } from '../types';
 import { Logo } from './Logo';
 
@@ -33,23 +35,27 @@ export const GuestMenu = ({ onHowItWorksClick, onNavigate }: GuestMenuProps) => 
         <>
             <div className="hidden lg:flex items-center space-x-1">
                  <DropdownMenu triggerText="For Engineers">
-                    <button onClick={() => onNavigate('forEngineers')} className={dropdownItemClass}>Explore Features</button>
-                    <button onClick={() => onNavigate('engineerSignUp')} className={dropdownItemClass}>Profile Setup</button>
+                    {/* FIX: Replaced string literals with Page enum members for type safety. */}
+                    <button onClick={() => onNavigate(Page.FOR_ENGINEERS)} className={dropdownItemClass}>Explore Features</button>
+                    <button onClick={() => onNavigate(Page.ENGINEER_SIGNUP)} className={dropdownItemClass}>Profile Setup</button>
                 </DropdownMenu>
                 <DropdownMenu triggerText="For Companies">
-                    <button onClick={() => onNavigate('forCompanies')} className={dropdownItemClass}>Why It's Free</button>
-                    <button onClick={() => onNavigate('login')} className={dropdownItemClass}>Post a Job</button>
+                    {/* FIX: Replaced string literals with Page enum members for type safety. */}
+                    <button onClick={() => onNavigate(Page.FOR_COMPANIES)} className={dropdownItemClass}>Why It's Free</button>
+                    <button onClick={() => onNavigate(Page.LOGIN)} className={dropdownItemClass}>Post a Job</button>
                 </DropdownMenu>
                  <DropdownMenu triggerText="For Resourcing">
-                    <button onClick={() => onNavigate('forResourcingCompanies')} className={dropdownItemClass}>Explore Features</button>
-                    <button onClick={() => onNavigate('pricing')} className={dropdownItemClass}>View Pricing</button>
-                    <button onClick={() => onNavigate('resourcingCompanySignUp')} className={dropdownItemClass}>Sign Up</button>
+                    {/* FIX: Replaced string literals with Page enum members for type safety. */}
+                    <button onClick={() => onNavigate(Page.FOR_RESOURCING)} className={dropdownItemClass}>Explore Features</button>
+                    <button onClick={() => onNavigate(Page.PRICING)} className={dropdownItemClass}>View Pricing</button>
+                    <button onClick={() => onNavigate(Page.RESOURCING_SIGNUP)} className={dropdownItemClass}>Sign Up</button>
                 </DropdownMenu>
                 <button onClick={onHowItWorksClick} className={navButtonClass}>How It Works</button>
-                <button onClick={() => onNavigate('pricing')} className={navButtonClass}>Pricing</button>
-                <button onClick={() => onNavigate('investors')} className={navButtonClass}>Investors</button>
-                <button onClick={() => onNavigate('aboutUs')} className={navButtonClass}>About Us</button>
-                <button onClick={() => onNavigate('login')} className={loginButtonClass}>
+                {/* FIX: Replaced string literals with Page enum members for type safety. */}
+                <button onClick={() => onNavigate(Page.PRICING)} className={navButtonClass}>Pricing</button>
+                <button onClick={() => onNavigate(Page.INVESTORS)} className={navButtonClass}>Investors</button>
+                <button onClick={() => onNavigate(Page.ABOUT_US)} className={navButtonClass}>About Us</button>
+                <button onClick={() => onNavigate(Page.LOGIN)} className={loginButtonClass}>
                     <LogIn className="w-4 h-4 mr-2" />
                     <span>Login / Sign Up</span>
                 </button>
@@ -64,7 +70,8 @@ export const GuestMenu = ({ onHowItWorksClick, onNavigate }: GuestMenuProps) => 
             {isMenuOpen && (
                 <div className="fixed inset-0 bg-white z-50 p-6 flex flex-col lg:hidden fade-in-up">
                     <header className="flex justify-between items-center mb-10">
-                        <button onClick={() => handleMobileNav('landing')} aria-label="Go to homepage">
+                        {/* FIX: Replaced string literal with Page enum for type safety. */}
+                        <button onClick={() => handleMobileNav(Page.LANDING)} aria-label="Go to homepage">
                             <Logo className="text-gray-800 h-12" />
                         </button>
                         <button onClick={() => setIsMenuOpen(false)} aria-label="Close menu">
@@ -72,16 +79,18 @@ export const GuestMenu = ({ onHowItWorksClick, onNavigate }: GuestMenuProps) => 
                         </button>
                     </header>
                     <nav className="flex flex-col flex-grow space-y-5 text-center">
-                        <button onClick={() => handleMobileNav('forEngineers')} className={mobileLinkClass}>For Engineers</button>
-                        <button onClick={() => handleMobileNav('forCompanies')} className={mobileLinkClass}>For Companies</button>
-                        <button onClick={() => handleMobileNav('forResourcingCompanies')} className={mobileLinkClass}>For Resourcing</button>
+                        {/* FIX: Replaced string literals with Page enum members for type safety. */}
+                        <button onClick={() => handleMobileNav(Page.FOR_ENGINEERS)} className={mobileLinkClass}>For Engineers</button>
+                        <button onClick={() => handleMobileNav(Page.FOR_COMPANIES)} className={mobileLinkClass}>For Companies</button>
+                        <button onClick={() => handleMobileNav(Page.FOR_RESOURCING)} className={mobileLinkClass}>For Resourcing</button>
                         <button onClick={handleMobileHowItWorks} className={mobileLinkClass}>How It Works</button>
-                        <button onClick={() => handleMobileNav('pricing')} className={mobileLinkClass}>Pricing</button>
-                        <button onClick={() => handleMobileNav('investors')} className={mobileLinkClass}>Investors</button>
-                        <button onClick={() => handleMobileNav('aboutUs')} className={mobileLinkClass}>About Us</button>
+                        <button onClick={() => handleMobileNav(Page.PRICING)} className={mobileLinkClass}>Pricing</button>
+                        <button onClick={() => handleMobileNav(Page.INVESTORS)} className={mobileLinkClass}>Investors</button>
+                        <button onClick={() => handleMobileNav(Page.ABOUT_US)} className={mobileLinkClass}>About Us</button>
                         <div className="pt-6 mt-auto">
                             <button
-                                onClick={() => handleMobileNav('login')}
+                                // FIX: Replaced string literal with Page enum for type safety.
+                                onClick={() => handleMobileNav(Page.LOGIN)}
                                 className="w-full max-w-xs mx-auto flex items-center justify-center text-center px-4 py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors font-bold"
                             >
                                 <LogIn className="w-5 h-5 mr-2" />

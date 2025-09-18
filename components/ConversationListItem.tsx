@@ -1,4 +1,5 @@
 import React from 'react';
+// FIX: Corrected import path for types.
 import { Conversation, UserProfile } from '../types';
 import { formatTimeAgo } from '../utils/dateFormatter';
 

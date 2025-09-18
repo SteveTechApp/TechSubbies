@@ -1,8 +1,7 @@
-
 import React from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useData } from '../context/DataContext';
 import { EngineerProfile, ProfileTier } from '../types';
-import { MapPin, Star, Rocket, Sparkles, Trophy } from './Icons';
+import { MapPin, Star, Rocket, Trophy } from './Icons';
 
 interface EngineerCardProps {
     profile: EngineerProfile;
@@ -10,15 +9,40 @@ interface EngineerCardProps {
     matchScore?: number;
 }
 
-const getMatchScoreBadgeClass = (score: number) => {
-    if (score >= 85) return 'bg-green-600 text-white';
-    if (score >= 70) return 'bg-blue-600 text-white';
-    if (score >= 50) return 'bg-yellow-500 text-black';
-    return 'bg-gray-500 text-white';
+const CircularProgress = ({ score }: { score: number }) => {
+    const radius = 30;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (score / 100) * circumference;
+    const scoreColor = score >= 85 ? 'stroke-green-500' : score >= 70 ? 'stroke-blue-500' : score >= 50 ? 'stroke-yellow-500' : 'stroke-gray-500';
+
+    return (
+        <div className="relative w-20 h-20">
+            <svg className="w-full h-full" viewBox="0 0 70 70">
+                <circle className="text-gray-200" strokeWidth="6" stroke="currentColor" fill="transparent" r={radius} cx="35" cy="35" />
+                <circle
+                    className={scoreColor}
+                    strokeWidth="6"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={offset}
+                    strokeLinecap="round"
+                    fill="transparent"
+                    r={radius}
+                    cx="35"
+                    cy="35"
+                    transform="rotate(-90 35 35)"
+                />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-xl font-bold text-gray-800">{Math.round(score)}</span>
+                <span className="text-xs font-bold text-gray-800">%</span>
+            </div>
+        </div>
+    );
 };
 
-export const EngineerCard = ({ profile, onClick, matchScore }: EngineerCardProps) => {
-    const { companies } = useAppContext();
+
+const EngineerCardComponent = ({ profile, onClick, matchScore }: EngineerCardProps) => {
+    const { companies } = useData();
 
     const resourcingCompany = profile.resourcingCompanyId 
         ? companies.find(c => c.id === profile.resourcingCompanyId) 
@@ -39,7 +63,7 @@ export const EngineerCard = ({ profile, onClick, matchScore }: EngineerCardProps
         >
             <div className="relative mb-3">
                 <div className="w-full h-32 bg-gray-200 rounded-md flex items-center justify-center">
-                    <img src={profile.avatar} alt={profile.name} className="w-24 h-24 rounded-full border-4 border-white shadow-md" />
+                    <img src={profile.avatar} alt={profile.name} className="w-24 h-24 rounded-full border-4 border-white shadow-md" loading="lazy" />
                 </div>
                 
                 {resourcingCompany?.logo && (
@@ -48,17 +72,11 @@ export const EngineerCard = ({ profile, onClick, matchScore }: EngineerCardProps
                         title={`Managed by ${resourcingCompany.name}`}
                     >
                         <img 
-                            src={resourcingCompany.logo} 
+                            src={resourcingCompany.logo as string} 
                             alt={`${resourcingCompany.name} logo`}
                             className="w-8 h-8 rounded-full object-contain"
+                            loading="lazy"
                         />
-                    </div>
-                )}
-                
-                {matchScore !== undefined && (
-                    <div className={`absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded-full flex items-center shadow-lg ${getMatchScoreBadgeClass(matchScore)}`}>
-                        <Sparkles size={12} className="mr-1.5" />
-                        {Math.round(matchScore)}% Match
                     </div>
                 )}
                 
@@ -91,29 +109,43 @@ export const EngineerCard = ({ profile, onClick, matchScore }: EngineerCardProps
             </div>
 
             <div className="mt-3 pt-3 border-t border-gray-100">
-                <div className="flex justify-between items-center">
-                    <h4 className="text-xs font-bold text-gray-500 uppercase">
-                        {profile.profileTier !== ProfileTier.BASIC ? 'Core Skills' : 'Day Rate'}
-                    </h4>
-                    <div className="text-right">
-                        <p className="text-lg font-bold text-gray-800">{profile.currency}{profile.minDayRate} - {profile.maxDayRate}</p>
-                    </div>
-                </div>
-                {profile.profileTier !== ProfileTier.BASIC && profile.skills && profile.skills.length > 0 ? (
-                    <div className="flex flex-wrap gap-1 mt-1">
-                        {profile.skills.slice(0, 3).map(skill => (
-                            <span key={skill.name} className="bg-gray-200 text-gray-800 px-2 py-1 text-xs rounded-md">{skill.name}</span>
-                        ))}
-                         {profile.skills.length > 3 && (
-                            <span className="bg-gray-200 text-gray-800 px-2 py-1 text-xs rounded-md">+{profile.skills.length - 3} more</span>
-                        )}
+                {matchScore !== undefined ? (
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h4 className="text-xs font-bold text-gray-500 uppercase">AI Match Score</h4>
+                            <p className="text-sm text-gray-600">Based on your job requirements.</p>
+                        </div>
+                        <CircularProgress score={matchScore} />
                     </div>
                 ) : (
-                    <div className="mt-1 text-center bg-gray-100 p-2 rounded-md">
-                        <p className="text-xs text-blue-700 font-semibold">Upgrade to Skills Profile to showcase expertise.</p>
-                    </div>
+                    <>
+                        <div className="flex justify-between items-center">
+                            <h4 className="text-xs font-bold text-gray-500 uppercase">
+                                {profile.profileTier !== ProfileTier.BASIC ? 'Core Skills' : 'Day Rate'}
+                            </h4>
+                            <div className="text-right">
+                                <p className="text-lg font-bold text-gray-800">{profile.currency}{profile.minDayRate} - {profile.maxDayRate}</p>
+                            </div>
+                        </div>
+                        {profile.profileTier !== ProfileTier.BASIC && profile.skills && profile.skills.length > 0 ? (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                                {profile.skills.slice(0, 3).map(skill => (
+                                    <span key={skill.name} className="bg-gray-200 text-gray-800 px-2 py-1 text-xs rounded-md">{skill.name}</span>
+                                ))}
+                                {profile.skills.length > 3 && (
+                                    <span className="bg-gray-200 text-gray-800 px-2 py-1 text-xs rounded-md">+{profile.skills.length - 3} more</span>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="mt-1 text-center bg-gray-100 p-2 rounded-md">
+                                <p className="text-xs text-blue-700 font-semibold">Upgrade to Skills Profile to showcase expertise.</p>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </button>
     );
 }
+
+export const EngineerCard = React.memo(EngineerCardComponent);

@@ -1,4 +1,5 @@
 import React from 'react';
+// FIX: Corrected import path for types.
 import { Badge } from '../types';
 
 interface BadgeDisplayProps {

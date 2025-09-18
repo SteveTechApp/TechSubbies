@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { EngineerProfile, Insight } from '../../types';
-import { useAppContext } from '../../context/AppContext';
-import { Lightbulb, ArrowLeft, Star, Loader } from '../../components/Icons';
+import { useAppContext } from '../../context/InteractionContext';
+import { Loader, BrainCircuit } from '../../components/Icons';
 import { InsightCard } from '../../components/InsightCard';
 
 interface AICoachViewProps {
@@ -10,84 +10,60 @@ interface AICoachViewProps {
 }
 
 export const AICoachView = ({ profile, setActiveView }: AICoachViewProps) => {
-    const { isPremium, getCareerCoaching } = useAppContext();
-    const [isLoading, setIsLoading] = useState(false);
+    const { geminiService } = useAppContext();
     const [insights, setInsights] = useState<Insight[] | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const premiumAccess = isPremium(profile);
-
-    const handleAnalysis = async () => {
+    const handleGetCoaching = async () => {
         setIsLoading(true);
         setError('');
         setInsights(null);
-        const result = await getCareerCoaching(profile);
+
+        const result = await geminiService.getCareerCoaching(profile);
         if (result.error) {
             setError(result.error);
-        } else if (result.insights) {
-            setInsights(result.insights);
+        } else {
+            setInsights(result.insights || []);
         }
         setIsLoading(false);
     };
+    
+    // Automatically run analysis on component mount
+    useEffect(() => {
+        handleGetCoaching();
+    }, [profile]);
+
 
     return (
         <div>
-            <button 
-                onClick={() => setActiveView('Dashboard')} 
-                className="flex items-center mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-            >
-                <ArrowLeft size={16} className="mr-2" />
-                Back to Dashboard
-            </button>
-            <h1 className="text-3xl font-bold mb-4 flex items-center"><Lightbulb size={32} className="mr-3 text-yellow-500"/> AI Career Coach</h1>
-            
-            {!premiumAccess ? (
-                // Upgrade CTA
-                <div className="mt-6 bg-gradient-to-br from-yellow-300 to-orange-400 p-8 rounded-lg shadow-lg text-center text-orange-900">
-                    <div className="inline-block bg-white/30 p-3 rounded-full mb-4">
-                        <Star size={32} className="text-white" />
+            <h1 className="text-3xl font-bold mb-2">AI Career Coach</h1>
+            <p className="text-gray-600 mb-6">Your personal AI career advisor, analyzing your profile to suggest actionable steps for growth.</p>
+
+            <div className="bg-white p-6 rounded-lg shadow">
+                 {isLoading && (
+                    <div className="text-center py-12">
+                        <Loader className="animate-spin w-10 h-10 text-blue-600 mx-auto mb-4" />
+                        <p className="font-semibold text-gray-700">Analyzing your profile against market trends...</p>
                     </div>
-                    <h2 className="text-2xl font-bold mb-2">Unlock Your Personal AI Career Coach</h2>
-                    <p className="max-w-xl mx-auto mb-6">
-                        Get personalized, data-driven advice on how to improve your profile, what skills to learn next, and which certifications will increase your day rate. This is a premium feature.
-                    </p>
-                    <button
-                        onClick={() => setActiveView('Billing')}
-                        className="bg-white text-blue-700 font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-transform transform hover:scale-105 shadow-md"
-                    >
-                        Upgrade Your Profile
-                    </button>
-                </div>
-            ) : (
-                // Feature UI
-                <div className="bg-white p-6 rounded-lg shadow">
-                    <p className="text-gray-600 mb-6">Your AI Coach analyzes your profile against real-time job market trends on TechSubbies to give you a competitive edge. Get personalized recommendations to help you land your next high-value contract.</p>
-                    
-                    {!insights && (
-                        <div className="text-center">
-                            <button onClick={handleAnalysis} disabled={isLoading} className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:bg-blue-300 flex items-center justify-center mx-auto">
-                                {isLoading ? (
-                                    <><Loader className="animate-spin w-5 h-5 mr-2"/> Analyzing...</>
-                                ) : 'Analyze My Career Path'}
-                            </button>
-                        </div>
-                    )}
+                )}
+                 {error && <p className="text-red-500 text-center py-12">{error}</p>}
 
-                    {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
-
-                    {insights && (
-                        <div className="mt-6 space-y-4">
-                            <h2 className="text-2xl font-bold text-gray-800">Your Personalized Insights:</h2>
-                            {insights.map((insight, index) => (
-                                <InsightCard key={index} insight={insight} onNavigate={setActiveView} />
-                            ))}
-                            <button onClick={handleAnalysis} disabled={isLoading} className="text-sm text-blue-600 hover:underline mt-4 font-semibold">
-                                {isLoading ? 'Analyzing...' : 'Re-analyze My Profile'}
-                            </button>
-                        </div>
-                    )}
-                </div>
-            )}
+                 {insights && (
+                     <div className="space-y-4">
+                        <h2 className="text-xl font-bold mb-2">Your Personalized Insights:</h2>
+                        {insights.map((insight, index) => (
+                            <InsightCard key={index} insight={insight} onNavigate={setActiveView} />
+                        ))}
+                         <button
+                            onClick={handleGetCoaching}
+                            className="text-sm text-blue-600 hover:underline mt-4 font-semibold"
+                        >
+                            Analyze again
+                        </button>
+                    </div>
+                 )}
+            </div>
         </div>
     );
 };

@@ -1,8 +1,8 @@
-
 import React, { useState, useMemo } from 'react';
 import { EngineerProfile } from '../../types';
 import { MapPin, Calendar, DollarSign, PlusCircle, Search, MessageCircle } from '../../components/Icons';
-import { useAppContext } from '../../context/AppContext';
+// FIX: Replaced incorrect context hook 'useInteractions' with the correct hook 'useAppContext'.
+import { useAppContext } from '../../context/InteractionContext';
 import { formatDisplayDate } from '../../utils/dateFormatter';
 
 const ManagedEngineerCard = ({ profile, onMessage }: { profile: EngineerProfile, onMessage: (profileId: string) => void }) => (

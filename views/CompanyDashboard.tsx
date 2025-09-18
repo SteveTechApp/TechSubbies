@@ -1,141 +1,138 @@
-
-import React, { useState, useMemo, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext';
-import { EngineerProfile, Job, CompanyProfile } from '../types';
+import React, { useState, useMemo } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
+// FIX: Replaced incorrect context hook 'useInteractions' with the correct hook 'useAppContext'.
+import { useAppContext } from '../context/InteractionContext';
 import { DashboardSidebar } from '../components/DashboardSidebar';
-import { JobPostModal } from '../components/JobPostModal';
+import { CompanyProfile, Job, Role, EngineerProfile } from '../types';
 import { DashboardView } from './CompanyDashboard/DashboardView';
 import { MyJobsView } from './CompanyDashboard/MyJobsView';
-import { SettingsView } from './CompanyDashboard/SettingsView';
 import { FindTalentView } from './CompanyDashboard/FindTalentView';
+import { SettingsView } from './CompanyDashboard/SettingsView';
+import { JobPostModal } from '../components/JobPostModal';
 import { EngineerProfileView } from './EngineerProfileView';
-import { MessagesView } from './MessagesView';
-import { ArrowLeft } from '../components/Icons';
-import { ContractsView } from './ContractsView';
+import { ApplicantDeepDiveModal } from '../components/Company/ApplicantDeepDiveModal';
 import { InstantInviteModal } from '../components/InstantInviteModal';
+import { MessagesView } from './MessagesView';
+import { ContractsView } from './ContractsView';
 import { ProjectPlannerView } from './CompanyDashboard/ProjectPlannerView';
 import { ProjectTrackingView } from './CompanyDashboard/ProjectTrackingView';
+import { AnalyticsView } from './CompanyDashboard/AnalyticsView';
 import { InvoicesView } from './InvoicesView';
 
 export const CompanyDashboard = () => {
-    const { user, postJob, jobs, engineers, applications, updateCompanyProfile, setCurrentPageContext } = useAppContext();
+    const { user } = useAuth();
+    const { jobs, engineers, applications } = useData();
+    const { postJob, updateCompanyProfile, applicantForDeepDive, setApplicantForDeepDive } = useAppContext();
     const [activeView, setActiveView] = useState('Dashboard');
     const [isJobModalOpen, setIsJobModalOpen] = useState(false);
-    
-    const [talentView, setTalentView] = useState<'list' | 'profile'>('list');
     const [selectedEngineer, setSelectedEngineer] = useState<EngineerProfile | null>(null);
+    const [justPostedJob, setJustPostedJob] = useState<Job | null>(null);
+
+    if (!user || (user.role !== Role.COMPANY && user.role !== Role.RESOURCING_COMPANY)) {
+        return <div>Error: Invalid user role for this dashboard.</div>;
+    }
+    const companyProfile = user.profile as CompanyProfile;
+
+    const myJobs = useMemo(() => {
+        return jobs.filter(j => j.companyId === companyProfile.id);
+    }, [jobs, companyProfile.id]);
+
+    const handlePostJob = async (jobData: Omit<Job, 'id' | 'companyId' | 'postedDate' | 'status'>) => {
+        const fullJobData = { ...jobData, companyId: companyProfile.id };
+        const newJob = await postJob(fullJobData);
+        setJustPostedJob(newJob);
+    };
+
+    const handleSelectEngineer = (eng: EngineerProfile) => {
+        setSelectedEngineer(eng);
+        setActiveView('Find Talent'); // Keep view consistent but overlay profile
+    };
+
+    const handleDeepDiveClose = () => {
+        setApplicantForDeepDive(null);
+    }
     
-    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-    const [jobForInvite, setJobForInvite] = useState<Job | null>(null);
-
-    const myJobs = useMemo(() => jobs.filter(j => j.companyId === user?.profile?.id), [jobs, user]);
-
-    useEffect(() => {
-        let context = `Company Dashboard: ${activeView}`;
-        if (activeView === 'Find Talent' && talentView === 'profile') {
-            context = `Company Dashboard: Viewing Engineer Profile`;
-        }
-        setCurrentPageContext(context);
-    }, [activeView, talentView, setCurrentPageContext]);
-
-
-    useEffect(() => {
-        if (activeView === 'Post a Job') {
-            setIsJobModalOpen(true);
-        } else if (isJobModalOpen) {
-            setIsJobModalOpen(false);
-        }
-    
-        if (activeView !== 'Find Talent') {
-            handleBackToSearch();
-        }
-    }, [activeView]);
-
-    const handleSelectEngineer = (engineer: EngineerProfile) => {
-        setSelectedEngineer(engineer);
-        setTalentView('profile');
+    const handleProjectCreated = () => {
+        setActiveView('Project Tracking');
     };
 
-    const handleBackToSearch = () => {
-        setSelectedEngineer(null);
-        setTalentView('list');
-    };
-
-    const handlePostJob = (jobData: any) => {
-        const newJob = postJob(jobData);
-        setIsJobModalOpen(false);
-        setActiveView('My Jobs');
-        if (newJob) {
-            setJobForInvite(newJob);
-            setIsInviteModalOpen(true);
+    const renderView = () => {
+        if (selectedEngineer) {
+            return (
+                <div className="h-full overflow-y-auto custom-scrollbar pr-4">
+                     <button onClick={() => setSelectedEngineer(null)} className="text-blue-600 hover:underline mb-4">&larr; Back to Talent Search</button>
+                    <EngineerProfileView profile={selectedEngineer} isEditable={false} onEdit={() => {}} />
+                </div>
+            );
         }
-    };
-
-    const renderActiveView = () => {
-        if (!user) return null;
-        switch(activeView) {
+        
+        switch (activeView) {
             case 'Dashboard':
                 return <DashboardView user={user} myJobs={myJobs} engineers={engineers} applications={applications} setActiveView={setActiveView} />;
-            case 'Find Talent':
-                 if (talentView === 'profile' && selectedEngineer) {
-                    return (
-                        <div className="h-full overflow-y-auto custom-scrollbar">
-                            <button 
-                                onClick={handleBackToSearch} 
-                                className="flex items-center mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-                            >
-                                <ArrowLeft size={16} className="mr-2" />
-                                Back to Search Results
-                            </button>
-                            <EngineerProfileView profile={selectedEngineer} isEditable={false} onEdit={() => {}} />
-                        </div>
-                    )
-                }
-                return <FindTalentView engineers={engineers} myJobs={myJobs} onSelectEngineer={handleSelectEngineer} />;
-            case 'Post a Job': 
+            case 'Post a Job':
+                // This view is now handled by opening the modal
                 return <MyJobsView myJobs={myJobs} setActiveView={setActiveView} />;
             case 'My Jobs':
                 return <MyJobsView myJobs={myJobs} setActiveView={setActiveView} />;
+            case 'Find Talent':
+                return <FindTalentView engineers={engineers} myJobs={myJobs} onSelectEngineer={handleSelectEngineer} />;
             case 'Project Planner':
-                return <ProjectPlannerView />;
+                return <ProjectPlannerView onProjectCreated={handleProjectCreated} />;
             case 'Project Tracking':
                 return <ProjectTrackingView />;
-            case 'Messages':
-                return <MessagesView />;
             case 'Contracts':
                 return <ContractsView setActiveView={setActiveView} />;
-            case 'Invoices':
+             case 'Invoices':
                 return <InvoicesView />;
+            case 'Messages':
+                return <MessagesView />;
+            case 'Analytics':
+                return <AnalyticsView />;
             case 'Settings':
-                return <SettingsView profile={user.profile as CompanyProfile} onSave={(updatedProfile) => updateCompanyProfile(user.profile.id, updatedProfile)} />;
+                return <SettingsView profile={companyProfile} onSave={updateCompanyProfile} />;
             default:
-                return (
-                    <div>
-                        <h1 className="text-2xl font-bold">{activeView} - Coming Soon</h1>
-                        <p className="mt-4">The functionality for "{activeView}" is under development. Please check back later!</p>
-                    </div>
-                );
+                return <div>View not found</div>;
+        }
+    };
+    
+    // Effect to open modal when 'Post a Job' is clicked
+    React.useEffect(() => {
+        if (activeView === 'Post a Job') {
+            setIsJobModalOpen(true);
+        }
+    }, [activeView]);
+
+    const handleCloseModal = () => {
+        setIsJobModalOpen(false);
+        if (activeView === 'Post a Job') {
+            setActiveView('My Jobs');
         }
     };
 
     return (
-        <div className="flex h-screen">
+        <div className="flex h-screen bg-gray-100">
             <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-grow p-6 bg-gray-50 overflow-hidden">
-                {renderActiveView()}
+            <main className="flex-1 p-8 overflow-y-auto">
+                {renderView()}
             </main>
             <JobPostModal
                 isOpen={isJobModalOpen}
-                onClose={() => {
-                    setIsJobModalOpen(false);
-                    if (activeView === 'Post a Job') setActiveView('Dashboard');
-                }}
+                onClose={handleCloseModal}
                 onPostJob={handlePostJob}
             />
-             <InstantInviteModal
-                isOpen={isInviteModalOpen}
-                onClose={() => setIsInviteModalOpen(false)}
-                job={jobForInvite}
+             {applicantForDeepDive && (
+                <ApplicantDeepDiveModal
+                    isOpen={!!applicantForDeepDive}
+                    onClose={handleDeepDiveClose}
+                    job={applicantForDeepDive.job}
+                    engineer={applicantForDeepDive.engineer}
+                />
+            )}
+            <InstantInviteModal 
+                isOpen={!!justPostedJob}
+                onClose={() => setJustPostedJob(null)}
+                job={justPostedJob}
             />
         </div>
     );

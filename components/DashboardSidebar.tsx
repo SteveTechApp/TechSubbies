@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { Role } from '../types';
 import { Logo } from './Logo';
 import { NavLink } from './NavLink';
@@ -41,6 +41,7 @@ const ENGINEER_LINKS = [
     { label: 'Invoices', icon: DollarSign },
     { label: 'Messages', icon: MessageCircle },
     { label: 'AI Tools', icon: Lightbulb },
+    { label: 'Product Finder', icon: Layers }, // For Sales Engineers
     { label: 'AI Coach', icon: ShieldCheck },
     { label: 'Storyboard Creator', icon: Clapperboard },
     { label: 'Analytics', icon: BarChart2 },
@@ -60,6 +61,7 @@ const COMPANY_LINKS = [
     { label: 'Contracts', icon: Briefcase },
     { label: 'Invoices', icon: DollarSign },
     { label: 'Messages', icon: MessageCircle },
+    { label: 'Analytics', icon: BarChart2 },
     { label: 'Settings', icon: Settings },
 ];
 
@@ -70,6 +72,7 @@ const RESOURCING_LINKS = [
     { label: 'Contracts', icon: Briefcase },
     { label: 'Invoices', icon: DollarSign },
     { label: 'Messages', icon: MessageCircle },
+    { label: 'Analytics', icon: BarChart2 },
     { label: 'Settings', icon: Settings },
 ];
 
@@ -82,7 +85,7 @@ const ADMIN_LINKS = [
 ];
 
 export const DashboardSidebar = ({ activeView, setActiveView }: DashboardSidebarProps) => {
-    const { user, logout } = useAppContext();
+    const { user, logout } = useAuth();
     
     if (!user) return null;
 

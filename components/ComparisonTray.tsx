@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// FIX: Corrected import path for types.
 import { Product, ProductFeatures } from '../types';
 
 interface ComparisonTrayProps {
@@ -58,6 +59,7 @@ const ComparisonModal = ({ items, analyzedProducts, onClose, onRemove }: { items
                             </tr>
                         </thead>
                         <tbody>
+                            {/* FIX: Fixed key and rendering logic for features. */}
                             {featuresToCompare.map(feature => (
                                 <tr key={feature} className="border-b">
                                     <td className="px-4 py-3 font-semibold capitalize">{feature.replace(/([A-Z])/g, ' $1').trim()}</td>

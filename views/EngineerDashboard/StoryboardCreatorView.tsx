@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { EngineerProfile } from '../../types';
 import { Save, Image, Upload, ArrowLeft } from '../../components/Icons';
-import { useAppContext } from '../../context/AppContext';
+// FIX: Replaced incorrect context hook 'useInteractions' with the correct hook 'useAppContext'.
+import { useAppContext } from '../../context/InteractionContext';
 
 interface StoryboardPanelData {
     id: number;

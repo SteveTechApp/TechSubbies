@@ -1,68 +1,62 @@
-import { Job, CompanyProfile, Currency, JobType, ExperienceLevel, ResourcingCompanyProfile } from '../../types';
-// FIX: Corrected import path for MOCK_COMPANIES to resolve module error.
-import { MOCK_COMPANIES } from './mockGeneratedProfiles';
-import { JOB_ROLE_DEFINITIONS } from '../jobRoles';
-import { LOCATIONS, DURATIONS, JOB_TYPES, EXP_LEVELS } from './mockConstants';
-
-const getRandom = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
-const getRandomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
-
-const MOCK_COMPANY_1 = MOCK_COMPANIES.find(c => c.id === 'comp-1')!;
-
-const MOCK_JOB_1: Job = {
-    id: 'job-1',
-    companyId: MOCK_COMPANY_1.id,
-    title: 'Senior AV Commissioning Engineer',
-    description: 'Lead the commissioning of a new corporate headquarters in Canary Wharf. Must be an expert in Crestron DM NVX, Biamp Tesira, and Dante. Client-facing role requiring excellent communication and documentation skills.',
-    location: 'London, UK',
-    dayRate: '550',
-    currency: Currency.GBP,
-    duration: '6 weeks',
-    postedDate: new Date('2024-06-15'),
-    startDate: new Date('2024-07-29'),
-    status: 'active',
-    jobType: JobType.CONTRACT,
-    experienceLevel: ExperienceLevel.SENIOR,
-    jobRole: 'AV Systems Engineer',
-    skillRequirements: [
-        { name: 'System commissioning and testing procedures', importance: 'essential' },
-        { name: 'Troubleshooting complex AV systems', importance: 'essential' },
-        { name: 'Network protocols (TCP/IP, IGMP, PTP)', importance: 'essential' },
-        { name: 'Performance optimization', importance: 'desirable' },
-    ],
-};
-
-// FIX: Updated the 'companies' parameter type to accept both CompanyProfile and ResourcingCompanyProfile.
-const generateMockJobs = (count: number, companies: (CompanyProfile | ResourcingCompanyProfile)[]): Job[] => {
-    if (companies.length === 0) return [];
-    return Array.from({ length: count }, (_, i) => {
-        const roleDef = getRandom(JOB_ROLE_DEFINITIONS);
-        const company = getRandom(companies);
-        const allSkillsForRole = roleDef.skillCategories.flatMap(category => category.skills);
-        return {
-            id: `gen-job-${i}`,
-            companyId: company.id,
-            title: roleDef.name,
-            description: `We are looking for a skilled ${roleDef.name} for an upcoming project. The ideal candidate will have strong experience in ${allSkillsForRole.slice(0, 3).map(s => s.name).join(', ')}. This is a contract role with potential for extension.`,
-            location: Math.random() > 0.2 ? `${getRandom(LOCATIONS)}, UK` : 'Remote',
-            dayRate: String(getRandomInt(13, 30) * 25),
-            currency: Currency.GBP,
-            duration: getRandom(DURATIONS),
-            postedDate: new Date(new Date().getTime() - getRandomInt(1, 30) * 24 * 60 * 60 * 1000),
-            startDate: new Date(new Date().getTime() + getRandomInt(1, 60) * 24 * 60 * 60 * 1000),
-            status: 'active',
-            jobType: getRandom(JOB_TYPES),
-            experienceLevel: getRandom(EXP_LEVELS),
-            jobRole: roleDef.name,
-            skillRequirements: allSkillsForRole.slice(0, 5).map((skill, index) => ({
-                name: skill.name,
-                importance: index < 2 ? 'essential' : 'desirable', // Make first 2 essential
-            })),
-        };
-    });
-};
+import { Job, Currency, JobType, ExperienceLevel, SkillImportance } from '../../types';
 
 export const MOCK_JOBS: Job[] = [
-    MOCK_JOB_1,
-    ...generateMockJobs(15, MOCK_COMPANIES)
+    {
+        id: 'job-1',
+        companyId: 'comp-1',
+        title: 'Senior AV Commissioning Engineer',
+        description: 'We are seeking an experienced AV Commissioning Engineer for a 6-week project in our new London HQ. The ideal candidate will have extensive experience with Crestron DM NVX and Biamp Tesira systems. Responsibilities include system testing, DSP configuration, and client handover.',
+        location: 'London, UK',
+        dayRate: '550',
+        duration: '6 weeks',
+        currency: Currency.GBP,
+        startDate: new Date('2024-08-01'),
+        postedDate: new Date('2024-06-15'),
+        jobType: JobType.CONTRACT,
+        experienceLevel: ExperienceLevel.SENIOR,
+        jobRole: 'AV Systems Engineer / Commissioner',
+        skillRequirements: [
+            { name: 'Systematic Troubleshooting', importance: SkillImportance.ESSENTIAL },
+            { name: 'Formal Commissioning Procedures', importance: SkillImportance.ESSENTIAL },
+            { name: 'DSP Configuration & Audio Calibration', importance: SkillImportance.ESSENTIAL },
+            { name: 'Crestron Ecosystem', importance: SkillImportance.DESIRABLE },
+        ],
+        status: 'active',
+    },
+    {
+        id: 'gen-job-1',
+        companyId: 'comp-2',
+        title: 'Live Event LED Technician',
+        description: 'Starlight Events requires an LED technician for a major product launch event. Must have experience with large-format LED walls (ROE, Absen) and video processors (Brompton, Novastar). This is a short-term, high-intensity contract.',
+        location: 'Birmingham, UK',
+        dayRate: '450',
+        duration: '1 week',
+        currency: Currency.GBP,
+        startDate: new Date('2024-08-12'),
+        postedDate: new Date('2024-07-01'),
+        jobType: JobType.CONTRACT,
+        experienceLevel: ExperienceLevel.MID_LEVEL,
+        jobRole: 'AV Technician / Installer',
+        skillRequirements: [
+            { name: 'Physical Equipment Installation', importance: SkillImportance.ESSENTIAL },
+        ],
+        status: 'active',
+    },
+    {
+        id: 'gen-job-2',
+        companyId: 'comp-3',
+        title: 'On-site IT Support Engineer',
+        description: 'Nexus IT needs a reliable IT Support Engineer for a 3-month contract providing desktop and network support for one of our key clients in Manchester. Experience with Windows, Active Directory, and basic network troubleshooting is essential.',
+        location: 'Manchester, UK',
+        dayRate: '250',
+        duration: '3 months',
+        currency: Currency.GBP,
+        startDate: new Date('2024-08-05'),
+        postedDate: new Date('2024-07-02'),
+        jobType: JobType.CONTRACT,
+        experienceLevel: ExperienceLevel.MID_LEVEL,
+        jobRole: 'IT Support Engineer',
+        skillRequirements: [],
+        status: 'active',
+    }
 ];

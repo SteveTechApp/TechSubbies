@@ -1,6 +1,5 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-// FIX: Added Product and ProductFeatures to the import list.
-import { EngineerProfile, Job, JobSkillRequirement, Skill, Product, ProductFeatures, Insight, ExperienceLevel } from "../types";
+import { EngineerProfile, Job, JobSkillRequirement, Skill, Product, ProductFeatures, Insight, ExperienceLevel, AiProductMatch } from "../types";
 import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';
 
 class GeminiService {
@@ -200,10 +199,14 @@ class GeminiService {
     
     // Method used in InstantInviteModal.tsx
     async findBestMatchesForJob(job: Job, engineers: EngineerProfile[]): Promise<any> {
-        const engineerProfiles = engineers.map(e => `ID: ${e.id}, Role: ${e.selectedJobRoles?.[0]?.roleName || e.discipline}, Skills: ${e.skills.map(s => `${s.name} (${s.rating})`).join(', ')}, Experience: ${e.experience}yrs, Rate: £${e.minDayRate}-${e.maxDayRate}`).join('\n');
+        const engineerProfiles = engineers.map(e => {
+            const engineerSkills = [...(e.skills?.map(s => `${s.name} (${s.rating})`) || []), ...(e.selectedJobRoles?.flatMap(r => r.skills.map(s => `${s.name} (${s.rating})`)) || [])].join(', ');
+            return `ID: ${e.id}, Role: ${e.selectedJobRoles?.map(r => r.roleName).join(', ') || e.discipline}, Skills: ${engineerSkills}, Experience: ${e.experience}yrs, Rate: £${e.minDayRate}-${e.maxDayRate}`;
+        }).join('\n');
+        
         const jobReqs = `Title: ${job.title}, Required Skills: ${job.skillRequirements.map(s => `${s.name} (${s.importance})`).join(', ')}`;
         
-        const prompt = `From the following list of engineers, find the top 5 best matches for the job. Provide only a JSON array of objects with "id" and "match_score" (0-100). Prioritize essential skills and relevant experience.
+        const prompt = `From the following list of engineers, find the top 5 best matches for the job. Provide only a JSON array of objects with "id" and "match_score" (0-100). Prioritize essential skills, relevant roles, and experience.
         
         Job Requirements:
         ${jobReqs}
@@ -282,45 +285,49 @@ class GeminiService {
         }
     }
 
-    // New method for Tutorial Videos
+    // Updated method for Live Video Generation
     async generateTutorialVideo(topic: string): Promise<{ title: string; script: string; videoUrl: string; error?: string }> {
-        // FIX: The returned object must match the function's return type. Added missing properties to the error case.
         if (!this.ai) return { title: '', script: '', videoUrl: '', error: "Gemini Service not initialized. Check API Key." };
 
-        const prompt = `You are a scriptwriter for short, engaging platform tutorial videos (under 60 seconds). Create a script for a video titled "${topic}". The script should be broken down into short, clear steps. The tone should be friendly, clear, and encouraging.
-
-        Respond in JSON format with a "title" and a "script" (a single string with newlines for breaks).`;
-
-        const schema = {
-            type: Type.OBJECT,
-            properties: {
-                title: { type: Type.STRING },
-                script: { type: Type.STRING },
-            }
-        };
-
         try {
-            const response = await this.generateWithSchema(prompt, schema);
-            if (response.error) {
-                return { ...response, title: '', script: '', videoUrl: '' };
-            }
-            
-            let mockVideoUrl = 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4';
-            if (topic.toLowerCase().includes('job')) {
-                mockVideoUrl = 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
-            } else if (topic.toLowerCase().includes('ai')) {
-                mockVideoUrl = 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4';
-            }
-
-            return {
-                title: response.title,
-                script: response.script,
-                videoUrl: mockVideoUrl
+            // Step 1: Generate the script first
+            const scriptPrompt = `Create a script for a short, engaging tutorial video titled "${topic}". Break it into clear steps. The tone should be friendly and encouraging. Respond in JSON format with "title" and "script".`;
+            const scriptSchema = {
+                type: Type.OBJECT,
+                properties: { title: { type: Type.STRING }, script: { type: Type.STRING } }
             };
+            const scriptResponse = await this.generateWithSchema(scriptPrompt, scriptSchema);
+            if (scriptResponse.error) throw new Error(scriptResponse.error);
+            const { title, script } = scriptResponse;
+
+            // Step 2: Start the video generation operation using the generated script
+            console.log("[Gemini] Starting video generation for:", title);
+            const videoPrompt = `An engaging, clean, corporate-style tutorial video for a software platform, with on-screen text callouts, based on the following script: ${script}`;
+            let operation = await this.ai.models.generateVideos({
+                model: 'veo-2.0-generate-001',
+                prompt: videoPrompt,
+                config: { numberOfVideos: 1 }
+            });
+            console.log("[Gemini] Video operation started:", operation);
+
+            // Step 3: Poll for completion
+            while (!operation.done) {
+                console.log("[Gemini] Waiting for video generation... Polling again in 10s.");
+                await new Promise(resolve => setTimeout(resolve, 10000));
+                operation = await this.ai.operations.getVideosOperation({ operation: operation });
+            }
+            console.log("[Gemini] Video generation finished:", operation);
+
+            // Step 4: Extract and return the video URI
+            const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+            if (!downloadLink) throw new Error("Video generation completed but no download link was found.");
+            
+            const videoUrl = `${downloadLink}&key=${process.env.API_KEY}`;
+            
+            return { title, script, videoUrl };
         } catch (error: any) {
-            console.error("Error generating tutorial video:", error);
-            const errorMessage = error.message || "Failed to get a valid response from the AI model.";
-            return { error: errorMessage, title: '', script: '', videoUrl: '' };
+            console.error("Error in generateTutorialVideo:", error);
+            return { error: error.message || "Failed to generate video.", title: '', script: '', videoUrl: '' };
         }
     }
 
@@ -339,7 +346,6 @@ class GeminiService {
         return "Acknowledged. I will get back to you on this as soon as possible.";
     }
 
-    // FIX: Added function to analyze product features, used by ProductCard.tsx.
     // Method for AI Product Feature Analysis
     async analyzeProductForFeatures(product: Product): Promise<ProductFeatures | { error: string }> {
         const prompt = `Analyze the following product description and extract its key technical features.
@@ -387,6 +393,34 @@ class GeminiService {
                 controlMethods: { type: Type.ARRAY, items: { type: Type.STRING } },
                 keyFeatures: { type: Type.ARRAY, items: { type: Type.STRING } },
                 idealApplication: { type: Type.STRING }
+            }
+        };
+        return this.generateWithSchema(prompt, schema);
+    }
+    
+    // Method for AI Product Search
+    async findMatchingProducts(brief: string, products: Product[]): Promise<{ matches?: AiProductMatch[], error?: string }> {
+        const productCatalog = products.map(p => `SKU: ${p.sku}, Name: ${p.name}, Description: ${p.description}`).join('\n');
+        const prompt = `Based on the following client brief, find the top 5 most suitable products from the catalog. Provide only a JSON array of objects with "sku" and "match_score" (0-100).
+
+        Client Brief: "${brief}"
+
+        Product Catalog:
+        ${productCatalog}`;
+        
+        const schema = {
+            type: Type.OBJECT,
+            properties: {
+                matches: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            sku: { type: Type.STRING },
+                            match_score: { type: Type.INTEGER }
+                        }
+                    }
+                }
             }
         };
         return this.generateWithSchema(prompt, schema);

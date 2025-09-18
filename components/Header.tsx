@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { Page } from '../types';
 import { Logo } from './Logo';
 import { UserMenu } from './UserMenu';
@@ -12,14 +12,14 @@ interface HeaderProps {
 }
 
 export const Header = ({ onNavigate, onHowItWorksClick }: HeaderProps) => {
-    const { user, logout } = useAppContext();
+    const { user, logout } = useAuth();
 
     const headerClasses = "bg-white shadow-md p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50";
     const logoColorClass = "text-gray-800";
 
     return (
         <header className={headerClasses}>
-            <button onClick={() => onNavigate('landing')} aria-label="Go to homepage">
+            <button onClick={() => onNavigate(Page.LANDING)} aria-label="Go to homepage">
               <Logo className={`${logoColorClass} h-12`} />
             </button>
             <nav className="flex items-center gap-2">

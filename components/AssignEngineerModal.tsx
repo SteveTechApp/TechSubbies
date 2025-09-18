@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../context/AppContext';
+// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
+import { useAppContext } from '../context/InteractionContext';
+// FIX: Corrected import path for types.
 import { ProjectRole, EngineerProfile } from '../types';
 import { X, User } from './Icons';
 

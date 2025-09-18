@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../../context/AppContext';
+import { useData } from '../../context/DataContext';
+// FIX: Replaced incorrect context hook 'useInteractions' with the correct hook 'useAppContext'.
+import { useAppContext } from '../../context/InteractionContext';
 import { Job, EngineerProfile, ApplicationStatus, Application } from '../../types';
 import { MapPin, DollarSign, Users, Edit, Trash2, BrainCircuit, Star } from '../../components/Icons';
 import { CreateContractModal } from '../../components/CreateContractModal';
@@ -10,7 +12,7 @@ interface MyJobsViewProps {
 }
 
 const JobCard = ({ job, onSelect, onEdit, onDelete }: { job: Job, onSelect: () => void, onEdit: () => void, onDelete: () => void }) => {
-    const { applications } = useAppContext();
+    const { applications } = useData();
     const jobApplicants = applications.filter(a => a.jobId === job.id).length;
 
     return (
@@ -63,7 +65,8 @@ const ApplicantCard = ({ applicant, application, onDeepDive, onHire }: { applica
 
 
 export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
-    const { applications, engineers, createContract, sendOffer, setApplicantForDeepDive } = useAppContext();
+    const { applications, engineers } = useData();
+    const { createContract, sendOffer, setApplicantForDeepDive } = useAppContext();
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [selectedApplicant, setSelectedApplicant] = useState<EngineerProfile | null>(null);
     const [isHireModalOpen, setIsHireModalOpen] = useState(false);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Timesheet, Contract, Role } from '../types';
-import { useAppContext } from '../context/AppContext';
+// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
+import { useAppContext } from '../context/InteractionContext';
 import { Loader } from './Icons';
 
 interface TimesheetRowProps {

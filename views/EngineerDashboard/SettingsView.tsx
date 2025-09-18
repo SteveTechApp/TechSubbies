@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { EngineerProfile } from '../../types';
 import { Save, ArrowLeft, ShieldCheck, AlertTriangle } from '../../components/Icons';
-import { useAppContext } from '../../context/AppContext';
+// FIX: Replaced incorrect context hook 'useInteractions' with the correct hook 'useAppContext'.
+import { useAppContext } from '../../context/InteractionContext';
 
 interface SettingsViewProps {
     profile: EngineerProfile;

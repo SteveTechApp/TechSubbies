@@ -1,75 +1,69 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { DashboardSidebar } from '../components/DashboardSidebar';
-import { useAppContext } from '../context/AppContext';
+import { Role, EngineerProfile, Contract, ResourcingCompanyProfile } from '../types';
 import { DashboardView } from './ResourcingDashboard/DashboardView';
 import { ManageEngineersView } from './ResourcingDashboard/ManageEngineersView';
 import { FindJobsView } from './ResourcingDashboard/FindJobsView';
-import { MessagesView } from './MessagesView';
+import { SettingsView } from './ResourcingDashboard/SettingsView';
+import { AddNewEngineerView } from './ResourcingDashboard/AddNewEngineerView';
+import { MessagesView } from '../views/MessagesView';
 import { PlacementsView } from './ResourcingDashboard/PlacementsView';
-import { InvoicesView } from './InvoicesView';
+import { AnalyticsView } from './ResourcingDashboard/AnalyticsView';
 
 export const ResourcingDashboard = () => {
-    const { user, engineers, applications, contracts, setCurrentPageContext } = useAppContext();
+    const { user } = useAuth();
+    const { engineers, applications, contracts } = useData();
     const [activeView, setActiveView] = useState('Dashboard');
+    
+    if (!user || user.role !== Role.RESOURCING_COMPANY) {
+        return <div>Access Denied.</div>;
+    }
 
-    useEffect(() => {
-        setCurrentPageContext(`Resourcing Dashboard: ${activeView}`);
-    }, [activeView, setCurrentPageContext]);
+    const resourcingProfile = user.profile as ResourcingCompanyProfile;
+    const managedEngineerIds = new Set(resourcingProfile.managedEngineerIds || []);
 
     const managedEngineers = useMemo(() => {
-        if (!user) return [];
-        return engineers.filter(e => e.resourcingCompanyId === user.profile.id);
-    }, [user, engineers]);
+        return engineers.filter(e => managedEngineerIds.has(e.id));
+    }, [engineers, managedEngineerIds]);
     
     const managedContracts = useMemo(() => {
-        if (!user) return [];
-        const managedIds = new Set(managedEngineers.map(e => e.id));
-        return contracts.filter(c => managedIds.has(c.engineerId));
-    }, [user, managedEngineers, contracts]);
+        return contracts.filter(c => managedEngineerIds.has(c.engineerId));
+    }, [contracts, managedEngineerIds]);
 
+    const handleEngineerAdded = () => {
+        setActiveView('Manage Engineers');
+    };
 
-    const renderActiveView = () => {
-        if (!user) return <div>Loading...</div>;
-
+    const renderView = () => {
         switch (activeView) {
             case 'Dashboard':
-                return <DashboardView managedEngineers={managedEngineers} applications={applications} activePlacements={managedContracts} setActiveView={setActiveView} />;
+                return <DashboardView managedEngineers={managedEngineers} applications={applications} activePlacements={managedContracts.filter(c => c.status === 'Active')} setActiveView={setActiveView} />;
             case 'Manage Engineers':
                 return <ManageEngineersView managedEngineers={managedEngineers} setActiveView={setActiveView} />;
             case 'Find Jobs':
                 return <FindJobsView managedEngineers={managedEngineers} setActiveView={setActiveView} />;
             case 'Contracts':
                 return <PlacementsView managedContracts={managedContracts} setActiveView={setActiveView} />;
-            case 'Invoices':
-                return <InvoicesView />;
             case 'Messages':
                 return <MessagesView />;
+            case 'Analytics':
+                return <AnalyticsView />;
             case 'Settings':
-                 return (
-                    <div>
-                        <h1 className="text-3xl font-bold mb-6">Settings</h1>
-                        <div className="bg-white p-6 rounded-lg shadow">
-                            <h2 className="text-xl font-bold">Company Settings</h2>
-                            <p className="mt-4">Manage your resourcing company profile and notification settings here.</p>
-                            <p className="mt-2 text-sm text-gray-500">(This feature is under development)</p>
-                        </div>
-                    </div>
-                );
+                return <SettingsView profile={resourcingProfile} onSave={() => {}} />;
+            case 'Add New Engineer':
+                return <AddNewEngineerView resourcingCompanyId={user.profile.id} onEngineerAdded={handleEngineerAdded} />;
             default:
-                return (
-                    <div>
-                        <h1 className="text-2xl font-bold">{activeView} - Coming Soon</h1>
-                        <p>The functionality for "{activeView}" is under construction.</p>
-                    </div>
-                );
+                return <div>View not found</div>;
         }
     };
 
     return (
-        <div className="flex h-screen">
+        <div className="flex h-screen bg-gray-100">
             <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-grow p-6 bg-gray-50 overflow-y-auto custom-scrollbar">
-                {renderActiveView()}
+            <main className="flex-1 p-8 overflow-y-auto">
+                {renderView()}
             </main>
         </div>
     );

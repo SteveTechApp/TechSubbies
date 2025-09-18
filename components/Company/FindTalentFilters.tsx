@@ -1,16 +1,32 @@
-
-import React, { useState, useMemo, useEffect } from 'react';
-import { EngineerProfile, Job, ProfileTier, CompanyProfile, ExperienceLevel } from '../../types';
-import { useAppContext } from '../../context/AppContext';
-import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles';
-import { Search, Sparkles, Loader } from '../Icons';
+import React, { useState, useEffect } from 'react';
+import { EngineerProfile, Job, ProfileTier, Discipline } from '../../types';
+import { Search, Sparkles, SlidersHorizontal } from '../Icons';
+// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
+import { useAppContext } from '../../context/InteractionContext';
 import { getDistance, findLocationsInRegion } from '../../utils/locationUtils';
 import { LocationAutocomplete } from '../LocationAutocomplete';
 
-interface AiMatchResult {
-    id: string;
-    match_score: number;
+interface Filters {
+    searchTerm: string;
+    jobForMatch: string;
+    minExperience: number;
+    maxDayRate: number;
+    location: string;
+    radius: number;
+    hasSkillsProfile: boolean;
+    discipline: string;
 }
+
+const initialFilters: Filters = {
+    searchTerm: '',
+    jobForMatch: '',
+    minExperience: 0,
+    maxDayRate: 1500,
+    location: 'London, UK',
+    radius: 50,
+    hasSkillsProfile: false,
+    discipline: 'all',
+};
 
 interface FindTalentFiltersProps {
     engineers: EngineerProfile[];
@@ -19,165 +35,167 @@ interface FindTalentFiltersProps {
 }
 
 export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTalentFiltersProps) => {
-    const { user, geminiService } = useAppContext();
-    const [filters, setFilters] = useState({
-        keyword: '', role: 'any', maxRate: 0, minExperience: 0, maxDistance: 0, location: '', experienceLevel: 'any'
-    });
-    const [sort, setSort] = useState('relevance');
-    const [aiSelectedJobId, setAiSelectedJobId] = useState('');
-    const [aiMatchResults, setAiMatchResults] = useState<AiMatchResult[]>([]);
+    const { geminiService } = useAppContext();
+    const [filters, setFilters] = useState<Filters>(initialFilters);
     const [isAiLoading, setIsAiLoading] = useState(false);
 
-    const specialistRoles = useMemo(() => JOB_ROLE_DEFINITIONS.map(r => r.name).sort(), []);
-    
-    const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFilters(prev => {
-            const newFilters = { ...prev };
-            switch (name) {
-                case 'maxRate':
-                case 'minExperience':
-                case 'maxDistance':
-                    newFilters[name] = parseInt(value, 10) || 0;
-                    break;
-                case 'keyword':
-                case 'role':
-                case 'experienceLevel':
-                    newFilters[name] = value;
-                    break;
-            }
-            return newFilters;
-        });
+    useEffect(() => {
+        // This effect will run whenever filters change, except for AI-based filters
+        if (!filters.jobForMatch) {
+            applyFilters();
+        }
+    }, [filters, engineers]);
+
+    const handleFilterChange = (field: keyof Filters, value: any) => {
+        setFilters(prev => ({ ...prev, [field]: value }));
     };
     
     const handleLocationChange = (value: string) => {
-        setFilters(prev => ({ ...prev, location: value }));
-    };
+         setFilters(prev => ({ ...prev, location: value }));
+    }
 
-    useEffect(() => {
-        const aiScores = new Map(aiMatchResults.map(r => [r.id, r.match_score]));
-        
-        const locationSearchText = filters.location.trim();
-        const regionLocations = locationSearchText ? findLocationsInRegion(locationSearchText) : [];
+    const runAiMatch = async () => {
+        const job = myJobs.find(j => j.id === filters.jobForMatch);
+        if (!job) return;
 
-        const filtered = engineers
-            .map(eng => ({ ...eng, matchScore: aiScores.get(eng.id) }))
-            .filter(eng => {
-                if (eng.status !== 'active') return false;
-                if (eng.minDayRate > filters.maxRate && filters.maxRate > 0) return false;
-                if (eng.experience < filters.minExperience) return false;
-                if (filters.role !== 'any' && !eng.selectedJobRoles?.some(r => r.roleName === filters.role)) return false;
-                if (filters.experienceLevel !== 'any' && eng.experienceLevel !== filters.experienceLevel) return false;
-                
-                if (locationSearchText && locationSearchText !== 'Worldwide') {
-                    const engLocation = eng.location;
-                    const inRegion = regionLocations.some(l => engLocation.toLowerCase().includes(l.toLowerCase()));
-                    if (!inRegion) return false;
-                }
-                
-                if (filters.keyword.trim() !== '') {
-                    const searchableText = [eng.name, eng.discipline, eng.description, ...(eng.skills?.map(s => s.name) || []), ...(eng.selectedJobRoles?.flatMap(r => [...r.skills.map(s => s.name), r.roleName]) || [])].join(' ').toLowerCase();
-                    if (!searchableText.includes(filters.keyword.toLowerCase())) return false;
-                }
-                return true;
-            })
-            .sort((a, b) => {
-                if (a.matchScore !== undefined && b.matchScore !== undefined) return b.matchScore - a.matchScore;
-                if (a.matchScore !== undefined) return -1;
-                if (b.matchScore !== undefined) return 1;
-
-                const tierSort = (b.profileTier !== ProfileTier.BASIC ? 1 : 0) - (a.profileTier !== ProfileTier.BASIC ? 1 : 0);
-                switch (sort) {
-                    case 'name-asc': return a.name.localeCompare(b.name);
-                    case 'name-desc': return b.name.localeCompare(a.name);
-                    case 'rate-asc': return a.minDayRate - b.minDayRate;
-                    case 'rate-desc': return b.maxDayRate - a.maxDayRate;
-                    default:
-                        if (a.isBoosted !== b.isBoosted) return a.isBoosted ? -1 : 1;
-                        return tierSort;
-                }
-            });
-        onFilterChange(filtered);
-    }, [engineers, filters, sort, aiMatchResults, onFilterChange]);
-
-    const handleAiMatch = async () => {
-        if (!aiSelectedJobId) return;
-        const selectedJob = myJobs.find(j => j.id === aiSelectedJobId);
-        if (!selectedJob) return;
-        if (!selectedJob.skillRequirements || selectedJob.skillRequirements.length === 0) {
-            alert("This job has no specific skill requirements defined. Please edit the job to add skills before using AI Match."); return;
-        }
-    
         setIsAiLoading(true);
-        setAiMatchResults([]);
-        const premiumEngineers = engineers.filter(e => e.status === 'active' && e.profileTier !== ProfileTier.BASIC);
-        const result = await geminiService.findBestMatchesForJob(selectedJob, premiumEngineers);
-    
-        if (result.error) alert(result.error);
-        else if (result && result.matches) setAiMatchResults(result.matches);
-        else alert("AI could not find matches for this job. An unexpected error occurred.");
+        const result = await geminiService.findBestMatchesForJob(job, engineers);
+        
+        if (result.matches) {
+            const engineersWithScores = engineers.map(eng => {
+                const match = result.matches.find(m => m.id === eng.id);
+                return match ? { ...eng, matchScore: match.match_score } : { ...eng, matchScore: 0 };
+            }).sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+            onFilterChange(engineersWithScores);
+        } else {
+            alert(result.error || "Failed to get AI matches.");
+        }
+        
         setIsAiLoading(false);
     };
 
-    return (
-        <aside className="w-1/3 lg:w-1/4 bg-white p-6 rounded-lg shadow-md flex-shrink-0 overflow-y-auto custom-scrollbar">
-            <h2 className="text-xl font-bold mb-4 flex items-center"><Search size={20} className="mr-2"/> Find Talent</h2>
-            <div className="space-y-6">
-                <div>
-                    <label htmlFor="keyword" className="block text-sm font-medium text-gray-700">Keyword</label>
-                    <input type="text" id="keyword" name="keyword" value={filters.keyword} onChange={handleFilterChange} placeholder="e.g., Crestron, Cisco" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" />
-                </div>
-                 <div>
-                    <label htmlFor="location" className="block text-sm font-medium text-gray-700">Location</label>
-                    <LocationAutocomplete value={filters.location} onValueChange={handleLocationChange} />
-                </div>
-                <div>
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-700">Specialist Role</label>
-                    <select name="role" id="role" value={filters.role} onChange={handleFilterChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-white">
-                        <option value="any">Any Role</option>
-                        {specialistRoles.map(r => <option key={r} value={r}>{r}</option>)}
-                    </select>
-                </div>
-                <div>
-                    <label htmlFor="experienceLevel" className="block text-sm font-medium text-gray-700">Experience Level</label>
-                    <select name="experienceLevel" id="experienceLevel" value={filters.experienceLevel} onChange={handleFilterChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-white">
-                        <option value="any">Any Level</option>
-                        {Object.values(ExperienceLevel).map(level => <option key={level} value={level}>{level}</option>)}
-                    </select>
-                </div>
-                 <div>
-                    <label htmlFor="maxDistance" className="block text-sm font-medium text-gray-700">Max Distance (miles): {filters.maxDistance > 0 ? filters.maxDistance : 'Any'}</label>
-                    <input type="range" id="maxDistance" name="maxDistance" min="0" max="500" step="10" value={filters.maxDistance} onChange={handleFilterChange} className="mt-1 block w-full" />
-                </div>
-                <div>
-                    <label htmlFor="maxRate" className="block text-sm font-medium text-gray-700">Max Day Rate: {filters.maxRate || 'Any'}</label>
-                    <input type="range" id="maxRate" name="maxRate" min="0" max="1200" step="25" value={filters.maxRate} onChange={handleFilterChange} className="mt-1 block w-full" />
-                </div>
-                <div>
-                    <label htmlFor="minExperience" className="block text-sm font-medium text-gray-700">Min Experience (Yrs)</label>
-                    <input type="number" id="minExperience" name="minExperience" value={filters.minExperience} onChange={handleFilterChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2" />
-                </div>
-                 <div>
-                    <label htmlFor="sort" className="block text-sm font-medium text-gray-700">Sort by</label>
-                    <select id="sort" name="sort" value={sort} onChange={(e) => setSort(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-white">
-                        <option value="relevance">Relevance</option>
-                        <option value="name-asc">Name (A-Z)</option>
-                        <option value="name-desc">Name (Z-A)</option>
-                        <option value="rate-asc">Day Rate (Low-High)</option>
-                        <option value="rate-desc">Day Rate (High-Low)</option>
-                    </select>
-                </div>
-            </div>
+    const applyFilters = () => {
+        let filtered = [...engineers];
 
-            <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center mb-3"><Sparkles size={16} className="mr-2 text-purple-600"/> AI Smart Match</h3>
-                <select value={aiSelectedJobId} onChange={(e) => setAiSelectedJobId(e.target.value)} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-white mb-2" aria-label="Select a job for AI matching">
-                    <option value="">-- Select a Job --</option>
-                    {myJobs.map(job => <option key={job.id} value={job.id}>{job.title}</option>)}
-                </select>
-                <button onClick={handleAiMatch} disabled={!aiSelectedJobId || isAiLoading} className="w-full flex items-center justify-center px-4 py-2 bg-purple-600 text-white font-semibold rounded-md hover:bg-purple-700 disabled:bg-purple-300">
-                    {isAiLoading ? <Loader className="animate-spin w-5 h-5"/> : 'Find Top Matches'}
-                </button>
+        // AI Match
+        if (filters.jobForMatch) {
+            // This is handled by a separate function
+            return;
+        }
+
+        // Search Term
+        if (filters.searchTerm) {
+            const term = filters.searchTerm.toLowerCase();
+            filtered = filtered.filter(e =>
+                e.name.toLowerCase().includes(term) ||
+                e.discipline.toLowerCase().includes(term) ||
+                (e.skills && e.skills.some(s => s.name.toLowerCase().includes(term)))
+            );
+        }
+        
+        // Experience
+        filtered = filtered.filter(e => e.experience >= filters.minExperience);
+        
+        // Day Rate
+        filtered = filtered.filter(e => e.minDayRate <= filters.maxDayRate);
+
+        // Location & Radius
+        if (filters.radius > 0 && filters.radius < 500) {
+             filtered = filtered.filter(e => {
+                const distance = getDistance(filters.location, e.location);
+                return distance !== null && distance <= filters.radius;
+            });
+        } else if (filters.radius >= 500) { // Special case for "UK Wide" or larger regions
+            const locationsInScope = findLocationsInRegion(filters.location);
+             filtered = filtered.filter(e => locationsInScope.some(l => e.location.includes(l)));
+        }
+        
+        // Skills Profile
+        if (filters.hasSkillsProfile) {
+            filtered = filtered.filter(e => e.profileTier !== ProfileTier.BASIC);
+        }
+        
+        // Discipline
+        if (filters.discipline !== 'all') {
+            filtered = filtered.filter(e => e.discipline === filters.discipline);
+        }
+        
+        // Remove match score when not using AI match
+        onFilterChange(filtered.map(e => ({ ...e, matchScore: undefined })));
+    };
+
+    const resetFilters = () => {
+        setFilters(initialFilters);
+        onFilterChange(engineers);
+    };
+
+    return (
+        <aside className="w-1/3 max-w-sm bg-white p-4 rounded-lg shadow-md flex-shrink-0">
+            <h2 className="text-xl font-bold mb-4 flex items-center">
+                <SlidersHorizontal size={20} className="mr-2" />
+                Find Talent
+            </h2>
+            
+            <div className="space-y-4">
+                {/* AI Smart Match */}
+                <div className="p-3 bg-purple-50 border-2 border-dashed border-purple-200 rounded-lg">
+                    <h3 className="font-bold text-purple-800 flex items-center mb-2">
+                        <Sparkles size={16} className="mr-1.5"/> AI Smart Match
+                    </h3>
+                    <select
+                        value={filters.jobForMatch}
+                        onChange={e => handleFilterChange('jobForMatch', e.target.value)}
+                        className="w-full border p-2 rounded bg-white"
+                    >
+                        <option value="">-- Select a job to auto-match --</option>
+                        {myJobs.map(j => <option key={j.id} value={j.id}>{j.title}</option>)}
+                    </select>
+                    <button onClick={runAiMatch} disabled={!filters.jobForMatch || isAiLoading} className="w-full mt-2 px-4 py-2 bg-purple-600 text-white font-semibold rounded-md text-sm hover:bg-purple-700 disabled:bg-purple-300">
+                        {isAiLoading ? 'Analyzing...' : 'Find Best Matches'}
+                    </button>
+                </div>
+                
+                {/* Manual Filters */}
+                <div>
+                    <label className="block text-sm font-medium">Keywords</label>
+                    <div className="relative">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
+                        <input
+                            type="text"
+                            placeholder="Name, skill, discipline..."
+                            value={filters.searchTerm}
+                            onChange={e => handleFilterChange('searchTerm', e.target.value)}
+                            className="w-full border p-2 pl-8 rounded"
+                            disabled={!!filters.jobForMatch}
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium">Location</label>
+                    <LocationAutocomplete value={filters.location} onValueChange={handleLocationChange}/>
+                    <label className="block text-sm font-medium mt-2">Within {filters.radius < 500 ? `${filters.radius} miles` : 'Region'}</label>
+                    <input type="range" min="0" max="500" step="10" value={filters.radius} onChange={e => handleFilterChange('radius', parseInt(e.target.value))} className="w-full" disabled={!!filters.jobForMatch}/>
+                </div>
+                
+                 <div>
+                    <label className="block text-sm font-medium">Min. Experience ({filters.minExperience} years)</label>
+                    <input type="range" min="0" max="25" value={filters.minExperience} onChange={e => handleFilterChange('minExperience', parseInt(e.target.value))} className="w-full" disabled={!!filters.jobForMatch}/>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium">Max Day Rate (£{filters.maxDayRate})</label>
+                    <input type="range" min="150" max="1500" step="25" value={filters.maxDayRate} onChange={e => handleFilterChange('maxDayRate', parseInt(e.target.value))} className="w-full" disabled={!!filters.jobForMatch}/>
+                </div>
+                
+                <div>
+                     <label className="flex items-center">
+                        <input type="checkbox" checked={filters.hasSkillsProfile} onChange={e => handleFilterChange('hasSkillsProfile', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" disabled={!!filters.jobForMatch}/>
+                        <span className="ml-2 text-sm">Skills Profile Only</span>
+                    </label>
+                </div>
+
+                <button onClick={resetFilters} className="w-full text-sm text-blue-600 hover:underline">Reset All Filters</button>
             </div>
         </aside>
     );

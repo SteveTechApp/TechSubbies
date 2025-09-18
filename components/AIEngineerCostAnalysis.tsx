@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useSettings } from '../context/SettingsContext';
 import { Job, EngineerProfile } from '../types';
 import { ResultDisplay } from './ResultDisplay';
 import { BrainCircuit, Loader } from './Icons';
@@ -21,7 +20,7 @@ export const AIEngineerCostAnalysis = ({ job, engineer }: AIEngineerCostAnalysis
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState('');
-  const { geminiService } = useAppContext();
+  const { geminiService } = useSettings();
 
   const handleAnalyze = async () => {
     setIsLoading(true);

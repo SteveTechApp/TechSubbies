@@ -1,5 +1,6 @@
 
 
+
 import React from 'react';
 import { Page } from '../types';
 import { PageHeader } from '../components/PageHeader';
@@ -13,7 +14,8 @@ interface ForEngineersPageProps {
 export const ForEngineersPage = ({ onNavigate }: ForEngineersPageProps) => {
   return (
     <div className="bg-white">
-      <PageHeader onBack={() => onNavigate('landing')} />
+      {/* FIX: Replaced string literal with Page enum for type safety. */}
+      <PageHeader onBack={() => onNavigate(Page.LANDING)} />
 
       {/* Hero Section */}
       <section className="relative bg-blue-600 text-white py-20 text-center">
@@ -92,7 +94,8 @@ export const ForEngineersPage = ({ onNavigate }: ForEngineersPageProps) => {
         <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold text-gray-800">Ready to Find Your Next Contract?</h2>
             <p className="text-gray-600 my-4 max-w-2xl mx-auto">Join a network of elite freelance professionals and connect with the world's top technology companies.</p>
-            <button onClick={() => onNavigate('engineerSignUp')} className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 mt-2">
+            {/* FIX: Replaced string literal with Page enum for type safety. */}
+            <button onClick={() => onNavigate(Page.ENGINEER_SIGNUP)} className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 mt-2">
                 Sign Up For Free
             </button>
         </div>

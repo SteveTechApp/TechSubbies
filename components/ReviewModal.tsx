@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Job, EngineerProfile, Review } from '../types';
 import { X, Star } from './Icons';
-import { useAppContext } from '../context/AppContext';
+// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
+import { useAppContext } from '../context/InteractionContext';
 
 interface ReviewModalProps {
     isOpen: boolean;

@@ -10,41 +10,40 @@ export const JOB_ROLE_DEFINITIONS: JobRoleDefinition[] = [
             {
                 category: 'Core Design Skills',
                 skills: [
-                    { name: 'AV System Signal Flow', description: 'Deep understanding of how audio, video, and control signals are routed, processed, and managed within complex AV systems.' },
-                    { name: 'Needs Analysis & Client Consultation', description: 'Skill in interviewing clients and stakeholders to understand their needs and translate them into technical system requirements.' },
-                    { name: 'System Interoperability', description: 'Ensuring all components from different manufacturers can communicate and work together seamlessly within an integrated system.' },
-                    { name: 'Power & Thermal Management', description: 'Calculating power loads, specifying electrical needs, and planning for heat dissipation to ensure system stability and safety.' },
-                    { name: 'Network Infrastructure Design', description: 'Designing the underlying network topology (switching, VLANs, QoS) to support AV-over-IP, control, and system traffic.' },
+                    { name: 'AV System Signal Flow Design', description: 'Expertise in architecting and documenting the complete signal path for audio, video, control, and network signals, ensuring proper resolution, format, and protocol compatibility from source to destination.' },
+                    { name: 'Needs Analysis & Client Consultation', description: 'Skill in conducting thorough stakeholder interviews and workshops to define functional requirements, user workflows, and translate business needs into a technical scope of work.' },
+                    { name: 'System Interoperability Planning', description: 'Designing systems with components from various manufacturers to ensure seamless communication and functionality, including API and control protocol compatibility.' },
+                    { name: 'Power & Thermal Management Strategy', description: 'Calculating power loads, specifying electrical requirements (including PoE budgets), and planning for adequate ventilation and heat dissipation within racks and equipment locations to ensure system stability and longevity.' },
+                    { name: 'AV Network Infrastructure Design', description: 'Designing the underlying network topology (switching, VLANs, QoS, IGMP for AV-over-IP) to support real-time media, control, and system management traffic reliably.' },
                 ]
             },
             {
                 category: 'Software & Tool Proficiency',
                 skills: [
-                    { name: 'CAD Software (AutoCAD, Vectorworks)', description: 'Proficiency in creating and interpreting AV system drawings, layouts, and architectural plans.' },
-                    { name: 'AV Design Software (D-Tools, Stardraw)', description: 'Using specialized software for creating system schematics, proposals, and project documentation.' },
-                    { name: 'Acoustic Modeling (EASE, CATT-Acoustic)', description: 'Ability to model and predict the acoustic performance of a space to inform speaker placement and treatment.' },
-                    { name: 'Video Modeling Tools (DisplayView, Modeler)', description: 'Using software to calculate sightlines, projector brightness, and optimal display sizes for various viewing environments.' },
+                    { name: 'CAD Software (AutoCAD, Vectorworks)', description: 'Proficiency in creating and interpreting AV system drawings, elevation views, architectural plans, and creating detailed schematics.' },
+                    { name: 'AV Design Software (D-Tools, Stardraw)', description: 'Using specialized software for creating comprehensive system schematics, proposals, bills of material, and project documentation.' },
+                    { name: 'Acoustic Modeling (EASE, CATT-Acoustic)', description: 'Ability to model and predict the acoustic performance of a space to inform loudspeaker selection, placement, and required acoustic treatment for optimal intelligibility and sound quality.' },
+                    { name: 'Video Projection & Display Modeling', description: 'Using software tools to calculate sightlines, required projector brightness (lumens), contrast ratios, and optimal display sizes for various viewing environments and ambient light conditions.' },
                 ]
             },
             {
-                category: 'Manufacturer Expertise',
+                category: 'Manufacturer Expertise (Design)',
                 skills: [
-                    { name: 'Crestron', description: 'Experience designing systems with Crestron control, video distribution (DM), and audio solutions.' },
-                    // FIX: Corrected typo from `name::` to `name:`
-                    { name: 'Extron', description: 'Knowledge of Extron control systems, switchers, and signal processing product lines.' },
-                    { name: 'AMX', description: 'Familiarity with AMX control and video distribution hardware and software ecosystems.' },
-                    { name: 'Biamp', description: 'Proficiency in designing audio systems using Biamp Tesira DSPs and loudspeakers.' },
-                    { name: 'QSC', description: 'Experience with the Q-SYS ecosystem for integrated audio, video, and control design.' },
-                    { name: 'Cisco', description: 'Understanding of Cisco networking hardware and video conferencing codecs in AV design.' },
+                    { name: 'Crestron Ecosystem', description: 'In-depth knowledge of designing systems with Crestron control processors, video distribution (DM NVX, DM Lite), and audio solutions.' },
+                    { name: 'Extron Global Configurator', description: 'Knowledge of Extron control systems, switchers, and signal processing product lines for integrated room designs.' },
+                    { name: 'AMX (Harman)', description: 'Familiarity with AMX control and video distribution hardware and software ecosystems for enterprise-level solutions.' },
+                    { name: 'Biamp Tesira Platform', description: 'Proficiency in designing complex audio systems using Biamp Tesira DSPs, AVB/Dante networking, and associated peripherals.' },
+                    { name: 'QSC Q-SYS Ecosystem', description: 'Experience with the Q-SYS platform for integrated audio, video, and control design, leveraging its software-based architecture.' },
+                    { name: 'Cisco Video Conferencing', description: 'Understanding of integrating Cisco Webex codecs, peripherals, and networking hardware into comprehensive AV designs.' },
                 ]
             },
             {
                 category: 'Industry Knowledge & Certifications',
                 skills: [
-                    { name: 'CTS-D (Certified Technology Specialist - Design)', description: 'A specialized AVIXA certification focused on the principles and best practices of AV system design.' },
-                    { name: 'Building Codes & ADA Compliance', description: 'Knowledge of relevant construction codes, accessibility standards, and safety regulations that impact AV design.' },
-                    { name: 'AVIXA Standards', description: 'Familiarity with best practice standards for performance, installation, and safety in the AV industry.' },
-                    { name: 'Cost Estimation & Budgeting', description: 'Ability to create accurate project cost estimates, including hardware, labor, and contingency.' },
+                    { name: 'AVIXA CTS-D Certification', description: 'A specialized AVIXA certification demonstrating mastery of the principles and best practices of AV system design.' },
+                    { name: 'Building & Safety Codes (ADA, IBC)', description: 'Knowledge of relevant construction codes, accessibility standards (ADA), and safety regulations that impact AV system design and installation.' },
+                    { name: 'AVIXA Standards Application', description: 'Familiarity and application of best practice standards for AV performance, installation, and safety as defined by the industry association.' },
+                    { name: 'Project Budgeting & Cost Estimation', description: 'Ability to create accurate and detailed project cost estimates, including hardware, labor, programming, and contingency planning.' },
                 ]
             }
         ]
@@ -54,42 +53,42 @@ export const JOB_ROLE_DEFINITIONS: JobRoleDefinition[] = [
         category: 'Audio Visual & Media Technology',
         skillCategories: [
             {
-                category: 'Technical Skills & Commissioning',
+                category: 'Technical Commissioning & Programming',
                 skills: [
-                    { name: 'Systematic Troubleshooting', description: 'Logical and efficient problem-solving skills to diagnose and resolve complex issues in integrated AV systems.' },
-                    { name: 'System Commissioning Procedures', description: 'A methodical approach to testing, verifying, and documenting that a system meets all design specifications and performance standards.' },
-                    { name: 'Control System Programming (Crestron, AMX)', description: 'Ability to write, debug, and deploy code for control systems to implement the designed functionality.' },
-                    { name: 'DSP Configuration & Audio Calibration', description: 'Expertise in configuring digital signal processors (DSPs) and using measurement tools to calibrate audio systems for optimal performance.' },
-                    { name: 'Network Configuration (TCP/IP, IGMP, QoS)', description: 'Hands-on configuration of network switches and protocols crucial for AV-over-IP systems and device control.' },
-                    { name: 'AV Cybersecurity Best Practices', description: 'Understanding and implementing security measures to protect networked AV devices from unauthorized access.' },
+                    { name: 'Systematic Troubleshooting', description: 'Applying logical and efficient problem-solving methodologies to diagnose and resolve complex hardware, software, and network issues in integrated AV systems.' },
+                    { name: 'Formal Commissioning Procedures', description: 'Executing a methodical approach to testing, verifying, and documenting that a system meets all design specifications and performance standards before client handover.' },
+                    { name: 'Control System Programming', description: 'Advanced ability to write, debug, and deploy custom code for control systems (e.g., Crestron SIMPL/C#, AMX Netlinx) to implement the designed functionality and user interface.' },
+                    { name: 'DSP Configuration & Audio Calibration', description: 'Expertise in configuring digital signal processors (DSPs) including AEC, gain structure, and auto-mixing. Using measurement tools (e.g., Smaart, REW) to calibrate audio systems for optimal performance.' },
+                    { name: 'AV Network Configuration & Validation', description: 'Hands-on configuration of managed network switches (e.g., Cisco, Juniper) for AV-over-IP systems, including VLANs, QoS, IGMP Snooping/Querier, and PTPv2 for clocking.' },
+                    { name: 'AV Cybersecurity Implementation', description: 'Understanding and implementing security measures such as 802.1x, Active Directory integration, and certificate management to protect networked AV devices from unauthorized access.' },
                 ]
             },
             {
-                category: 'Software & Tool Proficiency',
+                category: 'Software & Diagnostic Tools',
                 skills: [
-                    { name: 'Network Analysis Tools (Wireshark)', description: 'Using software tools to capture and analyze network packets to diagnose connectivity and performance issues.' },
-                    { name: 'Audio Measurement Software (Smaart, REW)', description: 'Using acoustic analysis software to measure and optimize room acoustics and audio system performance.' },
-                    { name: 'Manufacturer Configuration Software', description: 'Proficiency with tools like Biamp Tesira software, Q-SYS Designer, and Crestron Toolbox.' },
-                    { name: 'Remote Monitoring Platforms (XiO Cloud)', description: 'Experience with platforms that allow for remote monitoring, management, and troubleshooting of AV systems.' },
-                ]
-            },
-             {
-                category: 'Hardware & Tool Handling',
-                skills: [
-                    { name: 'Test & Measurement Equipment', description: 'Proficiency with multimeters, signal generators, oscilloscopes, and cable certifiers for in-depth troubleshooting.' },
-                    { name: 'Display Calibration Equipment', description: 'Using colorimeters and light meters to professionally calibrate video displays for accurate color and brightness.' },
-                    { name: 'Network Switches & Routers', description: 'Hands-on experience with configuring managed network hardware specifically for AV applications.' },
-                    { name: 'DSP Hardware Platforms', description: 'In-depth knowledge of configuring and troubleshooting hardware like Biamp TesiraFORTE and Q-SYS Core processors.' },
+                    { name: 'Network Analysis (Wireshark)', description: 'Using packet capture tools like Wireshark to diagnose complex connectivity, multicast, and protocol-specific issues on AV networks.' },
+                    { name: 'Acoustic Analysis (Smaart, REW)', description: 'Using acoustic analysis software with measurement microphones to measure and optimize room acoustics and audio system performance.' },
+                    { name: 'Manufacturer Configuration Suites', description: 'Mastery of tools like Biamp Tesira software, Q-SYS Designer, Crestron Toolbox, and Extron PCS for device configuration, monitoring, and firmware management.' },
+                    { name: 'Remote Management Platforms (XiO Cloud)', description: 'Experience with cloud-based platforms for remote monitoring, management, firmware deployment, and troubleshooting of enterprise-wide AV systems.' },
                 ]
             },
             {
-                category: 'Manufacturer Expertise & Certifications',
+                category: 'Hardware & Test Equipment',
                 skills: [
-                    { name: 'CTS-I (Certified Technology Specialist - Installation)', description: 'Specialized AVIXA certification focused on best practices for installing and commissioning AV systems.' },
-                    { name: 'Network+ / CCNA', description: 'Industry-recognized IT networking certifications demonstrating a strong foundation in networking principles.' },
-                    { name: 'Crestron Certified Programmer', description: 'Advanced certification demonstrating expertise in programming Crestron control systems.' },
-                    { name: 'Biamp Tesira / Q-SYS Certified', description: 'Manufacturer certifications for advanced audio DSP programming and configuration.' },
-                    { name: 'Dante Certification (Levels 1-3)', description: 'Audinate certification for proficiency in setting up and managing Dante audio networks.' },
+                    { name: 'Advanced Test & Measurement', description: 'Proficiency with multimeters, oscilloscopes, video/audio signal generators, and network cable certifiers (e.g., Fluke) for in-depth system verification.' },
+                    { name: 'Video Display Calibration', description: 'Using colorimeters, spectroradiometers, and calibration software (e.g., Calman) to professionally calibrate video displays for accurate color and brightness.' },
+                    { name: 'Managed Network Switches', description: 'Hands-on experience with CLI and GUI configuration of managed network hardware from brands like Cisco, Juniper, and Aruba specifically for AV applications.' },
+                    { name: 'DSP & Control Hardware', description: 'In-depth knowledge of configuring, loading, and troubleshooting hardware like Biamp TesiraFORTE, Q-SYS Core processors, and Crestron 4-Series control processors.' },
+                ]
+            },
+            {
+                category: 'Key Certifications',
+                skills: [
+                    { name: 'AVIXA CTS-I Certification', description: 'Specialized AVIXA certification focused on best practices for installing and commissioning AV systems to a high standard.' },
+                    { name: 'Networking Certifications (CCNA/Network+)', description: 'Industry-recognized IT networking certifications demonstrating a strong foundation in networking principles, essential for modern AV.' },
+                    { name: 'Crestron Certified Programmer (CCP)', description: 'Advanced certification demonstrating expertise in programming and deploying complex Crestron control systems.' },
+                    { name: 'Biamp Tesira / Q-SYS Level 2 Certified', description: 'Manufacturer certifications for advanced audio DSP programming and configuration.' },
+                    { name: 'Audinate Dante Certification (Level 3)', description: 'Audinate certification for proficiency in setting up, managing, and troubleshooting complex Dante audio networks.' },
                 ]
             }
         ]
@@ -101,35 +100,35 @@ export const JOB_ROLE_DEFINITIONS: JobRoleDefinition[] = [
              {
                 category: 'Practical Tasks & Installation Skills',
                 skills: [
-                    { name: 'Rack Building & Wiring', description: 'Ability to build, wire, and dress equipment racks to a high standard for serviceability and reliability.' },
-                    { name: 'Cable Termination & Testing', description: 'Proficiency in terminating various cable types (e.g., RJ45, BNC, XLR, coaxial) and using testers to verify integrity.' },
-                    { name: 'Physical Installation', description: 'Experience installing equipment such as displays, projectors, screens, speakers, and cameras according to plans.' },
-                    { name: 'Reading Schematics & Drawings', description: 'Ability to interpret system drawings, architectural plans, and wiring diagrams to execute installation correctly.' },
-                    { name: 'Loading Device Firmware', description: 'Experience updating firmware on various AV devices as part of the commissioning process.' },
+                    { name: 'Rack Building & Wiring', description: 'Physically assembling and wiring equipment racks according to elevation drawings and wiring schematics. Performing neat cable management (lacing, dressing) for serviceability and reliability.' },
+                    { name: 'Cable Termination & Testing', description: 'Proficiently terminating various cable types including Cat6/6a (T568A/B), coaxial (BNC), and audio (XLR, Phoenix). Verifying all terminations with appropriate testers.' },
+                    { name: 'Physical Equipment Installation', description: 'Experience installing equipment such as displays, projectors, screens, speakers, and cameras according to plans, including mounting and securing hardware safely and accurately.' },
+                    { name: 'Reading Schematics & Plans', description: 'Ability to interpret system drawings, architectural plans, and wiring diagrams to execute installation correctly and identify potential issues on site.' },
+                    { name: 'Device Firmware Management', description: 'Experience updating firmware on various AV devices as a standard part of the commissioning process to ensure stability and feature compatibility.' },
                 ]
             },
             {
                 category: 'Hardware & Tool Handling',
                 skills: [
-                    { name: 'Hand & Power Tools', description: 'Safe and proficient use of common construction and installation tools.' },
-                    { name: 'Cable Testers & Signal Generators', description: 'Using basic test equipment to verify signal flow and cable integrity during installation.' },
-                    { name: 'Ladders & Lifts', description: 'Certified and experienced in safely using ladders, scaffolding, and scissor lifts for installations at height.' },
+                    { name: 'Hand & Power Tools', description: 'Safe and proficient use of common construction and installation tools, including drills, saws, and specialized termination tools (RJ45 crimpers, punch-down tools, BNC crimpers).' },
+                    { name: 'Cable Testers & Signal Generators', description: 'Using basic test equipment to verify signal flow and cable integrity during and after installation to ensure a fault-free system.' },
+                    { name: 'Ladders & Powered Access Lifts', description: 'Certified and experienced in safely using ladders, scaffolding, and scissor lifts (e.g., IPAF PAL card) for installations at height.' },
                 ]
             },
             {
                 category: 'Software Knowledge',
                 skills: [
-                    { name: 'Basic IP Configuration', description: 'Understanding how to set static IP addresses and check network connectivity on AV devices.' },
-                    { name: 'Control System GUI', description: 'Ability to navigate and perform basic tests using a system\'s user interface (e.g., touch panel).' },
-                    { name: 'Manufacturer Utility Software', description: 'Basic use of tools like Crestron Toolbox or Extron Toolbelt for device discovery and setup.' },
+                    { name: 'Basic IP Addressing', description: 'Understanding how to set static IP addresses, check network connectivity (ping), and verify device status on a network.' },
+                    { name: 'User Interface Navigation', description: 'Ability to navigate and perform basic tests using a system\'s user interface (e.g., touch panel, web GUI) to confirm functionality.' },
+                    { name: 'Manufacturer Utility Tools', description: 'Basic use of tools like Crestron Toolbox or Extron Toolbelt for device discovery, addressing, and initial setup.' },
                 ]
             },
             {
                 category: 'Manufacturer & Certifications',
                 skills: [
-                    { name: 'CTS (Certified Technology Specialist)', description: 'General AVIXA certification covering a broad range of AV knowledge, recognized globally.' },
-                    { name: 'Safety Certifications (CSCS, OSHA)', description: 'Holding relevant job site safety certifications required for construction environments.' },
-                    { name: 'Physical Product Knowledge', description: 'Hands-on familiarity with the physical characteristics and mounting requirements of major brands like Crestron, Extron, Biamp, Shure, etc.' },
+                    { name: 'AVIXA CTS Certification', description: 'General AVIXA certification covering a broad range of AV knowledge, recognized globally as a baseline for competency.' },
+                    { name: 'Job Site Safety Certifications (CSCS, OSHA, etc.)', description: 'Holding relevant and current job site safety certifications required for construction environments, including card-based schemes and powered access licenses (PAL).' },
+                    { name: 'Physical Product Familiarity', description: 'Hands-on familiarity with the physical characteristics and mounting requirements of major brands like Crestron, Extron, Biamp, Shure, and major display manufacturers.' },
                 ]
             }
         ]
@@ -141,35 +140,35 @@ export const JOB_ROLE_DEFINITIONS: JobRoleDefinition[] = [
              {
                 category: 'Technical Acumen',
                 skills: [
-                     { name: 'Solution Architecture', description: 'Ability to understand client needs and architect a high-level technical solution that meets their requirements and budget.' },
-                     { name: 'Broad AV/IT Ecosystem Knowledge', description: 'Wide-ranging knowledge of various manufacturers, technologies, and industry trends to propose effective solutions.' },
-                     { name: 'Understanding of Signal Flow', description: 'Ability to conceptually map out how a system will function to ensure a proposed design is viable.' },
+                     { name: 'Solution Architecture', description: 'Ability to deeply understand client business needs and architect a high-level technical solution that meets their functional requirements and budget.' },
+                     { name: 'Broad AV/IT Ecosystem Knowledge', description: 'Wide-ranging knowledge of various manufacturers, technologies (e.g., AV-over-IP, UC, wireless presentation), and industry trends to propose effective and current solutions.' },
+                     { name: 'Conceptual Signal Flow', description: 'Ability to conceptually map out how a system will function to ensure a proposed design is viable and communicate it effectively to clients and internal teams.' },
                 ]
             },
             {
                 category: 'Sales & Business Skills',
                 skills: [
-                    { name: 'Technical Proposal Writing', description: 'Creating detailed, accurate, and persuasive technical proposals and statements of work (SOWs).' },
-                    { name: 'Product Demonstrations', description: 'Skillfully demonstrating AV hardware and software capabilities to technical and non-technical audiences.' },
-                    { name: 'Client Relationship Management', description: 'Building and maintaining strong relationships with clients, acting as a trusted technical advisor.' },
-                    { name: 'Presentation Skills', description: 'Clearly and confidently presenting complex technical solutions to potential clients.' },
+                    { name: 'Technical Proposal Writing', description: 'Creating detailed, accurate, and persuasive technical proposals and statements of work (SOWs) that clearly outline the solution, deliverables, and value proposition.' },
+                    { name: 'Product & Solution Demonstrations', description: 'Skillfully demonstrating AV hardware and software capabilities to both technical and non-technical audiences, focusing on benefits and user experience.' },
+                    { name: 'Client Relationship Management', description: 'Building and maintaining strong, long-term relationships with clients, acting as a trusted technical advisor throughout the sales cycle.' },
+                    { name: 'Public Speaking & Presentation Skills', description: 'Clearly and confidently presenting complex technical solutions to individuals and groups, from engineers to C-level executives.' },
                 ]
             },
              {
                 category: 'Software Proficiency',
                 skills: [
-                    { name: 'CRM Software (Salesforce, HubSpot)', description: 'Using CRM platforms to manage leads, opportunities, and client interactions.' },
-                    { name: 'Proposal Software (D-Tools, QuoteWerks)', description: 'Proficiency with software designed for quoting and creating AV system proposals.' },
-                    { name: 'Microsoft Office Suite (Word, Excel, PowerPoint)', description: 'Advanced skills in creating professional documents, spreadsheets, and presentations.' },
+                    { name: 'CRM Software (Salesforce, HubSpot)', description: 'Using CRM platforms to manage leads, opportunities, client interactions, and sales pipelines efficiently.' },
+                    { name: 'Proposal Software (D-Tools, QuoteWerks)', description: 'Proficiency with software designed for quoting and creating detailed AV system proposals, including bills of material and labor estimates.' },
+                    { name: 'Microsoft Office Suite', description: 'Advanced skills in creating professional documents (Word), detailed spreadsheets (Excel), and compelling presentations (PowerPoint).' },
                 ]
             },
             {
-                category: 'Manufacturer Knowledge',
+                category: 'Manufacturer Product Lines',
                 skills: [
-                    { name: 'Crestron / AMX / Extron', description: 'Strong familiarity with the control and video distribution product lines to specify appropriate hardware.' },
-                    { name: 'Biamp / QSC', description: 'Knowledge of audio DSP product families and their capabilities for different applications.' },
-                    { name: 'Poly / Cisco / Teams', description: 'Understanding of unified communications (UC) and video conferencing ecosystems.' },
-                    { name: 'Shure / Sennheiser', description: 'Familiarity with professional microphone and wireless audio solutions.' },
+                    { name: 'Crestron / AMX / Extron', description: 'Strong familiarity with the control and video distribution product lines to specify appropriate hardware for various applications.' },
+                    { name: 'Biamp / QSC / Shure', description: 'Knowledge of audio DSP, microphone, and loudspeaker product families and their capabilities for different acoustic environments.' },
+                    { name: 'Poly / Cisco / Microsoft Teams', description: 'Understanding of unified communications (UC) and video conferencing ecosystems and how they integrate into meeting room environments.' },
+                    { name: 'Major Display Brands (LG, Samsung, NEC)', description: 'Familiarity with the commercial display offerings from major manufacturers, including video walls, interactive panels, and professional displays.' },
                 ]
             }
         ]

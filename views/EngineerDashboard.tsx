@@ -1,108 +1,75 @@
-import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext';
-import { EngineerProfile, ProfileTier, Skill } from '../types';
+import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+// FIX: Replaced incorrect context hook 'useInteractions' with the correct hook 'useAppContext'.
+import { useAppContext } from '../context/InteractionContext';
 import { DashboardSidebar } from '../components/DashboardSidebar';
+import { EngineerProfile } from '../types';
 import { DashboardView } from './EngineerDashboard/DashboardView';
 import { ProfileManagementView } from './EngineerDashboard/ProfileManagementView';
 import { JobSearchView } from './EngineerDashboard/JobSearchView';
 import { AvailabilityView } from './EngineerDashboard/AvailabilityView';
-import { MyNetworkView } from './EngineerDashboard/MyNetworkView';
-import { AIToolsView } from './EngineerDashboard/AIToolsView';
-import { StoryboardCreatorView } from './EngineerDashboard/StoryboardCreatorView';
-// FIX: `PaymentsView` was not a module. It has been created and is now imported correctly.
-import { PaymentsView } from './EngineerDashboard/PaymentsView';
 import { MessagesView } from './MessagesView';
-import { AnalyticsView } from './EngineerDashboard/AnalyticsView';
-import { ForumView } from './ForumView';
-import { ContractsView } from './ContractsView';
-import { InvoicesView } from './InvoicesView';
-import { AICoachView } from './EngineerDashboard/AICoachView';
-import { LoyaltyView } from './EngineerDashboard/LoyaltyView';
+import { AIToolsView } from './EngineerDashboard/AIToolsView';
+import { MyNetworkView } from './EngineerDashboard/MyNetworkView';
 import { SettingsView } from './EngineerDashboard/SettingsView';
+import { AICoachView } from './EngineerDashboard/AICoachView';
+import { StoryboardCreatorView } from './EngineerDashboard/StoryboardCreatorView';
+import { AnalyticsView } from './EngineerDashboard/AnalyticsView';
+import { ContractsView } from './ContractsView';
 import { FindPartnerView } from './EngineerDashboard/FindPartnerView';
+import { InvoicesView } from './InvoicesView';
+import { ForumView } from './ForumView';
+import { PaymentsView } from './EngineerDashboard/PaymentsView';
+import { LoyaltyView } from './EngineerDashboard/LoyaltyView';
 
 export const EngineerDashboard = () => {
-    const { user, updateEngineerProfile, setCurrentPageContext, boostProfile } = useAppContext();
+    const { user } = useAuth();
+    const { updateEngineerProfile, boostProfile, addSkillsToProfile } = useAppContext();
     const [activeView, setActiveView] = useState('Dashboard');
-    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-    useEffect(() => {
-        setCurrentPageContext(`Engineer Dashboard: ${activeView}`);
-    }, [activeView, setCurrentPageContext]);
-
-
-    const handleSaveProfile = (updatedProfile: Partial<EngineerProfile>) => {
-        if (user) {
-            updateEngineerProfile(user.profile.id, updatedProfile);
-        }
-    };
-
-    const handleSkillsAdded = (newSkills: Skill[]) => {
-        if (user) {
-            const currentProfile = user.profile as EngineerProfile;
-            const existingSkills = currentProfile.skills || [];
-            const updatedSkills = [...existingSkills];
-            newSkills.forEach(newSkill => {
-                if (!existingSkills.some(s => s.name.toLowerCase() === newSkill.name.toLowerCase())) {
-                    updatedSkills.push(newSkill);
-                }
-            });
-            handleSaveProfile({ skills: updatedSkills });
-            alert(`${newSkills.length} skills added to your profile! For best results, add these skills to a Specialist Role in the 'Manage Profile' section.`);
-            setActiveView('Manage Profile');
-        }
-    };
-    
-    const handleBoostProfile = () => {
-        if (user && (user.profile as EngineerProfile).profileTier !== ProfileTier.BASIC) {
-            boostProfile();
-            alert("Profile Boosted for 12 hours!");
-        } else {
-             alert("Profile Boosts are a premium feature. Please upgrade your profile.");
-             setActiveView('Billing');
-        }
+    if (!user || user.role !== 'Engineer') {
+        return <div>Error: Not an engineer user.</div>;
     }
 
+    const engineerProfile = user.profile as EngineerProfile;
 
-    const renderActiveView = () => {
-        if (!user || !user.profile) return <div>Loading...</div>;
-        const engineerProfile = user.profile as EngineerProfile;
-
-        switch(activeView) {
+    const renderView = () => {
+        switch (activeView) {
             case 'Dashboard':
-                return <DashboardView engineerProfile={engineerProfile} onUpgradeTier={() => {}} setActiveView={setActiveView} boostProfile={handleBoostProfile} />;
+                return <DashboardView engineerProfile={engineerProfile} onUpgradeTier={() => setActiveView('Billing')} setActiveView={setActiveView} boostProfile={boostProfile} />;
             case 'Manage Profile':
-                return <ProfileManagementView profile={engineerProfile} onSave={handleSaveProfile} setActiveView={setActiveView} />;
+                return <ProfileManagementView profile={engineerProfile} onSave={updateEngineerProfile} setActiveView={setActiveView} />;
             case 'Job Search':
-                return <JobSearchView setActiveView={setActiveView} />;
-            case 'My Network':
-                return <MyNetworkView setActiveView={setActiveView} />;
+                 return <JobSearchView setActiveView={setActiveView} />;
             case 'Find a Partner':
                 return <FindPartnerView setActiveView={setActiveView} />;
+            case 'My Network':
+                 return <MyNetworkView setActiveView={setActiveView} />;
             case 'Availability':
-                return <AvailabilityView profile={engineerProfile} onUpdateAvailability={(date) => handleSaveProfile({ availability: date })} setActiveView={setActiveView} />;
-            case 'AI Tools':
-                return <AIToolsView profile={engineerProfile} onSkillsAdded={handleSkillsAdded} setActiveView={setActiveView} />;
-            case 'AI Coach':
-                return <AICoachView profile={engineerProfile} setActiveView={setActiveView} />;
-            case 'Storyboard Creator':
-                 return <StoryboardCreatorView profile={engineerProfile} setActiveView={setActiveView} />;
-            case 'Analytics':
-                return <AnalyticsView />;
-            case 'Forum':
-                return <ForumView setActiveView={setActiveView} />;
+                return <AvailabilityView profile={engineerProfile} onUpdateAvailability={(date) => updateEngineerProfile({ id: engineerProfile.id, availability: date })} setActiveView={setActiveView} />;
             case 'Contracts':
                 return <ContractsView setActiveView={setActiveView} />;
             case 'Invoices':
                 return <InvoicesView />;
             case 'Messages':
                 return <MessagesView />;
+            case 'AI Tools':
+                return <AIToolsView profile={engineerProfile} onSkillsAdded={addSkillsToProfile} setActiveView={setActiveView} />;
+            case 'AI Coach':
+                return <AICoachView profile={engineerProfile} setActiveView={setActiveView} />;
+            case 'Storyboard Creator':
+                return <StoryboardCreatorView profile={engineerProfile} setActiveView={setActiveView} />;
+            case 'Analytics':
+                return <AnalyticsView />;
+            case 'Forum':
+                return <ForumView setActiveView={setActiveView} />;
             case 'Billing':
                 return <PaymentsView profile={engineerProfile} setActiveView={setActiveView} />;
             case 'Loyalty Program':
                 return <LoyaltyView profile={engineerProfile} setActiveView={setActiveView} />;
             case 'Settings':
-                 return <SettingsView profile={engineerProfile} onSave={handleSaveProfile} setActiveView={setActiveView} />;
+                return <SettingsView profile={engineerProfile} onSave={updateEngineerProfile} setActiveView={setActiveView} />;
             default:
                 return <div>View not found</div>;
         }
@@ -111,8 +78,8 @@ export const EngineerDashboard = () => {
     return (
         <div className="flex h-screen bg-gray-100">
             <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-grow p-6 overflow-y-auto custom-scrollbar">
-                {renderActiveView()}
+            <main className="flex-1 p-8 overflow-y-auto">
+                {renderView()}
             </main>
         </div>
     );

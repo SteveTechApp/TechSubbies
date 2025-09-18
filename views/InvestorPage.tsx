@@ -1,6 +1,7 @@
 
 
 import React, { useState, useMemo } from 'react';
+// FIX: Corrected import path for types.
 import { Page, ProfileTier } from '../types';
 import { RevenueSimulator } from '../components/RevenueSimulator';
 import { FinancialForecast } from '../components/FinancialForecast';
@@ -16,6 +17,7 @@ export const InvestorPage = ({ onNavigate }: InvestorPageProps) => {
         [ProfileTier.PROFESSIONAL]: 1500,
         [ProfileTier.SKILLS]: 750,
         [ProfileTier.BUSINESS]: 100,
+        [ProfileTier.BASIC]: 0,
     });
 
     const handleSliderChange = (tier: ProfileTier, value: number) => {

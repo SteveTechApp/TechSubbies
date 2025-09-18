@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../../context/AppContext';
+// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
+import { useAppContext } from '../../context/InteractionContext';
 import { User, Role } from '../../types';
 import { Search, User as UserIcon, Building, ShieldCheck } from '../../components/Icons';
 
@@ -13,7 +14,7 @@ export const UserManagementView = () => {
             .filter(user => {
                 const roleMatch = filterRole === 'all' || user.role === filterRole;
                 const searchMatch = user.profile.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                    ('contact' in user.profile && user.profile.contact.email.toLowerCase().includes(searchTerm.toLowerCase()));
+                                    ('contact' in user.profile && 'email' in user.profile.contact && user.profile.contact.email.toLowerCase().includes(searchTerm.toLowerCase()));
                 return roleMatch && searchMatch;
             })
             .sort((a, b) => a.profile.name.localeCompare(b.profile.name));
@@ -74,7 +75,7 @@ export const UserManagementView = () => {
                     <tbody className="bg-white divide-y divide-gray-200">
                         {filteredUsers.map(user => {
                             const roleInfo = getRoleDisplay(user.role);
-                            const email = 'contact' in user.profile ? user.profile.contact.email : 'N/A';
+                            const email = 'contact' in user.profile && 'email' in user.profile.contact ? user.profile.contact.email : 'N/A';
                             return (
                                 <tr key={user.id}>
                                     <td className="px-6 py-4 whitespace-nowrap">

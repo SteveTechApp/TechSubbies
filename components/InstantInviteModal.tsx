@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext';
+// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
+import { useAppContext } from '../context/InteractionContext';
+// FIX: Corrected import path for types.
 import { Job, EngineerProfile, ProfileTier } from '../types';
 import { X, Sparkles, Loader, Send, CheckCircle, User } from './Icons';
 

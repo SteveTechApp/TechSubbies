@@ -1,7 +1,6 @@
-
-
 import React, { useMemo } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { Page } from '../types';
 import { FeatureCard } from '../components/FeatureCard';
 import { Search, Sparkles, Handshake, ArrowRight } from '../components/Icons';
@@ -15,7 +14,8 @@ interface LandingPageProps {
 }
 
 export const LandingPage = ({ onNavigate }: LandingPageProps) => {
-  const { user, jobs } = useAppContext();
+  const { user } = useAuth();
+  const { jobs } = useData();
 
   const featuredJobs = useMemo(() => {
     return jobs
@@ -36,13 +36,13 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
           </p>
           <div className="flex justify-center gap-4 fade-in-up" style={{ animationDelay: '0.4s' }}>
             <button
-              onClick={() => onNavigate(user ? (user.profile.role === 'Engineer' ? 'engineerDashboard' : 'companyDashboard') : 'engineerSignUp')}
+              onClick={() => onNavigate(user ? (user.profile.role === 'Engineer' ? Page.ENGINEER_DASHBOARD : Page.COMPANY_DASHBOARD) : Page.ENGINEER_SIGNUP)}
               className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105"
             >
               Find Work
             </button>
             <button
-              onClick={() => onNavigate(user ? (user.profile.role === 'Engineer' ? 'engineerDashboard' : 'companyDashboard') : 'companySignUp')}
+              onClick={() => onNavigate(user ? (user.profile.role === 'Engineer' ? Page.ENGINEER_DASHBOARD : Page.COMPANY_DASHBOARD) : Page.COMPANY_SIGNUP)}
               className="bg-white text-blue-700 font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-transform transform hover:scale-105"
             >
               Find Talent
@@ -96,7 +96,7 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
             ))}
           </div>
            <button
-              onClick={() => onNavigate(user ? (user.profile.role === 'Engineer' ? 'engineerDashboard' : 'companyDashboard') : 'login')}
+              onClick={() => onNavigate(user ? (user.profile.role === 'Engineer' ? Page.ENGINEER_DASHBOARD : Page.COMPANY_DASHBOARD) : Page.LOGIN)}
               className="mt-12 bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 inline-flex items-center group"
           >
               Explore All Jobs
@@ -138,7 +138,7 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Join?</h2>
           <p className="text-gray-300 max-w-2xl mx-auto mb-8">Whether you're looking for your next contract or searching for specialist talent, get started for free today.</p>
            <button
-              onClick={() => onNavigate('engineerSignUp')}
+              onClick={() => onNavigate(Page.ENGINEER_SIGNUP)}
               className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105"
             >
               Create Your Profile

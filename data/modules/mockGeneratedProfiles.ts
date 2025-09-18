@@ -1,94 +1,78 @@
-// FIX: Created file to house generated mock profiles, resolving "not a module" error.
-import { EngineerProfile, CompanyProfile, Role, Discipline, ProfileTier, Currency, Country, ResourcingCompanyProfile, ExperienceLevel } from '../../types';
+import { EngineerProfile, CompanyProfile, Role, Discipline, ProfileTier, Currency, Country, ExperienceLevel } from '../../types';
 import { MALE_FIRST_NAMES, FEMALE_FIRST_NAMES, LAST_NAMES, LOCATIONS, COMPANY_NAMES, COMPANY_SUFFIXES } from './mockConstants';
-import { MOCK_RESOURCING_COMPANY_1, MOCK_ENGINEER_STEVE, MOCK_FREE_ENGINEER } from './mockStaticProfiles';
 import { BADGES } from '../badges';
 
-const getRandom = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
-const getRandomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
-
-const generateMockEngineers = (count: number): EngineerProfile[] => {
+// --- MOCK DATA GENERATION ---
+const generateEngineers = (count: number): EngineerProfile[] => {
     const engineers: EngineerProfile[] = [];
-    for (let i = 0; i < count; i++) {
-        const isMale = Math.random() > 0.5;
-        const firstName = isMale ? getRandom(MALE_FIRST_NAMES) : getRandom(FEMALE_FIRST_NAMES);
-        const name = `${firstName} ${getRandom(LAST_NAMES)}`;
-        const experience = getRandomInt(3, 25);
-        const tier = Math.random() > 0.6 ? ProfileTier.SKILLS : (Math.random() > 0.4 ? ProfileTier.PROFESSIONAL : ProfileTier.BASIC);
-        const minRate = getRandomInt(15, 40) * 10;
-        const maxRate = minRate + getRandomInt(5, 15) * 10;
+    const allFirstNames = [...MALE_FIRST_NAMES, ...FEMALE_FIRST_NAMES];
 
-        let experienceLevel: ExperienceLevel;
-        if (experience < 3) experienceLevel = ExperienceLevel.JUNIOR;
-        else if (experience <= 7) experienceLevel = ExperienceLevel.MID_LEVEL;
-        else if (experience <= 15) experienceLevel = ExperienceLevel.SENIOR;
-        else experienceLevel = ExperienceLevel.EXPERT;
+    for (let i = 0; i < count; i++) {
+        const firstName = allFirstNames[i % allFirstNames.length];
+        const lastName = LAST_NAMES[i % LAST_NAMES.length];
+        const name = `${firstName} ${lastName}`;
+        const experience = 2 + Math.floor(Math.random() * 18);
+        const availability = new Date();
+        availability.setDate(availability.getDate() + Math.floor(Math.random() * 60));
 
         engineers.push({
-            id: `gen-eng-${i}`,
+            id: `gen-eng-${i + 1}`,
             name,
-            avatar: `https://xsgames.co/randomusers/assets/avatars/${isMale ? 'male' : 'female'}/${i}.jpg`,
+            avatar: `https://xsgames.co/randomusers/assets/avatars/${MALE_FIRST_NAMES.includes(firstName) ? 'male' : 'female'}/${i % 78}.jpg`,
             status: 'active',
             role: Role.ENGINEER,
-            discipline: getRandom([Discipline.AV, Discipline.IT, Discipline.BOTH]),
-            location: `${getRandom(LOCATIONS)}, UK`,
+            discipline: i % 3 === 0 ? Discipline.IT : Discipline.AV,
+            location: `${LOCATIONS[i % LOCATIONS.length]}, UK`,
             country: Country.UK,
-            description: `A skilled and reliable ${name} with ${experience} years of experience in the industry.`,
+            description: `A skilled ${i % 3 === 0 ? 'IT' : 'AV'} engineer with ${experience} years of experience.`,
             experience,
-            experienceLevel,
-            profileTier: tier,
-            minDayRate: minRate,
-            maxDayRate: tier === ProfileTier.BASIC ? Math.min(maxRate, 195) : maxRate,
+            experienceLevel: experience > 10 ? ExperienceLevel.EXPERT : experience > 5 ? ExperienceLevel.SENIOR : ExperienceLevel.MID_LEVEL,
+            profileTier: i % 4 === 0 ? ProfileTier.BASIC : i % 4 === 1 ? ProfileTier.PROFESSIONAL : ProfileTier.SKILLS,
+            minDayRate: 200 + (i * 10),
+            maxDayRate: 300 + (i * 15),
             currency: Currency.GBP,
-            availability: new Date(new Date().getTime() + getRandomInt(-10, 60) * 24 * 60 * 60 * 1000),
-            skills: [{ name: 'Troubleshooting', rating: getRandomInt(60, 95) }, { name: 'Teamwork', rating: getRandomInt(70, 100) }],
-            compliance: { professionalIndemnity: { hasCoverage: Math.random() > 0.3, isVerified: false }, publicLiability: { hasCoverage: Math.random() > 0.2, isVerified: false }, siteSafe: Math.random() > 0.5, cscsCard: Math.random() > 0.4, ownPPE: true, hasOwnTransport: Math.random() > 0.3, hasOwnTools: Math.random() > 0.2, powerToolCompetency: getRandomInt(50, 100), accessEquipmentTrained: getRandomInt(40, 90), firstAidTrained: Math.random() > 0.7, carriesSpares: Math.random() > 0.6 },
-            identity: { documentType: 'none', isVerified: false },
-            profileViews: getRandomInt(20, 200),
-            searchAppearances: getRandomInt(300, 2500),
-            jobInvites: getRandomInt(0, 20),
-            reputation: getRandomInt(70, 99),
-            complianceScore: getRandomInt(50, 98),
-            resourcingCompanyId: (i === 1 || i === 2) ? 'res-1' : undefined,
-            calendarSyncUrl: `https://techsubbies.com/cal/gen-eng-${i}.ics`,
-            badges: i === 0 ? [BADGES['rising-star']] : [],
-            contact: { email: `${name.replace(' ', '.').toLowerCase()}@email.com`, phone: '07123456789' },
-            platformCredits: getRandomInt(0, 5),
-            loyaltyPoints: getRandomInt(0, 1000),
-            referralCode: `REF${name.split(' ')[0].toUpperCase()}${getRandomInt(100,999)}`,
-            hasReceivedCompletionBonus: Math.random() > 0.5,
+            availability,
+            skills: [{ name: 'Troubleshooting', rating: 75 }, { name: 'Networking', rating: 80 }],
+            compliance: {},
+            identity: {},
+            profileViews: 10 + Math.floor(Math.random() * 100),
+            searchAppearances: 200 + Math.floor(Math.random() * 800),
+            jobInvites: Math.floor(Math.random() * 10),
+            reputation: 70 + Math.floor(Math.random() * 30),
+            complianceScore: 60 + Math.floor(Math.random() * 40),
+            calendarSyncUrl: `https://techsubbies.com/cal/gen-eng-${i+1}.ics`,
+            badges: [],
+            contact: { email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`},
+            platformCredits: Math.floor(Math.random() * 5),
+            // FIX: Added missing loyaltyPoints property to conform to the EngineerProfile interface.
+            loyaltyPoints: 50 + Math.floor(Math.random() * 500),
         });
     }
     return engineers;
 };
 
-const generateMockCompanies = (count: number): CompanyProfile[] => {
-    return Array.from({ length: count }, (_, i) => {
-        const name = `${getRandom(COMPANY_NAMES)} ${getRandom(COMPANY_SUFFIXES)}`;
-        return {
-            id: `gen-comp-${i}`,
+const generateCompanies = (count: number): CompanyProfile[] => {
+    const companies: CompanyProfile[] = [];
+    for (let i = 0; i < count; i++) {
+        const name = `${COMPANY_NAMES[i % COMPANY_NAMES.length]} ${COMPANY_SUFFIXES[i % COMPANY_SUFFIXES.length]}`;
+        companies.push({
+            id: `gen-comp-${i + 1}`,
             name,
-            avatar: `https://robohash.org/${name}.png?set=set4`,
-            logo: `https://robohash.org/${name}.png?set=set4`,
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
+            logo: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
             status: 'active',
             role: Role.COMPANY,
-            website: `https://${name.replace(/\s/g, '').toLowerCase()}.com`,
-            location: `${getRandom(LOCATIONS)}, UK`,
-            contact: { name: 'Hiring Manager', email: `contact@${name.replace(/\s/g, '').toLowerCase()}.com` }
-        };
-    });
+            website: `https://www.${name.toLowerCase().replace(/\s/g, '')}.com`,
+            location: `${LOCATIONS[i % LOCATIONS.length]}, UK`,
+            contact: {
+                name: 'Hiring Manager',
+                email: `hiring@${name.toLowerCase().replace(/\s/g, '')}.com`
+            }
+        });
+    }
+    return companies;
 };
 
-export const MOCK_ENGINEERS: EngineerProfile[] = [
-    MOCK_ENGINEER_STEVE,
-    MOCK_FREE_ENGINEER,
-    ...generateMockEngineers(20),
-];
 
-export const MOCK_COMPANIES: (CompanyProfile | ResourcingCompanyProfile)[] = [
-    { id: 'comp-1', name: 'Pro AV Solutions', avatar: 'https://i.imgur.com/L45aA6d.jpg', logo: 'https://i.imgur.com/your-logo-url.png', status: 'active', role: Role.COMPANY, website: 'https://www.proav.com', location: 'London, UK', contact: { name: 'Steve G.', email: 'steve.g@proav.com' } },
-    { id: 'comp-2', name: 'Starlight Events', avatar: 'https://i.imgur.com/your-avatar-url.png', logo: 'https://i.imgur.com/your-logo-url.png', status: 'active', role: Role.COMPANY, website: 'https://www.starlight.com', location: 'Manchester, UK', contact: { name: 'Sarah Jones', email: 'sarah@starlight.com' } },
-    { id: 'comp-3', name: 'Nexus IT', avatar: 'https://i.imgur.com/your-avatar-url.png', logo: 'https://i.imgur.com/your-logo-url.png', status: 'active', role: Role.COMPANY, website: 'https://www.nexusit.com', location: 'Birmingham, UK', contact: { name: 'Emily C.', email: 'emily.c@nexusit.com' } },
-    MOCK_RESOURCING_COMPANY_1,
-    ...generateMockCompanies(10)
-];
+export const MOCK_ENGINEERS: EngineerProfile[] = generateEngineers(20);
+export const MOCK_COMPANIES: CompanyProfile[] = generateCompanies(10);

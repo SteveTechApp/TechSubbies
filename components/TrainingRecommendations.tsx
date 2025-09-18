@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useSettings } from '../context/SettingsContext';
 import { EngineerProfile, TrainingProvider } from '../types';
 import { MOCK_TRAINING_PROVIDERS } from '../data/trainingProviders';
 import { Award, Loader, Sparkles } from './Icons';
@@ -29,7 +28,7 @@ const findProvidersByKeywords = (keywords: string[]): TrainingProvider[] => {
 };
 
 export const TrainingRecommendations = ({ profile }: TrainingRecommendationsProps) => {
-    const { geminiService } = useAppContext();
+    const { geminiService } = useSettings();
     const [isLoading, setIsLoading] = useState(false);
     const [recommendations, setRecommendations] = useState<Recommendation[] | null>(null);
     const [error, setError] = useState('');

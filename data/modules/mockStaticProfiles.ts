@@ -86,11 +86,11 @@ export const MOCK_ENGINEER_STEVE: EngineerProfile = {
     skills: [{ name: 'Project Management', rating: 95 }, { name: 'Crestron', rating: 90 }, { name: 'Biamp', rating: 85 }],
     selectedJobRoles: [
         { 
-            roleName: 'AV Systems Engineer', 
+            roleName: 'AV Systems Engineer / Commissioner', 
             skills: [
-                { name: 'Troubleshooting complex AV systems', rating: 95 }, 
-                { name: 'System commissioning and testing procedures', rating: 98 },
-                { name: 'Performance optimization', rating: 90 }
+                { name: 'Systematic Troubleshooting', rating: 95 }, 
+                { name: 'Formal Commissioning Procedures', rating: 98 },
+                { name: 'DSP Configuration & Audio Calibration', rating: 90 }
             ], 
             overallScore: 94 
         }
@@ -110,14 +110,14 @@ export const MOCK_ENGINEER_STEVE: EngineerProfile = {
             ]
         }, 
         { 
-            name: 'Crestron Master Programmer', 
+            name: 'Crestron Certified Programmer (CCP)', 
             verified: true,
             documents: [
                 { id: 'doc3', name: 'CMP_Certificate.pdf', url: '#', verified: true }
             ]
         },
         {
-            name: 'Dante Level 3',
+            name: 'Dante Certification (Level 3)',
             verified: false,
             documents: [
                 { id: 'doc4', name: 'dante-level3-exam-results.pdf', url: '#', verified: false }

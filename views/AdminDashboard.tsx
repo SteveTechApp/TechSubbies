@@ -1,24 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { DashboardSidebar } from '../components/DashboardSidebar';
+import { Role } from '../types';
 import { DashboardView } from './AdminDashboard/DashboardView';
 import { UserManagementView } from './AdminDashboard/UserManagementView';
 import { JobManagementView } from './AdminDashboard/JobManagementView';
-import { PlatformSettingsView } from './AdminDashboard/PlatformSettingsView';
 import { MonetizationView } from './AdminDashboard/MonetizationView';
-import { useAppContext } from '../context/AppContext';
+import { PlatformSettingsView } from './AdminDashboard/PlatformSettingsView';
 
 export const AdminDashboard = () => {
-    const { setCurrentPageContext } = useAppContext();
+    const { user } = useAuth();
     const [activeView, setActiveView] = useState('Dashboard');
 
-    useEffect(() => {
-        setCurrentPageContext(`Admin Dashboard: ${activeView}`);
-    }, [activeView, setCurrentPageContext]);
+    if (!user || user.role !== Role.ADMIN) {
+        return <div>Access Denied.</div>;
+    }
 
-    const renderActiveView = () => {
-        switch(activeView) {
+    const renderView = () => {
+        switch (activeView) {
             case 'Dashboard':
-                return <DashboardView setActiveView={setActiveView} />;
+                return <DashboardView setActiveView={setActiveView}/>;
             case 'Manage Users':
                 return <UserManagementView />;
             case 'Manage Jobs':
@@ -28,20 +29,15 @@ export const AdminDashboard = () => {
             case 'Platform Settings':
                 return <PlatformSettingsView />;
             default:
-                 return (
-                    <div>
-                        <h1 className="text-2xl font-bold">{activeView} - Coming Soon</h1>
-                        <p className="mt-4">This feature is under development.</p>
-                    </div>
-                );
+                return <div>Dashboard</div>;
         }
     };
 
     return (
-        <div className="flex h-screen overflow-hidden">
+        <div className="flex h-screen bg-gray-100">
             <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-grow p-6 bg-gray-50 overflow-y-auto custom-scrollbar">
-                {renderActiveView()}
+            <main className="flex-1 p-8 overflow-y-auto">
+                {renderView()}
             </main>
         </div>
     );

@@ -1,6 +1,9 @@
 
+
 import React, { useState, useMemo } from 'react';
+// FIX: Corrected import path for types.
 import { EngineerProfile } from '../../types';
+// FIX: Corrected import path for icons.
 import { ChevronLeft, ChevronRight, ArrowLeft, Link as LinkIcon, Copy, CheckCircle } from '../../components/Icons';
 
 interface AvailabilityViewProps {

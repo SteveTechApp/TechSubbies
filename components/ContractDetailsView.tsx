@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+// FIX: Corrected import path for types.
 import { Contract, User, Role, ContractStatus, UserProfile, CompanyProfile, EngineerProfile, Milestone, MilestoneStatus, ContractType, Timesheet, PaymentTerms } from '../types';
-import { useAppContext } from '../context/AppContext';
+// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
+import { useAppContext } from '../context/InteractionContext';
 import { FileText, User as UserIcon, Building, Calendar, CheckCircle, Clock, DollarSign, Loader, BrainCircuit } from './Icons';
 import { SignContractModal } from './SignContractModal';
 import { formatDisplayDate } from '../utils/dateFormatter';

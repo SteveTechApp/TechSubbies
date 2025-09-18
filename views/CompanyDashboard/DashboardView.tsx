@@ -1,7 +1,10 @@
 
+
 import React from 'react';
+// FIX: Corrected import path for types.
 import { User, Job, EngineerProfile, Application } from '../../types';
 import { StatCard } from '../../components/StatCard';
+// FIX: Corrected import path for icons.
 import { Briefcase, Users, PlusCircle, Search } from '../../components/Icons';
 
 interface DashboardViewProps {

@@ -3,7 +3,8 @@ import { Project, ProjectRole, Discipline } from '../../types';
 import { ProgressTracker } from '../../components/SignUp/ProgressTracker';
 import { ProjectTimeline } from '../../components/ProjectTimeline';
 import { ArrowLeft, ArrowRight, Plus, Trash2 } from '../../components/Icons';
-import { useAppContext } from '../../context/AppContext';
+// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
+import { useAppContext } from '../../context/InteractionContext';
 
 // --- Step Components ---
 
@@ -45,8 +46,7 @@ const Step2Resources = ({ data, setData }: { data: Partial<Project>, setData: Fu
         const role = newPhases[phaseIndex].roles[roleIndex] as any;
         role[field] = value;
 
-        // Auto-adjust end date if start date changes
-        if(field === 'startDate' && new Date(value) > role.endDate) {
+        if(field === 'startDate' && new Date(value) > new Date(role.endDate)) {
             role.endDate = value;
         }
 
@@ -98,9 +98,13 @@ const Step3Summary = ({ data }: { data: Partial<Project> }) => (
 
 
 // --- Main Component ---
+interface ProjectPlannerViewProps {
+    onProjectCreated: () => void;
+}
 
-export const ProjectPlannerView = () => {
-    const { user } = useAppContext();
+export const ProjectPlannerView = ({ onProjectCreated }: ProjectPlannerViewProps) => {
+    // FIX: Added createProject to the destructuring to fix missing property error.
+    const { user, createProject } = useAppContext();
     const [step, setStep] = useState(1);
     const [projectData, setProjectData] = useState<Partial<Project>>({ companyId: user?.profile.id, roles: [] });
 
@@ -108,8 +112,13 @@ export const ProjectPlannerView = () => {
     const prevStep = () => setStep(s => Math.max(s - 1, 1));
     
     const handleSubmit = () => {
-        alert("Project Created! (Check console for data)");
-        console.log(projectData);
+        if (!projectData.name || !projectData.description || !projectData.roles || projectData.roles.length === 0) {
+            alert("Please provide a project name, description, and at least one role.");
+            return;
+        }
+        createProject(projectData as Omit<Project, 'id'>);
+        alert("Project Created! You will now be taken to the Project Tracking view.");
+        onProjectCreated();
     };
 
     const renderStep = () => {

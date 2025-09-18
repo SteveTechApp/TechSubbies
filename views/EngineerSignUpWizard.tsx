@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { Currency, Discipline, Compliance, IdentityVerification, Country, ExperienceLevel } from '../types';
 import { Logo } from '../components/Logo';
 import { ArrowLeft } from '../components/Icons';
@@ -17,7 +16,7 @@ interface EngineerSignUpWizardProps {
 const WIZARD_STEPS = 4;
 
 export const EngineerSignUpWizard = ({ onCancel }: EngineerSignUpWizardProps) => {
-    const { createAndLoginEngineer } = useAppContext();
+    const { createAndLoginEngineer } = useAuth();
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         name: '', email: '', discipline: Discipline.AV, location: '', experience: 5,

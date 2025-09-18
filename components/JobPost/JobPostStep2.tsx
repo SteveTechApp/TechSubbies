@@ -1,25 +1,23 @@
-
-
 import React, { useEffect, useState } from 'react';
 import { JobSkillRequirement, SkillImportance } from '../../types';
 import { Save, Loader, Sparkles } from '../Icons';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/InteractionContext';
 
 interface JobPostStep2Props {
     jobDetails: any;
     skillRequirements: JobSkillRequirement[];
-    // FIX: Corrected the type definition to allow for state setter callbacks, which is the standard for React's useState setters.
     setSkillRequirements: React.Dispatch<React.SetStateAction<JobSkillRequirement[]>>;
     onBack: () => void;
     onSubmit: () => void;
 }
 
 const SkillRequirementSelector = ({ skill, selection, onSelect }: { skill: JobSkillRequirement, selection: SkillImportance | 'N/A', onSelect: (importance: SkillImportance | 'N/A') => void }) => {
+    // FIX: Replaced string literals with SkillImportance enum members for type safety.
     const getButtonClass = (value: SkillImportance | 'N/A') => {
         let base = 'px-3 py-1 text-xs font-bold rounded-full';
         if (value === selection) {
-            if (value === 'essential') return `${base} bg-yellow-400 text-yellow-900`;
-            if (value === 'desirable') return `${base} bg-blue-200 text-blue-800`;
+            if (value === SkillImportance.ESSENTIAL) return `${base} bg-yellow-400 text-yellow-900`;
+            if (value === SkillImportance.DESIRABLE) return `${base} bg-blue-200 text-blue-800`;
             return `${base} bg-gray-400 text-white`;
         }
         return `${base} bg-gray-200 text-gray-600 hover:bg-gray-300`;
@@ -29,8 +27,9 @@ const SkillRequirementSelector = ({ skill, selection, onSelect }: { skill: JobSk
         <div className="flex items-center justify-between p-2 bg-white rounded-md">
             <span className="font-medium text-gray-700 text-sm">{skill.name}</span>
             <div className="flex items-center gap-2">
-                <button type="button" onClick={() => onSelect('essential')} className={getButtonClass('essential')}>Essential</button>
-                <button type="button" onClick={() => onSelect('desirable')} className={getButtonClass('desirable')}>Desirable</button>
+                {/* FIX: Replaced string literals with SkillImportance enum members for type safety. */}
+                <button type="button" onClick={() => onSelect(SkillImportance.ESSENTIAL)} className={getButtonClass(SkillImportance.ESSENTIAL)}>Essential</button>
+                <button type="button" onClick={() => onSelect(SkillImportance.DESIRABLE)} className={getButtonClass(SkillImportance.DESIRABLE)}>Desirable</button>
                 <button type="button" onClick={() => onSelect('N/A')} className={getButtonClass('N/A')}>N/A</button>
             </div>
         </div>
@@ -120,7 +119,8 @@ export const JobPostStep2 = ({ jobDetails, skillRequirements, setSkillRequiremen
             <div className="flex justify-between items-center mt-6 pt-4 border-t">
                 <button onClick={onBack} className="px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Back</button>
                 <button onClick={onSubmit} className="flex items-center px-6 py-2 bg-green-600 text-white font-bold rounded-md hover:bg-green-700">
-                    <Save size={18} className="mr-2" /> Post Job
+                    <Save size={18} className="mr-2" />
+                    Post Job
                 </button>
             </div>
         </>

@@ -1,78 +1,61 @@
-import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../../context/AppContext';
-import { Contract, Role } from '../../types';
-import { ContractDetailsView } from '../../components/ContractDetailsView';
-import { Briefcase, ArrowLeft } from '../../components/Icons';
+import React, { useState } from 'react';
+import { Contract } from '../../types';
+import { useAppContext } from '../../context/InteractionContext';
+import { ContractDetailsView } from '../ContractDetailsView';
 
-const ContractListItem = ({ contract, onSelect }: { contract: Contract, onSelect: () => void }) => {
-    const { findUserByProfileId } = useAppContext();
-    
-    const company = findUserByProfileId(contract.companyId);
-    const engineer = findUserByProfileId(contract.engineerId);
+interface PlacementsViewProps {
+    managedContracts: Contract[];
+    setActiveView: (view: string) => void;
+}
 
-    return (
-        <button onClick={onSelect} className="w-full text-left p-4 border rounded-md flex justify-between items-center hover:bg-gray-50 hover:shadow-md transition-all">
-            <div>
-                <h3 className="font-bold text-lg text-blue-700">{contract.jobTitle}</h3>
-                <p className="text-gray-600 text-sm">
-                    <span className="font-semibold">{company?.profile.name || '...'}</span> hiring <span className="font-semibold">{engineer?.profile.name || '...'}</span>
-                </p>
-            </div>
-             <div className="text-right">
-                 <p className="text-sm font-bold">{contract.currency}{contract.amount}</p>
-                 <p className="text-xs text-gray-400 mt-1">ID: {contract.id}</p>
-            </div>
-        </button>
-    );
-};
-
-
-export const PlacementsView = ({ managedContracts, setActiveView }: { managedContracts: Contract[], setActiveView: (view: string) => void }) => {
-    const { jobs } = useAppContext();
+export const PlacementsView = ({ managedContracts, setActiveView }: PlacementsViewProps) => {
     const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
-
-    const contractsWithTitles = useMemo(() => {
-        return managedContracts
-            .map(c => {
-                const job = jobs.find(j => j.id === c.jobId);
-                return { ...c, jobTitle: job?.title || 'Unknown Job' };
-            })
-            .sort((a, b) => b.id.localeCompare(a.id));
-    }, [managedContracts, jobs]);
+    const { findUserByProfileId } = useAppContext();
 
     if (selectedContract) {
         return (
-            <div>
-                 <button 
-                    onClick={() => setSelectedContract(null)} 
-                    className="flex items-center mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-                >
-                    <ArrowLeft size={16} className="mr-2" />
-                    Back to Placements List
-                </button>
+             <div>
+                <button onClick={() => setSelectedContract(null)} className="text-blue-600 hover:underline mb-4">&larr; Back to All Placements</button>
                 <ContractDetailsView contract={selectedContract} />
             </div>
-        );
+        )
     }
-    
+
     return (
-      <div>
-        <h1 className="text-3xl font-bold mb-4 flex items-center"><Briefcase className="mr-3"/> My Placements</h1>
-        <div className="bg-white p-5 rounded-lg shadow">
-            {contractsWithTitles.length > 0 ? (
-                <div className="space-y-4">
-                    {contractsWithTitles.map(contract => 
-                        <ContractListItem 
-                            key={contract.id} 
-                            contract={contract} 
-                            onSelect={() => setSelectedContract(contract)}
-                        />
-                    )}
-                </div>
-            ) : (
-                <p className="text-center text-gray-500 py-8">You do not have any active placements for your managed engineers yet.</p>
-            )}
+        <div>
+            <h1 className="text-3xl font-bold mb-6">Contracts & Placements</h1>
+             <div className="bg-white rounded-lg shadow overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Engineer</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Job Title</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Value</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th className="relative px-6 py-3"></th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {managedContracts.map(contract => {
+                            const engineer = findUserByProfileId(contract.engineerId)?.profile;
+                            const company = findUserByProfileId(contract.companyId)?.profile;
+                            return (
+                                <tr key={contract.id}>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{engineer?.name}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{company?.name}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{contract.jobTitle}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">{contract.currency}{contract.amount}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm">{contract.status}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button onClick={() => setSelectedContract(contract)} className="text-blue-600 hover:text-blue-900">View Details</button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
         </div>
-      </div>
-  );
+    );
 };

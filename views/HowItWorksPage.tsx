@@ -64,7 +64,8 @@ const TabContent = ({ tab, onNavigate }: { tab: Tab, onNavigate: (page: Page) =>
                         imageSide="left"
                     />
                     <div className="text-center py-12">
-                         <button onClick={() => onNavigate('engineerSignUp')} className="bg-blue-600 text-white font-bold py-4 px-10 rounded-lg text-lg hover:bg-blue-700 transition-transform transform hover:scale-105">
+                         {/* FIX: Replaced string literal with Page enum for type safety. */}
+                         <button onClick={() => onNavigate(Page.ENGINEER_SIGNUP)} className="bg-blue-600 text-white font-bold py-4 px-10 rounded-lg text-lg hover:bg-blue-700 transition-transform transform hover:scale-105">
                             Create Your Free Profile Now
                         </button>
                     </div>
@@ -96,7 +97,8 @@ const TabContent = ({ tab, onNavigate }: { tab: Tab, onNavigate: (page: Page) =>
                         imageSide="left"
                     />
                     <div className="text-center py-12">
-                         <button onClick={() => onNavigate('companySignUp')} className="bg-green-600 text-white font-bold py-4 px-10 rounded-lg text-lg hover:bg-green-700 transition-transform transform hover:scale-105">
+                         {/* FIX: Replaced string literal with Page enum for type safety. */}
+                         <button onClick={() => onNavigate(Page.COMPANY_SIGNUP)} className="bg-green-600 text-white font-bold py-4 px-10 rounded-lg text-lg hover:bg-green-700 transition-transform transform hover:scale-105">
                             Post Your Job For Free
                         </button>
                     </div>
@@ -128,7 +130,8 @@ const TabContent = ({ tab, onNavigate }: { tab: Tab, onNavigate: (page: Page) =>
                         imageSide="left"
                     />
                     <div className="text-center py-12">
-                         <button onClick={() => onNavigate('resourcingCompanySignUp')} className="bg-indigo-600 text-white font-bold py-4 px-10 rounded-lg text-lg hover:bg-indigo-700 transition-transform transform hover:scale-105">
+                         {/* FIX: Replaced string literal with Page enum for type safety. */}
+                         <button onClick={() => onNavigate(Page.RESOURCING_SIGNUP)} className="bg-indigo-600 text-white font-bold py-4 px-10 rounded-lg text-lg hover:bg-indigo-700 transition-transform transform hover:scale-105">
                             Join as a Resourcing Partner
                         </button>
                     </div>
@@ -148,7 +151,8 @@ export const HowItWorksPage = ({ onNavigate }: HowItWorksPageProps) => {
 
     return (
         <div className="bg-white">
-            <PageHeader onBack={() => onNavigate('landing')} />
+            {/* FIX: Replaced string literal with Page enum for type safety. */}
+            <PageHeader onBack={() => onNavigate(Page.LANDING)} />
 
             {/* Hero Section */}
             <section className="bg-gray-800 text-white py-20 text-center">

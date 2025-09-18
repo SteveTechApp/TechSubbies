@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext';
+// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
+import { useAppContext } from '../context/InteractionContext';
 import { MOCK_ENGINEER_STEVE } from '../data/modules/mockStaticProfiles';
 import { STEVE_GOODWIN_CV_TEXT, JOHN_SMITH_CV_TEXT } from '../data/mockCVs';
 import { BrainCircuit, Loader } from './Icons';

@@ -1,8 +1,10 @@
 import React from 'react';
+// FIX: Corrected import path for types.
 import { ForumPost, UserProfile } from '../../types';
 import { ArrowUp, ArrowDown, MessageSquare } from '../Icons';
 import { formatTimeAgo } from '../../utils/dateFormatter';
-import { useAppContext } from '../../context/AppContext';
+// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
+import { useAppContext } from '../../context/InteractionContext';
 
 interface ForumPostItemProps {
     post: ForumPost;

@@ -1,5 +1,6 @@
 
 
+
 import React from 'react';
 import { Page } from '../types';
 import { PageHeader } from '../components/PageHeader';
@@ -13,7 +14,8 @@ interface ForCompaniesPageProps {
 export const ForCompaniesPage = ({ onNavigate }: ForCompaniesPageProps) => {
   return (
     <div className="bg-white">
-      <PageHeader onBack={() => onNavigate('landing')} />
+      {/* FIX: Replaced string literal with Page enum for type safety. */}
+      <PageHeader onBack={() => onNavigate(Page.LANDING)} />
 
       {/* Hero Section */}
       <section className="relative bg-gray-800 text-white py-20 text-center">
@@ -61,7 +63,8 @@ export const ForCompaniesPage = ({ onNavigate }: ForCompaniesPageProps) => {
         <div className="container mx-auto px-4 text-center text-white">
           <h2 className="text-3xl font-bold">Ready to Find Your Next Hire?</h2>
           <p className="my-4 max-w-2xl mx-auto text-blue-100">Join the world's leading companies who are building their flexible workforce on TechSubbies.</p>
-          <button onClick={() => onNavigate('companySignUp')} className="bg-white text-blue-700 font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-transform transform hover:scale-105 mt-2">
+          {/* FIX: Replaced string literal with Page enum for type safety. */}
+          <button onClick={() => onNavigate(Page.COMPANY_SIGNUP)} className="bg-white text-blue-700 font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-transform transform hover:scale-105 mt-2">
             Post a Job For Free
           </button>
         </div>

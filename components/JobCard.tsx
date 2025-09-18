@@ -1,6 +1,9 @@
 import React from 'react';
+import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
+// FIX: Replaced incorrect context hook 'useInteractions' with the correct hook 'useAppContext'.
+import { useAppContext } from '../context/InteractionContext';
 import { Job, CompanyProfile, EngineerProfile, ProfileTier } from '../types';
-import { useAppContext } from '../context/AppContext';
 import { MapPin, DollarSign, Clock, Layers, Briefcase, Calendar } from './Icons';
 import { formatDisplayDate } from '../utils/dateFormatter';
 
@@ -9,96 +12,69 @@ interface JobCardProps {
     setActiveView: (view: string) => void;
 }
 
-export const JobCard = ({ job, setActiveView }: JobCardProps) => {
-    const { companies, applyForJob, applyForJobWithCredit, user, applications } = useAppContext();
-    const company = companies.find(c => c.id === job.companyId) as CompanyProfile | undefined;
-    
-    const hasApplied = user ? applications.some(app => app.jobId === job.id && app.engineerId === user.profile.id) : false;
+const JobCardComponent = ({ job, setActiveView }: JobCardProps) => {
+    const { companies, applications } = useData();
+    const { user } = useAuth();
+    const { applyForJob, applyForJobWithCredit } = useAppContext();
+
+    const company = companies.find(c => c.id === job.companyId) as CompanyProfile;
 
     if (!company) return null;
-    
-    const isFreeTier = user && user.profile.role === 'Engineer' && (user.profile as EngineerProfile).profileTier === ProfileTier.BASIC;
+
     const engineerProfile = user?.profile as EngineerProfile;
-    const hasCredits = isFreeTier && engineerProfile.platformCredits > 0;
+    const hasApplied = user && applications.some(app => app.jobId === job.id && app.engineerId === user.profile.id);
+    const canAfford = engineerProfile ? engineerProfile.platformCredits > 0 : false;
+    const requiresCredit = job.dayRate > '195' && engineerProfile?.profileTier === ProfileTier.BASIC;
 
-    const handleApply = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (user && user.profile.role === 'Engineer' && !hasApplied) {
-            applyForJob(job.id, user.profile.id);
-            alert(`Successfully applied for: ${job.title}`);
-        }
-    };
-    
-     const handleApplyWithCredit = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (user && user.profile.role === 'Engineer' && !hasApplied) {
-            if (hasCredits) {
-                applyForJobWithCredit(job.id);
-            } else {
-                if (window.confirm("You have no Platform Credits. Would you like to purchase some to feature your application?")) {
-                    setActiveView('Billing');
-                }
-            }
-        }
-    };
-    
-    const handleViewJob = () => {
-        // In a more complex app, this would navigate to a full job details page.
-        // For this demo, we can just log it.
-        console.log("Viewing job details for:", job.title);
-        alert("This would normally navigate to a full job details view.");
-    };
-
-    const renderApplyButton = () => {
-        if (hasApplied) {
-            return (
-                <button disabled className="px-4 py-2 text-sm font-bold rounded-md bg-gray-200 text-gray-500 cursor-not-allowed">
-                    Applied
-                </button>
-            );
-        }
-
-        if (isFreeTier) {
-             const buttonClass = hasCredits 
-                ? 'bg-purple-600 text-white hover:bg-purple-700'
-                : 'bg-green-600 text-white hover:bg-green-700';
-            const buttonText = hasCredits ? 'Apply with Free Credit' : 'Feature your Application';
-            return (
-                 <button onClick={handleApplyWithCredit} className={`px-4 py-2 text-sm font-bold rounded-md transition-colors ${buttonClass}`}>
-                    {buttonText}
-                </button>
-            )
-        }
+    const handleApply = () => {
+        if (!user || user.role !== 'Engineer') return;
         
-        return (
-             <button onClick={handleApply} className="px-4 py-2 text-sm font-bold rounded-md transition-colors bg-green-600 text-white hover:bg-green-700">
-                Apply Now
-            </button>
-        )
+        if (requiresCredit) {
+            if (canAfford) {
+                if (window.confirm("This job is above your plan's day rate limit. Applying will use 1 Platform Credit. Continue?")) {
+                    applyForJobWithCredit(job.id);
+                }
+            } else {
+                alert("You don't have enough Platform Credits to apply for this job. You can buy more in the Billing section.");
+                setActiveView('Billing');
+            }
+        } else {
+            applyForJob(job.id, user.profile.id);
+        }
     };
-
+    
     return (
-        <div 
-            onClick={handleViewJob}
-            className="bg-white p-4 rounded-lg shadow-md border border-gray-200 hover:shadow-xl hover:border-blue-500 transition-all cursor-pointer"
-        >
+        <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200">
             <div className="flex items-start gap-4">
-                <img src={company.logo || company.avatar} alt={company.name} className="w-12 h-12 rounded-lg object-contain bg-white p-1 border flex-shrink-0" />
+                <img src={company.logo as string || company.avatar} alt={company.name} className="w-12 h-12 rounded-lg object-contain bg-white p-1 border flex-shrink-0" loading="lazy" />
                 <div className="flex-grow">
                     <h3 className="text-lg font-bold text-blue-700">{job.title}</h3>
-                    <p className="text-sm font-semibold text-gray-600">{company.name}</p>
+                    <p className="text-sm font-semibold text-gray-600">Posted by {company.name}</p>
                 </div>
-                {renderApplyButton()}
             </div>
-            <p className="text-sm text-gray-700 mt-3 line-clamp-2">{job.description}</p>
+            <p className="text-sm text-gray-700 mt-3">{job.description.substring(0, 120)}...</p>
             <div className="mt-3 pt-3 border-t border-gray-100 flex flex-wrap gap-x-4 gap-y-2 text-gray-600 text-sm">
-                 <span className="flex items-center"><MapPin size={14} className="mr-1.5 text-gray-400"/> {job.location}</span>
+                <span className="flex items-center"><MapPin size={14} className="mr-1.5 text-gray-400"/> {job.location}</span>
                 <span className="flex items-center"><DollarSign size={14} className="mr-1.5 text-gray-400"/> {job.currency}{job.dayRate} / day</span>
                 <span className="flex items-center"><Clock size={14} className="mr-1.5 text-gray-400"/> {job.duration}</span>
                 <span className="flex items-center"><Layers size={14} className="mr-1.5 text-gray-400"/> {job.experienceLevel}</span>
-                <span className="flex items-center"><Briefcase size={14} className="mr-1.5 text-gray-400"/> {job.jobType}</span>
                 <span className="flex items-center"><Calendar size={14} className="mr-1.5 text-gray-400"/> Starts: {formatDisplayDate(job.startDate)}</span>
             </div>
+            {user?.role === 'Engineer' && (
+                <div className="mt-4 text-right">
+                    <button 
+                        onClick={handleApply} 
+                        disabled={hasApplied} 
+                        className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-md text-sm hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed ml-auto"
+                    >
+                        <Briefcase size={16} className="mr-2"/>
+                        {hasApplied ? 'Applied' : 'Apply Now'}
+                    </button>
+                    {requiresCredit && !hasApplied && <p className="text-xs text-yellow-600 mt-1 text-right">Requires 1 Platform Credit to apply.</p>}
+                </div>
+            )}
         </div>
     );
 };
+
+export const JobCard = React.memo(JobCardComponent);

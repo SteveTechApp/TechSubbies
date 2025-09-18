@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+// FIX: Corrected import path for types.
 import { SelectedJobRole, JobRoleDefinition, RatedSkill } from '../types';
 import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';
+// FIX: Corrected import path for icons.
 import { X, Save, Plus, Trash2 } from './Icons';
 
 interface EditSkillProfileModalProps {

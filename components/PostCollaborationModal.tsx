@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext';
+// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
+import { useAppContext } from '../context/InteractionContext';
 import { CollaborationPost, Currency } from '../types';
 import { X, Save } from './Icons';
 

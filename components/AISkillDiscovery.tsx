@@ -1,6 +1,5 @@
-
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useSettings } from '../context/SettingsContext';
 import { Skill } from '../types';
 import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';
 import { BrainCircuit, Loader, Plus } from './Icons';
@@ -14,7 +13,7 @@ export const AISkillDiscovery = ({ onSkillsAdded }: AISkillDiscoveryProps) => {
     const [isLoading, setIsLoading] = useState(false);
     const [discoveredSkills, setDiscoveredSkills] = useState<Skill[] | null>(null);
     const [error, setError] = useState('');
-    const { geminiService } = useAppContext();
+    const { geminiService } = useSettings();
 
     const groupedRoles = useMemo(() => {
         return JOB_ROLE_DEFINITIONS.reduce((acc, roleDef) => {
@@ -89,7 +88,7 @@ export const AISkillDiscovery = ({ onSkillsAdded }: AISkillDiscoveryProps) => {
                 <div className="mt-4 animate-fade-in-up">
                     <h4 className="font-bold">Suggested Skills:</h4>
                     <div className="flex flex-wrap gap-2 my-2">
-                        {discoveredSkills.map(skill =>
+                        {(discoveredSkills as Skill[]).map(skill =>
                             <span key={skill.name} className="bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm">
                                 {skill.name} (Rating: {skill.rating})
                             </span>

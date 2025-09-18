@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { LogOut } from './Icons';
 import { User, Role, CompanyProfile } from '../types';
 import { Notifications } from './Notifications';
-import { useAppContext } from '../context/AppContext';
+import { useSettings } from '../context/SettingsContext';
 
 interface UserMenuProps {
     user: User | null;
@@ -11,7 +10,7 @@ interface UserMenuProps {
 }
 
 export const UserMenu = ({ user, logout }: UserMenuProps) => {
-    const { t } = useAppContext();
+    const { t } = useSettings();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 

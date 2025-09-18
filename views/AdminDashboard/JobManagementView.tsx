@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../../context/AppContext';
+// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
+import { useAppContext } from '../../context/InteractionContext';
 import { Search, MapPin, Calendar, DollarSign, Home, ArrowUp } from '../../components/Icons';
 import { formatDisplayDate } from '../../utils/dateFormatter';
 

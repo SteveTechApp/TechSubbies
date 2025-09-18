@@ -1,6 +1,8 @@
 import React from 'react';
+// FIX: Corrected import path for types.
 import { Job, Page, Role } from '../types';
-import { useAppContext } from '../context/AppContext';
+// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
+import { useAppContext } from '../context/InteractionContext';
 import { MapPin, DollarSign, Clock, ArrowRight } from './Icons';
 
 interface FeaturedJobCardProps {
@@ -18,9 +20,11 @@ export const FeaturedJobCard = ({ job, onNavigate }: FeaturedJobCardProps) => {
         // If user is an engineer, go to their dashboard (where they can find the job).
         // Otherwise (guest or other roles), go to login/signup page for engineers.
         if (user && user.role === Role.ENGINEER) {
-            onNavigate('engineerDashboard');
+            // FIX: Replaced string literal with Page enum for type safety.
+            onNavigate(Page.ENGINEER_DASHBOARD);
         } else {
-            onNavigate('login');
+            // FIX: Replaced string literal with Page enum for type safety.
+            onNavigate(Page.LOGIN);
         }
     };
 

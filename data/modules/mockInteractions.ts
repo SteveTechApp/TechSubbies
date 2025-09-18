@@ -1,4 +1,4 @@
-import { Application, Review, Conversation, Message, ApplicationStatus, Contract, ContractStatus, ContractType, Currency, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Project, Discipline, TimesheetStatus, CollaborationPost } from '../../types';
+import { Application, Review, Conversation, Message, ApplicationStatus, Contract, ContractStatus, ContractType, Currency, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Project, Discipline, TimesheetStatus, CollaborationPost, Invoice, InvoiceStatus, PaymentTerms } from '../../types';
 
 export const MOCK_APPLICATIONS: Application[] = [
     { jobId: 'job-1', engineerId: 'eng-1', date: new Date('2024-06-20'), status: ApplicationStatus.COMPLETED, reviewed: true },
@@ -79,8 +79,8 @@ export const MOCK_CONTRACTS: Contract[] = [
         companySignature: { name: 'Starlight Events', date: new Date('2024-07-25') },
         milestones: [
             { id: 'm1', description: 'Phase 1: Initial Site Survey & Report', amount: 500, status: MilestoneStatus.COMPLETED_PAID },
-            { id: 'm2', description: 'Phase 2: Pre-wire & First Fix', amount: 1000, status: MilestoneStatus.SUBMITTED_FOR_APPROVAL },
-            { id: 'm3', description: 'Phase 3: Final Installation & Handover', amount: 1000, status: MilestoneStatus.AWAITING_FUNDING },
+            { id: 'm2', description: 'Pre-wire & First Fix', amount: 1000, status: MilestoneStatus.SUBMITTED_FOR_APPROVAL },
+            { id: 'm3', description: 'Final Installation & Handover', amount: 1000, status: MilestoneStatus.AWAITING_FUNDING },
         ],
     }
 ];
@@ -137,5 +137,19 @@ export const MOCK_COLLABORATION_POSTS: CollaborationPost[] = [
         startDate: new Date('2024-08-15'),
         postedDate: new Date('2024-07-22'),
         status: 'open',
+    }
+];
+
+export const MOCK_INVOICES: Invoice[] = [
+    {
+        id: 'inv-1',
+        contractId: 'contract-2',
+        companyId: 'comp-2',
+        engineerId: 'eng-2',
+        items: [{ description: 'Milestone: Pre-wire & First Fix', amount: 1000 }],
+        total: 1000,
+        issueDate: new Date('2024-08-10'),
+        dueDate: new Date('2024-08-24'),
+        status: InvoiceStatus.SENT,
     }
 ];

@@ -1,50 +1,57 @@
-import React from 'react';
-import { useAppContext } from '../context/AppContext';
+import React, { useState, useMemo } from 'react';
+import { useAppContext } from '../context/InteractionContext';
 import { ConversationListItem } from '../components/ConversationListItem';
 import { ChatWindow } from '../components/ChatWindow';
-import { Mail } from '../components/Icons';
 
 export const MessagesView = () => {
-    const { user, conversations, selectedConversationId, setSelectedConversationId, findUserById } = useAppContext();
+    const { user, conversations, findUserByProfileId } = useAppContext();
+    const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+
+    const myConversations = useMemo(() => {
+        if (!user) return [];
+        return conversations
+            .filter(c => c.participantIds.includes(user.id))
+            .sort((a, b) => b.lastMessageTimestamp.getTime() - a.lastMessageTimestamp.getTime());
+    }, [user, conversations]);
     
-    if (!user) return null;
+    // Select the first conversation by default
+    useState(() => {
+        if (!selectedConversationId && myConversations.length > 0) {
+            setSelectedConversationId(myConversations[0].id);
+        }
+    });
 
-    const myConversations = conversations
-        .filter(c => c.participantIds.includes(user.id))
-        .sort((a, b) => b.lastMessageTimestamp.getTime() - a.lastMessageTimestamp.getTime());
-
-    const activeConversation = myConversations.find(c => c.id === selectedConversationId);
+    const selectedConversation = myConversations.find(c => c.id === selectedConversationId);
 
     return (
-        <div className="flex h-[calc(100vh-8rem)] border border-gray-200 rounded-lg overflow-hidden shadow-md">
-            <aside className="w-full md:w-1/3 border-r border-gray-200 bg-white flex flex-col">
+        <div className="flex h-[calc(100vh-4rem)] bg-white rounded-lg shadow-lg overflow-hidden border">
+            <aside className="w-1/3 border-r flex flex-col">
                 <div className="p-4 border-b">
-                    <h1 className="text-xl font-bold">Inbox</h1>
+                    <h2 className="text-xl font-bold">Messages</h2>
                 </div>
-                <div className="overflow-y-auto custom-scrollbar">
+                <div className="flex-grow overflow-y-auto custom-scrollbar">
                     {myConversations.map(convo => {
-                        const otherParticipantId = convo.participantIds.find(id => id !== user.id)!;
-                        const otherParticipant = findUserById(otherParticipantId);
+                        const otherParticipantId = convo.participantIds.find(id => id !== user!.id)!;
+                        const otherParticipant = findUserByProfileId(otherParticipantId);
+                        
                         return (
                             <ConversationListItem
                                 key={convo.id}
                                 conversation={convo}
                                 otherParticipant={otherParticipant?.profile}
-                                isSelected={convo.id === selectedConversationId}
+                                isSelected={selectedConversationId === convo.id}
                                 onSelect={() => setSelectedConversationId(convo.id)}
                             />
                         );
                     })}
                 </div>
             </aside>
-            <main className="hidden md:flex w-2/3 flex-col bg-gray-50">
-                {activeConversation ? (
-                    <ChatWindow conversation={activeConversation} />
+            <main className="w-2/3">
+                {selectedConversation ? (
+                    <ChatWindow conversation={selectedConversation} />
                 ) : (
-                    <div className="flex-grow flex flex-col items-center justify-center text-gray-500 text-center p-4">
-                        <Mail size={48} className="mb-4" />
-                        <h2 className="text-xl font-semibold">Select a conversation</h2>
-                        <p>Your messages will appear here.</p>
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                        <p>Select a conversation to start messaging.</p>
                     </div>
                 )}
             </main>

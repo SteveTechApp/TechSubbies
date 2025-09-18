@@ -56,7 +56,8 @@ export const UserGuidePage = ({ onNavigate }: UserGuidePageProps) => {
                         <h2 className="text-2xl font-bold">Prefer to watch?</h2>
                         <p className="text-blue-100">Check out our new video tutorials for a guided walkthrough of key features.</p>
                     </div>
-                    <button onClick={() => onNavigate('tutorials')} className="mt-4 sm:mt-0 bg-white text-blue-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-100 transition-transform transform hover:scale-105 flex-shrink-0">
+                    {/* FIX: Replaced string literal with Page enum for type safety. */}
+                    <button onClick={() => onNavigate(Page.TUTORIALS)} className="mt-4 sm:mt-0 bg-white text-blue-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-100 transition-transform transform hover:scale-105 flex-shrink-0">
                         View Tutorials
                     </button>
                 </div>

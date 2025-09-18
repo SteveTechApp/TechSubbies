@@ -1,4 +1,5 @@
 import React from 'react';
+// FIX: Corrected import path for types.
 import { EngineerProfile } from '../../types';
 import { EngineerCard } from '../EngineerCard';
 

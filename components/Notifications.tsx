@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext';
+// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
+import { useAppContext } from '../context/InteractionContext';
 import { Bell, Briefcase, Mail, Star } from './Icons';
 import { Notification, NotificationType } from '../types';
 import { formatTimeAgo } from '../utils/dateFormatter';

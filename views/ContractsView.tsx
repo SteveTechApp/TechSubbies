@@ -1,91 +1,90 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../context/AppContext';
-import { Role, Contract, ContractStatus } from '../types';
-import { ContractDetailsView } from '../components/ContractDetailsView';
-import { Briefcase, ArrowLeft } from '../components/Icons';
+import { useAppContext } from '../context/InteractionContext';
+import { Contract, ContractStatus, UserProfile } from '../types';
+import { FileText, Calendar, DollarSign } from '../components/Icons';
+import { formatDisplayDate } from '../utils/dateFormatter';
+import { ContractDetailsView } from './ContractDetailsView';
 
-const ContractListItem = ({ contract, onSelect, userRole }: { contract: Contract, onSelect: () => void, userRole: Role }) => {
-    const { findUserByProfileId } = useAppContext();
-    
-    const otherPartyId = userRole === Role.ENGINEER ? contract.companyId : contract.engineerId;
-    const otherParty = findUserByProfileId(otherPartyId);
+interface ContractCardProps {
+    contract: Contract;
+    otherParty: UserProfile | undefined;
+    onSelect: () => void;
+}
 
-    const STATUS_INFO = {
-        [ContractStatus.DRAFT]: { text: 'Draft', color: 'bg-gray-200 text-gray-800' },
-        [ContractStatus.PENDING_SIGNATURE]: { text: 'Pending Signature', color: 'bg-yellow-100 text-yellow-800' },
-        [ContractStatus.SIGNED]: { text: 'Signed', color: 'bg-blue-100 text-blue-800' },
-        [ContractStatus.ACTIVE]: { text: 'Active', color: 'bg-green-100 text-green-800' },
-        [ContractStatus.COMPLETED]: { text: 'Completed', color: 'bg-purple-100 text-purple-800' },
-        [ContractStatus.CANCELLED]: { text: 'Cancelled', color: 'bg-red-100 text-red-800' },
-    };
-    const statusInfo = STATUS_INFO[contract.status] || STATUS_INFO[ContractStatus.DRAFT];
+const getStatusClass = (status: ContractStatus) => {
+    switch(status) {
+        case ContractStatus.ACTIVE: return 'border-green-500';
+        case ContractStatus.COMPLETED: return 'border-purple-500';
+        case ContractStatus.PENDING_SIGNATURE: return 'border-yellow-500';
+        case ContractStatus.SIGNED: return 'border-blue-500';
+        default: return 'border-gray-300';
+    }
+}
 
-    return (
-        <button onClick={onSelect} className="w-full text-left p-4 border rounded-md flex justify-between items-center hover:bg-gray-50 hover:shadow-md transition-all">
+const ContractCard = ({ contract, otherParty, onSelect }: ContractCardProps) => (
+    <button onClick={onSelect} className={`w-full text-left p-4 bg-white rounded-lg shadow-md border-l-4 ${getStatusClass(contract.status)} hover:shadow-lg hover:-translate-y-1 transition-transform`}>
+        <div className="flex justify-between items-start">
             <div>
-                <h3 className="font-bold text-lg text-blue-700">Contract with {otherParty?.profile.name || '...'}</h3>
-                <p className="text-gray-600 text-sm">Job: {contract.jobTitle}</p>
+                <p className="text-sm text-gray-500">vs. {otherParty?.name || '...'}</p>
+                <h3 className="font-bold text-gray-800">{contract.jobTitle || 'Contract'}</h3>
             </div>
-             <div className="text-right">
-                <span className={`px-3 py-1 text-xs font-bold rounded-full ${statusInfo.color}`}>{statusInfo.text}</span>
-                 <p className="text-xs text-gray-400 mt-1">ID: {contract.id}</p>
-            </div>
-        </button>
-    );
-};
+             <span className="text-xs font-bold text-gray-500">{contract.id}</span>
+        </div>
+        <div className="mt-3 pt-3 border-t text-sm text-gray-600 flex justify-between">
+            <span className="flex items-center"><DollarSign size={14} className="mr-1.5"/>{contract.currency}{typeof contract.amount === 'number' ? contract.amount.toLocaleString() : contract.amount}</span>
+            <span className="flex items-center"><Calendar size={14} className="mr-1.5"/>{formatDisplayDate(new Date())}</span>
+        </div>
+    </button>
+);
 
+interface ContractsViewProps {
+    setActiveView: (view: string) => void;
+}
 
-export const ContractsView = ({ setActiveView }: { setActiveView: (view: string) => void }) => {
-    const { user, contracts, jobs } = useAppContext();
+export const ContractsView = ({ setActiveView }: ContractsViewProps) => {
+    const { user, contracts, findUserByProfileId } = useAppContext();
     const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
 
     const myContracts = useMemo(() => {
         if (!user) return [];
-        return contracts
-            .filter(c => c.companyId === user.profile.id || c.engineerId === user.profile.id)
-            .map(c => {
-                const job = jobs.find(j => j.id === c.jobId);
-                return { ...c, jobTitle: job?.title || 'Unknown Job' };
-            })
-            .sort((a, b) => b.id.localeCompare(a.id)); // Simple sort for now
-    }, [user, contracts, jobs]);
+        return contracts.filter(
+            c => c.engineerId === user.profile.id || c.companyId === user.profile.id
+        );
+    }, [user, contracts]);
 
     if (!user) return null;
 
     if (selectedContract) {
         return (
             <div>
-                 <button 
-                    onClick={() => setSelectedContract(null)} 
-                    className="flex items-center mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-                >
-                    <ArrowLeft size={16} className="mr-2" />
-                    Back to Contracts List
-                </button>
+                <button onClick={() => setSelectedContract(null)} className="text-blue-600 hover:underline mb-4">&larr; Back to All Contracts</button>
                 <ContractDetailsView contract={selectedContract} />
             </div>
         );
     }
     
     return (
-      <div>
-        <h1 className="text-3xl font-bold mb-4 flex items-center"><Briefcase className="mr-3"/> My Contracts</h1>
-        <div className="bg-white p-5 rounded-lg shadow">
-            {myContracts.length > 0 ? (
-                <div className="space-y-4">
-                    {myContracts.map(contract => 
-                        <ContractListItem 
-                            key={contract.id} 
-                            contract={contract} 
-                            onSelect={() => setSelectedContract(contract)}
-                            userRole={user.role}
+        <div>
+            <h1 className="text-3xl font-bold mb-6 flex items-center">
+                <FileText size={30} className="mr-3 text-blue-600"/>
+                My Contracts
+            </h1>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {myContracts.map(c => {
+                     const otherPartyId = user.role === 'Engineer' ? c.companyId : c.engineerId;
+                     const otherParty = findUserByProfileId(otherPartyId);
+                    return (
+                        <ContractCard 
+                            key={c.id} 
+                            contract={c} 
+                            otherParty={otherParty?.profile} 
+                            onSelect={() => setSelectedContract(c)}
                         />
-                    )}
-                </div>
-            ) : (
-                <p className="text-center text-gray-500 py-8">You do not have any contracts yet.</p>
-            )}
+                    );
+                })}
+            </div>
+             {myContracts.length === 0 && <p className="text-center text-gray-500 p-8">No contracts found.</p>}
         </div>
-      </div>
-  );
+    );
 };

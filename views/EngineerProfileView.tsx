@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { EngineerProfile, Role, ProfileTier } from '../types';
-import { MessageCircle, Star, Trophy, Share2, Handshake, Mail, Phone, Globe, Linkedin, ShieldCheck, CheckCircle, Award, X as XIcon, FileText, Download } from '../components/Icons';
+import { EngineerProfile, Role, ProfileTier, CaseStudy } from '../types';
+import { MessageCircle, Star, Trophy, Share2, Handshake, Mail, Phone, Globe, Linkedin, ShieldCheck, CheckCircle, Award, X as XIcon, FileText, Download, Sparkles, Clapperboard, Briefcase } from '../components/Icons';
 import { TopTrumpCard } from '../components/TopTrumpCard';
 import { ReviewCard } from '../components/ReviewCard';
-import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
+// FIX: Replaced incorrect context hook 'useInteractions' with the correct hook 'useAppContext'.
+import { useAppContext } from '../context/InteractionContext';
 import { ShareProfileModal } from '../components/ShareProfileModal';
 import { CVSearch } from '../components/CVSearch';
+import { StoryboardViewer } from '../components/StoryboardViewer';
 
 interface EngineerProfileViewProps {
     profile: EngineerProfile | null;
@@ -14,8 +18,11 @@ interface EngineerProfileViewProps {
 }
 
 export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerProfileViewProps) => {
-    const { user, startConversationAndNavigate, reviews, allUsers, proposeCollaboration } = useAppContext();
+    const { user } = useAuth();
+    const { reviews, allUsers } = useData();
+    const { startConversationAndNavigate, proposeCollaboration } = useAppContext();
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [viewingStoryboard, setViewingStoryboard] = useState<CaseStudy | null>(null);
 
     if (!profile) {
         return <div>Loading profile...</div>;
@@ -79,6 +86,51 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerPro
             </div>
            
             <TopTrumpCard profile={profile} isEditable={isEditable} onEdit={onEdit} />
+
+            {/* --- NEW AI Match Score Section --- */}
+            {profile.matchScore !== undefined && (
+                <div className="bg-white p-6 rounded-lg shadow-lg border-t-4 border-purple-500">
+                    <h2 className="text-2xl font-bold mb-2 flex items-center">
+                        <Sparkles size={22} className="mr-2 text-purple-500" />
+                        AI Match Score
+                    </h2>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-8 p-4">
+                        <div className="relative w-32 h-32 flex-shrink-0">
+                            <svg className="w-full h-full" viewBox="0 0 100 100">
+                                <circle className="text-gray-200" strokeWidth="8" stroke="currentColor" fill="transparent" r="42" cx="50" cy="50" />
+                                <circle
+                                    className={
+                                        profile.matchScore >= 85 ? 'stroke-green-500' : 
+                                        profile.matchScore >= 70 ? 'stroke-blue-500' : 
+                                        profile.matchScore >= 50 ? 'stroke-yellow-500' : 'stroke-gray-500'
+                                    }
+                                    strokeWidth="8"
+                                    strokeDasharray={2 * Math.PI * 42}
+                                    strokeDashoffset={(2 * Math.PI * 42) - (profile.matchScore / 100) * (2 * Math.PI * 42)}
+                                    strokeLinecap="round"
+                                    fill="transparent"
+                                    r="42"
+                                    cx="50"
+                                    cy="50"
+                                    transform="rotate(-90 50 50)"
+                                />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-4xl font-bold text-gray-800">{Math.round(profile.matchScore)}</span>
+                                <span className="text-lg font-bold text-gray-800">%</span>
+                            </div>
+                        </div>
+                        <div className="flex-1 text-center sm:text-left">
+                            <p className="text-gray-600">
+                                This score represents the AI's assessment of how well this engineer's skills, experience, and specialist roles align with the requirements of the job you selected for the search.
+                            </p>
+                            <p className="mt-2 text-xs text-gray-500">
+                                Note: This is a guide. Always conduct your own interviews and due diligence.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* CV / Resume Section */}
             <div className="bg-white p-6 rounded-lg shadow-lg">
@@ -172,6 +224,38 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerPro
                 )}
             </div>
 
+            {/* Case Studies Section */}
+            {profile.caseStudies && profile.caseStudies.length > 0 && (
+                 <div className="bg-white p-6 rounded-lg shadow-lg">
+                    <h2 className="text-2xl font-bold mb-4 flex items-center">
+                        <Briefcase size={22} className="mr-2 text-indigo-500" />
+                        Portfolio & Case Studies
+                    </h2>
+                    <div className="space-y-2">
+                        {profile.caseStudies.map(cs => {
+                            const isStoryboard = cs.url.startsWith('techsubbies://storyboard');
+                            return (
+                                <div key={cs.id} className="flex items-center justify-between p-3 bg-gray-100 rounded-md border">
+                                    <div className="flex items-center gap-3">
+                                        {isStoryboard ? <Clapperboard size={20} className="text-indigo-600"/> : <Globe size={20} className="text-blue-600" />}
+                                        <span className="font-semibold">{cs.name}</span>
+                                    </div>
+                                    {isStoryboard ? (
+                                        <button onClick={() => setViewingStoryboard(cs)} className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-semibold">
+                                            View Storyboard
+                                        </button>
+                                    ) : (
+                                        <a href={cs.url} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold">
+                                            View Link
+                                        </a>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
             {/* Certifications & Compliance Section */}
             <div className="bg-white p-6 rounded-lg shadow-lg">
                 <h2 className="text-2xl font-bold mb-4 flex items-center">
@@ -216,14 +300,14 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerPro
                         <h3 className="font-semibold text-lg mb-3">Compliance</h3>
                         <ul className="space-y-2 text-sm">
                             <li className="flex items-center">
-                                <CheckCircle size={16} className={`mr-2 flex-shrink-0 ${profile.compliance.professionalIndemnity.hasCoverage ? 'text-green-600' : 'text-gray-300'}`} />
-                                Professional Indemnity (£{profile.compliance.professionalIndemnity.amount?.toLocaleString() || 'N/A'})
-                                {profile.compliance.professionalIndemnity.isVerified && <span className="ml-auto text-xs font-bold bg-green-100 text-green-800 px-2 py-0.5 rounded-full">Verified</span>}
+                                <CheckCircle size={16} className={`mr-2 flex-shrink-0 ${profile.compliance.professionalIndemnity?.hasCoverage ? 'text-green-600' : 'text-gray-300'}`} />
+                                Professional Indemnity (£{profile.compliance.professionalIndemnity?.amount?.toLocaleString() || 'N/A'})
+                                {profile.compliance.professionalIndemnity?.isVerified && <span className="ml-auto text-xs font-bold bg-green-100 text-green-800 px-2 py-0.5 rounded-full">Verified</span>}
                             </li>
                             <li className="flex items-center">
-                                <CheckCircle size={16} className={`mr-2 flex-shrink-0 ${profile.compliance.publicLiability.hasCoverage ? 'text-green-600' : 'text-gray-300'}`} />
-                                Public Liability (£{profile.compliance.publicLiability.amount?.toLocaleString() || 'N/A'})
-                                {profile.compliance.publicLiability.isVerified && <span className="ml-auto text-xs font-bold bg-green-100 text-green-800 px-2 py-0.5 rounded-full">Verified</span>}
+                                <CheckCircle size={16} className={`mr-2 flex-shrink-0 ${profile.compliance.publicLiability?.hasCoverage ? 'text-green-600' : 'text-gray-300'}`} />
+                                Public Liability (£{profile.compliance.publicLiability?.amount?.toLocaleString() || 'N/A'})
+                                {profile.compliance.publicLiability?.isVerified && <span className="ml-auto text-xs font-bold bg-green-100 text-green-800 px-2 py-0.5 rounded-full">Verified</span>}
                             </li>
                              <li className="flex items-center">
                                 <CheckCircle size={16} className={`mr-2 flex-shrink-0 ${profile.compliance.cscsCard ? 'text-green-600' : 'text-gray-300'}`} />
@@ -271,6 +355,14 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerPro
                 profileUrl={profileUrl}
                 profileName={profile.name}
             />
+
+            {viewingStoryboard && (
+                <StoryboardViewer
+                    isOpen={!!viewingStoryboard}
+                    onClose={() => setViewingStoryboard(null)}
+                    storyboard={viewingStoryboard}
+                />
+            )}
         </div>
     );
 };

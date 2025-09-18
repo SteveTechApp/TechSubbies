@@ -11,7 +11,8 @@ interface ForResourcingCompaniesPageProps {
 export const ForResourcingCompaniesPage = ({ onNavigate }: ForResourcingCompaniesPageProps) => {
   return (
     <div className="bg-white">
-      <PageHeader onBack={() => onNavigate('landing')} />
+      {/* FIX: Replaced string literal with Page enum for type safety. */}
+      <PageHeader onBack={() => onNavigate(Page.LANDING)} />
 
       {/* Hero Section */}
       <section className="relative bg-indigo-600 text-white py-20 text-center">
@@ -65,7 +66,8 @@ export const ForResourcingCompaniesPage = ({ onNavigate }: ForResourcingCompanie
                     <span className="ml-1 text-lg font-medium text-gray-500">/ month</span>
                 </div>
                 <p className="mt-2 text-2xl font-bold text-gray-700">+ £5 <span className="text-base font-medium text-gray-500">/ engineer / month</span></p>
-                <button onClick={() => onNavigate('pricing')} className="mt-6 text-indigo-600 font-bold hover:underline">
+                {/* FIX: Replaced string literal with Page enum for type safety. */}
+                <button onClick={() => onNavigate(Page.PRICING)} className="mt-6 text-indigo-600 font-bold hover:underline">
                     See full feature list
                 </button>
             </div>
@@ -77,7 +79,8 @@ export const ForResourcingCompaniesPage = ({ onNavigate }: ForResourcingCompanie
         <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold text-gray-800">Ready to Streamline Your Agency?</h2>
             <p className="text-gray-600 my-4 max-w-2xl mx-auto">Join a new ecosystem for technical talent and take your resourcing business to the next level.</p>
-            <button onClick={() => onNavigate('resourcingCompanySignUp')} className="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-transform transform hover:scale-105 mt-2">
+            {/* FIX: Replaced string literal with Page enum for type safety. */}
+            <button onClick={() => onNavigate(Page.RESOURCING_SIGNUP)} className="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-transform transform hover:scale-105 mt-2">
                 Sign Up Now
             </button>
         </div>

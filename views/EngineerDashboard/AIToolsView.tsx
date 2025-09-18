@@ -1,8 +1,12 @@
-import React from 'react';
-import { EngineerProfile, Skill, ProfileTier } from '../../types';
+import React, { useState, useMemo } from 'react';
+import { EngineerProfile, Skill, ProfileTier, Product, ProductFeatures, AiProductMatch } from '../../types';
 import { AISkillDiscovery } from '../../components/AISkillDiscovery';
 import { TrainingRecommendations } from '../../components/TrainingRecommendations';
-import { BrainCircuit, ArrowLeft, Star } from '../../components/Icons';
+import { useAppContext } from '../../context/InteractionContext';
+import { ClientBriefBar } from '../../components/ClientBriefBar';
+import { parseProductData, MOCK_PRODUCT_DATA } from '../../data/productData';
+import { ProductMatrix } from '../../components/ProductMatrix';
+import { ComparisonTray } from '../../components/ComparisonTray';
 
 interface AIToolsViewProps {
     profile: EngineerProfile;
@@ -11,44 +15,92 @@ interface AIToolsViewProps {
 }
 
 export const AIToolsView = ({ profile, onSkillsAdded, setActiveView }: AIToolsViewProps) => {
-    const canUseAiTools = profile.profileTier !== ProfileTier.BASIC;
+    const { geminiService } = useAppContext();
+    const productCatalog = useMemo(() => parseProductData(MOCK_PRODUCT_DATA), []);
+    const [searchResults, setSearchResults] = useState<Product[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [analyzedProducts, setAnalyzedProducts] = useState<Record<string, ProductFeatures | { error: string }>>({});
+    const [comparisonList, setComparisonList] = useState<Product[]>([]);
+
+    const isSalesEngineer = profile.discipline === 'Sales Engineer' || profile.discipline === 'AV & IT Engineer';
+    const canUseProductFinder = profile.profileTier !== ProfileTier.BASIC && isSalesEngineer;
+
+    const handleProductSearch = async (brief: string) => {
+        setIsLoading(true);
+        setSearchResults([]);
+        const result = await geminiService.findMatchingProducts(brief, productCatalog);
+        if (result.matches) {
+            const matchesWithScores = result.matches
+                .map((match: AiProductMatch) => {
+                    const product = productCatalog.find(p => p.sku === match.sku);
+                    if (product) {
+                        return { ...product, matchScore: match.match_score };
+                    }
+                    return null;
+                })
+                .filter((p): p is Product & { matchScore: number } => p !== null);
+            
+            // FIX: Removed invalid type predicate `p is Product` which caused a compilation error.
+            // The object type is already correctly inferred from the filter above.
+            setSearchResults(matchesWithScores);
+        }
+        setIsLoading(false);
+    };
+    
+    const handleAddToCompare = (product: Product) => {
+        setComparisonList(prev => {
+            if (prev.some(p => p.sku === product.sku)) return prev;
+            if (prev.length >= 4) {
+                alert("You can compare a maximum of 4 products.");
+                return prev;
+            }
+            return [...prev, product];
+        });
+    };
+    
+    const handleRemoveFromCompare = (sku: string) => {
+        setComparisonList(prev => prev.filter(p => p.sku !== sku));
+    };
 
     return (
         <div>
-            <button 
-                onClick={() => setActiveView('Dashboard')} 
-                className="flex items-center mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-            >
-                <ArrowLeft size={16} className="mr-2" />
-                Back to Dashboard
-            </button>
-            <h1 className="text-3xl font-bold mb-4 flex items-center"><BrainCircuit size={32} className="mr-3 text-purple-600"/> AI Tools</h1>
+            <h1 className="text-3xl font-bold mb-4">AI-Powered Tools</h1>
             
-            {canUseAiTools ? (
+            <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+                <h2 className="text-xl font-bold mb-3">Product Finder (for Sales Engineers)</h2>
+                {canUseProductFinder ? (
+                    <div>
+                        <ClientBriefBar onSearch={handleProductSearch} isLoading={isLoading} />
+                        {searchResults.length > 0 && (
+                            <ProductMatrix
+                                products={searchResults}
+                                analyzedProducts={analyzedProducts}
+                                setAnalyzedProducts={setAnalyzedProducts}
+                                onAddToCompare={handleAddToCompare}
+                                comparisonList={comparisonList}
+                            />
+                        )}
+                    </div>
+                ) : (
+                    <div className="text-center p-6 bg-gray-100 rounded-lg border-2 border-dashed">
+                        <p className="text-gray-600">This powerful tool is available for premium Sales Engineer profiles to find the perfect hardware for a client brief.</p>
+                    </div>
+                )}
+            </div>
+            
+            {profile.profileTier !== ProfileTier.BASIC && (
                 <>
-                    <p className="text-gray-600 mb-6 max-w-3xl">Leverage the power of AI to enhance your profile, discover new skills, and identify valuable training opportunities to boost your career.</p>
-                    <div className="space-y-6">
-                        <AISkillDiscovery onSkillsAdded={onSkillsAdded} />
-                        <TrainingRecommendations profile={profile} />
-                    </div>
+                    <AISkillDiscovery onSkillsAdded={onSkillsAdded} />
+                    <TrainingRecommendations profile={profile} />
                 </>
-            ) : (
-                <div className="mt-6 bg-gradient-to-br from-yellow-300 to-orange-400 p-8 rounded-lg shadow-lg text-center text-orange-900">
-                    <div className="inline-block bg-white/30 p-3 rounded-full mb-4">
-                        <Star size={32} className="text-white" />
-                    </div>
-                    <h2 className="text-2xl font-bold mb-2">Unlock AI-Powered Career Tools</h2>
-                    <p className="max-w-xl mx-auto mb-6">
-                        AI Skill Discovery and Training Recommendations are premium features. Upgrade to a <strong>Silver Profile</strong> to get AI-driven insights that help you stand out, identify skill gaps, and command higher day rates.
-                    </p>
-                    <button
-                        onClick={() => setActiveView('Billing')}
-                        className="bg-white text-blue-700 font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-transform transform hover:scale-105 shadow-md"
-                    >
-                        Upgrade to Silver Profile
-                    </button>
-                </div>
             )}
+            
+            <ComparisonTray 
+                items={comparisonList}
+                analyzedProducts={analyzedProducts}
+                onRemove={handleRemoveFromCompare}
+                onClear={() => setComparisonList([])}
+            />
         </div>
     );
 };

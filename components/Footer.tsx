@@ -1,77 +1,45 @@
 import React from 'react';
 import { Logo } from './Logo';
+import { Linkedin, X as XIcon } from './Icons';
+// FIX: Corrected import path for types.
 import { Page } from '../types';
-import { DropdownMenu } from './DropdownMenu';
-import { Linkedin, XIcon, Instagram, Facebook } from './Icons';
 
-interface FooterProps {
-    onNavigate: (page: Page) => void;
-    onHowItWorksClick: () => void;
-}
-
-export const Footer = ({ onNavigate, onHowItWorksClick }: FooterProps) => {
-    const dropdownItemClass = 'block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100';
-    const textColor = 'text-gray-700 hover:text-blue-600';
-    const navButtonClass = `px-3 py-1.5 font-medium text-base ${textColor} text-center`;
+export const Footer = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
+    const footerLinks = [
+        { label: 'About Us', page: 'aboutUs' as Page },
+        { label: 'For Engineers', page: 'forEngineers' as Page },
+        { label: 'For Companies', page: 'forCompanies' as Page },
+        { label: 'Investors', page: 'investors' as Page },
+        { label: 'Terms of Service', page: 'legal' as Page, subPage: 'terms' },
+        { label: 'Privacy Policy', page: 'legal' as Page, subPage: 'privacy' },
+        { label: 'Data Security', page: 'legal' as Page, subPage: 'security' },
+        { label: 'Accessibility', page: 'accessibility' as Page },
+    ];
 
     return (
-        <footer className="bg-white shadow-md mt-auto border-t border-gray-200 z-40">
-            <div className="container mx-auto p-6 flex flex-col lg:flex-row justify-between items-center gap-6">
-                
-                <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-                    <button onClick={() => onNavigate('landing')} aria-label="Go to homepage" className="flex-shrink-0">
-                      <Logo className="text-gray-800 h-10" />
-                    </button>
-                    <div className="text-base text-gray-600">
-                        <p>&copy; {new Date().getFullYear()} TechSubbies.com. All Rights Reserved.</p>
-                        <p className="mt-1 sm:mt-0">
-                            Contact: <a href="mailto:contact@techsubbies.com" className="hover:underline">contact@techsubbies.com</a> | <a href="tel:+441234567890" className="hover:underline">+44 1234 567890</a>
-                        </p>
+        <footer className="bg-gray-800 text-white">
+            <div className="container mx-auto px-4 py-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    <div className="md:col-span-1">
+                        <Logo className="h-12 mb-4" />
+                        <p className="text-gray-400 text-sm">The Global Specialist Freelance Network</p>
+                    </div>
+                    <div className="md:col-span-3">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {footerLinks.map(link => (
+                                <button key={link.label} onClick={() => onNavigate(link.page)} className="text-left text-gray-300 hover:text-white text-sm">
+                                    {link.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
-
-                <div className="flex flex-col lg:flex-row items-center gap-4">
-                     <div className="flex items-center space-x-4">
-                        <a href="https://www.linkedin.com/company/techsubbies" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600" aria-label="LinkedIn"><Linkedin /></a>
-                        <a href="https://x.com/techsubbies" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600" aria-label="X - formerly Twitter"><XIcon /></a>
-                        <a href="https://instagram.com/techsubbies" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600" aria-label="Instagram"><Instagram /></a>
-                        <a href="https://facebook.com/techsubbies" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600" aria-label="Facebook"><Facebook /></a>
+                <div className="mt-8 pt-4 border-t border-gray-700 flex justify-between items-center">
+                    <p className="text-xs text-gray-500">&copy; {new Date().getFullYear()} TechSubbies.com. All rights reserved.</p>
+                    <div className="flex items-center space-x-4">
+                        <a href="#" className="text-gray-400 hover:text-white"><XIcon /></a>
+                        <a href="#" className="text-gray-400 hover:text-white"><Linkedin /></a>
                     </div>
-                    <nav>
-                        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-                            <DropdownMenu triggerText="For Engineers" direction="up">
-                                <button onClick={() => onNavigate('forEngineers')} className={dropdownItemClass}>Explore Features</button>
-                                <button onClick={() => onNavigate('pricing')} className={dropdownItemClass}>View Pricing</button>
-                                <button onClick={() => onNavigate('engineerSignUp')} className={dropdownItemClass}>Profile Setup</button>
-                            </DropdownMenu>
-                            <DropdownMenu triggerText="For Companies" direction="up">
-                                <button onClick={() => onNavigate('forCompanies')} className={dropdownItemClass}>Why It's Free</button>
-                                <button onClick={() => onNavigate('login')} className={dropdownItemClass}>Post a Job</button>
-                            </DropdownMenu>
-                            <DropdownMenu triggerText="For Resourcing" direction="up">
-                                <button onClick={() => onNavigate('forResourcingCompanies')} className={dropdownItemClass}>Explore Features</button>
-                                <button onClick={() => onNavigate('pricing')} className={dropdownItemClass}>View Pricing</button>
-                                <button onClick={() => onNavigate('resourcingCompanySignUp')} className={dropdownItemClass}>Sign Up</button>
-                            </DropdownMenu>
-                            <button
-                                onClick={onHowItWorksClick}
-                                className={navButtonClass}
-                            >
-                                How It Works
-                            </button>
-                            <DropdownMenu triggerText="Company" direction="up">
-                                <button onClick={() => onNavigate('aboutUs')} className={dropdownItemClass}>About Us</button>
-                                <button onClick={() => onNavigate('investors')} className={dropdownItemClass}>For Investors</button>
-                                <button onClick={() => onNavigate('helpCenter')} className={dropdownItemClass}>Help Center</button>
-                                <button onClick={() => onNavigate('tutorials')} className={dropdownItemClass}>Video Tutorials</button>
-                            </DropdownMenu>
-                             <DropdownMenu triggerText="Legal" direction="up">
-                                <button onClick={() => onNavigate('terms')} className={dropdownItemClass}>Terms of Service</button>
-                                <button onClick={() => onNavigate('privacy')} className={dropdownItemClass}>Privacy Policy</button>
-                                <button onClick={() => onNavigate('security')} className={dropdownItemClass}>Data Security</button>
-                            </DropdownMenu>
-                        </div>
-                    </nav>
                 </div>
             </div>
         </footer>

@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { EngineerProfile, ProfileTier } from '../../types';
 import { StatCard } from '../../components/StatCard';
 import { User, Search, Star, Rocket, Briefcase, Mail } from '../../components/Icons';
-import { useAppContext } from '../../context/AppContext';
+import { useData } from '../../context/DataContext';
 
 interface DashboardViewProps {
     engineerProfile: EngineerProfile;
@@ -13,7 +12,7 @@ interface DashboardViewProps {
 }
 
 export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, boostProfile }: DashboardViewProps) => {
-    const { applications, reviews } = useAppContext();
+    const { applications, reviews } = useData();
 
     const myApplications = applications.filter(app => app.engineerId === engineerProfile.id);
     const myReviews = reviews.filter(rev => rev.engineerId === engineerProfile.id);

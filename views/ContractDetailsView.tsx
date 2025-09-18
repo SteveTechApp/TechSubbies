@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Contract, User, Role, ContractStatus, UserProfile, CompanyProfile, EngineerProfile, Milestone, MilestoneStatus, ContractType, Timesheet, PaymentTerms } from '../types';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../context/InteractionContext';
 import { FileText, User as UserIcon, Building, Calendar, CheckCircle, Clock, DollarSign, Loader, BrainCircuit } from '../components/Icons';
 import { SignContractModal } from '../components/SignContractModal';
 import { formatDisplayDate } from '../utils/dateFormatter';
@@ -127,6 +127,7 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
         generateInvoice(contract.id, paymentTerms);
         setIsInvoiceModalOpen(false);
     };
+    
 
     return (
         <>
@@ -243,7 +244,7 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
                      </div>
                 </div>
 
-                <div className="mt-6 pt-6 border-t flex justify-end">
+                <div className="mt-6 pt-6 border-t flex justify-end gap-3 flex-wrap">
                     {canEngineerSign && (
                         <button onClick={() => setIsSignModalOpen(true)} className="px-6 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700">
                             Review & Sign Contract

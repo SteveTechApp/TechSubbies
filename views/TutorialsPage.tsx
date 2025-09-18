@@ -1,168 +1,121 @@
 import React, { useState } from 'react';
 import { Page } from '../types';
-import { PageHeader } from '../components/PageHeader';
-import { PlayCircle, Loader, FileText, X } from '../components/Icons';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../context/InteractionContext';
+import { PlayCircle, Loader, ArrowLeft, X } from '../components/Icons';
 
-interface TutorialsPageProps {
-  onNavigate: (page: Page) => void;
-}
-
-interface TutorialTopic {
-  title: string;
-  description: string;
-}
-
-interface GeneratedTutorial {
-  title: string;
-  script: string;
-  videoUrl: string;
-}
-
-const TUTORIAL_TOPICS: TutorialTopic[] = [
-    { title: "How to Create a Skills Profile", description: "Learn how to build a premium profile that gets you noticed by top companies." },
-    { title: "How to Post Your First Job", description: "A guide for companies to create effective job posts that attract the right talent." },
-    { title: "Using AI Smart Match to Hire", description: "See how our AI instantly shortlists the best candidates for your role." },
-    { title: "Managing Contracts & Payments", description: "A walkthrough of our secure contracting and milestone payment system." },
+const TUTORIAL_TOPICS = [
+    "How to Create an Effective Skills Profile",
+    "How to Find and Apply for Jobs",
+    "Understanding Contracts and Payments",
+    "How to Post a Job and Find Talent (for Companies)",
+    "Using AI Tools to Your Advantage",
 ];
 
-const LOADING_MESSAGES = [
-    "Spinning up the video generators...",
-    "Teaching the AI to be a film director...",
-    "Rendering pixels and soundwaves...",
-    "This can take a moment, great content is on its way!",
-    "Finalizing the script and syncing audio...",
-];
+const VideoModal = ({ title, script, videoUrl, onClose }: { title: string, script: string, videoUrl: string, onClose: () => void }) => {
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4" onClick={onClose}>
+            <div
+                className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col relative"
+                onClick={e => e.stopPropagation()}
+            >
+                <header className="flex-shrink-0 p-4 border-b flex justify-between items-center">
+                    <h2 className="text-xl font-bold">{title}</h2>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-800"><X size={24} /></button>
+                </header>
+                <main className="flex-grow flex flex-col md:flex-row gap-4 p-4 overflow-hidden">
+                    <div className="w-full md:w-2/3 flex-shrink-0">
+                         <video src={videoUrl} controls autoPlay className="w-full rounded-lg bg-black">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    <div className="w-full md:w-1/3 overflow-y-auto custom-scrollbar pr-2">
+                        <h3 className="font-bold mb-2">Video Script</h3>
+                        <p className="whitespace-pre-wrap text-sm text-gray-700">{script}</p>
+                    </div>
+                </main>
+            </div>
+        </div>
+    );
+};
 
-export const TutorialsPage = ({ onNavigate }: TutorialsPageProps) => {
+
+export const TutorialsPage = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
     const { geminiService } = useAppContext();
-    const [selectedTutorial, setSelectedTutorial] = useState<GeneratedTutorial | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [loadingMessage, setLoadingMessage] = useState(LOADING_MESSAGES[0]);
     const [error, setError] = useState('');
+    const [generatedVideo, setGeneratedVideo] = useState<{ title: string; script: string; videoUrl: string } | null>(null);
+    const [loadingTopic, setLoadingTopic] = useState<string | null>(null);
 
-    const handleGenerateVideo = async (topic: TutorialTopic) => {
+    const handleGenerateVideo = async (topic: string) => {
         setIsLoading(true);
-        setSelectedTutorial(null);
+        setLoadingTopic(topic);
         setError('');
+        setGeneratedVideo(null);
 
-        const messageInterval = setInterval(() => {
-            setLoadingMessage(prev => {
-                const currentIndex = LOADING_MESSAGES.indexOf(prev);
-                return LOADING_MESSAGES[(currentIndex + 1) % LOADING_MESSAGES.length];
-            });
-        }, 2000);
-
-        // Simulate a delay for the generation process
-        await new Promise(resolve => setTimeout(resolve, 3000));
-
-        const result = await geminiService.generateTutorialVideo(topic.title);
-        
-        clearInterval(messageInterval);
-        setIsLoading(false);
+        const result = await geminiService.generateTutorialVideo(topic);
 
         if (result.error) {
             setError(result.error);
         } else {
-            setSelectedTutorial(result);
+            setGeneratedVideo(result);
         }
+        setIsLoading(false);
+        setLoadingTopic(null);
     };
 
     return (
-        <div className="bg-gray-50">
-            <PageHeader onBack={() => onNavigate('landing')} />
-
-            {/* Hero Section */}
-            <section className="bg-gray-800 text-white py-20 text-center">
-                <div className="container mx-auto px-4">
-                    <h1 className="text-4xl md:text-5xl font-extrabold mb-4">Video Tutorials</h1>
-                    <p className="text-lg md:text-xl max-w-3xl mx-auto text-gray-300">
-                        Watch short, AI-generated guides to learn how to get the most out of the TechSubbies platform.
+        <div className="bg-gray-50 min-h-screen">
+            <div className="container mx-auto px-4 py-12">
+                <button 
+                    // FIX: Replaced string literal with Page enum for type safety.
+                    onClick={() => onNavigate(Page.LANDING)} 
+                    className="flex items-center mb-6 text-gray-600 hover:text-gray-900 font-semibold"
+                >
+                    <ArrowLeft size={16} className="mr-2" />
+                    Back to Main Site
+                </button>
+                <div className="text-center">
+                    <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800">Video Tutorials</h1>
+                    <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+                        Watch short, AI-generated guides to learn how to use the key features of TechSubbies.com.
                     </p>
                 </div>
-            </section>
 
-            {/* Tutorial List Section */}
-            <section className="py-16">
-                <div className="container mx-auto px-4 max-w-4xl">
-                    <h2 className="text-3xl font-bold text-center mb-8">Choose a Tutorial to Watch</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {TUTORIAL_TOPICS.map((topic, index) => (
-                            <button
-                                key={index}
-                                onClick={() => handleGenerateVideo(topic)}
-                                disabled={isLoading}
-                                className="bg-white p-6 rounded-lg shadow-lg text-left h-full flex flex-col items-start hover:shadow-xl hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <div className="bg-blue-100 p-3 rounded-full mb-4">
-                                    <PlayCircle className="w-8 h-8 text-blue-600" />
+                <div className="max-w-3xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-lg space-y-3">
+                    {TUTORIAL_TOPICS.map(topic => (
+                        <button
+                            key={topic}
+                            onClick={() => handleGenerateVideo(topic)}
+                            disabled={isLoading}
+                            className="w-full flex items-center justify-between text-left p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors disabled:opacity-50 disabled:bg-gray-100"
+                        >
+                            <span className="font-semibold text-lg text-gray-800">{topic}</span>
+                            {isLoading && loadingTopic === topic ? (
+                                <div className="text-center w-8">
+                                    <Loader className="animate-spin text-blue-600"/>
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-800">{topic.title}</h3>
-                                <p className="text-gray-600 mt-2 flex-grow">{topic.description}</p>
-                                <span className="mt-4 text-blue-600 font-bold flex items-center">
-                                    Watch Now &rarr;
-                                </span>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            </section>
-            
-            {/* Modal for Loading/Displaying Video */}
-            {(isLoading || selectedTutorial || error) && (
-                 <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4 animate-fade-in-up" style={{animationDuration: '0.3s'}}>
-                    <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] flex flex-col relative">
-                        <button onClick={() => { setIsLoading(false); setSelectedTutorial(null); setError(''); }} className="absolute -top-3 -right-3 bg-white rounded-full p-2 shadow-lg text-gray-600 hover:text-black z-10">
-                            <X size={24} />
+                            ) : (
+                                <PlayCircle className="text-blue-600"/>
+                            )}
                         </button>
-                        
-                        {isLoading && (
-                            <div className="p-12 text-center">
-                                <Loader className="animate-spin w-12 h-12 text-blue-600 mx-auto mb-6" />
-                                <h3 className="text-2xl font-bold text-gray-800">Generating Your Tutorial...</h3>
-                                <p className="text-gray-500 mt-2">{loadingMessage}</p>
-                            </div>
-                        )}
-
-                        {error && (
-                            <div className="p-12 text-center">
-                                <h3 className="text-2xl font-bold text-red-600">An Error Occurred</h3>
-                                <p className="text-gray-500 mt-2">{error}</p>
-                            </div>
-                        )}
-
-                        {selectedTutorial && (
-                            <>
-                                <header className="p-4 border-b flex-shrink-0">
-                                    <h2 className="text-2xl font-bold">{selectedTutorial.title}</h2>
-                                </header>
-                                <div className="flex flex-col md:flex-row flex-grow overflow-hidden">
-                                    <div className="w-full md:w-2/3 bg-black flex-shrink-0">
-                                        <video
-                                            key={selectedTutorial.videoUrl}
-                                            className="w-full h-full object-contain"
-                                            controls
-                                            autoPlay
-                                        >
-                                            <source src={selectedTutorial.videoUrl} type="video/mp4" />
-                                            Your browser does not support the video tag.
-                                        </video>
-                                    </div>
-                                    <div className="w-full md:w-1/3 p-4 flex flex-col">
-                                        <h3 className="text-lg font-bold mb-2 flex items-center flex-shrink-0">
-                                            <FileText size={18} className="mr-2" />
-                                            Video Script
-                                        </h3>
-                                        <div className="overflow-y-auto custom-scrollbar flex-grow pr-2">
-                                            <p className="text-gray-700 whitespace-pre-wrap">{selectedTutorial.script}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </>
-                        )}
+                    ))}
+                </div>
+                {error && <p className="text-center text-red-500 mt-4">{error}</p>}
+                
+                {isLoading && (
+                    <div className="text-center mt-4 text-gray-600">
+                        <p>Generating video... This can take a few minutes as the AI model is rendering the content.</p>
+                        <p className="text-sm">Please be patient and do not navigate away from the page.</p>
                     </div>
-                 </div>
-            )}
+                )}
+
+                {generatedVideo && (
+                    <VideoModal 
+                        {...generatedVideo}
+                        onClose={() => setGeneratedVideo(null)}
+                    />
+                )}
+            </div>
         </div>
     );
 };

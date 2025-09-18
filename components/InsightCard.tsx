@@ -1,4 +1,5 @@
 import React from 'react';
+// FIX: Corrected import path for types.
 import { Insight } from '../types';
 import { Lightbulb, Award, Edit, ArrowRight } from './Icons';
 

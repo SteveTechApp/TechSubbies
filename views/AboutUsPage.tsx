@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Page } from '../types';
 import { TestimonialCard } from '../components/TestimonialCard';
@@ -80,7 +81,8 @@ export const AboutUsPage = ({ onNavigate }: AboutUsPageProps) => {
       <section className="bg-gray-800 text-white py-20 text-center">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold">Join the Network</h2>
-          <button onClick={() => onNavigate('login')} className="mt-6 bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">
+          {/* FIX: Replaced string literal with Page enum for type safety. */}
+          <button onClick={() => onNavigate(Page.LOGIN)} className="mt-6 bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">
             Get Started
           </button>
         </div>
