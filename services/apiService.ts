@@ -68,7 +68,7 @@ const apiService = {
         compliance: data.compliance || {},
         identity: data.identity || {},
         profileViews: 0, searchAppearances: 0, jobInvites: 0, reputation: 50, complianceScore: 50,
-        calendarSyncUrl: `https://techsubbies.com/cal/eng-${Date.now()}.ics`,
+        calendarSyncUrl: `https://wingman.com/cal/eng-${Date.now()}.ics`,
         badges: [],
         contact: { email: data.email },
         platformCredits: 1, loyaltyPoints: 0,
@@ -124,7 +124,7 @@ const apiService = {
     // This simulates the backend generating a secure, temporary URL for a direct client-to-S3 upload.
     const uniqueId = `${Date.now()}-${fileName}`;
     const uploadUrl = `https://mock-s3-bucket.com/uploads/${uniqueId}?signature=secure-token`;
-    const fileUrl = `https://cdn.techsubbies.com/uploads/${uniqueId}`; // The final, public URL
+    const fileUrl = `https://cdn.wingman.com/uploads/${uniqueId}`; // The final, public URL
     return { uploadUrl, fileUrl };
   },
 

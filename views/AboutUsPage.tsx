@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { Page } from '../types';
 import { TestimonialCard } from '../components/TestimonialCard';
@@ -14,7 +12,7 @@ export const AboutUsPage = ({ onNavigate }: AboutUsPageProps) => {
   return (
     <div className="bg-white">
       {/* Hero Section */}
-      <section className="bg-gray-800 text-white py-20">
+      <section className="bg-gray-800 text-white py-16">
         <div className="container mx-auto px-4 text-center">
             <img 
                 src={AVATARS.steve} 
@@ -24,13 +22,13 @@ export const AboutUsPage = ({ onNavigate }: AboutUsPageProps) => {
             <h1 className="text-4xl md:text-5xl font-extrabold mb-2">Steve Goodwin</h1>
             <p className="text-xl text-blue-300 font-semibold mb-4">Founder & CEO</p>
             <p className="text-lg md:text-xl max-w-3xl mx-auto text-gray-300">
-                "After 25+ years in the AV industry, I've seen the hiring process from every angle—as an integrator, a distributor, and for manufacturers. I built TechSubbies to solve the problems I witnessed firsthand."
+                "After 25+ years in the AV industry, I've seen the hiring process from every angle—as an integrator, a distributor, and for manufacturers. I built TechSubbies.com to solve the problems I witnessed firsthand."
             </p>
         </div>
       </section>
 
       {/* Founder's Story Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4 max-w-4xl">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">A Vision Forged by Industry Experience</h2>
             <div className="prose lg:prose-lg max-w-none text-gray-700 space-y-6">
@@ -51,12 +49,12 @@ export const AboutUsPage = ({ onNavigate }: AboutUsPageProps) => {
       </section>
       
       {/* Testimonials Section */}
-      <section className="py-20 bg-blue-50">
+      <section className="py-16 bg-blue-50">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Trusted by the Industry</h2>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
              <TestimonialCard
-              text="TechSubbies is a game-changer. The AI matching gave me the top 3 candidates for a complex Crestron role in under an hour. We had a contract signed the same day."
+              text="TechSubbies.com is a game-changer. The AI matching gave me the top 3 candidates for a complex Crestron role in under an hour. We had a contract signed the same day."
               author="Steve G., Project Manager"
               company="Pro AV Solutions"
               avatar={AVATARS.steve}
@@ -78,7 +76,7 @@ export const AboutUsPage = ({ onNavigate }: AboutUsPageProps) => {
       </section>
 
       {/* Final CTA */}
-      <section className="bg-gray-800 text-white py-20 text-center">
+      <section className="bg-gray-800 text-white py-16 text-center">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold">Join the Network</h2>
           {/* FIX: Replaced string literal with Page enum for type safety. */}

@@ -13,7 +13,7 @@ export const AIAssistant = () => {
     const { chatSession, currentPageContext } = useAppContext();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([
-        { role: 'ai', text: "Hello! I'm the TechSubbies AI Assistant. I have context of the page you're on, so feel free to ask specific questions. How can I help?" }
+        { role: 'ai', text: "Hello! I'm the TechSubbies.com AI Assistant. I have context of the page you're on, so feel free to ask specific questions. How can I help?" }
     ]);
     const [userInput, setUserInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);

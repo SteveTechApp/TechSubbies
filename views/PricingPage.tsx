@@ -100,7 +100,7 @@ export const PricingPage = ({ onNavigate }: ForEngineersPageProps) => {
 
 
             {/* Pricing Grid */}
-            <div className="py-20 px-4">
+            <div className="py-16 px-4">
                  {activeTab === 'engineers' && (
                     <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-in-up">
                         {PRICING_PLANS.map(plan => (

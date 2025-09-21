@@ -55,6 +55,10 @@ const EngineerCardComponent = ({ profile, onClick, matchScore }: EngineerCardPro
         : 'border-transparent';
     
     const isTopRated = profile.badges.some(b => b.id === 'top-contributor' || b.id === 'contracts-10');
+    
+    const topSkillsFromRoles = profile.selectedJobRoles?.[0]?.skills
+        .sort((a, b) => b.rating - a.rating)
+        .slice(0, 3) || [];
         
     return (
         <button 
@@ -121,19 +125,19 @@ const EngineerCardComponent = ({ profile, onClick, matchScore }: EngineerCardPro
                     <>
                         <div className="flex justify-between items-center">
                             <h4 className="text-xs font-bold text-gray-500 uppercase">
-                                {profile.profileTier !== ProfileTier.BASIC ? 'Core Skills' : 'Day Rate'}
+                                {profile.profileTier !== ProfileTier.BASIC ? 'Top Skills' : 'Day Rate'}
                             </h4>
                             <div className="text-right">
                                 <p className="text-lg font-bold text-gray-800">{profile.currency}{profile.minDayRate} - {profile.maxDayRate}</p>
                             </div>
                         </div>
-                        {profile.profileTier !== ProfileTier.BASIC && profile.skills && profile.skills.length > 0 ? (
+                        {profile.profileTier !== ProfileTier.BASIC && topSkillsFromRoles.length > 0 ? (
                             <div className="flex flex-wrap gap-1 mt-1">
-                                {profile.skills.slice(0, 3).map(skill => (
+                                {topSkillsFromRoles.map(skill => (
                                     <span key={skill.name} className="bg-gray-200 text-gray-800 px-2 py-1 text-xs rounded-md">{skill.name}</span>
                                 ))}
-                                {profile.skills.length > 3 && (
-                                    <span className="bg-gray-200 text-gray-800 px-2 py-1 text-xs rounded-md">+{profile.skills.length - 3} more</span>
+                                {profile.selectedJobRoles?.[0]?.skills.length > 3 && (
+                                    <span className="bg-gray-200 text-gray-800 px-2 py-1 text-xs rounded-md">+{profile.selectedJobRoles[0].skills.length - 3} more</span>
                                 )}
                             </div>
                         ) : (

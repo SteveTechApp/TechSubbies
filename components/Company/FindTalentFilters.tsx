@@ -89,7 +89,8 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTal
             filtered = filtered.filter(e =>
                 e.name.toLowerCase().includes(term) ||
                 e.discipline.toLowerCase().includes(term) ||
-                (e.skills && e.skills.some(s => s.name.toLowerCase().includes(term)))
+                // FIX: Property 'skills' does not exist on type 'EngineerProfile'. Access skills via 'selectedJobRoles'.
+                (e.selectedJobRoles && e.selectedJobRoles.flatMap(role => role.skills).some(s => s.name.toLowerCase().includes(term)))
             );
         }
         

@@ -65,6 +65,7 @@ export const SettingsView = ({ profile, onSave }: SettingsViewProps) => {
                         </div>
                         <div className="ml-3 text-sm">
                             <label htmlFor="consentToFeature" className="font-medium text-gray-700">Feature on Homepage</label>
+                            {/* FIX: Corrected branding from Wingman to TechSubbies.com. */}
                             <p className="text-gray-500">Allow TechSubbies.com to feature your company logo on our landing page.</p>
                         </div>
                     </div>

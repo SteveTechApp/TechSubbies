@@ -155,7 +155,7 @@ export const HowItWorksPage = ({ onNavigate }: HowItWorksPageProps) => {
             <PageHeader onBack={() => onNavigate(Page.LANDING)} />
 
             {/* Hero Section */}
-            <section className="bg-gray-800 text-white py-20 text-center">
+            <section className="bg-gray-800 text-white py-16 text-center">
                 <div className="container mx-auto px-4">
                     <h1 className="text-4xl md:text-5xl font-extrabold mb-4">The Future of Freelance Hiring</h1>
                     <p className="text-lg md:text-xl max-w-3xl mx-auto text-gray-300">
@@ -165,7 +165,7 @@ export const HowItWorksPage = ({ onNavigate }: HowItWorksPageProps) => {
             </section>
             
             {/* Tab Navigation */}
-            <div className="sticky top-20 bg-white z-30 shadow-md">
+            <div className="sticky top-16 bg-white z-30 shadow-md">
                  <div className="container mx-auto">
                     <nav className="flex flex-col sm:flex-row justify-center">
                         <button onClick={() => setActiveTab('engineers')} className={getTabClass('engineers', 'blue')}>

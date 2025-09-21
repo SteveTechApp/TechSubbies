@@ -4,6 +4,19 @@ import { MousePointer } from './Icons';
 // --- Slide Content Components ---
 
 const Slide1Content = () => (
+    <div className="w-full h-full relative flex items-center justify-center text-center text-white p-8">
+        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop')` }}></div>
+        <div className="absolute inset-0 bg-gray-800 opacity-50"></div>
+        <div className="relative z-10">
+            <h1 className="text-4xl md:text-6xl font-extrabold mb-4">How It Works</h1>
+            <p className="text-lg md:text-xl text-gray-200 max-w-2xl mx-auto">
+                A transparent, AI-powered process for Engineers, Companies, and Resourcing Agencies.
+            </p>
+        </div>
+    </div>
+);
+
+const Slide2Content = () => (
     <div className="w-full h-full p-8 flex items-center justify-center bg-gray-200 font-sans">
         <div className="w-[480px] bg-white rounded-lg shadow-xl p-6 scale-90 transform">
             <h3 className="font-bold text-lg text-gray-800">Neil B. - Skills Profile</h3>
@@ -29,7 +42,7 @@ const Slide1Content = () => (
     </div>
 );
 
-const Slide2Content = () => (
+const Slide3Content = () => (
     <div className="w-full h-full p-8 flex items-center justify-center bg-gray-200 font-sans">
         <div className="w-[480px] bg-white rounded-lg shadow-xl p-6 scale-90 transform">
             <h3 className="font-bold text-lg text-gray-800">Post a Job - Define Skills</h3>
@@ -61,7 +74,33 @@ const Slide2Content = () => (
     </div>
 );
 
-const Slide3Content = () => (
+const Slide4Content = () => (
+    <div className="w-full h-full p-8 flex items-center justify-center bg-gray-200 font-sans">
+        <div className="w-[480px] bg-white rounded-lg shadow-xl p-6 scale-90 transform">
+            <h3 className="font-bold text-lg text-gray-800">Resourcing Dashboard</h3>
+            <p className="text-sm text-gray-500">Manage talent and find placements.</p>
+            <div className="mt-4 grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-3 rounded-lg border">
+                    <h4 className="font-semibold text-sm mb-2 text-gray-700">My Engineers</h4>
+                    <div className="space-y-2">
+                        <div className="bg-white p-2 rounded-md text-xs flex justify-between items-center"><span>Neil B. (AV)</span><button className="text-blue-600 font-semibold">Apply</button></div>
+                        <div className="bg-white p-2 rounded-md text-xs flex justify-between items-center"><span>Samantha G. (AV)</span><button className="text-blue-600 font-semibold">Apply</button></div>
+                        <div className="bg-white p-2 rounded-md text-xs flex justify-between items-center"><span>David C. (IT)</span><button className="text-blue-600 font-semibold">Apply</button></div>
+                    </div>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg border">
+                     <h4 className="font-semibold text-sm mb-2 text-gray-700">Available Jobs</h4>
+                     <div className="space-y-2">
+                        <div className="bg-white p-2 rounded-md text-xs"><strong>Senior AV Engineer</strong><p>Pro AV Solutions</p></div>
+                        <div className="bg-white p-2 rounded-md text-xs"><strong>IT Support Contract</strong><p>Nexus IT</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
+const Slide5Content = () => (
     <div className="w-full h-full p-8 flex items-center justify-center bg-gray-200 font-sans">
         <div className="w-[480px] h-full bg-white rounded-lg shadow-xl p-6 scale-90 transform overflow-hidden">
             <h3 className="font-bold text-lg text-gray-800">Applicants: Senior AV Engineer</h3>
@@ -102,7 +141,7 @@ const Slide3Content = () => (
     </div>
 );
 
-const Slide4Content = () => (
+const Slide6Content = () => (
     <div className="w-full h-full p-8 flex items-center justify-center bg-gray-200 font-sans">
         <div className="w-[480px] bg-white rounded-lg shadow-xl p-6 scale-90 transform text-center">
             <div className="flex items-center justify-center space-x-8">
@@ -125,28 +164,40 @@ const Slide4Content = () => (
 
 const SLIDES = [
     {
-        title: "1. Showcase Your Expertise",
-        description: "Engineers add a 'Specialist Role' to their premium profile and rate their competency on the granular, industry-specific skills that matter.",
+        title: "How It Works",
+        description: "A transparent, AI-powered process for Engineers, Companies, and Resourcing Agencies.",
         content: <Slide1Content />,
+        animationClass: "",
+    },
+    {
+        title: "1. For Engineers: Showcase Your Expertise",
+        description: "Engineers add a 'Specialist Role' to their premium profile and rate their competency on the granular, industry-specific skills that matter.",
+        content: <Slide2Content />,
         animationClass: "animate-cursor-1",
     },
     {
-        title: "2. Define Your Exact Needs",
+        title: "2. For Companies: Define Your Exact Needs",
         description: "Companies post jobs for free, selecting a role that auto-populates required skills. They then mark each one as 'Essential' or 'Desirable'.",
-        content: <Slide2Content />,
+        content: <Slide3Content />,
         animationClass: "animate-cursor-2",
     },
+     {
+        title: "3. For Resourcing: Manage Your Talent",
+        description: "Resourcing agencies use a centralized dashboard to manage their engineers and apply to jobs on their behalf.",
+        content: <Slide4Content />,
+        animationClass: "animate-cursor-4",
+    },
     {
-        title: "3. Get an Instant AI Match",
-        description: "The platform's AI analyzes engineer skills against the job's requirements, instantly generating a ranked list of candidates with a precise match score.",
-        content: <Slide3Content />,
+        title: "4. AI Delivers the Perfect Match",
+        description: "The platform's AI analyzes skills against requirements, instantly generating a ranked list of candidates with a precise match score.",
+        content: <Slide5Content />,
         animationClass: "animate-cursor-3",
     },
     {
-        title: "4. Connect Directly. No Middlemen.",
+        title: "5. Connect Directly. No Middlemen.",
         description: "The result is a fast, fair, and focused connection that saves everyone time and money. It's the modern way to hire freelance tech talent.",
-        content: <Slide4Content />,
-        animationClass: "", // No animation on the final slide
+        content: <Slide6Content />,
+        animationClass: "",
     },
 ];
 

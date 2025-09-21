@@ -27,7 +27,7 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
   return (
     <div className="bg-white">
       {/* Hero Section */}
-      <section className="relative bg-gray-800 text-white pt-32 pb-20 text-center">
+      <section className="relative bg-gray-800 text-white pt-24 pb-16 text-center">
         <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=2070&auto=format&fit=crop')` }}></div>
         <div className="relative container mx-auto px-4">
           <h1 className="text-4xl md:text-6xl font-extrabold mb-4 fade-in-up">The Global Specialist Freelance Network</h1>
@@ -52,9 +52,9 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Why TechSubbies?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Why TechSubbies.com?</h2>
           <p className="text-gray-600 max-w-2xl mx-auto mb-12">We're not another job board. We're a technology platform built for the specifics of the specialist tech industry.</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <FeatureCard icon={Search} title="Precision Search">
@@ -71,7 +71,7 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
       </section>
 
        {/* How It Works (Visual) Section */}
-       <section className="py-20 bg-white">
+       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
             <div className="text-center mb-12">
                 <h2 className="text-3xl md:text-4xl font-bold mb-4">The Future of Freelance Hiring</h2>
@@ -84,7 +84,7 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
       </section>
       
       {/* Featured Jobs Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Featured Contracts</h2>
           <p className="text-gray-600 max-w-2xl mx-auto mb-12">
@@ -106,12 +106,12 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
       </section>
 
        {/* Testimonials Section */}
-      <section className="py-20 bg-blue-50">
+      <section className="py-16 bg-blue-50">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Trusted by the Industry</h2>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
              <TestimonialCard
-              text="TechSubbies is a game-changer. The AI matching gave me the top 3 candidates for a complex Crestron role in under an hour. We had a contract signed the same day."
+              text="TechSubbies.com is a game-changer. The AI matching gave me the top 3 candidates for a complex Crestron role in under an hour. We had a contract signed the same day."
               author="Steve G., Project Manager"
               company="Pro AV Solutions"
               avatar={AVATARS.steve}
@@ -133,7 +133,7 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
       </section>
 
       {/* Final CTA */}
-      <section className="py-20 bg-gray-800 text-white">
+      <section className="py-16 bg-gray-800 text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Join?</h2>
           <p className="text-gray-300 max-w-2xl mx-auto mb-8">Whether you're looking for your next contract or searching for specialist talent, get started for free today.</p>

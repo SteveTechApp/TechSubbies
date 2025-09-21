@@ -7,7 +7,16 @@
     <title>TechSubbies.com | The Global Specialist Freelance Network</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Orbitron', sans-serif;
+      }
       /* --- Custom Scrollbar --- */
       .custom-scrollbar::-webkit-scrollbar {
         width: 8px;
@@ -71,6 +80,18 @@
       }
       .animate-cursor-3 {
         animation: cursor-click-path-3 8s ease-in-out infinite;
+      }
+      
+      @keyframes cursor-click-path-4 { /* For slide 4: Resourcing agency */
+        0%, 100% { top: 20%; left: 15%; opacity: 0; transform: scale(1); }
+        10% { top: 20%; left: 15%; opacity: 1; }
+        30% { top: 45%; left: 42%; } /* Move to 'Apply' button for Samantha G. */
+        35%, 45% { top: 45%; left: 42%; transform: scale(0.9); } /* Click effect */
+        50% { top: 45%; left: 42%; transform: scale(1); opacity: 0; } /* Disappear as modal would open */
+        90% { opacity: 0; }
+      }
+      .animate-cursor-4 {
+        animation: cursor-click-path-4 8s ease-in-out infinite;
       }
     </style>
   <script type="importmap">

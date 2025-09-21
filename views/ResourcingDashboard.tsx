@@ -62,7 +62,7 @@ export const ResourcingDashboard = () => {
     return (
         <div className="flex h-screen bg-gray-100">
             <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-1 p-8 overflow-y-auto">
+            <main className="flex-1 p-6 overflow-y-auto">
                 {renderView()}
             </main>
         </div>

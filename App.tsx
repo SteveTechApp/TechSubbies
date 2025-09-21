@@ -92,7 +92,7 @@ const App = () => {
     return (
         <div className="flex flex-col min-h-screen">
             {!isDashboard && <Header onNavigate={setPage} onHowItWorksClick={() => setIsHowItWorksOpen(true)} />}
-            <main className={`flex-grow ${!isDashboard ? 'pt-20' : ''}`}>
+            <main className={`flex-grow ${!isDashboard ? 'pt-16' : ''}`}>
                 {renderPage()}
             </main>
             {!isDashboard && <Footer onNavigate={setPage} />}

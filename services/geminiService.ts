@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { EngineerProfile, Job, JobSkillRequirement, Skill, Product, ProductFeatures, Insight, ExperienceLevel, AiProductMatch } from "../types";
+// FIX: Add Product and ProductFeatures types for new AI method.
+import { EngineerProfile, Job, JobSkillRequirement, Skill, Insight, ExperienceLevel, Product, ProductFeatures } from "../types";
 import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';
 
 class GeminiService {
@@ -46,6 +47,13 @@ class GeminiService {
         }
     }
     
+    private getEngineerSkillsString(engineer: EngineerProfile, includeRating: boolean = true): string {
+        const skillsFromRoles = engineer.selectedJobRoles?.flatMap(role => 
+            role.skills.map(skill => includeRating ? `${skill.name} (${skill.rating})` : skill.name)
+        ) || [];
+        return [...new Set(skillsFromRoles)].join(', ');
+    }
+
     // Method used in AISkillDiscovery.tsx
     async generateSkillsForRole(role: string): Promise<{ skills?: Skill[], error?: string }> {
         const prompt = `Based on the job role "${role}", suggest 5-8 relevant, granular technical skills an engineer should have. Provide a default competency rating between 40-70 for each skill.`;
@@ -69,10 +77,10 @@ class GeminiService {
     
     // Method used in AIEngineerCostAnalysis.tsx
     async analyzeEngineerCost(jobDescription: string, engineer: EngineerProfile): Promise<any> {
-        const engineerSkills = [...(engineer.skills?.map(s => `${s.name} (${s.rating})`) || []), ...(engineer.selectedJobRoles?.flatMap(r => r.skills.map(s => `${s.name} (${s.rating})`)) || [])].join(', ');
+        const engineerSkills = this.getEngineerSkillsString(engineer);
         const prompt = `Analyze the cost-effectiveness of an engineer for a specific job.
         Job Description: "${jobDescription}"
-        Engineer Profile: Name: ${engineer.name}, Experience: ${engineer.experience} years, Day Rate Range: £${engineer.minDayRate}-£${engineer.maxDayRate}, Skills: ${engineerSkills}.
+        Engineer Profile: Name: ${engineer.name}, Experience: ${engineer.experience} years, Day Rate Range: £${engineer.minDayRate}-£${engineer.maxDayRate}, Skills from Specialist Roles: ${engineerSkills}.
         
         Provide a JSON response assessing skill match, justifying the rate, giving an overall recommendation, and a confidence score.`;
         
@@ -91,8 +99,9 @@ class GeminiService {
     // Method used in TrainingRecommendations.tsx
     async getTrainingRecommendations(profile: EngineerProfile): Promise<any> {
         const existingCerts = profile.certifications?.map(c => c.name).join(', ') || 'None';
+        const engineerSkills = this.getEngineerSkillsString(profile, false);
         const prompt = `Analyze this AV/IT engineer's profile and suggest 2-3 specific, valuable training courses or certifications that would likely increase their day rate or job opportunities. For each, provide a brief reason.
-        Profile: Experience: ${profile.experience} years, Discipline: ${profile.discipline}, Existing Certs: ${existingCerts}, Skills: ${profile.skills?.map(s=>s.name).join(', ')}.`;
+        Profile: Experience: ${profile.experience} years, Discipline: ${profile.discipline}, Existing Certs: ${existingCerts}, Skills from Specialist Roles: ${engineerSkills}.`;
 
         const schema = {
             type: Type.OBJECT,
@@ -116,13 +125,14 @@ class GeminiService {
     
     // Method used in AICoachView.tsx
     async getCareerCoaching(profile: EngineerProfile): Promise<{ insights?: Insight[], error?: string }> {
+        const engineerSkills = this.getEngineerSkillsString(profile, false);
         const prompt = `Analyze this AV/IT engineer's profile against current market trends for freelance contracts. Provide 3 actionable insights to help them advance their career and increase their day rate. For each insight, suggest a type ('Upskill', 'Certification', 'Profile Enhancement'), a specific suggestion, and a call-to-action with text and a relevant dashboard view from this list: ['AI Tools', 'Manage Profile', 'Job Search'].
 
         Engineer Profile:
         - Experience: ${profile.experience} years
         - Discipline: ${profile.discipline}
         - Current Certifications: ${profile.certifications?.map(c => c.name).join(', ') || 'None'}
-        - Skills: ${profile.skills?.map(s => s.name).join(', ') || 'None'}
+        - Skills from Specialist Roles: ${engineerSkills}
         - Specialist Roles: ${profile.selectedJobRoles?.map(r => r.roleName).join(', ') || 'None'}
 
         Respond in JSON format.`;
@@ -200,7 +210,7 @@ class GeminiService {
     // Method used in InstantInviteModal.tsx
     async findBestMatchesForJob(job: Job, engineers: EngineerProfile[]): Promise<any> {
         const engineerProfiles = engineers.map(e => {
-            const engineerSkills = [...(e.skills?.map(s => `${s.name} (${s.rating})`) || []), ...(e.selectedJobRoles?.flatMap(r => r.skills.map(s => `${s.name} (${s.rating})`)) || [])].join(', ');
+            const engineerSkills = e.selectedJobRoles?.flatMap(r => r.skills.map(s => `${s.name} (${s.rating})`)).join(', ') || 'No detailed skills listed';
             return `ID: ${e.id}, Role: ${e.selectedJobRoles?.map(r => r.roleName).join(', ') || e.discipline}, Skills: ${engineerSkills}, Experience: ${e.experience}yrs, Rate: £${e.minDayRate}-${e.maxDayRate}`;
         }).join('\n');
         
@@ -331,6 +341,41 @@ class GeminiService {
         }
     }
 
+    // FIX: Add method for Product Analysis
+    // Method for Product Analysis
+    async analyzeProductForFeatures(product: Product): Promise<ProductFeatures | { error: string }> {
+        const prompt = `Analyze the following AV product description and extract its key technical features.
+        
+        Product SKU: ${product.sku}
+        Product Name: ${product.name}
+        Description: "${product.description}"
+
+        Provide a JSON response with the following structure:
+        - maxResolution (string, e.g., "4K60 4:4:4", "1080p")
+        - ioPorts (object with 'inputs' and 'outputs' arrays. Each item in the array should be an object with 'count' and 'type', e.g., {count: 2, type: "HDMI"})
+        - keyFeatures (array of strings, e.g., ["Video Wall", "PoE", "USB 2.0"])
+        - idealApplication (string, a brief description of the best use case for this product)
+        `;
+        
+        const schema = {
+            type: Type.OBJECT,
+            properties: {
+                maxResolution: { type: Type.STRING },
+                ioPorts: {
+                    type: Type.OBJECT,
+                    properties: {
+                        inputs: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { count: { type: Type.INTEGER }, type: { type: Type.STRING } } } },
+                        outputs: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { count: { type: Type.INTEGER }, type: { type: Type.STRING } } } }
+                    }
+                },
+                keyFeatures: { type: Type.ARRAY, items: { type: Type.STRING } },
+                idealApplication: { type: Type.STRING }
+            }
+        };
+
+        return this.generateWithSchema(prompt, schema);
+    }
+
     // Simple mock for AI auto-reply
     getAutoReply(incomingMessage: string): string {
         const lowerCaseMessage = incomingMessage.toLowerCase();
@@ -344,86 +389,6 @@ class GeminiService {
             return "Thanks for confirming. My availability is up-to-date on my profile, but let me know the exact dates you have in mind.";
         }
         return "Acknowledged. I will get back to you on this as soon as possible.";
-    }
-
-    // Method for AI Product Feature Analysis
-    async analyzeProductForFeatures(product: Product): Promise<ProductFeatures | { error: string }> {
-        const prompt = `Analyze the following product description and extract its key technical features.
-        Product SKU: ${product.sku}
-        Product Name: ${product.name}
-        Description: "${product.description}"
-        
-        Provide a JSON response with the following structure:
-        - maxResolution (e.g., "4K60 4:4:4", "1080p")
-        - ioPorts (inputs and outputs with type and count)
-        - controlMethods (e.g., "RS232", "IR", "Web GUI")
-        - keyFeatures (a list of important features like "Video Wall", "PoE", "USB 2.0")
-        - idealApplication (a short description of where this product is best used)
-        `;
-        
-        const schema = {
-            type: Type.OBJECT,
-            properties: {
-                maxResolution: { type: Type.STRING },
-                ioPorts: {
-                    type: Type.OBJECT,
-                    properties: {
-                        inputs: {
-                            type: Type.ARRAY,
-                            items: {
-                                type: Type.OBJECT,
-                                properties: {
-                                    type: { type: Type.STRING },
-                                    count: { type: Type.INTEGER }
-                                }
-                            }
-                        },
-                        outputs: {
-                            type: Type.ARRAY,
-                            items: {
-                                type: Type.OBJECT,
-                                properties: {
-                                    type: { type: Type.STRING },
-                                    count: { type: Type.INTEGER }
-                                }
-                            }
-                        }
-                    }
-                },
-                controlMethods: { type: Type.ARRAY, items: { type: Type.STRING } },
-                keyFeatures: { type: Type.ARRAY, items: { type: Type.STRING } },
-                idealApplication: { type: Type.STRING }
-            }
-        };
-        return this.generateWithSchema(prompt, schema);
-    }
-    
-    // Method for AI Product Search
-    async findMatchingProducts(brief: string, products: Product[]): Promise<{ matches?: AiProductMatch[], error?: string }> {
-        const productCatalog = products.map(p => `SKU: ${p.sku}, Name: ${p.name}, Description: ${p.description}`).join('\n');
-        const prompt = `Based on the following client brief, find the top 5 most suitable products from the catalog. Provide only a JSON array of objects with "sku" and "match_score" (0-100).
-
-        Client Brief: "${brief}"
-
-        Product Catalog:
-        ${productCatalog}`;
-        
-        const schema = {
-            type: Type.OBJECT,
-            properties: {
-                matches: {
-                    type: Type.ARRAY,
-                    items: {
-                        type: Type.OBJECT,
-                        properties: {
-                            sku: { type: Type.STRING },
-                            match_score: { type: Type.INTEGER }
-                        }
-                    }
-                }
-            }
-        };
-        return this.generateWithSchema(prompt, schema);
     }
 }
 

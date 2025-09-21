@@ -14,13 +14,13 @@ interface HeaderProps {
 export const Header = ({ onNavigate, onHowItWorksClick }: HeaderProps) => {
     const { user, logout } = useAuth();
 
-    const headerClasses = "bg-white shadow-md p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50";
+    const headerClasses = "bg-white shadow-md px-4 py-2 flex justify-between items-center fixed top-0 left-0 right-0 z-50";
     const logoColorClass = "text-gray-800";
 
     return (
         <header className={headerClasses}>
             <button onClick={() => onNavigate(Page.LANDING)} aria-label="Go to homepage">
-              <Logo className={`${logoColorClass} h-12`} />
+              <Logo className={`${logoColorClass} h-10`} />
             </button>
             <nav className="flex items-center gap-2">
                 {user ? (

@@ -10,10 +10,8 @@ import apiService from '../services/apiService';
 import {
     User, Role, EngineerProfile, CompanyProfile, Job, Application, Review, Conversation, Message,
     Contract, Transaction, Project, ForumPost, ForumComment, Notification, CollaborationPost, ResourcingCompanyProfile,
-    // FIX: Added missing TimesheetStatus import.
-    Invoice, ApplicationStatus, ContractStatus, MilestoneStatus, Timesheet, PaymentTerms, InvoiceStatus, TimesheetStatus,
-    Product,
-    ProductFeatures
+    // FIX: Added missing TimesheetStatus and Product-related imports.
+    Invoice, ApplicationStatus, ContractStatus, MilestoneStatus, Timesheet, PaymentTerms, InvoiceStatus, TimesheetStatus, Product, ProductFeatures,
 } from '../types';
 
 interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<typeof useSettings> {
@@ -46,7 +44,7 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     sendMessage: (conversationId: string, text: string) => Promise<void>;
     // --- AI & Gemini ---
     getApplicantDeepDive: (job: Job, engineer: EngineerProfile) => Promise<any>;
-    // FIX: Added analyzeProductForFeatures to the type definition.
+    // FIX: Add missing method definition
     analyzeProductForFeatures: (product: Product) => Promise<ProductFeatures | { error: string }>;
     // --- Admin ---
     toggleUserStatus: (profileId: string) => void;
@@ -169,7 +167,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => {
             if (c.id === contractId) {
                 if(user?.role === Role.ENGINEER) return { ...c, status: ContractStatus.SIGNED, engineerSignature: { name: signatureName, date: new Date() } };
-                if(user?.role === Role.COMPANY) return { ...c, status: ContractStatus.ACTIVE, companySignature: { name: signatureName, date: new Date() } };
+                if(user?.role === Role.COMPANY || user?.role === Role.ADMIN) return { ...c, status: ContractStatus.ACTIVE, companySignature: { name: signatureName, date: new Date() } };
             }
             return c;
         })}));
@@ -232,10 +230,11 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const getApplicantDeepDive = async (job: Job, engineer: EngineerProfile) => ({ analysis: { summary: "This is a mock AI summary.", strengths: ["Good with Crestron"], areas_to_probe: ["Biamp experience"], interview_questions: ["Tell me about your largest project."] }});
+    // FIX: Add missing method implementation
+    const analyzeProductForFeatures = (product: Product) => {
+        return geminiService.analyzeProductForFeatures(product);
+    };
     
-    // FIX: Add analyzeProductForFeatures to expose it to the context.
-    const analyzeProductForFeatures = (product: Product) => settings.geminiService.analyzeProductForFeatures(product);
-
     const toggleUserStatus = (profileId: string) => alert(`Toggling status for ${profileId}`);
     const toggleJobStatus = (jobId: string) => alert(`Toggling status for ${jobId}`);
     const createManagedEngineer = (resourcingCompanyId: string, engineerData: any) => alert(`Creating engineer for ${resourcingCompanyId}`);
@@ -289,7 +288,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
     
     const saveStoryboardAsCaseStudy = (title: string, panels: any[]) => {
          if(!user || user.role !== Role.ENGINEER) return;
-        const newCaseStudy = { id: `cs-${Date.now()}`, name: title, url: `techsubbies://storyboard/${Date.now()}`, panels };
+        const newCaseStudy = { id: `cs-${Date.now()}`, name: title, url: `wingman://storyboard/${Date.now()}`, panels };
         const currentProfile = user.profile as EngineerProfile;
         updateEngineerProfile({ caseStudies: [...(currentProfile.caseStudies || []), newCaseStudy] });
     };

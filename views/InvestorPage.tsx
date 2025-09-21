@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo } from 'react';
 // FIX: Corrected import path for types.
 import { Page, ProfileTier } from '../types';
@@ -32,7 +30,7 @@ export const InvestorPage = ({ onNavigate }: InvestorPageProps) => {
     return (
         <div className="bg-gray-50">
             {/* Hero Section */}
-            <section className="bg-gray-800 text-white text-center py-20">
+            <section className="bg-gray-800 text-white text-center py-16">
                 <div className="container mx-auto px-4">
                     <h1 className="text-4xl md:text-5xl font-extrabold">Investing in the Future of Work</h1>
                     <p className="mt-4 text-lg text-gray-300 max-w-3xl mx-auto">
@@ -42,7 +40,7 @@ export const InvestorPage = ({ onNavigate }: InvestorPageProps) => {
             </section>
 
             {/* Key Differentiators */}
-            <section className="py-20">
+            <section className="py-16">
                 <div className="container mx-auto px-4 text-center">
                     <h2 className="text-3xl md:text-4xl font-bold mb-12">A Capital-Efficient, SaaS-Powered Model</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -60,7 +58,7 @@ export const InvestorPage = ({ onNavigate }: InvestorPageProps) => {
             </section>
 
              {/* Revenue Simulator */}
-            <section className="py-20 bg-white">
+            <section className="py-16 bg-white">
                 <div className="container mx-auto px-4 text-center">
                     <h2 className="text-3xl md:text-4xl font-bold mb-4">Interactive Financial Model</h2>
                      <p className="mt-4 text-lg text-gray-600 max-w-3xl mx-auto mb-12">
@@ -75,7 +73,7 @@ export const InvestorPage = ({ onNavigate }: InvestorPageProps) => {
             </section>
 
              {/* Financial Forecast */}
-            <section className="py-20 bg-gray-50">
+            <section className="py-16 bg-gray-50">
                 <div className="container mx-auto px-4">
                      <FinancialForecast
                         revenue={financials.totalRevenue}
@@ -87,7 +85,7 @@ export const InvestorPage = ({ onNavigate }: InvestorPageProps) => {
             </section>
 
             {/* Contact CTA */}
-            <section className="bg-blue-600 py-20 text-white">
+            <section className="bg-blue-600 py-16 text-white">
                  <div className="container mx-auto px-4 text-center">
                     <h2 className="text-3xl font-bold">Request Our Prospectus</h2>
                     <p className="mt-4 text-blue-200 max-w-xl mx-auto">

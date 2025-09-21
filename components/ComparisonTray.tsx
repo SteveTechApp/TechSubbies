@@ -59,10 +59,10 @@ const ComparisonModal = ({ items, analyzedProducts, onClose, onRemove }: { items
                             </tr>
                         </thead>
                         <tbody>
-                            {/* FIX: Fixed key and rendering logic for features. */}
+                            {/* FIX: Cast feature to string to resolve key and method errors. */}
                             {featuresToCompare.map(feature => (
-                                <tr key={feature} className="border-b">
-                                    <td className="px-4 py-3 font-semibold capitalize">{feature.replace(/([A-Z])/g, ' $1').trim()}</td>
+                                <tr key={String(feature)} className="border-b">
+                                    <td className="px-4 py-3 font-semibold capitalize">{String(feature).replace(/([A-Z])/g, ' $1').trim()}</td>
                                     {items.map(item => (
                                         <td key={item.sku} className="px-4 py-3 align-top">
                                             {renderFeature(item, feature)}

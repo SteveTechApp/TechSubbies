@@ -41,7 +41,6 @@ const ENGINEER_LINKS = [
     { label: 'Invoices', icon: DollarSign },
     { label: 'Messages', icon: MessageCircle },
     { label: 'AI Tools', icon: Lightbulb },
-    { label: 'Product Finder', icon: Layers }, // For Sales Engineers
     { label: 'AI Coach', icon: ShieldCheck },
     { label: 'Storyboard Creator', icon: Clapperboard },
     { label: 'Analytics', icon: BarChart2 },

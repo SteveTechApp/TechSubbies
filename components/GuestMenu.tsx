@@ -16,7 +16,7 @@ export const GuestMenu = ({ onHowItWorksClick, onNavigate }: GuestMenuProps) => 
 
     const textColor = 'text-gray-700 hover:text-blue-600';
     const navButtonClass = `px-4 py-2 font-medium text-base ${textColor} text-center`;
-    const loginButtonClass = "flex items-center justify-center text-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-base";
+    const loginButtonClass = "flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 shadow-sm hover:shadow-lg";
     const dropdownItemClass = 'block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100';
     
     const mobileLinkClass = 'text-2xl font-bold text-gray-800 hover:text-blue-600 py-2';
@@ -91,7 +91,7 @@ export const GuestMenu = ({ onHowItWorksClick, onNavigate }: GuestMenuProps) => 
                             <button
                                 // FIX: Replaced string literal with Page enum for type safety.
                                 onClick={() => handleMobileNav(Page.LOGIN)}
-                                className="w-full max-w-xs mx-auto flex items-center justify-center text-center px-4 py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors font-bold"
+                                className="w-full max-w-xs mx-auto flex items-center justify-center px-4 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors"
                             >
                                 <LogIn className="w-5 h-5 mr-2" />
                                 <span>Login / Sign Up</span>

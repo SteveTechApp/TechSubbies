@@ -1,6 +1,3 @@
-
-
-
 import React from 'react';
 import { Page } from '../types';
 import { PageHeader } from '../components/PageHeader';
@@ -18,18 +15,18 @@ export const ForEngineersPage = ({ onNavigate }: ForEngineersPageProps) => {
       <PageHeader onBack={() => onNavigate(Page.LANDING)} />
 
       {/* Hero Section */}
-      <section className="relative bg-blue-600 text-white py-20 text-center">
+      <section className="relative bg-blue-600 text-white py-16 text-center">
          <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1581092921462-205273467433?q=80&w=2070&auto=format&fit=crop')` }}></div>
          <div className="relative container mx-auto px-4">
             <h1 className="text-4xl md:text-5xl font-extrabold mb-4">Your Skills. Your Rate. Your Contracts.</h1>
             <p className="text-lg md:text-xl max-w-3xl mx-auto">
-                TechSubbies is built for specialist engineers. Showcase your deep expertise, get matched with high-value jobs, and take control of your freelance career.
+                TechSubbies.com is built for specialist engineers. Showcase your deep expertise, get matched with high-value jobs, and take control of your freelance career.
             </p>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold">Features Designed For You</h2>
@@ -59,10 +56,10 @@ export const ForEngineersPage = ({ onNavigate }: ForEngineersPageProps) => {
       </section>
       
        {/* How It Works Steps */}
-       <section className="py-20 bg-white">
+       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
             <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold">Your Journey on TechSubbies</h2>
+                <h2 className="text-3xl md:text-4xl font-bold">Your Journey on TechSubbies.com</h2>
             </div>
             <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12">
                 <div className="text-center md:text-left">
@@ -90,7 +87,7 @@ export const ForEngineersPage = ({ onNavigate }: ForEngineersPageProps) => {
       </section>
 
       {/* Final CTA */}
-      <section className="bg-blue-50 py-20">
+      <section className="bg-blue-50 py-16">
         <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold text-gray-800">Ready to Find Your Next Contract?</h2>
             <p className="text-gray-600 my-4 max-w-2xl mx-auto">Join a network of elite freelance professionals and connect with the world's top technology companies.</p>

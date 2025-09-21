@@ -30,6 +30,9 @@ export const MOCK_ADMIN_PROFILE: AdminProfile = {
     permissions: ['all'],
     // FIX: Added missing 'location' property to satisfy the AdminProfile type.
     location: 'Platform HQ',
+    contact: {
+        email: 'admin@wingman.com',
+    }
 };
 
 export const MOCK_FREE_ENGINEER: EngineerProfile = {
@@ -49,7 +52,6 @@ export const MOCK_FREE_ENGINEER: EngineerProfile = {
     maxDayRate: 195,
     currency: Currency.GBP,
     availability: new Date('2024-08-15'),
-    skills: [],
     cv: {
         fileName: 'John_Smith_AV_Tech_CV.pdf',
         fileUrl: '/mock-cv/john-smith.pdf',
@@ -58,9 +60,9 @@ export const MOCK_FREE_ENGINEER: EngineerProfile = {
     compliance: { professionalIndemnity: { hasCoverage: false, isVerified: false }, publicLiability: { hasCoverage: true, amount: 1000000, isVerified: false }, siteSafe: true, cscsCard: true, ownPPE: true, hasOwnTransport: true, hasOwnTools: true, powerToolCompetency: 70, accessEquipmentTrained: 60, firstAidTrained: false, carriesSpares: false },
     identity: { documentType: 'none', isVerified: false },
     profileViews: 12, searchAppearances: 150, jobInvites: 1, reputation: 65, complianceScore: 60,
-    calendarSyncUrl: 'https://techsubbies.com/cal/eng-free.ics',
+    calendarSyncUrl: 'https://wingman.com/cal/eng-free.ics',
     badges: [],
-    contact: { email: 'john.smith.demo@techsubbies.com', phone: '07123456789' },
+    contact: { email: 'john.smith.demo@wingman.com', phone: '07123456789' },
     platformCredits: 1,
     loyaltyPoints: 120,
     referralCode: 'REFJOHN123',
@@ -83,7 +85,6 @@ export const MOCK_ENGINEER_STEVE: EngineerProfile = {
     maxDayRate: 650,
     currency: Currency.GBP,
     availability: new Date('2024-09-01'),
-    skills: [{ name: 'Project Management', rating: 95 }, { name: 'Crestron', rating: 90 }, { name: 'Biamp', rating: 85 }],
     selectedJobRoles: [
         { 
             roleName: 'AV Systems Engineer / Commissioner', 
@@ -127,9 +128,9 @@ export const MOCK_ENGINEER_STEVE: EngineerProfile = {
     compliance: { professionalIndemnity: { hasCoverage: true, amount: 2000000, isVerified: true }, publicLiability: { hasCoverage: true, amount: 5000000, isVerified: true }, siteSafe: true, cscsCard: true, ownPPE: true, hasOwnTransport: true, hasOwnTools: true, powerToolCompetency: 80, accessEquipmentTrained: 75, firstAidTrained: true, carriesSpares: true },
     identity: { documentType: 'passport', isVerified: true },
     profileViews: 128, searchAppearances: 950, jobInvites: 15, reputation: 98, complianceScore: 95,
-    calendarSyncUrl: 'https://techsubbies.com/cal/eng-steve.ics',
+    calendarSyncUrl: 'https://wingman.com/cal/eng-steve.ics',
     badges: [BADGES['verified-id'], BADGES['contracts-10'], BADGES['top-contributor'], BADGES['cts-certified']],
-    contact: { email: 'steve.goodwin.demo@techsubbies.com', phone: '07123456789' },
+    contact: { email: 'steve.goodwin.demo@wingman.com', phone: '07123456789' },
     platformCredits: 5,
     loyaltyPoints: 850,
     hasReceivedCompletionBonus: true,

@@ -93,6 +93,41 @@ export const JOB_ROLE_DEFINITIONS: JobRoleDefinition[] = [
             }
         ]
     },
+     {
+        name: 'Control System Programmer',
+        category: 'Audio Visual & Media Technology',
+        skillCategories: [
+            {
+                category: 'Core Programming Skills',
+                skills: [
+                    { name: 'Crestron SIMPL/SIMPL+ Programming', description: 'Developing and debugging control logic using Crestron\'s proprietary SIMPL and SIMPL+ languages.' },
+                    { name: 'Crestron C# Programming (VS Code)', description: 'Building complex control solutions using the C# SDK for Crestron 4-Series processors within Visual Studio Code.' },
+                    { name: 'AMX NetLinx Programming', description: 'Programming AMX control systems using NetLinx Studio and the NetLinx language.' },
+                    { name: 'Q-SYS Control Programming (Lua)', description: 'Scripting custom control components and logic within the Q-SYS ecosystem using Lua.' },
+                    { name: 'Extron Control Professional (Python)', description: 'Developing control logic for Extron Pro Series systems using Global Scripter and Python.' },
+                    { name: 'UI/UX Design for Touch Panels', description: 'Designing intuitive and user-friendly graphical interfaces for touch panels using tools like VT Pro-e, or native HTML5/JS.' },
+                    { name: 'API Integration & Web Services', description: 'Integrating with third-party devices and services via REST APIs, SOAP, and other web technologies.' },
+                ]
+            },
+            {
+                category: 'System Knowledge',
+                skills: [
+                    { name: 'AV Signal Flow & Protocols', description: 'Deep understanding of audio, video, and control signal paths, including protocols like HDMI, HDCP, EDID, RS-232, and IP.' },
+                    { name: 'Networked AV (AV-over-IP)', description: 'Understanding of networking principles as they apply to AV systems, including multicast, QoS, and protocols like DM NVX, SVSI, and Dante.' },
+                    { name: 'Hardware & System Architecture', description: 'Familiarity with the physical hardware (processors, switchers, DSPs) and how they fit into a larger system architecture.' },
+                ]
+            },
+            {
+                category: 'Manufacturer Certifications',
+                skills: [
+                    { name: 'Crestron Certified Programmer (CCP)', description: 'Advanced certification demonstrating expertise in programming and deploying complex Crestron control systems.' },
+                    { name: 'AMX Certified Programmer (ACE-P)', description: 'Certification for proficiency in programming AMX NetLinx control systems.' },
+                    { name: 'Q-SYS Control 201 Certified', description: 'Certification for advanced control programming within the Q-SYS ecosystem.' },
+                    { name: 'Extron Control Professional', description: 'Certification for programming Extron Pro Series control systems.' },
+                ]
+            }
+        ]
+    },
     {
         name: 'AV Technician / Installer',
         category: 'Audio Visual & Media Technology',
@@ -172,5 +207,47 @@ export const JOB_ROLE_DEFINITIONS: JobRoleDefinition[] = [
                 ]
             }
         ]
-    }
+    },
+    // --- Information Technology ---
+    {
+        name: 'IT Support Engineer',
+        category: 'Information Technology',
+        skillCategories: [
+            {
+                category: 'Core IT Support',
+                skills: [
+                    { name: 'Desktop Support (Windows/macOS)', description: 'Troubleshooting and resolving user issues on Windows and macOS operating systems, including software installation and hardware diagnostics.' },
+                    { name: 'Microsoft 365 Administration', description: 'Managing users, groups, and licenses in Microsoft 365. Troubleshooting Exchange Online, SharePoint, and Teams issues.' },
+                    { name: 'Active Directory Management', description: 'Creating and managing user accounts, groups, and OUs. Understanding of Group Policy Objects (GPOs).' },
+                    { name: 'Mobile Device Management (MDM)', description: 'Enrolling and managing mobile devices (iOS/Android) using platforms like Microsoft Intune or Jamf.' },
+                    { name: 'Hardware Troubleshooting & Repair', description: 'Diagnosing and replacing common hardware components in laptops and desktops, such as RAM, SSDs, and power supplies.' },
+                ]
+            },
+            {
+                category: 'Networking',
+                skills: [
+                    { name: 'TCP/IP Networking Fundamentals', description: 'Solid understanding of IP addressing, subnetting, DNS, DHCP, and core networking concepts.' },
+                    { name: 'Network Troubleshooting (Ping, Tracert)', description: 'Using command-line tools to diagnose network connectivity issues.' },
+                    { name: 'Wireless Network Support', description: 'Troubleshooting common Wi-Fi connectivity issues for end-users.' },
+                    { name: 'VPN Client Configuration', description: 'Assisting users with the setup and troubleshooting of VPN client software.' },
+                ]
+            },
+            {
+                category: 'Software & Systems',
+                skills: [
+                    { name: 'IT Service Management (ITSM)', description: 'Experience using ticketing systems like ServiceNow, Jira Service Desk, or Zendesk to manage and document support requests.' },
+                    { name: 'Antivirus & Endpoint Security', description: 'Managing endpoint security software and responding to basic security alerts.' },
+                    { name: 'Backup & Recovery Procedures', description: 'Performing data backups and restorations for end-user devices.' },
+                ]
+            },
+            {
+                category: 'Key Certifications',
+                skills: [
+                    { name: 'CompTIA A+', description: 'A foundational certification for IT support professionals covering hardware, software, and troubleshooting.' },
+                    { name: 'CompTIA Network+', description: 'A certification covering the fundamentals of computer networking.' },
+                    { name: 'Microsoft 365 Certified: Modern Desktop Administrator Associate', description: 'A certification focused on deploying, configuring, and managing Windows 10/11 and Microsoft 365 apps.' },
+                ]
+            }
+        ]
+    },
 ];

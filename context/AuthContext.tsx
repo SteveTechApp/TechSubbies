@@ -21,11 +21,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const login = (role: Role) => {
         // Simple login simulation
-        if (role === Role.ENGINEER && MOCK_USERS[Role.ENGINEER].profile.name.includes("Steve")) {
-             setUser(MOCK_USERS[Role.ENGINEER]);
-        } else {
-            setUser(MOCK_USERS[role] || MOCK_USER_FREE_ENGINEER);
-        }
+        // FIX: Correctly log in the mock user for the selected role.
+        setUser(MOCK_USERS[role] || null);
     };
 
     const logout = () => {

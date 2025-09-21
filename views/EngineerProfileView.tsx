@@ -56,7 +56,7 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerPro
     const profileUrl = `https://techsubbies.com/engineer/${profile.id}`;
 
     return (
-        <div className="relative font-sans max-w-4xl mx-auto py-4 space-y-8">
+        <div className="relative font-sans max-w-4xl mx-auto py-4 space-y-6">
             <div className="absolute top-8 right-0 sm:right-4 z-20 flex items-center gap-2">
                  <button
                     onClick={() => setIsShareModalOpen(true)}

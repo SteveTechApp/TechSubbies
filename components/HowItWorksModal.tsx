@@ -27,7 +27,7 @@ export const HowItWorksModal = ({ isOpen, onClose, onNavigate }: HowItWorksModal
                     <X size={24} />
                 </button>
                 <div className="p-8">
-                    <h2 className="text-3xl font-bold text-center mb-8">How TechSubbies Works</h2>
+                    <h2 className="text-3xl font-bold text-center mb-8">How TechSubbies.com Works</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* For Engineers */}
                         <div className="p-6 border rounded-lg bg-gray-50">

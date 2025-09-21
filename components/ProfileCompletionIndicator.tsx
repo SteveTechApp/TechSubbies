@@ -31,7 +31,9 @@ const calculateCompletion = (profile: EngineerProfile): CompletionInfo => {
     }
 
     // Skills & Specialist Roles (35 pts)
-    if (profile.skills && profile.skills.length >= 3) {
+    // FIX: Property 'skills' does not exist on type 'EngineerProfile'. Access skills via 'selectedJobRoles'.
+    const allSkills = profile.selectedJobRoles?.flatMap(role => role.skills) || [];
+    if (allSkills.length >= 3) {
         score += 10;
     } else {
         missingItems.push({ key: 'skills', label: 'Add at least 3 core skills', priority: 1 });
@@ -52,8 +54,8 @@ const calculateCompletion = (profile: EngineerProfile): CompletionInfo => {
 
     // Compliance (15 pts)
     let complianceScore = 0;
-    if (profile.compliance.professionalIndemnity.hasCoverage) complianceScore += 5;
-    if (profile.compliance.publicLiability.hasCoverage) complianceScore += 5;
+    if (profile.compliance.professionalIndemnity?.hasCoverage) complianceScore += 5;
+    if (profile.compliance.publicLiability?.hasCoverage) complianceScore += 5;
     if (profile.compliance.cscsCard || profile.compliance.siteSafe) complianceScore += 5;
     score += complianceScore;
 

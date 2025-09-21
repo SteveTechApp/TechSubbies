@@ -1,6 +1,3 @@
-
-
-
 import React from 'react';
 import { Page } from '../types';
 import { PageHeader } from '../components/PageHeader';
@@ -18,8 +15,8 @@ export const ForCompaniesPage = ({ onNavigate }: ForCompaniesPageProps) => {
       <PageHeader onBack={() => onNavigate(Page.LANDING)} />
 
       {/* Hero Section */}
-      <section className="relative bg-gray-800 text-white py-20 text-center">
-        <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop')` }}></div>
+      <section className="relative bg-gray-800 text-white py-16 text-center">
+        <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1542744173-8e7e5components/TestimonialCard.tsx415bb0?q=80&w=2070&auto=format&fit=crop')` }}></div>
         <div className="relative container mx-auto px-4">
           <h1 className="text-4xl md:text-5xl font-extrabold mb-4">Find & Hire Elite Tech Talent. Instantly.</h1>
           <p className="text-lg md:text-xl max-w-3xl mx-auto">
@@ -29,7 +26,7 @@ export const ForCompaniesPage = ({ onNavigate }: ForCompaniesPageProps) => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold">A Smarter Way to Hire</h2>
@@ -59,10 +56,10 @@ export const ForCompaniesPage = ({ onNavigate }: ForCompaniesPageProps) => {
       </section>
 
       {/* Final CTA */}
-      <section className="bg-blue-600 py-20">
+      <section className="bg-blue-600 py-16">
         <div className="container mx-auto px-4 text-center text-white">
           <h2 className="text-3xl font-bold">Ready to Find Your Next Hire?</h2>
-          <p className="my-4 max-w-2xl mx-auto text-blue-100">Join the world's leading companies who are building their flexible workforce on TechSubbies.</p>
+          <p className="my-4 max-w-2xl mx-auto text-blue-100">Join the world's leading companies who are building their flexible workforce on TechSubbies.com.</p>
           {/* FIX: Replaced string literal with Page enum for type safety. */}
           <button onClick={() => onNavigate(Page.COMPANY_SIGNUP)} className="bg-white text-blue-700 font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition-transform transform hover:scale-105 mt-2">
             Post a Job For Free

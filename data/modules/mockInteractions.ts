@@ -56,7 +56,7 @@ export const MOCK_CONTRACTS: Contract[] = [
         companyId: 'comp-1',
         engineerId: 'eng-1',
         type: ContractType.DAY_RATE,
-        description: `This Day Rate Agreement is made between Pro AV Solutions ("the Client") and Neil Bishop ("the Contractor"). The Contractor agrees to provide services as described herein. This platform, TechSubbies.com, is a facilitator and is not a party to this agreement. Any disputes must be resolved directly between the Client and the Contractor.`,
+        description: `This Day Rate Agreement is made between Pro AV Solutions ("the Client") and Neil Bishop ("the Contractor"). The Contractor agrees to provide services as described herein. This platform, Wingman, is a facilitator and is not a party to this agreement. Any disputes must be resolved directly between the Client and the Contractor.`,
         amount: '550',
         currency: Currency.GBP,
         status: ContractStatus.ACTIVE,
