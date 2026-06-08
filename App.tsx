@@ -30,8 +30,200 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { HowItWorksModal } from './components/HowItWorksModal';
 import { AIAssistant } from './components/AIAssistant';
+
+import CompanyEngineerDashboardPage from "./views/CompanyEngineerDashboardPage";
+import WatchDemoPage from "./views/WatchDemoPage";
+
+import RoleSkillBuilderPage from "./views/RoleSkillBuilderPage";
+
+
+function installTechSubbiesTopNavLinks() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  function normaliseText(value) {
+    return String(value || "").replace(/\s+/g, " ").trim().toLowerCase();
+  }
+
+  function findClickableByText(text) {
+    const target = normaliseText(text);
+    const candidates = Array.from(document.querySelectorAll("a, button, [role='button'], nav span, header span, nav div, header div"));
+
+    return candidates.find((item) => {
+      const value = normaliseText(item.textContent);
+      return value === target || value.indexOf(target) >= 0;
+    });
+  }
+
+  function createTopNavLink(label, href) {
+    const link = document.createElement("a");
+    link.href = href;
+    link.textContent = label;
+
+    link.onclick = (event) => {
+      event.preventDefault();
+      window.location.href = href;
+    };
+
+    link.style.color = "#1f2937";
+    link.style.textDecoration = "none";
+    link.style.fontSize = "14px";
+    link.style.fontWeight = "600";
+    link.style.display = "inline-flex";
+    link.style.alignItems = "center";
+    link.style.justifyContent = "center";
+    link.style.padding = "8px 10px";
+    link.style.borderRadius = "10px";
+    link.style.whiteSpace = "nowrap";
+
+    link.onmouseenter = () => {
+      link.style.background = "rgba(37, 99, 235, 0.08)";
+      link.style.color = "#2563eb";
+    };
+
+    link.onmouseleave = () => {
+      link.style.background = "transparent";
+      link.style.color = "#1f2937";
+    };
+
+    return link;
+  }
+
+  function createDropdownMenu() {
+    const menu = document.createElement("div");
+    menu.id = "techsubbies-engineer-profile-menu";
+    menu.style.position = "absolute";
+    menu.style.top = "calc(100% + 8px)";
+    menu.style.left = "0";
+    menu.style.minWidth = "280px";
+    menu.style.padding = "10px";
+    menu.style.borderRadius = "16px";
+    menu.style.border = "1px solid rgba(15, 23, 42, 0.12)";
+    menu.style.background = "#ffffff";
+    menu.style.boxShadow = "0 18px 42px rgba(15, 23, 42, 0.18)";
+    menu.style.zIndex = "9999";
+    menu.style.display = "none";
+
+    function addItem(title, detail, href) {
+      const item = document.createElement("a");
+      item.href = href;
+      item.style.display = "block";
+      item.style.padding = "10px";
+      item.style.borderRadius = "12px";
+      item.style.textDecoration = "none";
+      item.style.marginBottom = "6px";
+      item.style.border = "1px solid rgba(15, 23, 42, 0.08)";
+      item.style.background = "#f8fafc";
+
+      item.onclick = (event) => {
+        event.preventDefault();
+        window.location.href = href;
+      };
+
+      const titleEl = document.createElement("div");
+      titleEl.textContent = title;
+      titleEl.style.color = "#0f172a";
+      titleEl.style.fontSize = "13px";
+      titleEl.style.fontWeight = "800";
+      titleEl.style.marginBottom = "3px";
+
+      const detailEl = document.createElement("div");
+      detailEl.textContent = detail;
+      detailEl.style.color = "#475569";
+      detailEl.style.fontSize = "12px";
+      detailEl.style.lineHeight = "1.35";
+
+      item.appendChild(titleEl);
+      item.appendChild(detailEl);
+      menu.appendChild(item);
+    }
+
+    addItem("Profile setup", "Choose which part of the engineer profile to complete.", "/engineer/profile-setup");
+    addItem("Personal / business profile", "Identity, business, compliance, location and availability.", "/engineer/personal-business-profile");
+    addItem("Skills builder", "Role-based AV, IT and hybrid skill ratings.", "/engineer/skills-profile");
+
+    return menu;
+  }
+
+  function mount() {
+    document.getElementById("techsubbies-watch-demo-link")?.remove();
+    document.getElementById("techsubbies-role-skill-link")?.remove();
+    document.getElementById("techsubbies-engineer-profile-dropdown")?.remove();
+
+    const header = document.querySelector("header") || document.querySelector("nav") || document.body;
+
+    if (!document.getElementById("techsubbies-how-demo-nav-link")) {
+      const howItWorks = findClickableByText("How It Works");
+
+      if (howItWorks && howItWorks.parentElement) {
+        const demoLink = createTopNavLink("Watch demo", "/watch-demo");
+        demoLink.id = "techsubbies-how-demo-nav-link";
+        howItWorks.parentElement.insertBefore(demoLink, howItWorks.nextSibling);
+      }
+    }
+
+    if (!document.getElementById("techsubbies-engineer-nav-wrapper")) {
+      const engineers = findClickableByText("For Engineers");
+
+      if (engineers && engineers.parentElement) {
+        const wrapper = document.createElement("span");
+        wrapper.id = "techsubbies-engineer-nav-wrapper";
+        wrapper.style.position = "relative";
+        wrapper.style.display = "inline-flex";
+        wrapper.style.alignItems = "center";
+
+        const menu = createDropdownMenu();
+
+        engineers.parentElement.insertBefore(wrapper, engineers);
+        wrapper.appendChild(engineers);
+        wrapper.appendChild(menu);
+
+        wrapper.addEventListener("mouseenter", () => {
+          menu.style.display = "block";
+        });
+
+        wrapper.addEventListener("mouseleave", () => {
+          menu.style.display = "none";
+        });
+
+        engineers.addEventListener("click", (event) => {
+          event.preventDefault();
+          menu.style.display = menu.style.display === "none" ? "block" : "none";
+        });
+      }
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mount);
+  } else {
+    mount();
+  }
+
+  window.setTimeout(mount, 300);
+  window.setTimeout(mount, 900);
+}
+
+installTechSubbiesTopNavLinks();
 
 const App = () => {
+  if (window.location.pathname === "/role-skills") {
+    return <RoleSkillBuilderPage />;
+  }
+
+  if (window.location.pathname === "/watch-demo") {
+    return <WatchDemoPage />;
+  }
+
+  if (window.location.pathname === "/company/engineers") {
+    return <CompanyEngineerDashboardPage />;
+  }
+
     const { page, setPage } = useNavigation();
     const { user } = useAuth();
     const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
