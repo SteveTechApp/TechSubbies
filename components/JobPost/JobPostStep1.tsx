@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { JobType, ExperienceLevel } from '../../types';
+import { ExperienceLevel } from '../../types';
 import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles';
 import { ArrowRight, Sparkles } from '../Icons';
 import { AIJobHelper } from '../AIJobHelper';
@@ -10,8 +10,33 @@ interface JobPostStep1Props {
     onNext: () => void;
 }
 
+const requiresLeadConfirmation = (jobDetails: any) => {
+    const role = String(jobDetails.jobRole || '').toLowerCase();
+    const title = String(jobDetails.title || '').toLowerCase();
+    const level = String(jobDetails.experienceLevel || '').toLowerCase();
+
+    return (
+        level === 'junior' ||
+        role.includes('labour') ||
+        role.includes('helper') ||
+        role.includes('assistant') ||
+        role.includes('site support') ||
+        title.includes('labour') ||
+        title.includes('helper') ||
+        title.includes('assistant') ||
+        title.includes('site support')
+    );
+};
+
+const hasLeadConfirmation = (jobDetails: any) => {
+    const value = String(jobDetails.supervisionArrangement || '').toLowerCase();
+    return ['supervised', 'lead_engineer_present', 'qualified_engineer_present'].includes(value) && Boolean(jobDetails.supervisionDisclaimerAccepted);
+};
+
 export const JobPostStep1 = ({ jobDetails, setJobDetails, onNext }: JobPostStep1Props) => {
     const [showAiHelper, setShowAiHelper] = useState(false);
+    const needsLead = requiresLeadConfirmation(jobDetails);
+    const leadConfirmed = hasLeadConfirmation(jobDetails);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -21,6 +46,24 @@ export const JobPostStep1 = ({ jobDetails, setJobDetails, onNext }: JobPostStep1
     const handleRoleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const roleName = e.target.value;
         setJobDetails((prev: any) => ({ ...prev, jobRole: roleName, title: roleName }));
+    };
+
+    const handleLeadAccepted = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setJobDetails((prev: any) => ({ ...prev, supervisionDisclaimerAccepted: e.target.checked }));
+    };
+
+    const handleNext = () => {
+        if (!jobDetails.jobRole) {
+            alert('Please select a Specialist Role to continue.');
+            return;
+        }
+
+        if (needsLead && !leadConfirmed) {
+            alert('This support role must confirm that a qualified engineer, named lead engineer or site supervisor will be present.');
+            return;
+        }
+
+        onNext();
     };
 
     return (
@@ -75,9 +118,31 @@ export const JobPostStep1 = ({ jobDetails, setJobDetails, onNext }: JobPostStep1
                         <input type="date" name="startDate" value={jobDetails.startDate} onChange={handleChange} className="w-full border p-2 rounded" />
                     </div>
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Supervision arrangement</label>
+                        <select name="supervisionArrangement" value={jobDetails.supervisionArrangement || ''} onChange={handleChange} className="w-full border p-2 rounded bg-white h-[42px]">
+                            <option value="">Not specified</option>
+                            <option value="unsupervised">Engineer working independently</option>
+                            <option value="supervised">Supervised / under lead</option>
+                            <option value="lead_engineer_present">Named lead engineer present</option>
+                            <option value="qualified_engineer_present">Qualified engineer present</option>
+                        </select>
+                    </div>
+                </div>
+                {needsLead && (
+                    <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+                        <p className="font-bold">Support role supervision disclaimer</p>
+                        <p className="mt-1">This role requires a qualified engineer, named lead engineer or site supervisor to be present. The support engineer should assist under direction and should not be given technical ownership of the work.</p>
+                        <label className="mt-3 flex items-start gap-2 font-semibold">
+                            <input type="checkbox" checked={Boolean(jobDetails.supervisionDisclaimerAccepted)} onChange={handleLeadAccepted} className="mt-1" />
+                            <span>I confirm suitable supervision will be provided.</span>
+                        </label>
+                    </div>
+                )}
             </div>
             <div className="flex justify-end mt-6">
-                <button onClick={onNext} disabled={!jobDetails.jobRole} className="flex items-center px-6 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 disabled:bg-blue-300">
+                <button onClick={handleNext} disabled={!jobDetails.jobRole || (needsLead && !leadConfirmed)} className="flex items-center px-6 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 disabled:bg-blue-300">
                     Next: Define Skills <ArrowRight size={18} className="ml-2" />
                 </button>
             </div>
