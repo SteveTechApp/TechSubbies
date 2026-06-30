@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { FileUploadInput } from "../components/FileUploadInput";
 import { useAuth } from "../context/AuthContext";
 import { useAppContext } from "../context/InteractionContext";
@@ -9,7 +9,7 @@ type HubCardProps = {
   copy: string;
   buttonLabel: string;
   href: string;
-  tone?: "default" | "priority";
+  priority?: boolean;
 };
 
 type UploadRecord = {
@@ -41,24 +41,50 @@ type EvidenceRecord = {
   videoUrl?: string;
 };
 
-const createId = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
+const id = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
+const fileName = (fileUrl?: string) => fileUrl?.split("/").pop() || "uploaded-document";
 
-const getFileName = (fileUrl?: string) => fileUrl?.split("/").pop() || "uploaded-document";
+const pageClass = "min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 px-6 py-8 pb-20";
+const shellClass = "mx-auto w-[min(1120px,calc(100vw-48px))]";
+const labelClass = "block text-xs font-extrabold text-slate-300 mb-1";
+const inputClass = "w-full rounded-xl border border-slate-600/50 bg-slate-950/50 px-3 py-2 text-white outline-none focus:border-cyan-300";
+const panelClass = "rounded-[22px] border border-cyan-300/20 bg-slate-900/85 p-5 shadow-2xl";
+const recordClass = "mt-4 rounded-2xl border border-slate-500/20 bg-slate-950/45 p-4";
+const buttonClass = "rounded-full border border-cyan-300/40 bg-cyan-950/80 px-4 py-2.5 text-sm font-extrabold text-white";
+const saveButtonClass = "rounded-full border border-green-200/40 bg-green-600 px-4 py-2.5 text-sm font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-50";
 
-const getEngineerProfile = (user: ReturnType<typeof useAuth>["user"]): EngineerProfile | null => {
+const defaultCredential = (): UploadRecord => ({
+  id: id("qual"),
+  title: "",
+  issuer: "",
+  category: "Professional certificate",
+  verificationStatus: "pending",
+  visibility: "verified_companies",
+});
+
+const defaultEvidence = (): EvidenceRecord => ({
+  id: id("case"),
+  title: "",
+  customer: "",
+  projectType: "",
+  permissionStatus: "not_requested",
+  visibility: "verified_companies",
+});
+
+const engineerFromUser = (user: ReturnType<typeof useAuth>["user"]): EngineerProfile | null => {
   if (!user || user.role !== Role.ENGINEER) return null;
   return user.profile as EngineerProfile;
 };
 
-const credentialFromProfile = (profile: EngineerProfile | null): UploadRecord[] => {
+const credentialsFromProfile = (profile: EngineerProfile | null): UploadRecord[] => {
   const extended = ((profile as any)?.professionalCredentials || []) as UploadRecord[];
   if (extended.length > 0) return extended;
 
-  return (profile?.certifications || []).map((cert, index) => {
+  const mapped = (profile?.certifications || []).map((cert) => {
     const extendedCert = cert as any;
     const firstDoc = cert.documents?.[0];
     return {
-      id: extendedCert.id || createId("qual"),
+      id: extendedCert.id || id("qual"),
       title: cert.name,
       issuer: extendedCert.issuer || "",
       category: extendedCert.category || "Professional certificate",
@@ -69,15 +95,17 @@ const credentialFromProfile = (profile: EngineerProfile | null): UploadRecord[] 
       visibility: extendedCert.visibility || "verified_companies",
       notes: extendedCert.notes || "",
       fileUrl: firstDoc?.url || "",
-    };
+    } as UploadRecord;
   });
+
+  return mapped.length > 0 ? mapped : [defaultCredential()];
 };
 
 const evidenceFromProfile = (profile: EngineerProfile | null): EvidenceRecord[] => {
   const extended = ((profile as any)?.workEvidence || []) as EvidenceRecord[];
   if (extended.length > 0) return extended;
 
-  return (profile?.caseStudies || []).map((caseStudy) => {
+  const mapped = (profile?.caseStudies || []).map((caseStudy) => {
     const extendedCase = caseStudy as any;
     return {
       id: caseStudy.id,
@@ -92,117 +120,50 @@ const evidenceFromProfile = (profile: EngineerProfile | null): EvidenceRecord[] 
       documentUrl: extendedCase.documentUrl || caseStudy.url || "",
       imageUrl: extendedCase.imageUrl || "",
       videoUrl: extendedCase.videoUrl || "",
-    };
+    } as EvidenceRecord;
   });
+
+  return mapped.length > 0 ? mapped : [defaultEvidence()];
 };
 
-const pageStyles: Record<string, React.CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    background: "linear-gradient(135deg, #020617 0%, #061525 48%, #020617 100%)",
-    color: "#e5edf7",
-    padding: "32px 24px 80px",
-    fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
-  },
-  shell: { width: "min(1120px, calc(100vw - 48px))", margin: "0 auto" },
-  backLink: { color: "#67e8f9", fontSize: "14px", fontWeight: 900, textDecoration: "none" },
-  eyebrow: { color: "#67e8f9", fontSize: "13px", fontWeight: 900, letterSpacing: "0.18em", textTransform: "uppercase", margin: "28px 0 10px" },
-  title: { color: "#ffffff", fontSize: "clamp(30px, 4vw, 48px)", lineHeight: 1.05, margin: "0 0 14px" },
-  intro: { color: "rgba(226, 232, 240, 0.82)", maxWidth: "760px", fontSize: "15px", lineHeight: 1.7, margin: "0 0 26px" },
-  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))", gap: "14px" },
-  card: {
-    border: "1px solid rgba(103, 232, 249, 0.18)",
-    background: "linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(8, 25, 42, 0.88))",
-    borderRadius: "18px",
-    padding: "18px",
-    minHeight: "178px",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    boxShadow: "0 20px 54px rgba(0, 0, 0, 0.24)",
-  },
-  priorityCard: {
-    border: "1px solid rgba(103, 232, 249, 0.4)",
-    background: "linear-gradient(180deg, rgba(8, 47, 73, 0.96), rgba(15, 23, 42, 0.9))",
-    borderRadius: "18px",
-    padding: "18px",
-    minHeight: "178px",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    boxShadow: "0 0 0 4px rgba(103, 232, 249, 0.08), 0 24px 64px rgba(6, 182, 212, 0.18)",
-  },
-  cardTitle: { color: "#67e8f9", fontSize: "17px", lineHeight: 1.25, margin: "0 0 10px", fontWeight: 900 },
-  copy: { color: "rgba(226, 232, 240, 0.84)", fontSize: "14px", lineHeight: 1.58, margin: 0 },
-  button: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-    minHeight: "42px",
-    border: "1px solid rgba(103, 232, 249, 0.34)",
-    background: "rgba(8, 47, 73, 0.82)",
-    color: "#ffffff",
-    borderRadius: "999px",
-    fontSize: "14px",
-    fontWeight: 900,
-    textDecoration: "none",
-    marginTop: "18px",
-  },
-  panel: { border: "1px solid rgba(103, 232, 249, 0.22)", background: "rgba(15, 23, 42, 0.86)", borderRadius: "22px", padding: "22px", boxShadow: "0 22px 64px rgba(0, 0, 0, 0.26)" },
-  formGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" },
-  label: { color: "#cbd5e1", display: "block", fontSize: "12px", fontWeight: 800, marginBottom: "6px" },
-  input: { width: "100%", border: "1px solid rgba(148, 163, 184, 0.24)", background: "rgba(2, 6, 23, 0.52)", color: "#ffffff", borderRadius: "12px", padding: "10px 12px", outline: "none" },
-  textarea: { width: "100%", minHeight: "90px", border: "1px solid rgba(148, 163, 184, 0.24)", background: "rgba(2, 6, 23, 0.52)", color: "#ffffff", borderRadius: "12px", padding: "10px 12px", outline: "none" },
-  secondaryButton: { border: "1px solid rgba(103, 232, 249, 0.36)", background: "rgba(8, 47, 73, 0.88)", color: "#ffffff", borderRadius: "999px", padding: "11px 16px", fontSize: "14px", fontWeight: 900, cursor: "pointer" },
-  saveButton: { border: "1px solid rgba(187, 247, 208, 0.42)", background: "rgba(22, 163, 74, 0.9)", color: "#ffffff", borderRadius: "999px", padding: "11px 16px", fontSize: "14px", fontWeight: 900, cursor: "pointer" },
-  record: { border: "1px solid rgba(148, 163, 184, 0.18)", background: "rgba(2, 6, 23, 0.44)", borderRadius: "16px", padding: "14px", marginTop: "14px" },
-  small: { color: "rgba(226, 232, 240, 0.68)", fontSize: "12px", lineHeight: 1.5, margin: "8px 0 0" },
-  notice: { border: "1px solid rgba(251, 191, 36, 0.32)", background: "rgba(113, 63, 18, 0.24)", color: "#fde68a", borderRadius: "14px", padding: "12px 14px", fontSize: "13px", marginBottom: "14px" },
-};
-
-const HubCard = ({ title, copy, buttonLabel, href, tone = "default" }: HubCardProps) => (
-  <article style={tone === "priority" ? pageStyles.priorityCard : pageStyles.card}>
-    <div>
-      <h2 style={pageStyles.cardTitle}>{title}</h2>
-      <p style={pageStyles.copy}>{copy}</p>
-    </div>
-    <a href={href} style={pageStyles.button}>{buttonLabel}</a>
-  </article>
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <label>
+    <span className={labelClass}>{label}</span>
+    {children}
+  </label>
 );
 
 const PageShell = ({ eyebrow, title, intro, children }: { eyebrow: string; title: string; intro: string; children: React.ReactNode }) => (
-  <main style={pageStyles.page}>
-    <div style={pageStyles.shell}>
-      <a href="/" style={pageStyles.backLink}>Back to landing page</a>
-      <p style={pageStyles.eyebrow}>{eyebrow}</p>
-      <h1 style={pageStyles.title}>{title}</h1>
-      <p style={pageStyles.intro}>{intro}</p>
+  <main className={pageClass}>
+    <div className={shellClass}>
+      <a href="/" className="text-sm font-extrabold text-cyan-300 no-underline">Back to landing page</a>
+      <p className="mb-2 mt-7 text-xs font-black uppercase tracking-[0.18em] text-cyan-300">{eyebrow}</p>
+      <h1 className="mb-4 text-4xl font-black leading-tight text-white md:text-5xl">{title}</h1>
+      <p className="mb-7 max-w-3xl text-sm leading-7 text-slate-300">{intro}</p>
       {children}
     </div>
   </main>
 );
 
-const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <label>
-    <span style={pageStyles.label}>{label}</span>
-    {children}
-  </label>
+const HubCard = ({ title, copy, buttonLabel, href, priority }: HubCardProps) => (
+  <article className={`flex min-h-[178px] flex-col justify-between rounded-2xl border p-5 shadow-2xl ${priority ? "border-cyan-300/40 bg-cyan-950/35 shadow-cyan-900/20" : "border-cyan-300/20 bg-slate-900/80"}`}>
+    <div>
+      <h2 className="mb-3 text-lg font-black text-cyan-300">{title}</h2>
+      <p className="text-sm leading-6 text-slate-300">{copy}</p>
+    </div>
+    <a href={href} className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full border border-cyan-300/40 bg-cyan-950/80 px-4 text-sm font-extrabold text-white no-underline">{buttonLabel}</a>
+  </article>
 );
 
 export const EngineerProfileHubPage = () => (
-  <PageShell
-    eyebrow="For Engineers"
-    title="Engineer Profile Hub"
-    intro="Keep personal identity, business details, compliance evidence, qualifications, availability and previous work proof in separate profile sections."
-  >
-    <section style={pageStyles.grid}>
+  <PageShell eyebrow="For Engineers" title="Engineer Profile Hub" intro="Keep personal identity, business details, compliance evidence, qualifications, availability and previous work proof in separate profile sections.">
+    <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
       <HubCard title="Personal & Insurance Profile" copy="Personal details, business information, insurance documents, verification and official paperwork." buttonLabel="Manage profile" href="/engineer/personal-business-profile" />
       <HubCard title="Skills Builder" copy="Role-based AV/IT skills, product knowledge, certifications, self-ratings and specialist capability." buttonLabel="Build skills profile" href="/role-skills" />
       <HubCard title="Availability & Working Area" copy="Location, working radius, calendar availability, weekend rules, public holidays and travel preferences." buttonLabel="Set availability" href="/engineer/availability" />
       <HubCard title="Product Awareness / Experience" copy="Skills-based awareness of AV brands, platforms, signal technologies and product categories." buttonLabel="Add product awareness" href="/engineer/product-awareness" />
-      <HubCard title="Professional Certificates & Awards" copy="Upload certificates, record professional qualifications, add issuer details, expiry dates and supporting evidence." buttonLabel="Upload certificates & awards" href="/engineer/certificates-awards" tone="priority" />
-      <HubCard title="Customer Feedback & Case Studies" copy="Store client feedback, testimonials, project examples, photographs, documents and short videos from previous work." buttonLabel="Add feedback & case studies" href="/engineer/feedback-case-studies" tone="priority" />
+      <HubCard title="Professional Certificates & Awards" copy="Upload certificates, record professional qualifications, add issuer details, expiry dates and supporting evidence." buttonLabel="Upload certificates & awards" href="/engineer/certificates-awards" priority />
+      <HubCard title="Customer Feedback & Case Studies" copy="Store client feedback, testimonials, project examples, photographs, documents and short videos from previous work." buttonLabel="Add feedback & case studies" href="/engineer/feedback-case-studies" priority />
     </section>
   </PageShell>
 );
@@ -210,17 +171,16 @@ export const EngineerProfileHubPage = () => (
 export const EngineerCertificatesAwardsPage = () => {
   const { user } = useAuth();
   const { updateEngineerProfile } = useAppContext();
-  const engineerProfile = getEngineerProfile(user);
-  const [records, setRecords] = useState<UploadRecord[]>(() => credentialFromProfile(engineerProfile));
-  const safeRecords = records.length > 0 ? records : [{ id: createId("qual"), title: "", issuer: "", category: "Professional certificate", verificationStatus: "pending", visibility: "verified_companies" }];
-  const completionCount = useMemo(() => safeRecords.filter((record) => record.title || record.fileUrl).length, [safeRecords]);
+  const engineerProfile = engineerFromUser(user);
+  const [records, setRecords] = useState<UploadRecord[]>(() => credentialsFromProfile(engineerProfile));
+  const completed = records.filter((record) => record.title || record.fileUrl).length;
 
-  const updateRecord = (id: string, field: keyof UploadRecord, value: string) => setRecords((current) => current.map((record) => record.id === id ? { ...record, [field]: value } : record));
+  const update = (recordId: string, field: keyof UploadRecord, value: string) => setRecords((current) => current.map((record) => record.id === recordId ? { ...record, [field]: value } : record));
 
-  const saveRecords = () => {
-    const cleaned = safeRecords.filter((record) => record.title || record.fileUrl);
+  const save = () => {
+    const cleaned = records.filter((record) => record.title || record.fileUrl);
     const certifications = cleaned.map((record) => ({
-      name: record.title || getFileName(record.fileUrl),
+      name: record.title || fileName(record.fileUrl),
       verified: record.verificationStatus === "verified",
       issuer: record.issuer,
       category: record.category,
@@ -230,7 +190,7 @@ export const EngineerCertificatesAwardsPage = () => {
       verificationStatus: record.verificationStatus || "pending",
       visibility: record.visibility || "verified_companies",
       notes: record.notes,
-      documents: record.fileUrl ? [{ id: `${record.id}-doc`, name: getFileName(record.fileUrl), url: record.fileUrl, verified: record.verificationStatus === "verified" }] : [],
+      documents: record.fileUrl ? [{ id: `${record.id}-doc`, name: fileName(record.fileUrl), url: record.fileUrl, verified: record.verificationStatus === "verified" }] : [],
     })) as any;
 
     updateEngineerProfile({ certifications, professionalCredentials: cleaned } as any);
@@ -238,35 +198,26 @@ export const EngineerCertificatesAwardsPage = () => {
 
   return (
     <PageShell eyebrow="Profile evidence" title="Professional Certificates & Awards" intro="Capture structured qualification data as well as the certificate file. This gives companies useful filters instead of just a loose document upload area.">
-      {!engineerProfile && <div style={pageStyles.notice}>This is currently in preview mode because the logged-in user is not an engineer. The form can be reviewed, but profile save is disabled.</div>}
-      <section style={pageStyles.panel}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", alignItems: "center", marginBottom: "16px", flexWrap: "wrap" }}>
-          <div>
-            <h2 style={pageStyles.cardTitle}>Qualification records</h2>
-            <p style={pageStyles.small}>{completionCount} record(s) started. Verification status should be handled by admin or approved resourcing-company workflow.</p>
-          </div>
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            <button type="button" style={pageStyles.secondaryButton} onClick={() => setRecords((current) => [...current, { id: createId("qual"), title: "", issuer: "", category: "Professional certificate", verificationStatus: "pending", visibility: "verified_companies" }])}>Add qualification</button>
-            <button type="button" style={{ ...pageStyles.saveButton, opacity: engineerProfile ? 1 : 0.52 }} disabled={!engineerProfile} onClick={saveRecords}>Save to profile</button>
-          </div>
+      {!engineerProfile && <div className="mb-4 rounded-xl border border-amber-300/40 bg-amber-950/30 p-3 text-sm text-amber-200">Preview mode: the logged-in user is not an engineer, so profile saving is disabled.</div>}
+      <section className={panelClass}>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div><h2 className="text-lg font-black text-cyan-300">Qualification records</h2><p className="mt-1 text-xs text-slate-400">{completed} record(s) started. Verification should be handled by admin or approved resourcing workflow.</p></div>
+          <div className="flex flex-wrap gap-2"><button type="button" className={buttonClass} onClick={() => setRecords((current) => [...current, defaultCredential()])}>Add qualification</button><button type="button" className={saveButtonClass} disabled={!engineerProfile} onClick={save}>Save to profile</button></div>
         </div>
-
-        {safeRecords.map((record) => (
-          <article key={record.id} style={pageStyles.record}>
-            <div style={pageStyles.formGrid}>
-              <Field label="Certificate / qualification name"><input style={pageStyles.input} value={record.title} onChange={(event) => updateRecord(record.id, "title", event.target.value)} placeholder="e.g. CTS, ECS, IPAF, vendor training" /></Field>
-              <Field label="Issuer / awarding body"><input style={pageStyles.input} value={record.issuer || ""} onChange={(event) => updateRecord(record.id, "issuer", event.target.value)} placeholder="e.g. AVIXA, ECS, manufacturer" /></Field>
-              <Field label="Category"><select style={pageStyles.input} value={record.category || "Professional certificate"} onChange={(event) => updateRecord(record.id, "category", event.target.value)}><option>Professional certificate</option><option>Industry qualification</option><option>Manufacturer training</option><option>Safety / site access</option><option>Award / recognition</option></select></Field>
-              <Field label="Level / grade"><input style={pageStyles.input} value={record.level || ""} onChange={(event) => updateRecord(record.id, "level", event.target.value)} placeholder="e.g. Level 3, Advanced, Gold" /></Field>
-              <Field label="Issued date"><input style={pageStyles.input} type="date" value={record.issuedDate || ""} onChange={(event) => updateRecord(record.id, "issuedDate", event.target.value)} /></Field>
-              <Field label="Expiry / renewal date"><input style={pageStyles.input} type="date" value={record.expiryDate || ""} onChange={(event) => updateRecord(record.id, "expiryDate", event.target.value)} /></Field>
-              <Field label="Verification status"><select style={pageStyles.input} value={record.verificationStatus || "pending"} onChange={(event) => updateRecord(record.id, "verificationStatus", event.target.value)}><option value="pending">Pending</option><option value="verified">Verified</option><option value="rejected">Rejected</option><option value="expired">Expired</option></select></Field>
-              <Field label="Visibility"><select style={pageStyles.input} value={record.visibility || "verified_companies"} onChange={(event) => updateRecord(record.id, "visibility", event.target.value)}><option value="private">Private</option><option value="verified_companies">Verified companies only</option><option value="public">Public profile</option></select></Field>
-              <div style={{ alignSelf: "end" }}><FileUploadInput label="Upload evidence" fileUrl={record.fileUrl} isVerified={record.verificationStatus === "verified"} onFileChange={(fileUrl) => updateRecord(record.id, "fileUrl", fileUrl)} /></div>
+        {records.map((record) => (
+          <article key={record.id} className={recordClass}>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <Field label="Certificate / qualification name"><input className={inputClass} value={record.title} onChange={(e) => update(record.id, "title", e.target.value)} placeholder="e.g. CTS, ECS, IPAF, vendor training" /></Field>
+              <Field label="Issuer / awarding body"><input className={inputClass} value={record.issuer || ""} onChange={(e) => update(record.id, "issuer", e.target.value)} placeholder="e.g. AVIXA, ECS, manufacturer" /></Field>
+              <Field label="Category"><select className={inputClass} value={record.category || "Professional certificate"} onChange={(e) => update(record.id, "category", e.target.value)}><option>Professional certificate</option><option>Industry qualification</option><option>Manufacturer training</option><option>Safety / site access</option><option>Award / recognition</option></select></Field>
+              <Field label="Level / grade"><input className={inputClass} value={record.level || ""} onChange={(e) => update(record.id, "level", e.target.value)} placeholder="e.g. Level 3, Advanced, Gold" /></Field>
+              <Field label="Issued date"><input className={inputClass} type="date" value={record.issuedDate || ""} onChange={(e) => update(record.id, "issuedDate", e.target.value)} /></Field>
+              <Field label="Expiry / renewal date"><input className={inputClass} type="date" value={record.expiryDate || ""} onChange={(e) => update(record.id, "expiryDate", e.target.value)} /></Field>
+              <Field label="Verification status"><select className={inputClass} value={record.verificationStatus || "pending"} onChange={(e) => update(record.id, "verificationStatus", e.target.value)}><option value="pending">Pending</option><option value="verified">Verified</option><option value="rejected">Rejected</option><option value="expired">Expired</option></select></Field>
+              <Field label="Visibility"><select className={inputClass} value={record.visibility || "verified_companies"} onChange={(e) => update(record.id, "visibility", e.target.value)}><option value="private">Private</option><option value="verified_companies">Verified companies only</option><option value="public">Public profile</option></select></Field>
+              <div><FileUploadInput label="Upload evidence" fileUrl={record.fileUrl} isVerified={record.verificationStatus === "verified"} onFileChange={(fileUrl) => update(record.id, "fileUrl", fileUrl)} /></div>
             </div>
-            <div style={{ marginTop: "12px" }}>
-              <Field label="Notes / scope covered"><textarea style={pageStyles.textarea} value={record.notes || ""} onChange={(event) => updateRecord(record.id, "notes", event.target.value)} placeholder="Briefly describe what this proves, any level achieved, practical scope or renewal requirement." /></Field>
-            </div>
+            <div className="mt-3"><Field label="Notes / scope covered"><textarea className={inputClass} value={record.notes || ""} onChange={(e) => update(record.id, "notes", e.target.value)} placeholder="Briefly describe what this proves, any level achieved, practical scope or renewal requirement." /></Field></div>
           </article>
         ))}
       </section>
@@ -277,14 +228,13 @@ export const EngineerCertificatesAwardsPage = () => {
 export const EngineerFeedbackCaseStudiesPage = () => {
   const { user } = useAuth();
   const { updateEngineerProfile } = useAppContext();
-  const engineerProfile = getEngineerProfile(user);
+  const engineerProfile = engineerFromUser(user);
   const [records, setRecords] = useState<EvidenceRecord[]>(() => evidenceFromProfile(engineerProfile));
-  const safeRecords = records.length > 0 ? records : [{ id: createId("case"), title: "", customer: "", projectType: "", permissionStatus: "not_requested", visibility: "verified_companies" }];
 
-  const updateRecord = (id: string, field: keyof EvidenceRecord, value: string) => setRecords((current) => current.map((record) => record.id === id ? { ...record, [field]: value } : record));
+  const update = (recordId: string, field: keyof EvidenceRecord, value: string) => setRecords((current) => current.map((record) => record.id === recordId ? { ...record, [field]: value } : record));
 
-  const saveRecords = () => {
-    const cleaned = safeRecords.filter((record) => record.title || record.outcome || record.documentUrl || record.imageUrl || record.videoUrl);
+  const save = () => {
+    const cleaned = records.filter((record) => record.title || record.outcome || record.documentUrl || record.imageUrl || record.videoUrl);
     const caseStudies = cleaned.map((record) => ({
       id: record.id,
       name: record.title || "Previous work evidence",
@@ -307,39 +257,28 @@ export const EngineerFeedbackCaseStudiesPage = () => {
 
   return (
     <PageShell eyebrow="Profile evidence" title="Customer Feedback & Case Studies" intro="Capture previous work in a structured way so companies can assess evidence, not just read generic claims. Support written feedback, documents, photos and short video proof.">
-      {!engineerProfile && <div style={pageStyles.notice}>This is currently in preview mode because the logged-in user is not an engineer. The form can be reviewed, but profile save is disabled.</div>}
-      <section style={pageStyles.panel}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", alignItems: "center", marginBottom: "16px", flexWrap: "wrap" }}>
-          <div>
-            <h2 style={pageStyles.cardTitle}>Work evidence records</h2>
-            <p style={pageStyles.small}>Useful case studies should include task, site type, outcome, proof media and permission status.</p>
-          </div>
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            <button type="button" style={pageStyles.secondaryButton} onClick={() => setRecords((current) => [...current, { id: createId("case"), title: "", customer: "", projectType: "", permissionStatus: "not_requested", visibility: "verified_companies" }])}>Add case study</button>
-            <button type="button" style={{ ...pageStyles.saveButton, opacity: engineerProfile ? 1 : 0.52 }} disabled={!engineerProfile} onClick={saveRecords}>Save to profile</button>
-          </div>
+      {!engineerProfile && <div className="mb-4 rounded-xl border border-amber-300/40 bg-amber-950/30 p-3 text-sm text-amber-200">Preview mode: the logged-in user is not an engineer, so profile saving is disabled.</div>}
+      <section className={panelClass}>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div><h2 className="text-lg font-black text-cyan-300">Work evidence records</h2><p className="mt-1 text-xs text-slate-400">Useful case studies should include task, site type, outcome, proof media and permission status.</p></div>
+          <div className="flex flex-wrap gap-2"><button type="button" className={buttonClass} onClick={() => setRecords((current) => [...current, defaultEvidence()])}>Add case study</button><button type="button" className={saveButtonClass} disabled={!engineerProfile} onClick={save}>Save to profile</button></div>
         </div>
-
-        {safeRecords.map((record) => (
-          <article key={record.id} style={pageStyles.record}>
-            <div style={pageStyles.formGrid}>
-              <Field label="Project / case study title"><input style={pageStyles.input} value={record.title} onChange={(event) => updateRecord(record.id, "title", event.target.value)} placeholder="e.g. UC room rollout, rack build, service visit" /></Field>
-              <Field label="Customer / site name"><input style={pageStyles.input} value={record.customer || ""} onChange={(event) => updateRecord(record.id, "customer", event.target.value)} placeholder="Use anonymised name if needed" /></Field>
-              <Field label="Project type"><input style={pageStyles.input} value={record.projectType || ""} onChange={(event) => updateRecord(record.id, "projectType", event.target.value)} placeholder="Install, commissioning, support, maintenance" /></Field>
-              <Field label="Site type"><input style={pageStyles.input} value={record.siteType || ""} onChange={(event) => updateRecord(record.id, "siteType", event.target.value)} placeholder="Office, education, hospitality, retail" /></Field>
-              <Field label="Completion date"><input style={pageStyles.input} type="date" value={record.date || ""} onChange={(event) => updateRecord(record.id, "date", event.target.value)} /></Field>
-              <Field label="Customer permission"><select style={pageStyles.input} value={record.permissionStatus || "not_requested"} onChange={(event) => updateRecord(record.id, "permissionStatus", event.target.value)}><option value="not_requested">Not requested</option><option value="permission_granted">Permission granted</option><option value="anonymised">Anonymised</option><option value="private_only">Private evidence only</option></select></Field>
-              <Field label="Visibility"><select style={pageStyles.input} value={record.visibility || "verified_companies"} onChange={(event) => updateRecord(record.id, "visibility", event.target.value)}><option value="private">Private</option><option value="verified_companies">Verified companies only</option><option value="public">Public profile</option></select></Field>
+        {records.map((record) => (
+          <article key={record.id} className={recordClass}>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <Field label="Project / case study title"><input className={inputClass} value={record.title} onChange={(e) => update(record.id, "title", e.target.value)} placeholder="e.g. UC room rollout, rack build, service visit" /></Field>
+              <Field label="Customer / site name"><input className={inputClass} value={record.customer || ""} onChange={(e) => update(record.id, "customer", e.target.value)} placeholder="Use anonymised name if needed" /></Field>
+              <Field label="Project type"><input className={inputClass} value={record.projectType || ""} onChange={(e) => update(record.id, "projectType", e.target.value)} placeholder="Install, commissioning, support, maintenance" /></Field>
+              <Field label="Site type"><input className={inputClass} value={record.siteType || ""} onChange={(e) => update(record.id, "siteType", e.target.value)} placeholder="Office, education, hospitality, retail" /></Field>
+              <Field label="Completion date"><input className={inputClass} type="date" value={record.date || ""} onChange={(e) => update(record.id, "date", e.target.value)} /></Field>
+              <Field label="Customer permission"><select className={inputClass} value={record.permissionStatus || "not_requested"} onChange={(e) => update(record.id, "permissionStatus", e.target.value)}><option value="not_requested">Not requested</option><option value="permission_granted">Permission granted</option><option value="anonymised">Anonymised</option><option value="private_only">Private evidence only</option></select></Field>
+              <Field label="Visibility"><select className={inputClass} value={record.visibility || "verified_companies"} onChange={(e) => update(record.id, "visibility", e.target.value)}><option value="private">Private</option><option value="verified_companies">Verified companies only</option><option value="public">Public profile</option></select></Field>
             </div>
-
-            <div style={{ marginTop: "12px" }}>
-              <Field label="Customer feedback / outcome"><textarea style={pageStyles.textarea} value={record.outcome || ""} onChange={(event) => updateRecord(record.id, "outcome", event.target.value)} placeholder="Add customer feedback, measurable outcome, issue resolved or work completed." /></Field>
-            </div>
-
-            <div style={{ ...pageStyles.formGrid, marginTop: "12px" }}>
-              <FileUploadInput label="Upload document / testimonial" fileUrl={record.documentUrl} isVerified={false} onFileChange={(fileUrl) => updateRecord(record.id, "documentUrl", fileUrl)} />
-              <FileUploadInput label="Upload photo evidence" fileUrl={record.imageUrl} isVerified={false} onFileChange={(fileUrl) => updateRecord(record.id, "imageUrl", fileUrl)} />
-              <FileUploadInput label="Upload short video" fileUrl={record.videoUrl} isVerified={false} onFileChange={(fileUrl) => updateRecord(record.id, "videoUrl", fileUrl)} />
+            <div className="mt-3"><Field label="Customer feedback / outcome"><textarea className={inputClass} value={record.outcome || ""} onChange={(e) => update(record.id, "outcome", e.target.value)} placeholder="Add customer feedback, measurable outcome, issue resolved or work completed." /></Field></div>
+            <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+              <FileUploadInput label="Upload document / testimonial" fileUrl={record.documentUrl} isVerified={false} onFileChange={(fileUrl) => update(record.id, "documentUrl", fileUrl)} />
+              <FileUploadInput label="Upload photo evidence" fileUrl={record.imageUrl} isVerified={false} onFileChange={(fileUrl) => update(record.id, "imageUrl", fileUrl)} />
+              <FileUploadInput label="Upload short video" fileUrl={record.videoUrl} isVerified={false} onFileChange={(fileUrl) => update(record.id, "videoUrl", fileUrl)} />
             </div>
           </article>
         ))}
