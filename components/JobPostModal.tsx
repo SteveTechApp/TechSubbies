@@ -24,7 +24,9 @@ const initialJobDetails = {
     startDate: new Date().toISOString().split('T')[0],
     jobType: JobType.CONTRACT,
     experienceLevel: ExperienceLevel.MID_LEVEL,
-    jobRole: ''
+    jobRole: '',
+    supervisionArrangement: '',
+    supervisionDisclaimerAccepted: false,
 };
 
 export const JobPostModal = ({ isOpen, onClose, onPostJob }: JobPostModalProps) => {
