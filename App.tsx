@@ -30,12 +30,15 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { HowItWorksModal } from './components/HowItWorksModal';
 import { AIAssistant } from './components/AIAssistant';
-
+
+
 import CompanyEngineerDashboardPage from "./views/CompanyEngineerDashboardPage";
 import WatchDemoPage from "./views/WatchDemoPage";
 
 import RoleSkillBuilderPage from "./views/RoleSkillBuilderPage";
-
+import { EngineerCertificatesAwardsPage, EngineerFeedbackCaseStudiesPage, EngineerProfileHubPage } from "./views/EngineerProfileHubPage";
+
+
 
 function installTechSubbiesTopNavLinks() {
   if (typeof window === "undefined") {
@@ -143,9 +146,12 @@ function installTechSubbiesTopNavLinks() {
       menu.appendChild(item);
     }
 
+    addItem("Engineer profile hub", "Choose which profile section to complete next.", "/engineer/profile");
     addItem("Profile setup", "Choose which part of the engineer profile to complete.", "/engineer/profile-setup");
     addItem("Personal / business profile", "Identity, business, compliance, location and availability.", "/engineer/personal-business-profile");
     addItem("Skills builder", "Role-based AV, IT and hybrid skill ratings.", "/engineer/skills-profile");
+    addItem("Certificates & awards", "Upload certificates, awards and professional qualifications.", "/engineer/certificates-awards");
+    addItem("Feedback & case studies", "Add customer feedback, documents, photos and short videos.", "/engineer/feedback-case-studies");
 
     return menu;
   }
@@ -212,6 +218,18 @@ function installTechSubbiesTopNavLinks() {
 installTechSubbiesTopNavLinks();
 
 const App = () => {
+  if (window.location.pathname === "/engineer/profile") {
+    return <EngineerProfileHubPage />;
+  }
+
+  if (window.location.pathname === "/engineer/certificates-awards") {
+    return <EngineerCertificatesAwardsPage />;
+  }
+
+  if (window.location.pathname === "/engineer/feedback-case-studies") {
+    return <EngineerFeedbackCaseStudiesPage />;
+  }
+
   if (window.location.pathname === "/role-skills") {
     return <RoleSkillBuilderPage />;
   }
