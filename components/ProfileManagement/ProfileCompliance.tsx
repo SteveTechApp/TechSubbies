@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { EngineerProfile, Compliance } from '../../types';
 import { FileUploadInput } from '../FileUploadInput';
 import { CompetencySlider } from '../CompetencySlider';
@@ -108,3 +108,4 @@ export const ProfileCompliance = ({ formData, setFormData }: ProfileCompliancePr
         </div>
     );
 };
+

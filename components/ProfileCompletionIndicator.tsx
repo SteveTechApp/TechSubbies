@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { EngineerProfile } from '../../types';
+import { EngineerProfile } from '../types';
 import { CheckCircle, ArrowRight } from './Icons';
 
 interface ProfileCompletionIndicatorProps {

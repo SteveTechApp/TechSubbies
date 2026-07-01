@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Compliance } from '../../types';
 import { FileUploadInput } from '../FileUploadInput';
 import { CompetencySlider } from '../CompetencySlider';
@@ -106,3 +106,4 @@ export const StepWorkReadiness = ({ data, setData }: StepWorkReadinessProps) => 
         </div>
     );
 };
+

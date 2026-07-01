@@ -1,118 +1,113 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TechSubbies.com | The Global Specialist Freelance Network</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
-      body {
-        font-family: 'Inter', sans-serif;
-      }
-      h1, h2, h3, h4, h5, h6 {
-        font-family: 'Orbitron', sans-serif;
-      }
-      /* --- Custom Scrollbar --- */
-      .custom-scrollbar::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-track {
-        background: #f1f5f9; /* bg-slate-100 */
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #94a3b8; /* bg-slate-400 */
-        border-radius: 4px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #64748b; /* bg-slate-500 */
-      }
-
-      /* Animation for modal/tray */
-      @keyframes slide-up {
-        from {
-          transform: translateY(100%);
-        }
-        to {
-          transform: translateY(0);
-        }
-      }
-      .animate-slide-up {
-        animation: slide-up 0.3s ease-out forwards;
-      }
-
-      /* Keyframes for FeatureSlideshow cursor animations */
-      @keyframes cursor-click-path-1 { /* For slide 1: Engineer skill profile */
-        0%, 100% { top: 10%; left: 20%; opacity: 0; transform: scale(1); }
-        10% { top: 10%; left: 20%; opacity: 1; }
-        30% { top: 37%; left: 82%; } /* Move to 'Edit' button on a role */
-        35%, 45% { top: 37%; left: 82%; transform: scale(0.9); } /* Click effect */
-        50% { top: 37%; left: 82%; transform: scale(1); opacity: 0; } /* Disappear as modal would open */
-        90% { opacity: 0; }
-      }
-      .animate-cursor-1 {
-        animation: cursor-click-path-1 8s ease-in-out infinite;
-      }
-
-      @keyframes cursor-click-path-2 { /* For slide 2: Company job posting */
-        0%, 100% { top: 15%; left: 20%; opacity: 0; transform: scale(1); }
-        10% { top: 15%; left: 20%; opacity: 1; }
-        30% { top: 58%; left: 88%; } /* Move to 'Desirable' button on 2nd skill */
-        35%, 45% { top: 58%; left: 88%; transform: scale(0.9); } /* Click effect */
-        55% { top: 72%; left: 88%; transform: scale(1); } /* Move to 'Desirable' button on 3rd skill */
-        60%, 70% { top: 72%; left: 88%; transform: scale(0.9); } /* Click effect */
-        80% { top: 72%; left: 88%; opacity: 0; transform: scale(1); }
-      }
-      .animate-cursor-2 {
-        animation: cursor-click-path-2 8s ease-in-out infinite;
-      }
+    <title>TechSubbies.com</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "system-ui", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
       
-      @keyframes cursor-click-path-3 { /* For slide 3: AI match results */
-        0%, 100% { top: 22%; left: 50%; opacity: 0; }
-        10% { top: 22%; left: 50%; opacity: 1; }
-        90% { top: 85%; left: 50%; opacity: 1; } /* Scroll down */
-        95% { top: 85%; left: 50%; opacity: 0; }
-      }
-      .animate-cursor-3 {
-        animation: cursor-click-path-3 8s ease-in-out infinite;
-      }
       
-      @keyframes cursor-click-path-4 { /* For slide 4: Resourcing agency */
-        0%, 100% { top: 20%; left: 15%; opacity: 0; transform: scale(1); }
-        10% { top: 20%; left: 15%; opacity: 1; }
-        30% { top: 45%; left: 42%; } /* Move to 'Apply' button for Samantha G. */
-        35%, 45% { top: 45%; left: 42%; transform: scale(0.9); } /* Click effect */
-        50% { top: 45%; left: 42%; transform: scale(1); opacity: 0; } /* Disappear as modal would open */
-        90% { opacity: 0; }
-      }
-      .animate-cursor-4 {
-        animation: cursor-click-path-4 8s ease-in-out infinite;
-      }
-    </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@18.2.0",
-    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-    "@google/genai": "https://esm.sh/@google/genai@^1.15.0",
-    "react-dom/": "https://esm.sh/react-dom@18.2.0/",
-    "react/": "https://esm.sh/react@18.2.0/",
-    "lit": "https://esm.sh/lit@^3.3.1",
-    "framer-motion": "https://esm.sh/framer-motion@11.3.12",
-    "@/i18n": "./i18n.js",
-    "@testing-library/react": "https://aistudiocdn.com/@testing-library/react@^16.3.0",
-    "@testing-library/jest-dom": "https://aistudiocdn.com/@testing-library/jest-dom@^6.8.0"
-  }
-}
-</script>
-</head>
-  <body class="bg-gray-100">
+      
+      <link rel="icon" type="image/png" href="/brand/techsubbies-icon.png" />
+  </head>
+  <body>
     <div id="root"></div>
-    <script type="text/babel" data-type="module" data-presets="react,typescript" src="./index.tsx"></script>
-  </body>
+    
+      
+      
+      <script type="module" src="./index.tsx"></script>
+
+<!-- TECHSUBBIES NAV ORDER FIX -->
+<script>
+(function () {
+  function cleanText(value) {
+    return String(value || "").replace(/\s+/g, " ").trim();
+  }
+
+  function menuLabel(item) {
+    if (!item) return "";
+
+    const directControls = item.querySelectorAll("button, a, [role='button']");
+
+    for (const control of directControls) {
+      const text = cleanText(control.textContent);
+
+      if (
+        text === "About" ||
+        text === "Engineers" ||
+        text === "Companies" ||
+        text === "Resourcing Companies"
+      ) {
+        return text;
+      }
+    }
+
+    return cleanText(item.textContent);
+  }
+
+  function fixTechSubbiesNavOrder() {
+    const headers = Array.from(document.querySelectorAll("header"));
+
+    for (const header of headers) {
+      const navs = Array.from(header.querySelectorAll("nav"));
+
+      for (const nav of navs) {
+        const items = Array.from(nav.children);
+
+        const about = items.find((item) => menuLabel(item) === "About");
+        const engineers = items.find((item) => menuLabel(item) === "Engineers");
+        const companies = items.find((item) => menuLabel(item) === "Companies");
+        const resourcing = items.find((item) => menuLabel(item) === "Resourcing Companies");
+
+        if (!about || !engineers || !companies || !resourcing) {
+          continue;
+        }
+
+        nav.appendChild(engineers);
+        nav.appendChild(companies);
+        nav.appendChild(resourcing);
+        nav.appendChild(about);
+      }
+    }
+  }
+
+  let scheduled = false;
+
+  function scheduleFix() {
+    if (scheduled) return;
+
+    scheduled = true;
+
+    window.requestAnimationFrame(function () {
+      scheduled = false;
+      fixTechSubbiesNavOrder();
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", scheduleFix);
+  window.addEventListener("load", scheduleFix);
+  window.addEventListener("hashchange", scheduleFix);
+  window.addEventListener("popstate", scheduleFix);
+
+  new MutationObserver(scheduleFix).observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  });
+
+  scheduleFix();
+})();
+</script>
+<!-- /TECHSUBBIES NAV ORDER FIX -->
+</body>
 </html>

@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type, Chat } from "@google/genai";
+﻿import { GoogleGenAI, Type, Chat } from "@google/genai";
 // FIX: Add Product and ProductFeatures types for new AI method.
 import { EngineerProfile, Job, JobSkillRequirement, Skill, Insight, ExperienceLevel, Product, ProductFeatures } from "../types";
 import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';

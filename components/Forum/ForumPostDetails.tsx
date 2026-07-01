@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 // FIX: Corrected import path for useAppContext to resolve 'not a module' error.
 import { useAppContext } from '../../context/InteractionContext';
 // FIX: Corrected import path for types.
@@ -21,7 +21,7 @@ const Comment = ({ comment, onReply }: CommentProps) => {
             <div className="flex-grow bg-gray-50 p-3 rounded-lg">
                 <p className="text-sm">
                     <span className="font-bold">{author?.profile.name}</span>
-                    <span className="text-gray-500 ml-2">• {formatTimeAgo(comment.timestamp)}</span>
+                    <span className="text-gray-500 ml-2">€¢ {formatTimeAgo(comment.timestamp)}</span>
                 </p>
                 <p className="mt-1">{comment.content}</p>
                 <div className="flex items-center gap-4 mt-2 text-xs">
@@ -95,7 +95,7 @@ export const ForumPostDetails = ({ post }: ForumPostDetailsProps) => {
         <div className="bg-white p-6 rounded-lg shadow">
             <div className="border-b pb-4 mb-4">
                 <p className="text-sm text-gray-500">
-                    Posted by <span className="font-semibold">{author?.profile.name || '...'}</span> • {formatTimeAgo(post.timestamp)}
+                    Posted by <span className="font-semibold">{author?.profile.name || '...'}</span> €¢ {formatTimeAgo(post.timestamp)}
                 </p>
                 <h1 className="text-3xl font-extrabold text-gray-900 mt-2">{post.title}</h1>
                 <div className="flex flex-wrap gap-2 mt-3">

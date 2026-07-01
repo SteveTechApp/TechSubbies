@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { Page } from '../types';
@@ -31,6 +31,26 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
         <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=2070&auto=format&fit=crop')` }}></div>
         <div className="relative container mx-auto px-4">
           <h1 className="text-4xl md:text-6xl font-extrabold mb-4 fade-in-up">The Global Specialist Freelance Network</h1>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "10px",
+              alignItems: "center",
+              marginTop: "16px",
+            }}
+          >
+            
+            <span
+              style={{
+                color: "rgba(255,255,255,0.68)",
+                fontSize: "13px",
+                lineHeight: 1.45,
+              }}
+            >
+              
+            </span>
+          </div>
           <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto mb-8 fade-in-up" style={{ animationDelay: '0.2s' }}>
             AI-powered matching connects expert AV &amp; IT engineers with the world's leading tech companies. No recruiters. No placement fees. Just direct connections.
           </p>
@@ -149,3 +169,4 @@ export const LandingPage = ({ onNavigate }: LandingPageProps) => {
     </div>
   );
 };
+

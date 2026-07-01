@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { useAppContext } from '../../context/InteractionContext';
 import { BarChart2, DollarSign, Star, Briefcase } from '../../components/Icons';
 import { Contract, ContractStatus, Review } from '../../types';
@@ -68,3 +68,4 @@ export const AnalyticsView = () => {
         </div>
     );
 };
+

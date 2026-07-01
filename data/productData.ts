@@ -1,4 +1,4 @@
-import { Product } from '../types';
+﻿import { Product } from '../types';
 
 export const parseProductData = (text: string): Product[] => {
     const lines = text.split('\n');
@@ -56,10 +56,10 @@ Companion Control License for 1 Tablet"
 COMP-3LIC	Companion Control License for 3 Tablets
 COMP-6LIC	Companion Control License for 6 Tablets
 TS-280-EU	2-Gang 2.8" Touchscreen Controller for Presentation Switcher Solutions
-SYN-KEY10	Synergy™ 10-button Keypad Controller | Only comes with US back box
-SYN-TOUCH10	Synergy™ 10.1” All-In-One Touchpad IP Controller | PoE+ | Table Top Stand & Wall-Mount (US/UK/EU Compatible)
+SYN-KEY10	Synergyâ„¢ 10-button Keypad Controller | Only comes with US back box
+SYN-TOUCH10	Synergyâ„¢ 10.1€ All-In-One Touchpad IP Controller | PoE+ | Table Top Stand & Wall-Mount (US/UK/EU Compatible)
 SYN-CTL-HUB	Ethernet Protocol Converter for the SYN-TOUCH10 | RS232 | Relay | IR
-NetworkHD Touch™	Free iPad & Android Control App for NetworkHD 100, 200 & 400 Series 
+NetworkHD Touchâ„¢	Free iPad & Android Control App for NetworkHD 100, 200 & 400 Series 
 	
 VIDEO PROCESSOR	
 Video Processor - WyreStorm	
@@ -107,6 +107,6 @@ NHD-CTL-PRO-V2	Pro Controller for NetworkHD Series | PoE | Dual NIC Network Isol
 NHD-USB-TRX	USB 2.0 over IP Transceiver | 1GbE | USB-A & USB-B Ports | SFP | PoE+ | USB Hub 
 NHD-000-RACK4	6U/12 Slot Rack Mount for all NetworkHD Series
 NHD-140-RACK-1U	1U/2 Slot Rack Mount for NHD-140-TX &NHD-124-TX Quad Encoder
-NHD-RACK-1U	1U/2 Slot Rack Mount for NetworkHD™ 110/120/500/600/CTL
+NHD-RACK-1U	1U/2 Slot Rack Mount for NetworkHDâ„¢ 110/120/500/600/CTL
 NHD-RACK4-BLK	Blanking Plate for NHD-000-RACK4
 `;

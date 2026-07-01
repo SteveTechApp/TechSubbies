@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+﻿import React, { useMemo, useState } from "react";
 import {
   companyComplianceDocuments,
   companyEngineers,
@@ -208,7 +208,7 @@ function makeDemoDocument(): ComplianceDocument {
     issuedAt: now.toISOString().slice(0, 10),
     expiresAt: "2027-06-30",
     reference: "UPLOAD-" + String(now.getTime()),
-    notes: "Demo bulk company update. Replace with real upload and verification workflow later.",
+    notes: "Demo Bulk resourcing company update. Replace with real upload and verification workflow later.",
   };
 }
 
@@ -288,10 +288,10 @@ function CompanyEngineerDashboardPage() {
     <main style={styles.page}>
       <header style={styles.header}>
         <section>
-          <p style={styles.eyebrow}>TechSubbies company account</p>
-          <h1 style={styles.title}>Company engineer management dashboard</h1>
+          <p style={styles.eyebrow}>TechSubbies resourcing company account</p>
+          <h1 style={styles.title}>Resourcing company engineer management dashboard</h1>
           <p style={styles.copy}>
-            Manage all engineers in one place, apply company-wide compliance updates, drill into groups,
+            Manage all subcontracting engineers in one place, apply resourcing-company compliance updates, drill into groups,
             and control individual engineer records without removing engineer independence.
           </p>
         </section>
@@ -429,7 +429,7 @@ function CompanyEngineerDashboardPage() {
 
         <aside>
           <section style={styles.card}>
-            <h2 style={styles.cardTitle}>Bulk company update</h2>
+            <h2 style={styles.cardTitle}>Bulk resourcing company update</h2>
             <p style={styles.copy}>
               Apply a new company document to all engineers, a selected group, or one individual profile.
             </p>
@@ -510,7 +510,7 @@ function CompanyEngineerDashboardPage() {
           <section style={{ ...styles.card, marginTop: 14 }}>
             <h2 style={styles.cardTitle}>Audit trail</h2>
             <p style={styles.copy}>
-              Company-wide changes should always record who changed what and which engineer records were affected.
+              Resourcing-company changes should always record who changed what and which engineer records were affected.
             </p>
 
             {auditLog.length === 0 ? (
@@ -535,3 +535,4 @@ function CompanyEngineerDashboardPage() {
 
 export { CompanyEngineerDashboardPage };
 export default CompanyEngineerDashboardPage;
+

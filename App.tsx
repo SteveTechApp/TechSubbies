@@ -1,14 +1,23 @@
-import React, { useState } from 'react';
+﻿import PersistentAppHeader from "./components/PersistentAppHeader";
+import { clearDemoSession, getDemoSession, type DemoSession } from "./data/demoAccounts";
+import DemoLoginPage from "./views/DemoLoginPage";
+import LiveOpportunityIntakePage from "./views/LiveOpportunityIntakePage";
+import OpportunityMatchingDemoPage from "./views/OpportunityMatchingDemoPage";
+import ProductAwarenessExperiencePage from "./views/ProductAwarenessExperiencePage";
+import { ResourcingCompanySignUpWizard } from "./views/ResourcingCompanySignUpWizard";
+import { EngineerSignUpWizard } from "./views/EngineerSignUpWizard";
+import { CompanySignUpWizard } from "./views/CompanySignUpWizard";
+import { LoginSelector } from "./views/LoginSelector";
+import EngineerAvailabilityPage from "./views/EngineerAvailabilityPage";
+import EngineerProfileHubPage from "./views/EngineerProfileHubPage";
+import HowItWorksFaqPage from "./views/HowItWorksFaqPage";
+import React, { useEffect, useState } from 'react';
 import { useNavigation } from './context/NavigationContext';
 import { useAuth } from './context/AuthContext';
 import { Page } from './types';
 
 // Page Components
 import { LandingPage } from './views/LandingPage';
-import { LoginSelector } from './views/LoginSelector';
-import { EngineerSignUpWizard } from './views/EngineerSignUpWizard';
-import { CompanySignUpWizard } from './views/CompanySignUpWizard';
-import { ResourcingCompanySignUpWizard } from './views/ResourcingCompanySignUpWizard';
 import { EngineerDashboard } from './views/EngineerDashboard';
 import { CompanyDashboard } from './views/CompanyDashboard';
 import { ResourcingDashboard } from './views/ResourcingDashboard';
@@ -26,7 +35,6 @@ import { UserGuidePage } from './views/UserGuidePage';
 import { TutorialsPage } from './views/TutorialsPage';
 
 // Common Components
-import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { HowItWorksModal } from './components/HowItWorksModal';
 import { AIAssistant } from './components/AIAssistant';
@@ -36,217 +44,220 @@ import CompanyEngineerDashboardPage from "./views/CompanyEngineerDashboardPage";
 import WatchDemoPage from "./views/WatchDemoPage";
 
 import RoleSkillBuilderPage from "./views/RoleSkillBuilderPage";
-import { EngineerCertificatesAwardsPage, EngineerFeedbackCaseStudiesPage, EngineerProfileHubPage } from "./views/EngineerProfileHubPage";
 
 
 
-function installTechSubbiesTopNavLinks() {
+import EngineerProfileSetupPage from "./views/EngineerProfileSetupPage";
+import EngineerPersonalBusinessProfilePage from "./views/EngineerPersonalBusinessProfilePage";
+
+function TechSubbiesHowItWorksFaqHashRoute(): boolean {
   if (typeof window === "undefined") {
-    return;
+    return false;
   }
 
-  if (typeof document === "undefined") {
-    return;
-  }
-
-  function normaliseText(value) {
-    return String(value || "").replace(/\s+/g, " ").trim().toLowerCase();
-  }
-
-  function findClickableByText(text) {
-    const target = normaliseText(text);
-    const candidates = Array.from(document.querySelectorAll("a, button, [role='button'], nav span, header span, nav div, header div"));
-
-    return candidates.find((item) => {
-      const value = normaliseText(item.textContent);
-      return value === target || value.indexOf(target) >= 0;
-    });
-  }
-
-  function createTopNavLink(label, href) {
-    const link = document.createElement("a");
-    link.href = href;
-    link.textContent = label;
-
-    link.onclick = (event) => {
-      event.preventDefault();
-      window.location.href = href;
-    };
-
-    link.style.color = "#1f2937";
-    link.style.textDecoration = "none";
-    link.style.fontSize = "14px";
-    link.style.fontWeight = "600";
-    link.style.display = "inline-flex";
-    link.style.alignItems = "center";
-    link.style.justifyContent = "center";
-    link.style.padding = "8px 10px";
-    link.style.borderRadius = "10px";
-    link.style.whiteSpace = "nowrap";
-
-    link.onmouseenter = () => {
-      link.style.background = "rgba(37, 99, 235, 0.08)";
-      link.style.color = "#2563eb";
-    };
-
-    link.onmouseleave = () => {
-      link.style.background = "transparent";
-      link.style.color = "#1f2937";
-    };
-
-    return link;
-  }
-
-  function createDropdownMenu() {
-    const menu = document.createElement("div");
-    menu.id = "techsubbies-engineer-profile-menu";
-    menu.style.position = "absolute";
-    menu.style.top = "calc(100% + 8px)";
-    menu.style.left = "0";
-    menu.style.minWidth = "280px";
-    menu.style.padding = "10px";
-    menu.style.borderRadius = "16px";
-    menu.style.border = "1px solid rgba(15, 23, 42, 0.12)";
-    menu.style.background = "#ffffff";
-    menu.style.boxShadow = "0 18px 42px rgba(15, 23, 42, 0.18)";
-    menu.style.zIndex = "9999";
-    menu.style.display = "none";
-
-    function addItem(title, detail, href) {
-      const item = document.createElement("a");
-      item.href = href;
-      item.style.display = "block";
-      item.style.padding = "10px";
-      item.style.borderRadius = "12px";
-      item.style.textDecoration = "none";
-      item.style.marginBottom = "6px";
-      item.style.border = "1px solid rgba(15, 23, 42, 0.08)";
-      item.style.background = "#f8fafc";
-
-      item.onclick = (event) => {
-        event.preventDefault();
-        window.location.href = href;
-      };
-
-      const titleEl = document.createElement("div");
-      titleEl.textContent = title;
-      titleEl.style.color = "#0f172a";
-      titleEl.style.fontSize = "13px";
-      titleEl.style.fontWeight = "800";
-      titleEl.style.marginBottom = "3px";
-
-      const detailEl = document.createElement("div");
-      detailEl.textContent = detail;
-      detailEl.style.color = "#475569";
-      detailEl.style.fontSize = "12px";
-      detailEl.style.lineHeight = "1.35";
-
-      item.appendChild(titleEl);
-      item.appendChild(detailEl);
-      menu.appendChild(item);
-    }
-
-    addItem("Engineer profile hub", "Choose which profile section to complete next.", "/engineer/profile");
-    addItem("Profile setup", "Choose which part of the engineer profile to complete.", "/engineer/profile-setup");
-    addItem("Personal / business profile", "Identity, business, compliance, location and availability.", "/engineer/personal-business-profile");
-    addItem("Skills builder", "Role-based AV, IT and hybrid skill ratings.", "/engineer/skills-profile");
-    addItem("Certificates & awards", "Upload certificates, awards and professional qualifications.", "/engineer/certificates-awards");
-    addItem("Feedback & case studies", "Add customer feedback, documents, photos and short videos.", "/engineer/feedback-case-studies");
-
-    return menu;
-  }
-
-  function mount() {
-    document.getElementById("techsubbies-watch-demo-link")?.remove();
-    document.getElementById("techsubbies-role-skill-link")?.remove();
-    document.getElementById("techsubbies-engineer-profile-dropdown")?.remove();
-
-    const header = document.querySelector("header") || document.querySelector("nav") || document.body;
-
-    if (!document.getElementById("techsubbies-how-demo-nav-link")) {
-      const howItWorks = findClickableByText("How It Works");
-
-      if (howItWorks && howItWorks.parentElement) {
-        const demoLink = createTopNavLink("Watch demo", "/watch-demo");
-        demoLink.id = "techsubbies-how-demo-nav-link";
-        howItWorks.parentElement.insertBefore(demoLink, howItWorks.nextSibling);
-      }
-    }
-
-    if (!document.getElementById("techsubbies-engineer-nav-wrapper")) {
-      const engineers = findClickableByText("For Engineers");
-
-      if (engineers && engineers.parentElement) {
-        const wrapper = document.createElement("span");
-        wrapper.id = "techsubbies-engineer-nav-wrapper";
-        wrapper.style.position = "relative";
-        wrapper.style.display = "inline-flex";
-        wrapper.style.alignItems = "center";
-
-        const menu = createDropdownMenu();
-
-        engineers.parentElement.insertBefore(wrapper, engineers);
-        wrapper.appendChild(engineers);
-        wrapper.appendChild(menu);
-
-        wrapper.addEventListener("mouseenter", () => {
-          menu.style.display = "block";
-        });
-
-        wrapper.addEventListener("mouseleave", () => {
-          menu.style.display = "none";
-        });
-
-        engineers.addEventListener("click", (event) => {
-          event.preventDefault();
-          menu.style.display = menu.style.display === "none" ? "block" : "none";
-        });
-      }
-    }
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", mount);
-  } else {
-    mount();
-  }
-
-  window.setTimeout(mount, 300);
-  window.setTimeout(mount, 900);
+  return (
+    window.location.hash === "#/how-it-works/faq" ||
+    window.location.hash === "#how-it-works-faq" ||
+    window.location.pathname === "/how-it-works/faq"
+  );
 }
 
-installTechSubbiesTopNavLinks();
 
+
+const publicDirectPaths = new Set([
+  "/",
+  "/login",
+  "/signin",
+  "/company/signup",
+  "/engineer/signup",
+  "/resourcing/signup",
+  "/watch-demo",
+  "/matching-demo",
+  "/how-it-works/matching-demo",
+  "/how-it-works/faq",
+]);
+
+function normalisePathname(): string {
+  if (typeof window === "undefined") {
+    return "/";
+  }
+
+  return window.location.pathname || "/";
+}
+
+function isPublicDirectPath(pathname: string): boolean {
+  if (publicDirectPaths.has(pathname)) {
+    return true;
+  }
+
+  if (pathname.startsWith("/public")) {
+    return true;
+  }
+
+  if (pathname.startsWith("/how-it-works")) {
+    return true;
+  }
+
+  return false;
+}
+
+function LoginRequiredPage() {
+  return (
+    <div className="min-h-screen bg-slate-950 px-5 py-10 text-white">
+      <div className="mx-auto max-w-3xl rounded-3xl border border-amber-300/20 bg-slate-900 p-8">
+        <p className="text-xs font-bold uppercase tracking-[0.28em] text-amber-200">
+          Login required
+        </p>
+        <h1 className="mt-4 text-3xl font-bold text-white">
+          This area is protected
+        </h1>
+        <p className="mt-3 text-sm leading-6 text-slate-400">
+          Public pages are open, but project intake, engineer profiles, matching tools, dashboards and admin areas require a signed-in account.
+        </p>
+        <a
+          href="/login"
+          className="mt-6 inline-flex rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200"
+        >
+          Sign in
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function DemoSessionBar({
+  session,
+  onLogout,
+}: {
+  session: DemoSession;
+  onLogout: () => void;
+}) {
+  return (
+    <div className="fixed bottom-4 left-4 z-50 rounded-2xl border border-cyan-300/20 bg-slate-950/95 p-3 text-xs text-white shadow-2xl backdrop-blur">
+      <div className="font-bold text-cyan-200">{session.name}</div>
+      <div className="mt-1 text-slate-400">{session.role} · {session.email}</div>
+      <button
+        type="button"
+        onClick={onLogout}
+        className="mt-2 rounded-lg border border-white/10 px-3 py-1 font-bold text-slate-300 hover:border-cyan-300/60 hover:text-cyan-200"
+      >
+        Logout
+      </button>
+    </div>
+  );
+}
 const App = () => {
+const { page, setPage } = useNavigation();
+  const { user } = useAuth();
+  const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
+  const renderPersistentShell = (content: React.ReactNode, showFooter = false) => (
+    <div className="flex min-h-screen flex-col bg-slate-950">
+      <PersistentAppHeader />
+      <main className="flex-grow">
+        {content}
+      </main>
+      {showFooter && <Footer onNavigate={setPage} />}
+      <HowItWorksModal
+        isOpen={isHowItWorksOpen}
+        onClose={() => setIsHowItWorksOpen(false)}
+        onNavigate={setPage}
+      />
+      {user && <AIAssistant />}
+    </div>
+  );
+
+  const [demoSession, setDemoSessionState] = useState<DemoSession | null>(() => getDemoSession());
+
+  useEffect(() => {
+    function refreshDemoSession() {
+      setDemoSessionState(getDemoSession());
+    }
+
+    window.addEventListener("storage", refreshDemoSession);
+    window.addEventListener("focus", refreshDemoSession);
+
+    return () => {
+      window.removeEventListener("storage", refreshDemoSession);
+      window.removeEventListener("focus", refreshDemoSession);
+    };
+  }, []);
+
+  const pathname = normalisePathname();
+  const isPublicPath = isPublicDirectPath(pathname) || TechSubbiesHowItWorksFaqHashRoute();
+  const isSignedIn = Boolean(user || demoSession);
+
+  function handleDemoSignedIn(session: DemoSession) {
+    setDemoSessionState(session);
+  }
+
+  function handleDemoLogout() {
+    clearDemoSession();
+    setDemoSessionState(null);
+    window.location.href = "/";
+  }
+
+  if (!isPublicPath && !isSignedIn) {
+    return renderPersistentShell(<LoginRequiredPage />);
+  }
+
+    if (window.location.pathname === "/opportunity-intake" || window.location.pathname === "/matching/intake") {
+    return renderPersistentShell(<LiveOpportunityIntakePage />);
+  }
+
+if (window.location.pathname === "/matching-demo" || window.location.pathname === "/how-it-works/matching-demo") {
+    return renderPersistentShell(<OpportunityMatchingDemoPage />);
+  }
+
+
+  if (window.location.pathname === "/engineer/product-awareness") {
+    return renderPersistentShell(<ProductAwarenessExperiencePage />);
+  }
+
+  
+  if (window.location.pathname === "/login" || window.location.pathname === "/signin") {
+    return renderPersistentShell(<DemoLoginPage onSignedIn={handleDemoSignedIn} />);
+  }
+
+  if (window.location.pathname === "/company/signup") {
+    return <CompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />;
+  }
+
+  if (window.location.pathname === "/engineer/signup") {
+    return <EngineerSignUpWizard onCancel={() => setPage(Page.LOGIN)} />;
+  }
+
+  if (window.location.pathname === "/resourcing/signup") {
+    return <ResourcingCompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />;
+  }
+if (TechSubbiesHowItWorksFaqHashRoute()) {
+    return renderPersistentShell(<HowItWorksFaqPage />, true);
+  }
+
   if (window.location.pathname === "/engineer/profile") {
-    return <EngineerProfileHubPage />;
+    return renderPersistentShell(<EngineerProfileHubPage />);
   }
 
-  if (window.location.pathname === "/engineer/certificates-awards") {
-    return <EngineerCertificatesAwardsPage />;
+  if (window.location.pathname === "/engineer/availability") {
+    return renderPersistentShell(<EngineerAvailabilityPage />);
+  }
+if (window.location.pathname === "/watch-demo") {
+    return renderPersistentShell(<WatchDemoPage />, true);
   }
 
-  if (window.location.pathname === "/engineer/feedback-case-studies") {
-    return <EngineerFeedbackCaseStudiesPage />;
+  if (window.location.pathname === "/engineer/profile-setup") {
+    return renderPersistentShell(<EngineerProfileSetupPage />);
   }
 
-  if (window.location.pathname === "/role-skills") {
-    return <RoleSkillBuilderPage />;
+  if (window.location.pathname === "/engineer/personal-business-profile") {
+    return renderPersistentShell(<EngineerPersonalBusinessProfilePage />);
   }
-
-  if (window.location.pathname === "/watch-demo") {
-    return <WatchDemoPage />;
+  if (window.location.pathname === "/engineer/skills-profile" || window.location.pathname === "/role-skills") {
+    return renderPersistentShell(<RoleSkillBuilderPage />);
   }
-
-  if (window.location.pathname === "/company/engineers") {
-    return <CompanyEngineerDashboardPage />;
+if (window.location.pathname === "/company/engineers" || window.location.pathname === "/resourcing/engineers") {
+    return renderPersistentShell(<CompanyEngineerDashboardPage />);
   }
-
-    const { page, setPage } = useNavigation();
-    const { user } = useAuth();
-    const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
-
-    const renderPage = () => {
+const renderPage = () => {
         // Automatically route logged-in users to their dashboard if they land on a public page
         if (user && (page === Page.LANDING || page === Page.LOGIN)) {
             switch (user.role) {
@@ -262,7 +273,7 @@ const App = () => {
         
         switch (page) {
             case Page.LANDING: return <LandingPage onNavigate={setPage} />;
-            case Page.LOGIN: return <LoginSelector onNavigate={setPage} />;
+            case Page.LOGIN: return renderPersistentShell(<DemoLoginPage onSignedIn={handleDemoSignedIn} />);
             case Page.ENGINEER_SIGNUP: return <EngineerSignUpWizard onCancel={() => setPage(Page.LOGIN)} />;
             case Page.COMPANY_SIGNUP: return <CompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />;
             case Page.RESOURCING_SIGNUP: return <ResourcingCompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />;
@@ -301,8 +312,8 @@ const App = () => {
 
     return (
         <div className="flex flex-col min-h-screen">
-            {!isDashboard && <Header onNavigate={setPage} onHowItWorksClick={() => setIsHowItWorksOpen(true)} />}
-            <main className={`flex-grow ${!isDashboard ? 'pt-16' : ''}`}>
+            <PersistentAppHeader />
+            <main className="flex-grow">
                 {renderPage()}
             </main>
             {!isDashboard && <Footer onNavigate={setPage} />}
@@ -312,9 +323,17 @@ const App = () => {
                 onClose={() => setIsHowItWorksOpen(false)}
                 onNavigate={setPage}
             />
-            {user && <AIAssistant />}
+            {(user || demoSession) && <AIAssistant />}
         </div>
     );
 };
 
 export default App;
+
+
+
+
+
+
+
+

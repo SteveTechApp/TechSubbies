@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useAppContext } from '../context/InteractionContext';
 import { FileText, DollarSign, Clock } from '../components/Icons';
 import { InvoiceStatus } from '../types';
@@ -70,3 +70,4 @@ export const InvoicesView = () => {
         </div>
     );
 };
+

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Page } from '../types';
 import { TestimonialCard } from '../components/TestimonialCard';
 import { AVATARS } from '../data/assets';
@@ -22,7 +22,7 @@ export const AboutUsPage = ({ onNavigate }: AboutUsPageProps) => {
             <h1 className="text-4xl md:text-5xl font-extrabold mb-2">Steve Goodwin</h1>
             <p className="text-xl text-blue-300 font-semibold mb-4">Founder & CEO</p>
             <p className="text-lg md:text-xl max-w-3xl mx-auto text-gray-300">
-                "After 25+ years in the AV industry, I've seen the hiring process from every angle—as an integrator, a distributor, and for manufacturers. I built TechSubbies.com to solve the problems I witnessed firsthand."
+                "After 25+ years in the AV industry, I've seen the hiring process from every angle€”as an integrator, a distributor, and for manufacturers. I built TechSubbies.com to solve the problems I witnessed firsthand."
             </p>
         </div>
       </section>

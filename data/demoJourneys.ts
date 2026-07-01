@@ -1,4 +1,4 @@
-import type { DemoJourney } from "../types/demoJourney";
+﻿import type { DemoJourney } from "../types/demoJourney";
 
 export const demoJourneys: DemoJourney[] = [
   {
@@ -361,7 +361,7 @@ export const demoJourneys: DemoJourney[] = [
         povTitle: "The company updates one engineer",
         userAction: "Open an engineer record to update status, groups, notes or company-managed documents.",
         platformResponse: "The platform separates company-owned information from engineer-owned profile details.",
-        expectedResult: "The company can manage its pool without taking control of an independent engineer’s personal profile.",
+        expectedResult: "The company can manage its pool without taking control of an independent engineer€™s personal profile.",
         description: "This is important for fairness and trust. Company control should not erase engineer independence.",
         metrics: [
           { label: "Record type", value: "Linked shared", detail: "Engineer + company data" },

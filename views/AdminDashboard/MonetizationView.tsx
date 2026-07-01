@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 // FIX: Corrected import path for useAppContext to resolve 'not a module' error.
 import { useAppContext } from '../../context/InteractionContext';
 import { StatCard } from '../../components/StatCard';
@@ -106,3 +106,4 @@ export const MonetizationView = () => {
         </div>
     );
 };
+

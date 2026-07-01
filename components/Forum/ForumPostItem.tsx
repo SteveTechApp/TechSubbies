@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 // FIX: Corrected import path for types.
 import { ForumPost, UserProfile } from '../../types';
 import { ArrowUp, ArrowDown, MessageSquare } from '../Icons';
@@ -25,7 +25,7 @@ export const ForumPostItem = ({ post, author, onSelect }: ForumPostItemProps) =>
             </div>
             <button onClick={onSelect} className="flex-grow text-left">
                 <p className="text-xs text-gray-500">
-                    Posted by <span className="font-semibold">{author?.name || '...'}</span> • {formatTimeAgo(post.timestamp)}
+                    Posted by <span className="font-semibold">{author?.name || '...'}</span> €¢ {formatTimeAgo(post.timestamp)}
                 </p>
                 <h3 className="text-xl font-bold text-blue-700 mt-1">{post.title}</h3>
                 <div className="flex justify-between items-center mt-3">

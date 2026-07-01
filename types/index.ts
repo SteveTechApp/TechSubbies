@@ -1,4 +1,4 @@
-// --- Enums ---
+﻿// --- Enums ---
 
 export enum Page {
   LANDING = 'landing',
@@ -540,3 +540,4 @@ export interface Product {
     subCategory: string;
     matchScore?: number;
 }
+

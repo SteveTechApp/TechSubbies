@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 // FIX: Corrected import path for useAppContext to resolve 'not a module' error.
 import { useAppContext } from '../../context/InteractionContext';
 import { User, Role } from '../../types';
@@ -56,7 +56,7 @@ export const UserManagementView = () => {
                         <option value="all">All Roles</option>
                         <option value={Role.ENGINEER}>Engineer</option>
                         <option value={Role.COMPANY}>Company</option>
-                        <option value={Role.RESOURCING_COMPANY}>Resourcing</option>
+                        <option value={Role.RESOURCING_COMPANY}>Resourcing Companies</option>
                         <option value={Role.ADMIN}>Admin</option>
                     </select>
                 </div>

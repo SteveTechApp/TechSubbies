@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 // FIX: Corrected import path for useAppContext to resolve 'not a module' error.
 import { useAppContext } from '../../context/InteractionContext';
 import { BarChart2, DollarSign, Briefcase, Users, Clock } from '../../components/Icons';

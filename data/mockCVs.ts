@@ -1,4 +1,4 @@
-export const STEVE_GOODWIN_CV_TEXT = `
+﻿export const STEVE_GOODWIN_CV_TEXT = `
 Steve Goodwin
 Oxford, UK | 07123456789 | steve.goodwin.demo@techsubbies.com | linkedin.com/in/stevegoodwinav
 
@@ -66,3 +66,4 @@ Qualifications
 - CSCS Card Holder
 - Full UK Driving License
 `;
+

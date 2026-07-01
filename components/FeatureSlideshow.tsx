@@ -9,6 +9,44 @@ const Slide1Content = () => (
         <div className="absolute inset-0 bg-gray-800 opacity-50"></div>
         <div className="relative z-10">
             <h1 className="text-4xl md:text-6xl font-extrabold mb-4">How It Works</h1>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "10px",
+              alignItems: "center",
+              marginTop: "16px",
+            }}
+          >
+            <a
+              href="/watch-demo"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "999px",
+                border: "1px solid rgba(103, 232, 249, 0.48)",
+                background: "rgba(8, 47, 73, 0.78)",
+                color: "#ffffff",
+                padding: "10px 14px",
+                fontSize: "13px",
+                fontWeight: 800,
+                textDecoration: "none",
+                boxShadow: "0 12px 32px rgba(6, 182, 212, 0.12)",
+              }}
+            >
+              Watch a demo
+            </a>
+            <span
+              style={{
+                color: "rgba(255,255,255,0.68)",
+                fontSize: "13px",
+                lineHeight: 1.45,
+              }}
+            >
+              Choose Engineer, Hiring Company or Company Account and view the expected workflow.
+            </span>
+          </div>
             <p className="text-lg md:text-xl text-gray-200 max-w-2xl mx-auto">
                 A transparent, AI-powered process for Engineers, Companies, and Resourcing Agencies.
             </p>

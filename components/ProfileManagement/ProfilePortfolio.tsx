@@ -1,7 +1,8 @@
 import React from 'react';
 import { EngineerProfile } from '../../types';
 import { Plus, Trash2 } from '../Icons';
-
+
+import BrandLogo from "./BrandLogo";
 interface ProfilePortfolioProps {
     formData: EngineerProfile;
     setFormData: React.Dispatch<React.SetStateAction<EngineerProfile>>;

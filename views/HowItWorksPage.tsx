@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Page } from '../types';
 import { PageHeader } from '../components/PageHeader';
 import { User, Building, Briefcase, Star, Sparkles, Handshake, DollarSign, FileText, BarChart2, Search, Users as UsersIcon } from '../components/Icons';
@@ -8,6 +8,20 @@ interface HowItWorksPageProps {
 }
 
 type Tab = 'engineers' | 'companies' | 'resourcing';
+
+function getInitialHowItWorksTab(): Tab {
+    if (typeof window === 'undefined') {
+        return 'engineers';
+    }
+
+    const hash = window.location.hash.replace('#', '');
+
+    if (hash === 'engineers' || hash === 'companies' || hash === 'resourcing') {
+        return hash;
+    }
+
+    return 'engineers';
+}
 
 const Step = ({ icon: Icon, title, description, imageSide = 'right' }: { icon: React.ComponentType<any>, title: string, description: string, imageSide?: 'left' | 'right' }) => {
     const textContent = (
@@ -43,30 +57,30 @@ const TabContent = ({ tab, onNavigate }: { tab: Tab, onNavigate: (page: Page) =>
                 <div className="animate-fade-in-up">
                     <Step 
                         icon={Star}
-                        title="1. Build Your Expert Profile"
-                        description="Don't just list jobs, showcase your deep skills. Our premium 'Skills Profile' lets you rate your competency on specific technologies (Crestron, Dante, Cisco) so our AI can find you the perfect, high-value contract."
+                        title="1. Build your engineer profile"
+                        description="Create a practical subcontractor profile with your trade skills, specialist capabilities, product knowledge, documents, locations and availability."
                     />
                     <Step 
                         icon={Sparkles}
-                        title="2. Get Matched, Not Spammed"
-                        description="Our AI does the heavy lifting. It matches your unique skills to detailed job requirements. No more scrolling through irrelevant listings. Get alerts for jobs that are a perfect fit."
+                        title="2. Get matched to suitable work"
+                        description="TechSubbies compares your skills, availability, location and compliance status against live project requirements so you see better-fit opportunities."
                         imageSide="left"
                     />
                      <Step 
                         icon={Handshake}
-                        title="3. Connect & Contract Directly"
-                        description="Cut out the middleman. Communicate directly with top companies, sign digital contracts securely on the platform, and build your professional network with every job."
+                        title="3. Respond directly to project requests"
+                        description="Receive structured requests with dates, location, required skills and site details, then accept, ask a question or decline without vague back-and-forth."
                     />
                      <Step 
                         icon={DollarSign}
-                        title="4. Manage Your Business"
-                        description="From scheduling your availability to invoicing and getting paid securely (with optional escrow), we provide the tools to run your freelance business smoothly."
+                        title="4. Keep your working profile current"
+                        description="Keep your documents, availability, travel range and preferred work types up to date so the platform can keep matching you accurately."
                         imageSide="left"
                     />
                     <div className="text-center py-12">
                          {/* FIX: Replaced string literal with Page enum for type safety. */}
                          <button onClick={() => onNavigate(Page.ENGINEER_SIGNUP)} className="bg-blue-600 text-white font-bold py-4 px-10 rounded-lg text-lg hover:bg-blue-700 transition-transform transform hover:scale-105">
-                            Create Your Free Profile Now
+                            Create engineer profile
                         </button>
                     </div>
                 </div>
@@ -76,30 +90,30 @@ const TabContent = ({ tab, onNavigate }: { tab: Tab, onNavigate: (page: Page) =>
                  <div className="animate-fade-in-up">
                     <Step 
                         icon={FileText}
-                        title="1. Post a Job for Free"
-                        description="Describe your project and define the exact skills you need. Our AI helps you build the perfect job description to attract the right experts. It's always free to post."
+                        title="1. Post a project requirement"
+                        description="Describe the work, location, dates, site type, skills needed and any compliance requirements. The platform turns this into a structured project request."
                     />
                     <Step 
                         icon={Sparkles}
-                        title="2. Instant AI Shortlist"
-                        description="Forget sifting through CVs. The moment you post, our AI analyzes our network of premium 'Skills Profiles' and presents you with a ranked shortlist of the best-matched engineers, complete with a percentage score."
+                        title="2. Review matched engineers"
+                        description="TechSubbies ranks available engineers against the project requirement and explains why each person is a strong, partial or unsuitable match."
                         imageSide="left"
                     />
                      <Step 
                         icon={Handshake}
-                        title="3. Hire with Confidence"
-                        description="Review detailed profiles, message candidates, and send a secure digital contract in minutes. Choose between a simple Day Rate or a milestone-based SOW with escrow for total peace of mind."
+                        title="3. Shortlist with confidence"
+                        description="Review skills, availability, location, documents and suitability before sending a targeted request to one or more engineers."
                     />
                      <Step 
                         icon={UsersIcon}
-                        title="4. Build Your Talent Pool"
-                        description="Don't lose track of great freelancers. After a successful project, add them to your private 'Talent Pool' for direct invitations to future work."
+                        title="4. Keep a useful project record"
+                        description="Keep the requirement, shortlist and communication trail together so similar future projects can be resourced faster."
                         imageSide="left"
                     />
                     <div className="text-center py-12">
                          {/* FIX: Replaced string literal with Page enum for type safety. */}
                          <button onClick={() => onNavigate(Page.COMPANY_SIGNUP)} className="bg-green-600 text-white font-bold py-4 px-10 rounded-lg text-lg hover:bg-green-700 transition-transform transform hover:scale-105">
-                            Post Your Job For Free
+                            Post a project
                         </button>
                     </div>
                 </div>
@@ -109,30 +123,30 @@ const TabContent = ({ tab, onNavigate }: { tab: Tab, onNavigate: (page: Page) =>
                  <div className="animate-fade-in-up">
                     <Step 
                         icon={UsersIcon}
-                        title="1. Centralize Your Roster"
-                        description="Manage your entire roster of freelance talent in one powerful dashboard. Track their skills, availability, and documents effortlessly."
+                        title="1. Manage your engineer pool"
+                        description="Manage multiple subcontracting engineers in one place, including groups, skills, documents, compliance attention and availability."
                     />
                     <Step 
                         icon={Search}
-                        title="2. Proactively Find Contracts"
-                        description="Access our exclusive B2B job board. Search for opportunities and apply on behalf of your engineers, expanding your business reach."
+                        title="2. Match engineers to opportunities"
+                        description="See which engineers fit incoming project requirements by skill, location, availability and document readiness."
                         imageSide="left"
                     />
                      <Step 
                         icon={Briefcase}
-                        title="3. Streamline Placements"
-                        description="Oversee all contracts and placements from a single view. Manage communications and track progress without the administrative headache."
+                        title="3. Control compliance and availability"
+                        description="Track expiring documents, missing evidence, engineer status and availability before putting people forward for work."
                     />
                      <Step 
                         icon={BarChart2}
-                        title="4. Grow Your Agency"
-                        description="With a simple, scalable subscription model, you can grow your business without worrying about commission fees. Focus on what you do best: connecting talent with opportunity."
+                        title="4. Operate as a managed resource supplier"
+                        description="Use TechSubbies as an operational layer for managing a technical labour pool, not just as another job board."
                         imageSide="left"
                     />
                     <div className="text-center py-12">
                          {/* FIX: Replaced string literal with Page enum for type safety. */}
                          <button onClick={() => onNavigate(Page.RESOURCING_SIGNUP)} className="bg-indigo-600 text-white font-bold py-4 px-10 rounded-lg text-lg hover:bg-indigo-700 transition-transform transform hover:scale-105">
-                            Join as a Resourcing Partner
+                            Create resourcing company account
                         </button>
                     </div>
                 </div>
@@ -143,11 +157,19 @@ const TabContent = ({ tab, onNavigate }: { tab: Tab, onNavigate: (page: Page) =>
 
 
 export const HowItWorksPage = ({ onNavigate }: HowItWorksPageProps) => {
-    const [activeTab, setActiveTab] = useState<Tab>('engineers');
+    const [activeTab, setActiveTab] = useState<Tab>(getInitialHowItWorksTab());
     
     const getTabClass = (tabName: Tab, color: string) => 
         `w-full sm:w-auto px-6 py-4 text-center font-bold border-b-4 transition-colors flex items-center justify-center gap-2 text-xl 
         ${ activeTab === tabName ? `border-${color}-600 text-${color}-600` : 'border-transparent text-gray-500 hover:text-gray-800' }`;
+
+    const selectTab = (tabName: Tab) => {
+        setActiveTab(tabName);
+
+        if (typeof window !== 'undefined') {
+            window.location.hash = tabName;
+        }
+    };
 
     return (
         <div className="bg-white">
@@ -157,9 +179,9 @@ export const HowItWorksPage = ({ onNavigate }: HowItWorksPageProps) => {
             {/* Hero Section */}
             <section className="bg-gray-800 text-white py-16 text-center">
                 <div className="container mx-auto px-4">
-                    <h1 className="text-4xl md:text-5xl font-extrabold mb-4">The Future of Freelance Hiring</h1>
+                    <h1 className="text-4xl md:text-5xl font-extrabold mb-4">How TechSubbies Works</h1>
                     <p className="text-lg md:text-xl max-w-3xl mx-auto text-gray-300">
-                        A transparent, AI-powered process designed to save time and create perfect matches between clients and freelance experts.
+                        TechSubbies works differently for each user type: individual engineers, resourcing companies managing multiple engineers, and clients looking for technical resource.
                     </p>
                 </div>
             </section>
@@ -168,14 +190,14 @@ export const HowItWorksPage = ({ onNavigate }: HowItWorksPageProps) => {
             <div className="sticky top-16 bg-white z-30 shadow-md">
                  <div className="container mx-auto">
                     <nav className="flex flex-col sm:flex-row justify-center">
-                        <button onClick={() => setActiveTab('engineers')} className={getTabClass('engineers', 'blue')}>
-                            <User /> For Engineers
+                        <button onClick={() => selectTab('engineers')} className={getTabClass('engineers', 'blue')}>
+                            <User /> Engineer
                         </button>
-                        <button onClick={() => setActiveTab('companies')} className={getTabClass('companies', 'green')}>
-                            <Building /> For Companies
+                        <button onClick={() => selectTab('companies')} className={getTabClass('companies', 'green')}>
+                            <Building /> Client
                         </button>
-                        <button onClick={() => setActiveTab('resourcing')} className={getTabClass('resourcing', 'indigo')}>
-                            <Briefcase /> For Resourcing
+                        <button onClick={() => selectTab('resourcing')} className={getTabClass('resourcing', 'indigo')}>
+                            <Briefcase /> Resourcing Company
                         </button>
                     </nav>
                 </div>
@@ -190,3 +212,4 @@ export const HowItWorksPage = ({ onNavigate }: HowItWorksPageProps) => {
         </div>
     );
 };
+

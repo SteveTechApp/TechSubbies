@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useAppContext } from '../context/InteractionContext';
 import { Sparkles, Loader, ArrowRight } from './Icons';
 
@@ -89,3 +89,4 @@ export const AIJobHelper = ({ jobDetails, setJobDetails }: AIJobHelperProps) => 
         </div>
     );
 };
+

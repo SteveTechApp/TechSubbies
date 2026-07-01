@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { EngineerProfile, Job, ProfileTier, Discipline } from '../../types';
 import { Search, Sparkles, SlidersHorizontal } from '../Icons';
 // FIX: Corrected import path for useAppContext to resolve 'not a module' error.

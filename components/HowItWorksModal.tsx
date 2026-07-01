@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { X, User, Building, Sparkles, Handshake } from './Icons';
 // FIX: Corrected import path for types.
 import { Page } from '../types';
@@ -44,7 +44,7 @@ export const HowItWorksModal = ({ isOpen, onClose, onNavigate }: HowItWorksModal
                                     <Handshake className="w-6 h-6 mr-3 mt-1 text-blue-500 flex-shrink-0" />
                                     <div>
                                         <h4 className="font-semibold">Connect Directly</h4>
-                                        <p className="text-gray-600">Apply for jobs with one click and communicate directly with hiring managers—no recruiters involved.</p>
+                                        <p className="text-gray-600">Apply for jobs with one click and communicate directly with hiring managers€”no recruiters involved.</p>
                                     </div>
                                 </li>
                             </ul>

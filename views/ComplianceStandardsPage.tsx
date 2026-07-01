@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+﻿import React, { useMemo, useState } from "react";
 import {
   COMPLIANCE_CREDENTIALS,
   COMPLIANCE_REQUIREMENT_LEVELS,
@@ -120,7 +120,7 @@ function ComplianceStandardsPage(_props: ComplianceStandardsPageProps) {
                 <p className="text-sm font-black text-slate-900">Examples</p>
                 <ul className="mt-2 space-y-1 text-sm text-slate-600">
                   {credential.examples.map((example) => (
-                    <li key={example}>• {example}</li>
+                    <li key={example}>€¢ {example}</li>
                   ))}
                 </ul>
               </div>

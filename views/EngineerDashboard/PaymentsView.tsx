@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { EngineerProfile } from '../../types';
 import { useAppContext } from '../../context/InteractionContext';
 import { ArrowLeft, CreditCard, DollarSign, Zap, Save } from '../../components/Icons';
@@ -78,3 +78,4 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
         </div>
     );
 };
+

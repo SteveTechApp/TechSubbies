@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Page, Role } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { Logo } from '../components/Logo';
@@ -17,14 +17,14 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex flex-col justify-center items-center p-4">
-            <div className="max-w-md w-full text-center mb-8">
+        <div className="min-h-[calc(100vh-64px)] bg-gray-100 flex flex-col justify-center items-center p-4">
+            <div className="max-w-md w-full text-center mb-3">
                 <Logo className="h-16 mx-auto mb-4" />
                 <h1 className="text-3xl font-bold text-gray-800">Welcome Back</h1>
                 <p className="text-gray-500">Please select your role to login or sign up.</p>
             </div>
 
-            <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8 space-y-4">
+            <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-5 space-y-4">
                 <button
                     onClick={() => handleLogin(Role.ENGINEER)}
                     className="w-full flex items-center p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-all"
@@ -69,3 +69,5 @@ export const LoginSelector = ({ onNavigate }: LoginSelectorProps) => {
         </div>
     );
 };
+
+

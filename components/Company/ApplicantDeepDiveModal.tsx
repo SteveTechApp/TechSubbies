@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 // FIX: Corrected import path for types.
 import { Job, EngineerProfile } from '../../types';
 import { X, BrainCircuit, Loader, CheckCircle, AlertTriangle, Lightbulb } from '../Icons';

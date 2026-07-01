@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { EngineerProfile, Role, ProfileTier, CaseStudy } from '../types';
 import { MessageCircle, Star, Trophy, Share2, Handshake, Mail, Phone, Globe, Linkedin, ShieldCheck, CheckCircle, Award, X as XIcon, FileText, Download, Sparkles, Clapperboard, Briefcase } from '../components/Icons';
 import { TopTrumpCard } from '../components/TopTrumpCard';

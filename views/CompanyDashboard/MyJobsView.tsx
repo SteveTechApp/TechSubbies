@@ -110,7 +110,7 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
     if (selectedJob) {
         return (
             <div>
-                <button onClick={() => setSelectedJob(null)} className="text-blue-600 hover:underline mb-4">&larr; Back to My Jobs</button>
+                <button onClick={() => setSelectedJob((current) => current === null ? null : null)} className="text-blue-600 hover:underline mb-4">&larr; Back to My Jobs</button>
                 <h2 className="text-2xl font-bold">{selectedJob.title}</h2>
                 <p className="text-gray-500 mb-4">Applicants for this role:</p>
                 {applicantsForSelectedJob.length > 0 ? (

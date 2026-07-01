@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 // FIX: Corrected import path for types.
 import { Contract, InvoiceItem, PaymentTerms, MilestoneStatus } from '../types';
 import { X, FileText } from './Icons';
@@ -90,3 +90,4 @@ export const InvoiceGeneratorModal = ({ isOpen, onClose, onSubmit, contract }: I
         </div>
     );
 };
+

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { DollarSign, Star, Save } from '../../components/Icons';
 
 export const PlatformSettingsView = () => {
@@ -58,3 +58,4 @@ export const PlatformSettingsView = () => {
         </div>
     );
 };
+

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Currency } from '../../types';
 
 interface StepRateAndAvailabilityProps {
@@ -53,3 +53,4 @@ export const StepRateAndAvailability = ({ data, onChange }: StepRateAndAvailabil
         </div>
     );
 };
+

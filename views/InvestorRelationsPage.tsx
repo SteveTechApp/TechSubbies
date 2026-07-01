@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Page } from '../types';
 import { prospectusContent } from '../data/prospectusContent';
 
@@ -58,3 +58,4 @@ export const InvestorRelationsPage = ({ onNavigate }: InvestorRelationsPageProps
     </div>
   );
 };
+
