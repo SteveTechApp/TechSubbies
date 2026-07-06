@@ -1,2 +1,26 @@
-// This test file has been emptied to resolve build errors related to missing Jest type definitions.
-// This is an environment issue that needs to be addressed in the project's configuration (e.g., tsconfig.json or missing '@types/jest' package).
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { StatCard } from './StatCard';
+
+const DummyIcon = (props: any) => <svg data-testid="dummy-icon" {...props} />;
+
+describe('StatCard', () => {
+  it('renders the value and label', () => {
+    render(<StatCard icon={DummyIcon} value="42" label="Active Contracts" />);
+
+    expect(screen.getByText('42')).toBeInTheDocument();
+    expect(screen.getByText('Active Contracts')).toBeInTheDocument();
+  });
+
+  it('renders the provided icon', () => {
+    render(<StatCard icon={DummyIcon} value="7" label="Open Jobs" />);
+
+    expect(screen.getByTestId('dummy-icon')).toBeInTheDocument();
+  });
+
+  it('falls back to the default color class when none is provided', () => {
+    const { container } = render(<StatCard icon={DummyIcon} value="1" label="Reviews" />);
+
+    expect(container.querySelector('.bg-blue-500')).not.toBeNull();
+  });
+});

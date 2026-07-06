@@ -18,6 +18,7 @@ type NavLink = {
 
 type NavGroup = {
   label: string;
+  href: string;
   links: NavLink[];
 };
 
@@ -27,22 +28,10 @@ const logoFallbackSrc = "/techsubbies-logo.svg";
 
 const navGroups: NavGroup[] = [
   {
-    label: "About",
-    links: [
-      { label: "Home", href: "/" },
-      { label: "How it works", href: "/how-it-works/faq" },
-{ label: "Engineer How it Works", href: "/how-it-works/faq#engineers" },
-{ label: "Resourcing Company How it Works", href: "/how-it-works/faq#resourcing" },
-{ label: "Client How it Works", href: "/how-it-works/faq#companies" },
-      { label: "Engineer Demo", href: "/watch-demo#engineer" },
-      { label: "Resourcing Company Demo", href: "/watch-demo#resourcing_company" },
-      { label: "Client Demo", href: "/watch-demo#hiring_company" },
-],
-  },
-  {
     label: "Engineers",
+    href: "/engineer/signup",
     links: [
-      { label: "Subcontractor sign up", href: "/engineer/signup" },
+      { label: "Engineer signup", href: "/engineer/signup" },
       { label: "Profile hub", href: "/engineer/profile", protected: true },
       { label: "Personal / business profile", href: "/engineer/personal-business-profile", protected: true },
       { label: "Role skills profile", href: "/engineer/skills-profile", protected: true },
@@ -51,21 +40,37 @@ const navGroups: NavGroup[] = [
   },
   {
     label: "Companies",
+    href: "/company/signup",
     links: [
-      { label: "Client company sign up", href: "/company/signup" },
+      { label: "Find Talent", href: "/company/signup" },
       { label: "Post a Project", href: "/opportunity-intake", protected: true },
-],
+      { label: "Company dashboard", href: "/company/dashboard", protected: true },
+    ],
   },
   {
     label: "Resourcing Companies",
+    href: "/resourcing/signup",
     links: [
-      { label: "Resourcing company sign up", href: "/resourcing/signup" },
-      
-      { label: "Engineer management", href: "/company/engineers", protected: true },{ label: "Opportunity matching", href: "/matching/intake", protected: true },
+      { label: "Resourcing company signup", href: "/resourcing/signup" },
+      { label: "Engineer management", href: "/company/engineers", protected: true },
+      { label: "Opportunity matching", href: "/matching/intake", protected: true },
+    ],
+  },
+  {
+    label: "About",
+    href: "/how-it-works/faq",
+    links: [
+      { label: "Home", href: "/" },
+      { label: "How it works", href: "/how-it-works/faq" },
+      { label: "Engineer How it Works", href: "/how-it-works/faq#engineers" },
+      { label: "Resourcing Company How it Works", href: "/how-it-works/faq#resourcing" },
+      { label: "Client How it Works", href: "/how-it-works/faq#companies" },
+      { label: "Engineer Demo", href: "/watch-demo#engineer" },
+      { label: "Resourcing Company Demo", href: "/watch-demo#resourcing_company" },
+      { label: "Client Demo", href: "/watch-demo#hiring_company" },
     ],
   },
 ];
-
 function readDemoSession(): DemoSession | null {
   if (typeof window === "undefined") {
     return null;
@@ -148,15 +153,19 @@ export default function PersistentAppHeader() {
     setOpenGroup(label);
   }
 
+  function handleHeaderMouseLeave() {
+    setOpenGroup(null);
+  }
+
   return (
-    <header className="sticky top-0 z-[120] border-b border-white/10 bg-slate-950/95 text-white shadow-2xl backdrop-blur techsubbies-sticky-header">
+    <header onMouseLeave={handleHeaderMouseLeave} className="sticky top-0 z-[120] border-b border-white/10 bg-slate-950/95 text-white shadow-2xl backdrop-blur techsubbies-sticky-header">
       <div className="relative min-h-[92px] w-full">
         <BrandLogo />
 
         <div className="flex min-h-[92px] items-center justify-between pr-5 pl-[420px]">
           <nav className="hidden items-center gap-3 xl:flex">
             {navGroups.map((group) => {
-              const active = groupIsActive(group);
+              const active = groupIsActive(group) || isActiveHref(group.href);
               const expanded = openGroup === group.label;
 
               return (
@@ -164,6 +173,7 @@ export default function PersistentAppHeader() {
                   <button
                     type="button"
                     onClick={() => toggleGroup(group.label)}
+                    aria-expanded={expanded}
                     className={[
                       "rounded-xl px-4 py-2 text-sm font-black transition",
                       active || expanded
@@ -175,32 +185,38 @@ export default function PersistentAppHeader() {
                   </button>
 
                   {expanded && (
-                    <div className="absolute left-0 top-[calc(100%+14px)] w-72 rounded-2xl border border-cyan-300/20 bg-slate-950 p-3 shadow-2xl shadow-black/50">
+                    <div className="absolute left-0 top-[calc(100%+14px)] z-[200] w-80 rounded-2xl border border-cyan-300/20 bg-slate-950 p-3 shadow-2xl shadow-black/50">
                       <div className="px-3 pb-2 text-[13px] font-bold uppercase tracking-[0.30em] text-cyan-300">
                         {group.label}
                       </div>
 
                       <div className="space-y-1">
-                        {group.links.map((link) => (
-                          <a
-                            key={link.href}
-                            href={link.href}
-                            className={[
-                              "flex items-center justify-between rounded-xl px-3 py-2 text-sm transition",
-                              currentPath === link.href
-                                ? "bg-cyan-300 text-slate-950"
-                                : "text-slate-300 hover:bg-white/10 hover:text-cyan-200",
-                            ].join(" ")}
-                          >
-                            <span>{link.label}</span>
+                        {group.links.map((link) => {
+                          const linkPath = link.href.split("#")[0];
+                          const activeLink = currentPath === linkPath;
 
-                            {link.protected && (
-                              <span className="rounded-full border border-white/10 px-2 py-0.5 text-[13px] uppercase tracking-wide opacity-70">
-                                login
-                              </span>
-                            )}
-                          </a>
-                        ))}
+                          return (
+                            <a
+                              key={link.href}
+                              href={link.href}
+                              onClick={() => setOpenGroup(null)}
+                              className={[
+                                "flex items-center justify-between rounded-xl px-3 py-2 text-sm transition",
+                                activeLink
+                                  ? "bg-cyan-300 text-slate-950"
+                                  : "text-slate-300 hover:bg-white/10 hover:text-cyan-200",
+                              ].join(" ")}
+                            >
+                              <span>{link.label}</span>
+
+                              {link.protected && (
+                                <span className="rounded-full border border-white/10 px-2 py-0.5 text-[13px] uppercase tracking-wide opacity-70">
+                                  login
+                                </span>
+                              )}
+                            </a>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -315,6 +331,8 @@ export default function PersistentAppHeader() {
     </header>
   );
 }
+
+
 
 
 
