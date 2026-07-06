@@ -256,6 +256,10 @@ export interface JobRoleDefinition {
 export interface JobSkillRequirement {
     name: string;
     importance: SkillImportance;
+    // 0-100 required competency level (see utils/skillBands.ts for bands).
+    // Optional for backward compatibility with older/mock job records that
+    // predate the slider - code reading this should fall back to a default.
+    requiredLevel?: number;
 }
 
 export interface Job {

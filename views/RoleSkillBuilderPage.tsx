@@ -1,4 +1,5 @@
-﻿import React, { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
+import { getSkillBand, DEFAULT_SKILL_RATING } from "../utils/skillBands";
 
 type RoleMarket = "AV" | "IT" | "Hybrid";
 
@@ -261,10 +262,14 @@ function RoleSkillBuilderPage() {
     });
   }, [search, market]);
 
-  const ratedCount = selectedRole.skills.filter((skill) => (ratings[skill.id] || 0) > 0).length;
-  const goodCount = selectedRole.skills.filter((skill) => (ratings[skill.id] || 0) >= 3).length;
-  const missingRequired = selectedRole.skills.filter((skill) => skill.required && (ratings[skill.id] || 0) < 3);
-  const completeness = Math.round((ratedCount / selectedRole.skills.length) * 100);
+  const getRating = (skillId: string) => ratings[skillId] ?? DEFAULT_SKILL_RATING;
+
+  const averageRating = selectedRole.skills.length > 0
+    ? Math.round(selectedRole.skills.reduce((sum, skill) => sum + getRating(skill.id), 0) / selectedRole.skills.length)
+    : 0;
+  const averageBand = getSkillBand(averageRating);
+  const goodCount = selectedRole.skills.filter((skill) => getRating(skill.id) >= 35).length;
+  const missingRequired = selectedRole.skills.filter((skill) => skill.required && getRating(skill.id) < 35);
 
   function addTag(tag: string) {
     setTags((current) => current.includes(tag) ? current : [...current, tag]);
@@ -318,34 +323,43 @@ function RoleSkillBuilderPage() {
               <span style={styles.pill}>{selectedRole.family}</span>
             </div>
 
-            {selectedRole.skills.map((skill) => (
-              <article key={skill.id} style={styles.skillRow}>
-                <h3 style={{ margin: "0 0 4px", fontSize: 15 }}>{skill.label}</h3>
-                <p style={styles.copy}>{skill.group}{skill.required ? " · Required for a good match" : ""}</p>
-                <div style={styles.ratingRow}>
-                  {[0, 1, 2, 3, 4, 5].map((rating) => (
-                    <button key={rating} type="button" style={(ratings[skill.id] || 0) === rating ? styles.ratingButtonActive : styles.ratingButton} onClick={() => setRatings({ ...ratings, [skill.id]: rating })}>
-                      {rating}
-                    </button>
-                  ))}
-                </div>
-                <div>
-                  {skill.tags.map((tag) => <button key={tag} type="button" style={styles.tagButton} onClick={() => addTag(tag)}>+ {tag}</button>)}
-                </div>
-              </article>
-            ))}
+            {selectedRole.skills.map((skill) => {
+              const rating = getRating(skill.id);
+              const band = getSkillBand(rating);
+              return (
+                <article key={skill.id} style={styles.skillRow}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <h3 style={{ margin: "0 0 4px", fontSize: 15 }}>{skill.label}</h3>
+                    <span style={{ ...styles.pill, margin: 0 }}>{rating} · {band.label}</span>
+                  </div>
+                  <p style={styles.copy}>{skill.group}{skill.required ? " · Required for a good match" : ""}</p>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={rating}
+                    onChange={(event) => setRatings({ ...ratings, [skill.id]: Number(event.target.value) })}
+                    style={{ width: "100%", marginTop: 10 }}
+                  />
+                  <div>
+                    {skill.tags.map((tag) => <button key={tag} type="button" style={styles.tagButton} onClick={() => addTag(tag)}>+ {tag}</button>)}
+                  </div>
+                </article>
+              );
+            })}
           </section>
 
           <aside style={styles.card}>
             <p style={styles.cardTitle}>Profile strength</p>
             <div style={styles.metricGrid}>
               <div style={styles.metric}>
-                <p style={styles.metricValue}>{completeness}%</p>
-                <p style={styles.metricLabel}>Skills rated</p>
+                <p style={styles.metricValue}>{averageRating}</p>
+                <p style={styles.metricLabel}>Average level ({averageBand.label})</p>
               </div>
               <div style={styles.metric}>
                 <p style={styles.metricValue}>{goodCount}</p>
-                <p style={styles.metricLabel}>Can do independently</p>
+                <p style={styles.metricLabel}>Good or above</p>
               </div>
               <div style={styles.metric}>
                 <p style={styles.metricValue}>{missingRequired.length}</p>

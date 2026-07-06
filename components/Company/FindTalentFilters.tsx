@@ -1,10 +1,11 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { EngineerProfile, Job, ProfileTier, Discipline } from '../../types';
 import { Search, Sparkles, SlidersHorizontal } from '../Icons';
 // FIX: Corrected import path for useAppContext to resolve 'not a module' error.
 import { useAppContext } from '../../context/InteractionContext';
 import { getDistance, findLocationsInRegion } from '../../utils/locationUtils';
 import { LocationAutocomplete } from '../LocationAutocomplete';
+import { getSkillBand } from '../../utils/skillBands';
 
 interface Filters {
     searchTerm: string;
@@ -15,6 +16,7 @@ interface Filters {
     radius: number;
     hasSkillsProfile: boolean;
     discipline: string;
+    minSkillLevel: number;
 }
 
 const initialFilters: Filters = {
@@ -26,6 +28,7 @@ const initialFilters: Filters = {
     radius: 50,
     hasSkillsProfile: false,
     discipline: 'all',
+    minSkillLevel: 0,
 };
 
 interface FindTalentFiltersProps {
@@ -83,15 +86,26 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTal
             return;
         }
 
-        // Search Term
+        // Search Term - when a minimum skill level is also set, only engineers
+        // whose matching skill meets that level count as a match on the
+        // skill itself (name/discipline matches are unaffected by the level).
         if (filters.searchTerm) {
             const term = filters.searchTerm.toLowerCase();
-            filtered = filtered.filter(e =>
-                e.name.toLowerCase().includes(term) ||
-                e.discipline.toLowerCase().includes(term) ||
-                // FIX: Property 'skills' does not exist on type 'EngineerProfile'. Access skills via 'selectedJobRoles'.
-                (e.selectedJobRoles && e.selectedJobRoles.flatMap(role => role.skills).some(s => s.name.toLowerCase().includes(term)))
-            );
+            filtered = filtered.filter(e => {
+                const nameOrDisciplineMatch =
+                    e.name.toLowerCase().includes(term) ||
+                    e.discipline.toLowerCase().includes(term);
+
+                const matchingSkills = (e.selectedJobRoles || [])
+                    .flatMap(role => role.skills)
+                    .filter(s => s.name.toLowerCase().includes(term));
+
+                if (matchingSkills.length > 0) {
+                    return matchingSkills.some(s => s.rating >= filters.minSkillLevel);
+                }
+
+                return nameOrDisciplineMatch && filters.minSkillLevel === 0;
+            });
         }
         
         // Experience
@@ -170,6 +184,23 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTal
                             disabled={!!filters.jobForMatch}
                         />
                     </div>
+                    {filters.searchTerm && (
+                        <div className="mt-2">
+                            <label className="block text-xs font-medium text-gray-600">
+                                Minimum skill level for "{filters.searchTerm}": {filters.minSkillLevel} · {getSkillBand(filters.minSkillLevel).label}
+                            </label>
+                            <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                step="5"
+                                value={filters.minSkillLevel}
+                                onChange={e => handleFilterChange('minSkillLevel', parseInt(e.target.value))}
+                                className="w-full"
+                                disabled={!!filters.jobForMatch}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 <div>

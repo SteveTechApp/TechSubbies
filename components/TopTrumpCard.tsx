@@ -1,6 +1,7 @@
 import React from 'react';
 import { EngineerProfile, ProfileTier } from '../types';
 import { PenSquare, Star, Award, ShieldCheck, Briefcase } from './Icons';
+import { getSkillBandLabel } from '../utils/skillBands';
 
 interface TopTrumpCardProps {
     profile: EngineerProfile;
@@ -70,7 +71,7 @@ export const TopTrumpCard = ({ profile, isEditable, onEdit }: TopTrumpCardProps)
                     <div className="flex justify-center flex-wrap gap-x-4 gap-y-2 pt-4 border-t border-gray-700/50">
                         {profile.selectedJobRoles?.slice(0, 3).map(role => (
                             <div key={role.roleName} className="flex items-center text-sm font-semibold text-gray-200">
-                                <Star size={14} className="mr-1.5 text-yellow-400" /> {role.roleName} ({role.overallScore})
+                                <Star size={14} className="mr-1.5 text-yellow-400" /> {role.roleName} ({role.overallScore} · {getSkillBandLabel(role.overallScore)})
                             </div>
                         ))}
                          {profile.certifications?.slice(0, 2).map(cert => (

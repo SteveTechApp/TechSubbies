@@ -2,6 +2,7 @@ import { Type } from "@google/genai";
 // FIX: Add Product and ProductFeatures types for new AI method.
 import { EngineerProfile, Job, JobSkillRequirement, Skill, Insight, ExperienceLevel, Product, ProductFeatures } from "../types";
 import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';
+import { shortlistByRequirementScore, getRequiredLevel } from './skillMatching';
 
 // All AI calls go through the backend now instead of talking to Google's
 // Gemini API directly from the browser. The API key lives only on the
@@ -213,32 +214,46 @@ class GeminiService {
          const roleDef = JOB_ROLE_DEFINITIONS.find(r => r.name === jobRole);
          if (roleDef) {
              const skills = roleDef.skillCategories.flatMap(cat => cat.skills).slice(0, 10);
-             const suggestedSkills = skills.map((skill, index) => ({
-                 name: skill.name,
-                 importance: index < 4 ? 'essential' : 'desirable'
-             } as JobSkillRequirement));
+             // First 4 default to a higher required level ("Excellent"), the
+             // rest to "Good" - a reasonable starting point the company can
+             // then adjust with the slider.
+             const suggestedSkills = skills.map((skill, index) => {
+                 const requiredLevel = index < 4 ? 65 : 35;
+                 return {
+                     name: skill.name,
+                     requiredLevel,
+                     importance: requiredLevel >= 60 ? 'essential' : 'desirable',
+                 } as JobSkillRequirement;
+             });
              return { skills: suggestedSkills };
          }
          return { error: 'Could not find definition for the selected role.' };
     }
-    
-    // Method used in InstantInviteModal.tsx
+
+    // Method used in InstantInviteModal.tsx and FindTalentFilters.tsx.
+    // Numeric skill levels do real work here: engineers are first ranked
+    // deterministically by how well their own 0-100 skill ratings meet each
+    // required level (see services/skillMatching.ts), and only that
+    // shortlist is handed to the AI for final ranking/explanation - so the
+    // sliders actually gate who's considered, not just wording in a prompt.
     async findBestMatchesForJob(job: Job, engineers: EngineerProfile[]): Promise<any> {
-        const engineerProfiles = engineers.map(e => {
+        const shortlisted = shortlistByRequirementScore(engineers, job, 15);
+
+        const engineerProfiles = shortlisted.map(e => {
             const engineerSkills = e.selectedJobRoles?.flatMap(r => r.skills.map(s => `${s.name} (${s.rating})`)).join(', ') || 'No detailed skills listed';
-            return `ID: ${e.id}, Role: ${e.selectedJobRoles?.map(r => r.roleName).join(', ') || e.discipline}, Skills: ${engineerSkills}, Experience: ${e.experience}yrs, Rate: £${e.minDayRate}-${e.maxDayRate}`;
+            return `ID: ${e.id}, Role: ${e.selectedJobRoles?.map(r => r.roleName).join(', ') || e.discipline}, Skills: ${engineerSkills}, Requirement match: ${e.requirementScore}/100, Experience: ${e.experience}yrs, Rate: £${e.minDayRate}-${e.maxDayRate}`;
         }).join('\n');
-        
-        const jobReqs = `Title: ${job.title}, Required Skills: ${job.skillRequirements.map(s => `${s.name} (${s.importance})`).join(', ')}`;
-        
-        const prompt = `From the following list of engineers, find the top 5 best matches for the job. Provide only a JSON array of objects with "id" and "match_score" (0-100). Prioritize essential skills, relevant roles, and experience.
-        
+
+        const jobReqs = `Title: ${job.title}, Required Skills: ${job.skillRequirements.map(s => `${s.name} (level ${getRequiredLevel(s)}/100, ${s.importance})`).join(', ')}`;
+
+        const prompt = `From the following list of engineers, find the top 5 best matches for the job. Provide only a JSON array of objects with "id" and "match_score" (0-100). Each engineer's "Requirement match" score already reflects how well their own skill levels meet the job's required levels - use it as a strong signal alongside relevant role and experience.
+
         Job Requirements:
         ${jobReqs}
-        
+
         Available Engineers:
         ${engineerProfiles}`;
-        
+
          const schema = {
             type: Type.OBJECT,
             properties: {
@@ -254,7 +269,22 @@ class GeminiService {
                 }
             }
         };
-        return this.generateWithSchema(prompt, schema);
+
+        const result = await this.generateWithSchema(prompt, schema);
+
+        // Blend the AI's contextual score with the deterministic requirement
+        // score so a fluky AI number can't override a candidate who
+        // genuinely doesn't meet the required levels, or bury one who does.
+        if (result && Array.isArray(result.matches)) {
+            result.matches = result.matches.map((match: { id: string; match_score: number }) => {
+                const candidate = shortlisted.find(e => e.id === match.id);
+                if (!candidate) return match;
+                const blended = Math.round((match.match_score + candidate.requirementScore) / 2);
+                return { ...match, match_score: blended };
+            });
+        }
+
+        return result;
     }
     
      // Method for Forum Moderation

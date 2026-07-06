@@ -4,6 +4,7 @@ import { SelectedJobRole, JobRoleDefinition, RatedSkill } from '../types';
 import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';
 // FIX: Corrected import path for icons.
 import { X, Save, Plus, Trash2 } from './Icons';
+import { getSkillBand, DEFAULT_SKILL_RATING } from '../utils/skillBands';
 
 interface EditSkillProfileModalProps {
     isOpen: boolean;
@@ -14,10 +15,8 @@ interface EditSkillProfileModalProps {
 }
 
 const getRatingStyles = (rating: number): { bg: string; text: string; accent: string; descriptor: string } => {
-    if (rating < 25) return { bg: 'bg-gray-100', text: 'text-gray-700', accent: 'accent-gray-500', descriptor: 'Novice' };
-    if (rating < 50) return { bg: 'bg-yellow-100', text: 'text-yellow-800', accent: 'accent-yellow-500', descriptor: 'Competent' };
-    if (rating < 75) return { bg: 'bg-blue-100', text: 'text-blue-800', accent: 'accent-blue-500', descriptor: 'Proficient' };
-    return { bg: 'bg-green-100', text: 'text-green-800', accent: 'accent-green-500', descriptor: 'Expert' };
+    const band = getSkillBand(rating);
+    return { bg: band.bg, text: band.text, accent: band.accent, descriptor: band.label };
 };
 
 export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles, initialRole }: EditSkillProfileModalProps) => {
@@ -84,7 +83,7 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
 
     const addSkill = (skillDef: { name: string; description: string }) => {
         if (!currentRole) return;
-        const newSkill: RatedSkill = { name: skillDef.name, rating: 50 };
+        const newSkill: RatedSkill = { name: skillDef.name, rating: DEFAULT_SKILL_RATING };
         const newSkills = [...currentRole.skills, newSkill];
         const newOverallScore = recalculateScore(newSkills);
         setCurrentRole({ ...currentRole, skills: newSkills, overallScore: newOverallScore });
