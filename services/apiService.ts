@@ -2,11 +2,77 @@ import { MOCK_ENGINEERS, MOCK_COMPANIES, MOCK_JOBS, MOCK_APPLICATIONS, MOCK_REVI
 import { MOCK_RESOURCING_COMPANY_1, MOCK_ADMIN_PROFILE, MOCK_FREE_ENGINEER, MOCK_ENGINEER_STEVE } from '../data/modules/mockStaticProfiles';
 import { ApplicationStatus, EngineerProfile, ProfileTier, Role, User, ContractStatus, MilestoneStatus, Timesheet, TimesheetStatus, PaymentTerms, InvoiceStatus, ForumPost, Notification, CollaborationPost, CompanyProfile, ResourcingCompanyProfile, Job, Discipline, Currency, Country, ExperienceLevel } from '../types';
 
-// --- API Service Simulation ---
-// This service mimics a real backend API. All functions are async and return promises.
-// It includes error simulation to test frontend error handling.
+// --- API Service ---
+// Account creation, login and profile updates now call the real backend
+// (see backend/API_SPECIFICATION.md and backend/src). Everything else
+// below is still an in-memory simulation of a backend API - jobs,
+// contracts, messaging, invoicing etc still reset on refresh. That's the
+// next phase of work, not this one.
 
 const simulateDelay = (ms: number = 500) => new Promise(res => setTimeout(res, ms));
+
+const API_BASE_URL = (typeof process !== 'undefined' && (process as any).env?.API_BASE_URL) || 'http://localhost:4000/api';
+const TOKEN_KEY = 'techsubbies_auth_token';
+
+export function getAuthToken(): string | null {
+  try {
+    return window.localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function saveAuthToken(token: string) {
+  try {
+    window.localStorage.setItem(TOKEN_KEY, token);
+  } catch {
+    // localStorage unavailable (e.g. private browsing) - the session just
+    // won't survive a refresh, which matches the old mock behavior anyway.
+  }
+}
+
+export function clearAuthToken() {
+  try {
+    window.localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    // no-op
+  }
+}
+
+// True when the backend genuinely couldn't be reached (it's not running,
+// wrong URL, offline, etc) - as opposed to the backend responding with a
+// real validation error (bad password, duplicate email, ...).
+function isNetworkError(error: any): boolean {
+  return error instanceof TypeError;
+}
+
+async function backendRegister(payload: { email: string; password: string; role: string; name: string; profileData: any }) {
+  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.error || 'Registration failed.');
+  }
+  saveAuthToken(data.token);
+  return data.user as User;
+}
+
+async function backendLogin(email: string, password: string) {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.error || 'Invalid credentials.');
+  }
+  saveAuthToken(data.token);
+  return data.user as User;
+}
 
 const apiService = {
   // --- DATA FETCHING ---
@@ -44,42 +110,121 @@ const apiService = {
     throw new Error("Invalid credentials or user role not found.");
   },
 
-  // FIX: Added missing user creation and profile update methods
+  // Real, password-based login against the backend. Used by the sign-in
+  // form for accounts created through the sign-up wizards below. Throws
+  // if the backend can't be reached at all, so callers can fall back to
+  // the demo login system if they want to keep working offline.
+  loginWithPassword: async (email: string, password: string): Promise<User> => {
+    return backendLogin(email, password);
+  },
+
+  // Looks up a single profile by id from the backend (public data, no
+  // auth required to read it - matches GET /users/:profileId in the spec).
+  getUserById: async (id: string): Promise<User | null> => {
+    const response = await fetch(`${API_BASE_URL}/users/${id}`);
+    if (!response.ok) return null;
+    return (await response.json()) as User;
+  },
+
+  // Restores a signed-in session after a page reload, using the JWT saved
+  // in localStorage. Returns null if there's no token, the token is
+  // unreadable, or the backend can't be reached (e.g. not running).
+  getCurrentUserFromToken: async (): Promise<User | null> => {
+    const token = getAuthToken();
+    if (!token) return null;
+    try {
+      const payloadSegment = token.split('.')[1];
+      const payload = JSON.parse(atob(payloadSegment.replace(/-/g, '+').replace(/_/g, '/')));
+      if (!payload?.sub) return null;
+      return await apiService.getUserById(payload.sub);
+    } catch {
+      return null;
+    }
+  },
+
   // --- USER CREATION ---
+  // Each of these tries the real backend first (so the account is
+  // actually saved to the database). If the backend simply isn't running
+  // (a network error, not a validation error), it falls back to the old
+  // in-memory mock so the app still works for quick local demos without
+  // the backend started.
   createEngineer: async (data: any): Promise<User> => {
-    await simulateDelay();
-    const newEngineer: EngineerProfile = {
-        id: `eng-${Date.now()}`,
-        name: data.name,
-        avatar: 'https://xsgames.co/randomusers/assets/avatars/male/1.jpg',
-        status: 'active',
+    try {
+      return await backendRegister({
+        email: data.email,
+        password: data.password,
         role: Role.ENGINEER,
-        discipline: data.discipline || Discipline.AV,
-        location: data.location || 'London, UK',
-        country: data.country || Country.UK,
-        description: 'Newly registered engineer.',
-        experience: data.experience || 0,
-        experienceLevel: data.experienceLevel || ExperienceLevel.JUNIOR,
-        profileTier: ProfileTier.BASIC,
-        minDayRate: data.minDayRate || 150,
-        maxDayRate: data.maxDayRate || 195,
-        currency: data.currency || Currency.GBP,
-        availability: new Date(data.availability) || new Date(),
-        compliance: data.compliance || {},
-        identity: data.identity || {},
-        profileViews: 0, searchAppearances: 0, jobInvites: 0, reputation: 50, complianceScore: 50,
-        calendarSyncUrl: `https://wingman.com/cal/eng-${Date.now()}.ics`,
-        badges: [],
-        contact: { email: data.email },
-        platformCredits: 1, loyaltyPoints: 0,
-    };
-    const newUser: User = { id: `user-${newEngineer.id}`, role: Role.ENGINEER, profile: newEngineer };
-    MOCK_ENGINEERS.push(newEngineer);
-    ALL_MOCK_USERS.push(newUser);
-    return newUser;
+        name: data.name || data.fullName,
+        profileData: {
+          discipline: data.discipline || Discipline.AV,
+          location: data.location || data.baseLocation || 'London, UK',
+          country: data.country || Country.UK,
+          description: 'Newly registered engineer.',
+          experience: data.experience || 0,
+          experienceLevel: data.experienceLevel || ExperienceLevel.JUNIOR,
+          profileTier: ProfileTier.BASIC,
+          minDayRate: data.minDayRate || 150,
+          maxDayRate: data.maxDayRate || 195,
+          currency: data.currency || Currency.GBP,
+          compliance: data.compliance || {},
+          identity: data.identity || {},
+          badges: [],
+          platformCredits: 1,
+          loyaltyPoints: 0,
+        },
+      });
+    } catch (error: any) {
+      if (!isNetworkError(error)) throw error;
+
+      await simulateDelay();
+      const newEngineer: EngineerProfile = {
+          id: `eng-${Date.now()}`,
+          name: data.name,
+          avatar: 'https://xsgames.co/randomusers/assets/avatars/male/1.jpg',
+          status: 'active',
+          role: Role.ENGINEER,
+          discipline: data.discipline || Discipline.AV,
+          location: data.location || 'London, UK',
+          country: data.country || Country.UK,
+          description: 'Newly registered engineer.',
+          experience: data.experience || 0,
+          experienceLevel: data.experienceLevel || ExperienceLevel.JUNIOR,
+          profileTier: ProfileTier.BASIC,
+          minDayRate: data.minDayRate || 150,
+          maxDayRate: data.maxDayRate || 195,
+          currency: data.currency || Currency.GBP,
+          availability: new Date(data.availability) || new Date(),
+          compliance: data.compliance || {},
+          identity: data.identity || {},
+          profileViews: 0, searchAppearances: 0, jobInvites: 0, reputation: 50, complianceScore: 50,
+          calendarSyncUrl: `https://wingman.com/cal/eng-${Date.now()}.ics`,
+          badges: [],
+          contact: { email: data.email },
+          platformCredits: 1, loyaltyPoints: 0,
+      };
+      const newUser: User = { id: `user-${newEngineer.id}`, role: Role.ENGINEER, profile: newEngineer };
+      MOCK_ENGINEERS.push(newEngineer);
+      ALL_MOCK_USERS.push(newUser);
+      return newUser;
+    }
   },
 
   createCompany: async (data: any): Promise<User> => {
+    try {
+      return await backendRegister({
+        email: data.email,
+        password: data.password,
+        role: Role.COMPANY,
+        name: data.companyName,
+        profileData: {
+          website: data.website,
+          location: data.location,
+          contact: { name: data.contactName, email: data.email },
+        },
+      });
+    } catch (error: any) {
+      if (!isNetworkError(error)) throw error;
+
       await simulateDelay();
       const newCompany: CompanyProfile = {
           id: `comp-${Date.now()}`,
@@ -96,9 +241,26 @@ const apiService = {
       MOCK_COMPANIES.push(newCompany);
       ALL_MOCK_USERS.push(newUser);
       return newUser;
+    }
   },
   
   createResourcingCompany: async (data: any): Promise<User> => {
+    try {
+      return await backendRegister({
+        email: data.email,
+        password: data.password,
+        role: Role.RESOURCING_COMPANY,
+        name: data.companyName,
+        profileData: {
+          website: data.website,
+          location: data.location,
+          contact: { name: data.contactName, email: data.email },
+          managedEngineerIds: [],
+        },
+      });
+    } catch (error: any) {
+      if (!isNetworkError(error)) throw error;
+
       await simulateDelay();
       const newResourcingCompany: ResourcingCompanyProfile = {
           id: `res-${Date.now()}`,
@@ -116,6 +278,27 @@ const apiService = {
       MOCK_COMPANIES.push(newResourcingCompany);
       ALL_MOCK_USERS.push(newUser);
       return newUser;
+    }
+  },
+
+  // Updates the signed-in user's profile on the real backend. Only works
+  // for accounts that were created via the real registration path above
+  // (i.e. a token is stored) - falls back to updating the in-memory mock
+  // otherwise, same pattern as account creation.
+  updateMyProfile: async (updates: Record<string, unknown>): Promise<User | null> => {
+    const token = getAuthToken();
+    if (!token) return null;
+
+    const response = await fetch(`${API_BASE_URL}/users/me`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(updates),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.error || 'Could not update profile.');
+    }
+    return data as User;
   },
 
   // --- FILE UPLOADS (Production Pattern) ---

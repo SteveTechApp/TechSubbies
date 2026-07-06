@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useAppContext } from '../context/InteractionContext';
 import { Logo } from '../components/Logo';
 import { ArrowLeft } from '../components/Icons';
@@ -44,7 +44,11 @@ export const ResourcingCompanySignUpWizard = ({ onCancel }: ResourcingCompanySig
             }
         }
 
-        createAndLoginResourcingCompany(formData);
+        try {
+            await createAndLoginResourcingCompany(formData);
+        } catch (err: any) {
+            setError(err.message || 'Could not create the account. Please try again.');
+        }
     };
 
     return (
@@ -145,4 +149,3 @@ export const ResourcingCompanySignUpWizard = ({ onCancel }: ResourcingCompanySig
         </div>
     );
 };
-

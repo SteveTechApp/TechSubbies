@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useAppContext } from '../context/InteractionContext';
 import { Logo } from '../components/Logo';
 import { ArrowLeft } from '../components/Icons';
@@ -61,7 +61,12 @@ export const CompanySignUpWizard = ({ onCancel }: CompanySignUpWizardProps) => {
         }
 
         setIsLoading(true);
-        createAndLoginCompany(formData);
+        try {
+            await createAndLoginCompany(formData);
+        } catch (err: any) {
+            setError(err.message || 'Could not create the account. Please try again.');
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -209,4 +214,3 @@ export const CompanySignUpWizard = ({ onCancel }: CompanySignUpWizardProps) => {
         </div>
     );
 };
-

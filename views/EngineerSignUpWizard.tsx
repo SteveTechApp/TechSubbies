@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   cloneSkillRequirements,
   getRoleExpectation,
@@ -8,6 +8,7 @@ import {
   type ResponsibilityBand,
   type SkillRequirement,
 } from "../data/roleExpectations";
+import { useAppContext } from "../context/InteractionContext";
 
 type EngineerSignUpWizardProps = {
   onCancel?: () => void;
@@ -18,6 +19,7 @@ type Step = 1 | 2 | 3 | 4 | 5 | 6;
 type AccountDetails = {
   fullName: string;
   email: string;
+  password: string;
   phone: string;
   businessName: string;
   tradingStatus: string;
@@ -63,6 +65,7 @@ type EngineerRoleProfile = {
 const defaultAccount: AccountDetails = {
   fullName: "",
   email: "",
+  password: "",
   phone: "",
   businessName: "",
   tradingStatus: "Sole trader",
@@ -348,6 +351,7 @@ function getSubscriptionEstimate(profiles: EngineerRoleProfile[]): SubscriptionE
   };
 }
 export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
+  const { createAndLoginEngineer } = useAppContext();
   const [step, setStep] = useState<Step>(1);
   const [account, setAccount] = useState<AccountDetails>(defaultAccount);
   const [readiness, setReadiness] = useState<ReadinessDetails>(defaultReadiness);
@@ -355,6 +359,8 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
   const [selectedProfileId, setSelectedProfileId] = useState<string>("");
   const [documentNotes, setDocumentNotes] = useState("");
   const [published, setPublished] = useState(false);
+  const [publishError, setPublishError] = useState("");
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const selectedProfile = roleProfiles.find((profile) => profile.id === selectedProfileId) || roleProfiles[0];
 
@@ -426,7 +432,7 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
     );
   }
 
-  function publishProfile() {
+  async function publishProfile() {
     const draft = {
       account,
       readiness,
@@ -436,7 +442,37 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
     };
 
     window.localStorage.setItem("techsubbies_engineer_onboarding_draft", JSON.stringify(draft, null, 2));
-    setPublished(true);
+
+    if (!account.email || !account.password) {
+      setPublishError("Add an email and password on step 1 (Identity) so this account can actually be created.");
+      return;
+    }
+    if (account.password.length < 8) {
+      setPublishError("Password must be at least 8 characters.");
+      return;
+    }
+
+    setIsPublishing(true);
+    setPublishError("");
+    try {
+      await createAndLoginEngineer({
+        name: account.fullName,
+        email: account.email,
+        password: account.password,
+        location: account.baseLocation,
+        country: account.country,
+        experience: activeProfiles[0]
+          ? Math.max(...activeProfiles[0].skills.map((s) => s.selfLevel), 0)
+          : 0,
+        minDayRate: activeProfiles[0]?.targetDayRate,
+        maxDayRate: activeProfiles[0]?.targetDayRate,
+      });
+      setPublished(true);
+    } catch (error: any) {
+      setPublishError(error.message || "Could not create the account. Please try again.");
+    } finally {
+      setIsPublishing(false);
+    }
   }
 
   return (
@@ -500,7 +536,18 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
               </Field>
 
               <Field label="Email">
-                <input className={inputClass()} value={account.email} onChange={(event) => setAccount({ ...account, email: event.target.value })} />
+                <input className={inputClass()} type="email" value={account.email} onChange={(event) => setAccount({ ...account, email: event.target.value })} />
+              </Field>
+
+              <Field label="Password">
+                <input
+                  className={inputClass()}
+                  type="password"
+                  value={account.password}
+                  onChange={(event) => setAccount({ ...account, password: event.target.value })}
+                  autoComplete="new-password"
+                  placeholder="At least 8 characters"
+                />
               </Field>
 
               <Field label="Phone">
@@ -682,7 +729,7 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
                   <div className="text-sm font-bold text-amber-100">Pricing and verification notes</div>
                   <ul className="mt-2 space-y-1 text-sm leading-6 text-amber-50">
                     {subscription.warnings.map((warning) => (
-                      <li key={warning}>€¢ {warning}</li>
+                      <li key={warning}>- {warning}</li>
                     ))}
                   </ul>
                 </div>
@@ -882,24 +929,24 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
               <section className="rounded-2xl border border-white/10 bg-slate-950 p-5">
                 <h3 className="font-bold text-cyan-200">Documents to prepare</h3>
                 <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-300">
-                  <li>€¢ Photo ID / identity verification</li>
-                  <li>€¢ Right-to-work evidence where required</li>
-                  <li>€¢ Public liability insurance</li>
-                  <li>€¢ Professional indemnity if offering design, consultancy or specialist commissioning</li>
-                  <li>€¢ ECS/CSCS or local equivalent where construction-site access is needed</li>
-                  <li>€¢ IPAF/PASMA or local equivalent where working at height is expected</li>
-                  <li>€¢ Vendor certifications, project references and examples of completed work</li>
+                  <li>- Photo ID / identity verification</li>
+                  <li>- Right-to-work evidence where required</li>
+                  <li>- Public liability insurance</li>
+                  <li>- Professional indemnity if offering design, consultancy or specialist commissioning</li>
+                  <li>- ECS/CSCS or local equivalent where construction-site access is needed</li>
+                  <li>- IPAF/PASMA or local equivalent where working at height is expected</li>
+                  <li>- Vendor certifications, project references and examples of completed work</li>
                 </ul>
               </section>
 
               <section className="rounded-2xl border border-white/10 bg-slate-950 p-5">
                 <h3 className="font-bold text-cyan-200">Verification rules</h3>
                 <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-300">
-                  <li>€¢ Self-rating is allowed but should be marked as unverified.</li>
-                  <li>€¢ Specialist roles should require evidence before strong-match ranking.</li>
-                  <li>€¢ Site-readiness documents need expiry dates.</li>
-                  <li>€¢ Company feedback should update skill confidence after each job.</li>
-                  <li>€¢ Tags should never override skill level, evidence or compliance.</li>
+                  <li>- Self-rating is allowed but should be marked as unverified.</li>
+                  <li>- Specialist roles should require evidence before strong-match ranking.</li>
+                  <li>- Site-readiness documents need expiry dates.</li>
+                  <li>- Company feedback should update skill confidence after each job.</li>
+                  <li>- Tags should never override skill level, evidence or compliance.</li>
                 </ul>
               </section>
             </div>
@@ -935,7 +982,13 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
 
             {published && (
               <div className="mt-5 rounded-2xl border border-emerald-300/30 bg-emerald-300/10 p-4 text-sm font-semibold text-emerald-100">
-                Draft profile saved locally. Backend save/publish can be connected next.
+                Account created and signed in. Your profile is saved for real - refreshing the page won't lose it.
+              </div>
+            )}
+
+            {publishError && (
+              <div className="mt-5 rounded-2xl border border-red-300/30 bg-red-300/10 p-4 text-sm font-semibold text-red-100">
+                {publishError}
               </div>
             )}
 
@@ -1037,8 +1090,13 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
                 Back
               </button>
 
-              <button type="button" onClick={publishProfile} className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200">
-                Save draft profile
+              <button
+                type="button"
+                onClick={publishProfile}
+                disabled={isPublishing}
+                className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200 disabled:opacity-60"
+              >
+                {isPublishing ? "Creating account..." : "Create account"}
               </button>
             </div>
           </main>
@@ -1050,7 +1108,3 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
 }
 
 export default EngineerSignUpWizard;
-
-
-
-

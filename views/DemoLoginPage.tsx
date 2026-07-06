@@ -4,6 +4,8 @@ import {
   validateDemoLogin,
   type DemoSession,
 } from "../data/demoAccounts";
+import apiService from "../services/apiService";
+import { useAuth } from "../context/AuthContext";
 
 type DemoLoginPageProps = {
   onSignedIn?: (session: DemoSession) => void;
@@ -14,12 +16,32 @@ function inputClass() {
 }
 
 export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
+  const { setUser } = useAuth();
   const [email, setEmail] = useState("admin@techsubbies.demo");
   const [password, setPassword] = useState("password");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      // Try a real account first (one created through the sign-up
+      // wizards, backed by the real backend). Any failure here - wrong
+      // password, no such account, or the backend not running - falls
+      // through to the local demo accounts below rather than blocking
+      // the user.
+      const realUser = await apiService.loginWithPassword(email, password);
+      setUser(realUser);
+      window.location.href = "/";
+      return;
+    } catch {
+      // Fall through to demo login.
+    } finally {
+      setIsSubmitting(false);
+    }
 
     const account = validateDemoLogin(email, password);
 
@@ -60,7 +82,7 @@ export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
               <div>Role: <span className="font-mono text-white">Admin</span></div>
             </div>
             <p className="mt-3 text-xs leading-5 text-slate-500">
-              This is a local development login only. Replace with backend authentication before production use.
+              This is a local development login. If you created a real account through one of the sign-up wizards, sign in with that email and password instead.
             </p>
           </div>
         </section>
@@ -97,9 +119,10 @@ export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
 
           <button
             type="submit"
-            className="mt-6 w-full rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200"
+            disabled={isSubmitting}
+            className="mt-6 w-full rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200 disabled:opacity-60"
           >
-            Sign in
+            {isSubmitting ? "Signing in..." : "Sign in"}
           </button>
 
           <a

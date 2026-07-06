@@ -1,15 +1,15 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Role } from '../types';
 import { MOCK_USERS, MOCK_USER_FREE_ENGINEER } from '../data/mockData';
-import apiService from '../services/apiService';
+import apiService, { getAuthToken, clearAuthToken } from '../services/apiService';
 
 interface AuthContextType {
     user: User | null;
     login: (role: Role) => void;
     logout: () => void;
-    createAndLoginEngineer: (data: any) => void;
-    createAndLoginCompany: (data: any) => void;
-    createAndLoginResourcingCompany: (data: any) => void;
+    createAndLoginEngineer: (data: any) => Promise<void>;
+    createAndLoginCompany: (data: any) => Promise<void>;
+    createAndLoginResourcingCompany: (data: any) => Promise<void>;
     // FIX: Added setUser to allow InteractionContext to update user profile data globally
     setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
@@ -19,6 +19,23 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
 
+    // Restore a real (backend-backed) session after a page reload, if a
+    // login token was saved. Demo-role sessions (via `login` below) are
+    // intentionally not persisted - that's a quick local testing shortcut,
+    // not a real account.
+    useEffect(() => {
+        if (!getAuthToken()) return;
+        let cancelled = false;
+        apiService.getCurrentUserFromToken().then((restoredUser) => {
+            if (!cancelled && restoredUser) {
+                setUser(restoredUser);
+            }
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
     const login = (role: Role) => {
         // Simple login simulation
         // FIX: Correctly log in the mock user for the selected role.
@@ -26,6 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const logout = () => {
+        clearAuthToken();
         setUser(null);
     };
     

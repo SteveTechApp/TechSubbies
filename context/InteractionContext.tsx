@@ -71,9 +71,9 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     applicantForDeepDive: { job: Job, engineer: EngineerProfile } | null;
     setApplicantForDeepDive: React.Dispatch<React.SetStateAction<{ job: Job, engineer: EngineerProfile } | null>>;
     // FIX: Added missing user creation methods from AuthContext.
-    createAndLoginCompany: (data: any) => void;
-    createAndLoginResourcingCompany: (data: any) => void;
-    createAndLoginEngineer: (data: any) => void;
+    createAndLoginCompany: (data: any) => Promise<void>;
+    createAndLoginResourcingCompany: (data: any) => Promise<void>;
+    createAndLoginEngineer: (data: any) => Promise<void>;
 }
 
 const InteractionContext = createContext<InteractionContextType | undefined>(undefined);
