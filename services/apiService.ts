@@ -301,6 +301,107 @@ const apiService = {
     return data as User;
   },
 
+  // --- ENGINEER PARTNERSHIPS ("team" pairing) ---
+  // Requires the signed-in user to have a real backend account (a token
+  // saved from registration/login). Mirrors backend/src/routes/partnerships.ts.
+
+  requestPartnership: async (partnerEmail: string): Promise<any> => {
+    const token = getAuthToken();
+    if (!token) throw new Error('You need to be signed in to do this.');
+    const response = await fetch(`${API_BASE_URL}/partnerships/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ partnerEmail }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not send partner request.');
+    return data;
+  },
+
+  respondToPartnershipRequest: async (requestId: string, accept: boolean): Promise<any> => {
+    const token = getAuthToken();
+    if (!token) throw new Error('You need to be signed in to do this.');
+    const response = await fetch(`${API_BASE_URL}/partnerships/${requestId}/${accept ? 'accept' : 'decline'}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not respond to the partner request.');
+    return data;
+  },
+
+  removePartnership: async (): Promise<any> => {
+    const token = getAuthToken();
+    if (!token) throw new Error('You need to be signed in to do this.');
+    const response = await fetch(`${API_BASE_URL}/partnerships/remove`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not remove your partner.');
+    return data;
+  },
+
+  getMyPartnershipStatus: async (): Promise<{ incoming: any[]; outgoing: any[]; partner: User | null }> => {
+    const token = getAuthToken();
+    if (!token) return { incoming: [], outgoing: [], partner: null };
+    const response = await fetch(`${API_BASE_URL}/partnerships/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) return { incoming: [], outgoing: [], partner: null };
+    return await response.json();
+  },
+
+  // --- RESOURCING COMPANY ATTACHMENT ---
+  // Mirrors backend/src/routes/companyAttachments.ts.
+
+  requestCompanyAttachment: async (resourcingCompanyId: string): Promise<any> => {
+    const token = getAuthToken();
+    if (!token) throw new Error('You need to be signed in to do this.');
+    const response = await fetch(`${API_BASE_URL}/company-attachments/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ resourcingCompanyId }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not send the request to join this company.');
+    return data;
+  },
+
+  respondToCompanyAttachmentRequest: async (requestId: string, approve: boolean): Promise<any> => {
+    const token = getAuthToken();
+    if (!token) throw new Error('You need to be signed in to do this.');
+    const response = await fetch(`${API_BASE_URL}/company-attachments/${requestId}/${approve ? 'approve' : 'reject'}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not respond to the request.');
+    return data;
+  },
+
+  getMyCompanyAttachmentRequests: async (): Promise<any[]> => {
+    const token = getAuthToken();
+    if (!token) return [];
+    const response = await fetch(`${API_BASE_URL}/company-attachments/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.requests || [];
+  },
+
+  getPendingCompanyAttachmentRequests: async (): Promise<any[]> => {
+    const token = getAuthToken();
+    if (!token) return [];
+    const response = await fetch(`${API_BASE_URL}/company-attachments/pending`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.requests || [];
+  },
+
   // --- FILE UPLOADS (Production Pattern) ---
   getPresignedUploadUrl: async (fileName: string, fileType: string): Promise<{ uploadUrl: string, fileUrl: string }> => {
     await simulateDelay(300);

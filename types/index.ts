@@ -200,6 +200,8 @@ export interface EngineerProfile extends UserProfile {
     jobDigestOptIn?: boolean;
     jobAlertsEnabled?: boolean;
     resourcingCompanyId?: string;
+    partnerEngineerId?: string;
+    partnerStatus?: 'pending' | 'accepted';
     caseStudies?: CaseStudy[];
     matchScore?: number;
 }
