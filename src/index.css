@@ -404,7 +404,7 @@ header a[href="/home"]:has(svg) {
   width: clamp(430px, 33vw, 680px) !important;
   height: clamp(116px, 8.8vw, 180px) !important;
   min-width: clamp(430px, 33vw, 680px) !important;
-  background-image: url("/brand/techsubbies-logo-lockup.webp") !important;
+  background-image: url("/brand/techsubbies-logo-lockup-transparent.png") !important;
   background-repeat: no-repeat !important;
   background-position: left center !important;
   background-size: contain !important;
