@@ -1,54 +1,68 @@
-﻿import PersistentAppHeader from "./components/PersistentAppHeader";
+import React, { Suspense, lazy, useEffect, useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import PersistentAppHeader from "./components/PersistentAppHeader";
 import { clearDemoSession, getDemoSession, type DemoSession } from "./data/demoAccounts";
-import DemoLoginPage from "./views/DemoLoginPage";
-import LiveOpportunityIntakePage from "./views/LiveOpportunityIntakePage";
-import OpportunityMatchingDemoPage from "./views/OpportunityMatchingDemoPage";
-import ProductAwarenessExperiencePage from "./views/ProductAwarenessExperiencePage";
-import { ResourcingCompanySignUpWizard } from "./views/ResourcingCompanySignUpWizard";
-import { EngineerSignUpWizard } from "./views/EngineerSignUpWizard";
-import { CompanySignUpWizard } from "./views/CompanySignUpWizard";
-import { LoginSelector } from "./views/LoginSelector";
-import EngineerAvailabilityPage from "./views/EngineerAvailabilityPage";
-import EngineerProfileHubPage from "./views/EngineerProfileHubPage";
-import HowItWorksFaqPage from "./views/HowItWorksFaqPage";
-import React, { useEffect, useState } from 'react';
 import { useNavigation } from './context/NavigationContext';
 import { useAuth } from './context/AuthContext';
 import { Page } from './types';
 
-// Page Components
-import { LandingPage } from './views/LandingPage';
-import { EngineerDashboard } from './views/EngineerDashboard';
-import { CompanyDashboard } from './views/CompanyDashboard';
-import { ResourcingDashboard } from './views/ResourcingDashboard';
-import { AdminDashboard } from './views/AdminDashboard';
-import { ForEngineersPage } from './views/ForEngineersPage';
-import { ForCompaniesPage } from './views/ForCompaniesPage';
-import { ForResourcingCompaniesPage } from './views/ForResourcingCompaniesPage';
-import { AboutUsPage } from './views/AboutUsPage';
-import { InvestorPage } from './views/InvestorPage';
-import { PricingPage } from './views/PricingPage';
-import { LegalPage } from './views/LegalPage';
-import { AccessibilityPage } from './views/AccessibilityPage';
-import { HowItWorksPage } from './views/HowItWorksPage';
-import { UserGuidePage } from './views/UserGuidePage';
-import { TutorialsPage } from './views/TutorialsPage';
-
-// Common Components
+// Common Components (small, always needed - kept in the main bundle)
 import { Footer } from './components/Footer';
 import { HowItWorksModal } from './components/HowItWorksModal';
 import { AIAssistant } from './components/AIAssistant';
 
+// Page Components - each is loaded on demand (its own chunk) instead of
+// all being bundled into the app's initial download. This replaces the
+// old approach of importing every page eagerly at the top of this file.
+const DemoLoginPage = lazy(() => import("./views/DemoLoginPage"));
+const LiveOpportunityIntakePage = lazy(() => import("./views/LiveOpportunityIntakePage"));
+const OpportunityMatchingDemoPage = lazy(() => import("./views/OpportunityMatchingDemoPage"));
+const ProductAwarenessExperiencePage = lazy(() => import("./views/ProductAwarenessExperiencePage"));
+const ResourcingCompanySignUpWizard = lazy(() =>
+  import("./views/ResourcingCompanySignUpWizard").then((m) => ({ default: m.ResourcingCompanySignUpWizard }))
+);
+const EngineerSignUpWizard = lazy(() =>
+  import("./views/EngineerSignUpWizard").then((m) => ({ default: m.EngineerSignUpWizard }))
+);
+const CompanySignUpWizard = lazy(() =>
+  import("./views/CompanySignUpWizard").then((m) => ({ default: m.CompanySignUpWizard }))
+);
+const EngineerAvailabilityPage = lazy(() => import("./views/EngineerAvailabilityPage"));
+const EngineerProfileHubPage = lazy(() => import("./views/EngineerProfileHubPage"));
+const HowItWorksFaqPage = lazy(() => import("./views/HowItWorksFaqPage"));
 
-import CompanyEngineerDashboardPage from "./views/CompanyEngineerDashboardPage";
-import WatchDemoPage from "./views/WatchDemoPage";
+const LandingPage = lazy(() => import('./views/LandingPage').then((m) => ({ default: m.LandingPage })));
+const EngineerDashboard = lazy(() => import('./views/EngineerDashboard').then((m) => ({ default: m.EngineerDashboard })));
+const CompanyDashboard = lazy(() => import('./views/CompanyDashboard').then((m) => ({ default: m.CompanyDashboard })));
+const ResourcingDashboard = lazy(() => import('./views/ResourcingDashboard').then((m) => ({ default: m.ResourcingDashboard })));
+const AdminDashboard = lazy(() => import('./views/AdminDashboard').then((m) => ({ default: m.AdminDashboard })));
+const ForEngineersPage = lazy(() => import('./views/ForEngineersPage').then((m) => ({ default: m.ForEngineersPage })));
+const ForCompaniesPage = lazy(() => import('./views/ForCompaniesPage').then((m) => ({ default: m.ForCompaniesPage })));
+const ForResourcingCompaniesPage = lazy(() =>
+  import('./views/ForResourcingCompaniesPage').then((m) => ({ default: m.ForResourcingCompaniesPage }))
+);
+const AboutUsPage = lazy(() => import('./views/AboutUsPage').then((m) => ({ default: m.AboutUsPage })));
+const InvestorPage = lazy(() => import('./views/InvestorPage').then((m) => ({ default: m.InvestorPage })));
+const PricingPage = lazy(() => import('./views/PricingPage').then((m) => ({ default: m.PricingPage })));
+const LegalPage = lazy(() => import('./views/LegalPage').then((m) => ({ default: m.LegalPage })));
+const AccessibilityPage = lazy(() => import('./views/AccessibilityPage').then((m) => ({ default: m.AccessibilityPage })));
+const HowItWorksPage = lazy(() => import('./views/HowItWorksPage').then((m) => ({ default: m.HowItWorksPage })));
+const UserGuidePage = lazy(() => import('./views/UserGuidePage').then((m) => ({ default: m.UserGuidePage })));
+const TutorialsPage = lazy(() => import('./views/TutorialsPage').then((m) => ({ default: m.TutorialsPage })));
 
-import RoleSkillBuilderPage from "./views/RoleSkillBuilderPage";
+const CompanyEngineerDashboardPage = lazy(() => import("./views/CompanyEngineerDashboardPage"));
+const WatchDemoPage = lazy(() => import("./views/WatchDemoPage"));
+const RoleSkillBuilderPage = lazy(() => import("./views/RoleSkillBuilderPage"));
+const EngineerProfileSetupPage = lazy(() => import("./views/EngineerProfileSetupPage"));
+const EngineerPersonalBusinessProfilePage = lazy(() => import("./views/EngineerPersonalBusinessProfilePage"));
 
-
-
-import EngineerProfileSetupPage from "./views/EngineerProfileSetupPage";
-import EngineerPersonalBusinessProfilePage from "./views/EngineerPersonalBusinessProfilePage";
+function PageLoadingFallback() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center">
+      <div className="text-sm font-semibold text-slate-400">Loading...</div>
+    </div>
+  );
+}
 
 function TechSubbiesHowItWorksFaqHashRoute(): boolean {
   if (typeof window === "undefined") {
@@ -57,12 +71,9 @@ function TechSubbiesHowItWorksFaqHashRoute(): boolean {
 
   return (
     window.location.hash === "#/how-it-works/faq" ||
-    window.location.hash === "#how-it-works-faq" ||
-    window.location.pathname === "/how-it-works/faq"
+    window.location.hash === "#how-it-works-faq"
   );
 }
-
-
 
 const publicDirectPaths = new Set([
   "/",
@@ -154,7 +165,7 @@ const { page, setPage } = useNavigation();
     <div className="flex min-h-screen flex-col bg-slate-950">
       <PersistentAppHeader />
       <main className="flex-grow">
-        {content}
+        <Suspense fallback={<PageLoadingFallback />}>{content}</Suspense>
       </main>
       {showFooter && <Footer onNavigate={setPage} />}
       <HowItWorksModal
@@ -200,64 +211,15 @@ const { page, setPage } = useNavigation();
     return renderPersistentShell(<LoginRequiredPage />);
   }
 
-    if (window.location.pathname === "/opportunity-intake" || window.location.pathname === "/matching/intake") {
-    return renderPersistentShell(<LiveOpportunityIntakePage />);
-  }
-
-if (window.location.pathname === "/matching-demo" || window.location.pathname === "/how-it-works/matching-demo") {
-    return renderPersistentShell(<OpportunityMatchingDemoPage />);
-  }
-
-
-  if (window.location.pathname === "/engineer/product-awareness") {
-    return renderPersistentShell(<ProductAwarenessExperiencePage />);
-  }
-
-  
-  if (window.location.pathname === "/login" || window.location.pathname === "/signin") {
-    return renderPersistentShell(<DemoLoginPage onSignedIn={handleDemoSignedIn} />);
-  }
-
-  if (window.location.pathname === "/company/signup") {
-    return <CompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />;
-  }
-
-  if (window.location.pathname === "/engineer/signup") {
-    return <EngineerSignUpWizard onCancel={() => setPage(Page.LOGIN)} />;
-  }
-
-  if (window.location.pathname === "/resourcing/signup") {
-    return <ResourcingCompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />;
-  }
-if (TechSubbiesHowItWorksFaqHashRoute()) {
+  // The FAQ page also has a hash-based entry point (e.g. #/how-it-works/faq)
+  // alongside its real path, which React Router's path matching can't
+  // express directly - handled here rather than as a <Route>.
+  if (TechSubbiesHowItWorksFaqHashRoute()) {
     return renderPersistentShell(<HowItWorksFaqPage />, true);
   }
 
-  if (window.location.pathname === "/engineer/profile") {
-    return renderPersistentShell(<EngineerProfileHubPage />);
-  }
-
-  if (window.location.pathname === "/engineer/availability") {
-    return renderPersistentShell(<EngineerAvailabilityPage />);
-  }
-if (window.location.pathname === "/watch-demo") {
-    return renderPersistentShell(<WatchDemoPage />, true);
-  }
-
-  if (window.location.pathname === "/engineer/profile-setup") {
-    return renderPersistentShell(<EngineerProfileSetupPage />);
-  }
-
-  if (window.location.pathname === "/engineer/personal-business-profile") {
-    return renderPersistentShell(<EngineerPersonalBusinessProfilePage />);
-  }
-  if (window.location.pathname === "/engineer/skills-profile" || window.location.pathname === "/role-skills") {
-    return renderPersistentShell(<RoleSkillBuilderPage />);
-  }
-if (window.location.pathname === "/company/engineers" || window.location.pathname === "/resourcing/engineers") {
-    return renderPersistentShell(<CompanyEngineerDashboardPage />);
-  }
-const renderPage = () => {
+  function renderLegacyPage() {
+    const renderPage = () => {
         // Automatically route logged-in users to their dashboard if they land on a public page
         if (user && (page === Page.LANDING || page === Page.LOGIN)) {
             switch (user.role) {
@@ -314,7 +276,7 @@ const renderPage = () => {
         <div className="flex flex-col min-h-screen">
             <PersistentAppHeader />
             <main className="flex-grow">
-                {renderPage()}
+                <Suspense fallback={<PageLoadingFallback />}>{renderPage()}</Suspense>
             </main>
             {!isDashboard && <Footer onNavigate={setPage} />}
 
@@ -326,14 +288,33 @@ const renderPage = () => {
             {(user || demoSession) && <AIAssistant />}
         </div>
     );
+  }
+
+  return (
+    <Routes>
+      <Route path="/opportunity-intake" element={renderPersistentShell(<LiveOpportunityIntakePage />)} />
+      <Route path="/matching/intake" element={renderPersistentShell(<LiveOpportunityIntakePage />)} />
+      <Route path="/matching-demo" element={renderPersistentShell(<OpportunityMatchingDemoPage />)} />
+      <Route path="/how-it-works/matching-demo" element={renderPersistentShell(<OpportunityMatchingDemoPage />)} />
+      <Route path="/engineer/product-awareness" element={renderPersistentShell(<ProductAwarenessExperiencePage />)} />
+      <Route path="/login" element={renderPersistentShell(<DemoLoginPage onSignedIn={handleDemoSignedIn} />)} />
+      <Route path="/signin" element={renderPersistentShell(<DemoLoginPage onSignedIn={handleDemoSignedIn} />)} />
+      <Route path="/company/signup" element={<CompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
+      <Route path="/engineer/signup" element={<EngineerSignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
+      <Route path="/resourcing/signup" element={<ResourcingCompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
+      <Route path="/how-it-works/faq" element={renderPersistentShell(<HowItWorksFaqPage />, true)} />
+      <Route path="/engineer/profile" element={renderPersistentShell(<EngineerProfileHubPage />)} />
+      <Route path="/engineer/availability" element={renderPersistentShell(<EngineerAvailabilityPage />)} />
+      <Route path="/watch-demo" element={renderPersistentShell(<WatchDemoPage />, true)} />
+      <Route path="/engineer/profile-setup" element={renderPersistentShell(<EngineerProfileSetupPage />)} />
+      <Route path="/engineer/personal-business-profile" element={renderPersistentShell(<EngineerPersonalBusinessProfilePage />)} />
+      <Route path="/engineer/skills-profile" element={renderPersistentShell(<RoleSkillBuilderPage />)} />
+      <Route path="/role-skills" element={renderPersistentShell(<RoleSkillBuilderPage />)} />
+      <Route path="/company/engineers" element={renderPersistentShell(<CompanyEngineerDashboardPage />)} />
+      <Route path="/resourcing/engineers" element={renderPersistentShell(<CompanyEngineerDashboardPage />)} />
+      <Route path="*" element={renderLegacyPage()} />
+    </Routes>
+  );
 };
 
 export default App;
-
-
-
-
-
-
-
-

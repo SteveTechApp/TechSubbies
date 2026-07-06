@@ -13,5 +13,9 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],
     globals: false,
+    // The backend is a separate Node project with its own package.json,
+    // dependencies and Vitest config (see backend/vitest.config.ts) - run
+    // `npm test` inside backend/ for those tests.
+    exclude: ['**/node_modules/**', '**/dist/**', 'backend/**'],
   },
 });

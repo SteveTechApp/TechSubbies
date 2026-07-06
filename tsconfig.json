@@ -1,4 +1,4 @@
-﻿{
+{
     "compilerOptions":  {
                             "target":  "ES2022",
                             "experimentalDecorators":  true,
@@ -33,6 +33,7 @@
                     "dist",
                     "build",
                     ".git",
+                    "backend",
                     "_techsubbies_backup_*",
                     "**/_techsubbies_backup_*",
                     "**/*.backup.*",
