@@ -1,10 +1,10 @@
-﻿import React from "react";
+import React from "react";
 
 export function TechSubbiesLogo() {
   return (
     <img
       className="techsubbies-image-logo-lockup"
-      src="/brand/techsubbies-logo-lockup.webp"
+      src="/brand/techsubbies-logo-lockup-transparent.png"
       alt="TechSubbies - Technical Skills Exchange"
     />
   );
