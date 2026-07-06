@@ -1,9 +1,100 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { EngineerProfile } from '../../types';
 import { MapPin, Calendar, DollarSign, PlusCircle, Search, MessageCircle } from '../../components/Icons';
 // FIX: Replaced incorrect context hook 'useInteractions' with the correct hook 'useAppContext'.
 import { useAppContext } from '../../context/InteractionContext';
 import { formatDisplayDate } from '../../utils/dateFormatter';
+import apiService from '../../services/apiService';
+
+interface PendingAttachmentRequest {
+    id: string;
+    status: string;
+    createdAt: string;
+    engineer: {
+        id: string;
+        profile: { name?: string; contact?: { email?: string } };
+    } | null;
+}
+
+const PendingJoinRequests = () => {
+    const [requests, setRequests] = useState<PendingAttachmentRequest[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [busyId, setBusyId] = useState<string | null>(null);
+    const [error, setError] = useState('');
+    const [resolvedNote, setResolvedNote] = useState('');
+
+    const loadRequests = async () => {
+        setLoading(true);
+        try {
+            const data = await apiService.getPendingCompanyAttachmentRequests();
+            setRequests(data);
+        } catch {
+            // Quietly leave the list empty - this panel is a bonus, not core dashboard function.
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadRequests();
+    }, []);
+
+    const handleRespond = async (requestId: string, approve: boolean) => {
+        setBusyId(requestId);
+        setError('');
+        setResolvedNote('');
+        try {
+            await apiService.respondToCompanyAttachmentRequest(requestId, approve);
+            setResolvedNote(approve ? 'Engineer approved and added to your roster.' : 'Request declined.');
+            await loadRequests();
+        } catch (err: any) {
+            setError(err.message || 'Could not process this request.');
+        } finally {
+            setBusyId(null);
+        }
+    };
+
+    if (loading || requests.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="mb-6 bg-white rounded-lg shadow-sm border p-4">
+            <h2 className="text-lg font-bold text-gray-800 mb-1">Pending join requests</h2>
+            <p className="text-sm text-gray-500 mb-3">Engineers who have asked to join your resourcing company.</p>
+
+            {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
+            {resolvedNote && <p className="text-sm text-green-600 mb-2">{resolvedNote}</p>}
+
+            <div className="space-y-2">
+                {requests.map((req) => (
+                    <div key={req.id} className="flex items-center justify-between border rounded-md p-3">
+                        <div>
+                            <p className="font-semibold text-gray-800">{req.engineer?.profile?.name || 'Unknown engineer'}</p>
+                            <p className="text-sm text-gray-500">{req.engineer?.profile?.contact?.email}</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => handleRespond(req.id, true)}
+                                disabled={busyId === req.id}
+                                className="px-3 py-1.5 bg-green-600 text-white text-sm font-semibold rounded-md hover:bg-green-700 disabled:opacity-50"
+                            >
+                                Approve
+                            </button>
+                            <button
+                                onClick={() => handleRespond(req.id, false)}
+                                disabled={busyId === req.id}
+                                className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm font-semibold rounded-md hover:bg-gray-300 disabled:opacity-50"
+                            >
+                                Reject
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
 
 const ManagedEngineerCard = ({ profile, onMessage }: { profile: EngineerProfile, onMessage: (profileId: string) => void }) => (
     <div className="bg-white p-4 rounded-lg shadow-md border flex flex-col h-full">
@@ -62,6 +153,8 @@ export const ManageEngineersView = ({ managedEngineers, setActiveView }: ManageE
 
     return (
         <div>
+            <PendingJoinRequests />
+
             <div className="flex justify-between items-center mb-4">
                 <h1 className="text-3xl font-bold">Manage Engineers</h1>
                 <button className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700">

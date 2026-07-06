@@ -29,6 +29,7 @@ const CompanySignUpWizard = lazy(() =>
 );
 const EngineerAvailabilityPage = lazy(() => import("./views/EngineerAvailabilityPage"));
 const EngineerProfileHubPage = lazy(() => import("./views/EngineerProfileHubPage"));
+const EngineerTeamCompanyPage = lazy(() => import("./views/EngineerTeamCompanyPage"));
 const HowItWorksFaqPage = lazy(() => import("./views/HowItWorksFaqPage"));
 
 const LandingPage = lazy(() => import('./views/LandingPage').then((m) => ({ default: m.LandingPage })));
@@ -304,6 +305,7 @@ const { page, setPage } = useNavigation();
       <Route path="/resourcing/signup" element={<ResourcingCompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
       <Route path="/how-it-works/faq" element={renderPersistentShell(<HowItWorksFaqPage />, true)} />
       <Route path="/engineer/profile" element={renderPersistentShell(<EngineerProfileHubPage />)} />
+      <Route path="/engineer/team-company" element={renderPersistentShell(<EngineerTeamCompanyPage />)} />
       <Route path="/engineer/availability" element={renderPersistentShell(<EngineerAvailabilityPage />)} />
       <Route path="/watch-demo" element={renderPersistentShell(<WatchDemoPage />, true)} />
       <Route path="/engineer/profile-setup" element={renderPersistentShell(<EngineerProfileSetupPage />)} />

@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 
 const cardStyle: React.CSSProperties = {
   display: "flex",
@@ -71,6 +71,12 @@ export function EngineerProfileHubPage() {
             <p style={copyStyle}>Skills-based awareness of AV brands, platforms, signal technologies and product categories.</p>
             <span style={buttonStyle}>Add product awareness</span>
           </a>
+
+          <a href="/engineer/team-company" style={cardStyle}>
+            <h2 style={titleStyle}>Team & Resourcing Company</h2>
+            <p style={copyStyle}>Pair up with another engineer as a team, or attach yourself to a resourcing company.</p>
+            <span style={buttonStyle}>Manage team & company</span>
+          </a>
         </section>
       </section>
     </main>
@@ -78,5 +84,3 @@ export function EngineerProfileHubPage() {
 }
 
 export default EngineerProfileHubPage;
-
-

@@ -126,6 +126,19 @@ const apiService = {
     return (await response.json()) as User;
   },
 
+  // Lists resourcing companies registered on the real backend, so an
+  // engineer can pick one to request attaching themselves to.
+  listResourcingCompanies: async (): Promise<User[]> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users`);
+      if (!response.ok) return [];
+      const all = (await response.json()) as User[];
+      return all.filter((u) => u.role === Role.RESOURCING_COMPANY);
+    } catch {
+      return [];
+    }
+  },
+
   // Restores a signed-in session after a page reload, using the JWT saved
   // in localStorage. Returns null if there's no token, the token is
   // unreadable, or the backend can't be reached (e.g. not running).
