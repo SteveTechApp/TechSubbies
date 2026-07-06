@@ -827,7 +827,7 @@ function WatchDemoPage() {
                 </div>
 
                 <div style={styles.controls}>
-                  <button type="button" style={styles.controlButton} onClick={goPrevious}>
+                  <button type="button" style={styles.controlButton} onClick={() => goPrevious(true)}>
                     Previous
                   </button>
                   <button
@@ -884,10 +884,4 @@ function WatchDemoPage() {
 
 export { WatchDemoPage };
 export default WatchDemoPage;
-
-
-
-
-
-
 

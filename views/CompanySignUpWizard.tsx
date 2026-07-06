@@ -1,5 +1,4 @@
 ﻿import React, { useState } from 'react';
-import PersistentAppHeader from "../components/PersistentAppHeader";
 import { useAppContext } from '../context/InteractionContext';
 import { Logo } from '../components/Logo';
 import { ArrowLeft } from '../components/Icons';
@@ -66,10 +65,7 @@ export const CompanySignUpWizard = ({ onCancel }: CompanySignUpWizardProps) => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <PersistentAppHeader />
-
-            <main className="flex flex-col items-center justify-center px-4 py-12">
+        <div className="min-h-screen bg-gray-50"><main className="flex flex-col items-center justify-center px-4 py-12">
                 <div className="w-full max-w-lg">
                     <button
                         type="button"
@@ -213,3 +209,4 @@ export const CompanySignUpWizard = ({ onCancel }: CompanySignUpWizardProps) => {
         </div>
     );
 };
+

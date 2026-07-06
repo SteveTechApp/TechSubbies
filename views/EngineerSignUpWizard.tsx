@@ -1,6 +1,4 @@
 ﻿import React, { useMemo, useState } from "react";
-
-import PersistentAppHeader from "../components/PersistentAppHeader";
 import {
   cloneSkillRequirements,
   getRoleExpectation,
@@ -443,7 +441,6 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
 
   return (
         <div className="min-h-screen ">
-            <PersistentAppHeader />
             <div className="min-h-screen bg-slate-950 text-white">
       <div className="mx-auto max-w-6xl px-5 py-8">
         <header className="mb-6 rounded-3xl border border-cyan-300/20 bg-slate-900 p-6">
@@ -1053,6 +1050,7 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
 }
 
 export default EngineerSignUpWizard;
+
 
 
 
