@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 import { Language, Currency } from '../types';
 import { i18n } from '../i18n';
-import { geminiService } from '../services/geminiService';
-import { Chat } from '@google/genai';
+import { geminiService, BackendChatSession } from '../services/geminiService';
 
 interface SettingsContextType {
   language: Language;
@@ -11,7 +10,7 @@ interface SettingsContextType {
   setCurrency: (curr: Currency) => void;
   t: (key: string) => string;
   geminiService: typeof geminiService;
-  chatSession: Chat | null;
+  chatSession: BackendChatSession | null;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

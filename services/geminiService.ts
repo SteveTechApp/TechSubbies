@@ -1,52 +1,67 @@
-﻿import { GoogleGenAI, Type, Chat } from "@google/genai";
+import { Type } from "@google/genai";
 // FIX: Add Product and ProductFeatures types for new AI method.
 import { EngineerProfile, Job, JobSkillRequirement, Skill, Insight, ExperienceLevel, Product, ProductFeatures } from "../types";
 import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';
 
-class GeminiService {
-    private ai: GoogleGenAI;
-    public chat: Chat | null = null;
+// All AI calls go through the backend now instead of talking to Google's
+// Gemini API directly from the browser. The API key lives only on the
+// server (backend/.env) - see backend/src/routes/ai.ts. This file keeps
+// the exact same public methods as before so nothing else in the app has
+// to change.
+const API_BASE_URL = (typeof process !== 'undefined' && (process as any).env?.API_BASE_URL) || 'http://localhost:4000/api';
 
-    constructor() {
-        if (!process.env.API_KEY) {
-            console.error("API_KEY environment variable not set.");
-            // Allow app to load, features will fail gracefully.
-            this.ai = null!; 
-            return;
-        }
-        this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        this.chat = this.ai.chats.create({
-            model: "gemini-2.5-flash",
-            config: {
-                systemInstruction: "You are a helpful AI assistant for the TechSubbies.com platform, a freelance network for AV and IT engineers. Be concise and helpful.",
-            }
+async function postJSON(path: string, body: unknown): Promise<any> {
+    try {
+        const response = await fetch(`${API_BASE_URL}${path}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
         });
+        const data = await response.json();
+        if (!response.ok) {
+            return { error: data?.error || `Request failed with status ${response.status}.` };
+        }
+        return data;
+    } catch (error: any) {
+        return { error: error.message || "Could not reach the AI service." };
     }
+}
+
+export interface ChatTurn {
+    role: 'user' | 'model';
+    text: string;
+}
+
+// Mimics the small slice of the @google/genai Chat interface the app
+// actually uses (sendMessage), but talks to our backend instead. The
+// server holds no session state, so this class keeps the running
+// history and resends it with every message.
+export class BackendChatSession {
+    private history: ChatTurn[] = [];
+
+    async sendMessage({ message }: { message: string }): Promise<{ text: string }> {
+        const result = await postJSON('/ai/chat', { history: this.history, message });
+        if (result.error) {
+            throw new Error(result.error);
+        }
+        this.history.push({ role: 'user', text: message });
+        this.history.push({ role: 'model', text: result.text });
+        return { text: result.text };
+    }
+}
+
+class GeminiService {
+    public chat: BackendChatSession = new BackendChatSession();
 
     private async generateWithSchema(prompt: string, schema: any): Promise<any> {
-        if (!this.ai) return { error: "Gemini Service not initialized. Check API Key." };
-        try {
-            const response = await this.ai.models.generateContent({
-                model: "gemini-2.5-flash",
-                contents: prompt,
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: schema,
-                },
-            });
-
-            const jsonStr = response.text.trim();
-            if (!jsonStr) {
-                throw new Error("Empty response from AI model.");
-            }
-            return JSON.parse(jsonStr);
-        } catch (error: any) {
-            console.error("Error generating content with schema:", error);
-            const errorMessage = error.message || "Failed to get a valid response from the AI model.";
-            return { error: errorMessage };
+        const result = await postJSON('/ai/generate', { prompt, schema });
+        if (result.error) {
+            console.error("Error generating content with schema:", result.error);
+            return { error: result.error };
         }
+        return result.result;
     }
-    
+
     private getEngineerSkillsString(engineer: EngineerProfile, includeRating: boolean = true): string {
         const skillsFromRoles = engineer.selectedJobRoles?.flatMap(role => 
             role.skills.map(skill => includeRating ? `${skill.name} (${skill.rating})` : skill.name)
@@ -268,77 +283,16 @@ class GeminiService {
     
     // Method for CV Querying
     async queryCV(cvContent: string, query: string): Promise<{ answer?: string, error?: string }> {
-        if (!this.ai) return { error: "Gemini Service not initialized. Check API Key." };
-        try {
-            const prompt = `You are an expert technical recruiter analyzing a CV. Based ONLY on the CV text provided below, answer the user's query concisely. If the information is not in the CV, state that clearly.
-
-            CV TEXT:
-            ---
-            ${cvContent}
-            ---
-
-            USER QUERY: "${query}"`;
-            
-            const response = await this.ai.models.generateContent({
-                model: "gemini-2.5-flash",
-                contents: prompt,
-            });
-            
-            const answer = response.text.trim();
-            if (!answer) {
-                throw new Error("Empty response from AI model.");
-            }
-            return { answer };
-        } catch (error: any) {
-            console.error("Error querying CV:", error);
-            return { error: error.message || "Failed to get a valid response from the AI model." };
-        }
+        return postJSON('/ai/query-cv', { cvContent, query });
     }
 
-    // Updated method for Live Video Generation
+    // Method for tutorial video generation (script + video)
     async generateTutorialVideo(topic: string): Promise<{ title: string; script: string; videoUrl: string; error?: string }> {
-        if (!this.ai) return { title: '', script: '', videoUrl: '', error: "Gemini Service not initialized. Check API Key." };
-
-        try {
-            // Step 1: Generate the script first
-            const scriptPrompt = `Create a script for a short, engaging tutorial video titled "${topic}". Break it into clear steps. The tone should be friendly and encouraging. Respond in JSON format with "title" and "script".`;
-            const scriptSchema = {
-                type: Type.OBJECT,
-                properties: { title: { type: Type.STRING }, script: { type: Type.STRING } }
-            };
-            const scriptResponse = await this.generateWithSchema(scriptPrompt, scriptSchema);
-            if (scriptResponse.error) throw new Error(scriptResponse.error);
-            const { title, script } = scriptResponse;
-
-            // Step 2: Start the video generation operation using the generated script
-            console.log("[Gemini] Starting video generation for:", title);
-            const videoPrompt = `An engaging, clean, corporate-style tutorial video for a software platform, with on-screen text callouts, based on the following script: ${script}`;
-            let operation = await this.ai.models.generateVideos({
-                model: 'veo-2.0-generate-001',
-                prompt: videoPrompt,
-                config: { numberOfVideos: 1 }
-            });
-            console.log("[Gemini] Video operation started:", operation);
-
-            // Step 3: Poll for completion
-            while (!operation.done) {
-                console.log("[Gemini] Waiting for video generation... Polling again in 10s.");
-                await new Promise(resolve => setTimeout(resolve, 10000));
-                operation = await this.ai.operations.getVideosOperation({ operation: operation });
-            }
-            console.log("[Gemini] Video generation finished:", operation);
-
-            // Step 4: Extract and return the video URI
-            const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
-            if (!downloadLink) throw new Error("Video generation completed but no download link was found.");
-            
-            const videoUrl = `${downloadLink}&key=${process.env.API_KEY}`;
-            
-            return { title, script, videoUrl };
-        } catch (error: any) {
-            console.error("Error in generateTutorialVideo:", error);
-            return { error: error.message || "Failed to generate video.", title: '', script: '', videoUrl: '' };
+        const result = await postJSON('/ai/tutorial-video', { topic });
+        if (result.error && !result.title) {
+            return { title: '', script: '', videoUrl: '', error: result.error };
         }
+        return result;
     }
 
     // FIX: Add method for Product Analysis
