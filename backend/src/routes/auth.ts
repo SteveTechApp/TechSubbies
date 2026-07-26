@@ -46,15 +46,22 @@ authRouter.post("/register", async (req, res) => {
 
   const token = signToken(user.id);
   const verificationToken = issueAccountToken(user.id, "verify-email", 24 * 60 * 60 * 1000);
-  await sendEmail({
-    to: user.email,
-    subject: "Verify your TechSubbies email",
-    text: `${frontendOrigin()}/verify-email?token=${encodeURIComponent(verificationToken)}`,
-  });
+  let verificationEmailSent = true;
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: "Verify your TechSubbies email",
+      text: `${frontendOrigin()}/verify-email?token=${encodeURIComponent(verificationToken)}`,
+    });
+  } catch (error) {
+    verificationEmailSent = false;
+    console.error("Verification email delivery failed after registration.", error);
+  }
   setAuthCookies(res, token);
   return res.status(201).json({
     ...(process.env.NODE_ENV === "production" ? {} : { token }),
     user: toPublicUser(user),
+    verificationEmailSent,
   });
 });
 
@@ -97,11 +104,15 @@ authRouter.post("/verification/request", requireAuth, async (req: AuthedRequest,
   const user = req.authUser!;
   if (user.emailVerified) return res.status(204).end();
   const token = issueAccountToken(user.id, "verify-email", 24 * 60 * 60 * 1000);
-  await sendEmail({
-    to: user.email,
-    subject: "Verify your TechSubbies email",
-    text: `${frontendOrigin()}/verify-email?token=${encodeURIComponent(token)}`,
-  });
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: "Verify your TechSubbies email",
+      text: `${frontendOrigin()}/verify-email?token=${encodeURIComponent(token)}`,
+    });
+  } catch {
+    return res.status(503).json({ error: "Verification email is temporarily unavailable. Please try again." });
+  }
   return res.status(202).json({ message: "Verification email queued." });
 });
 
@@ -121,11 +132,16 @@ authRouter.post("/password-reset/request", async (req, res) => {
     const user = findUserByEmail(parsed.data.email.trim().toLowerCase());
     if (user) {
       const token = issueAccountToken(user.id, "reset-password", 60 * 60 * 1000);
-      await sendEmail({
-        to: user.email,
-        subject: "Reset your TechSubbies password",
-        text: `${frontendOrigin()}/reset-password?token=${encodeURIComponent(token)}`,
-      });
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: "Reset your TechSubbies password",
+          text: `${frontendOrigin()}/reset-password?token=${encodeURIComponent(token)}`,
+        });
+      } catch (error) {
+        // Preserve the identical response for known and unknown addresses.
+        console.error("Password reset email delivery failed.", error);
+      }
     }
   }
   // Identical response prevents account enumeration.

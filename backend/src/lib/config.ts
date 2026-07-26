@@ -23,6 +23,17 @@ export function validateRuntimeConfig(env: NodeJS.ProcessEnv = process.env) {
     problems.push("FRONTEND_ORIGIN must be a valid HTTPS origin");
   }
 
+  if (env.EMAIL_PROVIDER !== "resend") {
+    problems.push('EMAIL_PROVIDER must be "resend" in production');
+  }
+  if (!env.RESEND_API_KEY?.trim()) {
+    problems.push("RESEND_API_KEY is required in production");
+  }
+  const emailFrom = env.EMAIL_FROM?.trim() || "";
+  if (!emailFrom.includes("@")) {
+    problems.push("EMAIL_FROM must contain a valid sender address");
+  }
+
   if (problems.length) {
     throw new Error(`Unsafe production configuration:\n- ${problems.join("\n- ")}`);
   }

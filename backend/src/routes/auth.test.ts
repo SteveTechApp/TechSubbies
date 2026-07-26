@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, vi } from "vitest";
 import request from "supertest";
 
 // Point the app at a throwaway database file so these tests never touch
@@ -11,7 +11,7 @@ process.env.DB_FILE = TEST_DB;
 process.env.JWT_SECRET = "test-secret";
 
 const { createApp } = await import("../app.js");
-const { developmentEmailOutbox } = await import("../lib/email.js");
+const { developmentEmailOutbox, resetEmailProvider, setEmailProvider } = await import("../lib/email.js");
 const app = createApp();
 
 function tokenFromLastEmail(): string {
@@ -154,6 +154,26 @@ describe("POST /api/auth/login", () => {
 });
 
 describe("email verification and password recovery", () => {
+  it("keeps a newly created account usable when email delivery is temporarily unavailable", async () => {
+    setEmailProvider({ send: async () => { throw new Error("provider unavailable"); } });
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      const response = await request(app).post("/api/auth/register").send({
+        email: "delivery-failure@example.com",
+        password: "correcthorsebattery",
+        role: "Engineer",
+        name: "Delivery Failure",
+      });
+      expect(response.status).toBe(201);
+      expect(response.body.user.id).toBeTruthy();
+      expect(response.body.user.role).toBe("Engineer");
+      expect(response.body.verificationEmailSent).toBe(false);
+    } finally {
+      resetEmailProvider();
+      consoleError.mockRestore();
+    }
+  });
+
   it("verifies an email with a hashed, single-use token", async () => {
     const registered = await request(app).post("/api/auth/register").send({
       email: "verify@example.com",
