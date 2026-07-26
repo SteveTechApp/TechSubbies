@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+  isDemoAccessEnabled,
   setDemoSession,
   validateDemoLogin,
   type DemoSession,
@@ -17,8 +18,8 @@ function inputClass() {
 
 export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
   const { setUser } = useAuth();
-  const [email, setEmail] = useState("admin@techsubbies.demo");
-  const [password, setPassword] = useState("password");
+  const [email, setEmail] = useState(isDemoAccessEnabled ? "admin@techsubbies.demo" : "");
+  const [password, setPassword] = useState(isDemoAccessEnabled ? "password" : "");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -38,7 +39,11 @@ export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
       window.location.href = "/";
       return;
     } catch {
-      // Fall through to demo login.
+      if (!isDemoAccessEnabled) {
+        setError("Login failed. Check your email and password.");
+        return;
+      }
+      // Development builds can fall through to demo login.
     } finally {
       setIsSubmitting(false);
     }
@@ -74,7 +79,7 @@ export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
             Public pages stay open. Project intake, matching tools, dashboards, engineer records and admin areas require a signed-in session.
           </p>
 
-          <div className="mt-6 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-5">
+          {isDemoAccessEnabled && <div className="mt-6 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-5">
             <h2 className="font-bold text-cyan-200">Demo admin account</h2>
             <div className="mt-3 grid gap-2 text-sm text-slate-300">
               <div>Email: <span className="font-mono text-white">admin@techsubbies.demo</span></div>
@@ -84,7 +89,7 @@ export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
             <p className="mt-3 text-xs leading-5 text-slate-500">
               This is a local development login. If you created a real account through one of the sign-up wizards, sign in with that email and password instead.
             </p>
-          </div>
+          </div>}
         </section>
 
         <form onSubmit={submit} className="rounded-3xl border border-white/10 bg-slate-900 p-6">

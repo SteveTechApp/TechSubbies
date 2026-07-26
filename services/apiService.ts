@@ -165,17 +165,19 @@ const apiService = {
     }
   },
 
-  // Restores a signed-in session after a page reload, using the JWT saved
-  // in localStorage. Returns null if there's no token, the token is
-  // unreadable, or the backend can't be reached (e.g. not running).
+  // Restore identity only after the backend validates the signed token.
   getCurrentUserFromToken: async (): Promise<User | null> => {
     const token = getAuthToken();
     if (!token) return null;
     try {
-      const payloadSegment = token.split('.')[1];
-      const payload = JSON.parse(atob(payloadSegment.replace(/-/g, '+').replace(/_/g, '/')));
-      if (!payload?.sub) return null;
-      return await apiService.getUserById(payload.sub);
+      const response = await fetch(`${API_BASE_URL}/users/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        if (response.status === 401) clearAuthToken();
+        return null;
+      }
+      return (await response.json()) as User;
     } catch {
       return null;
     }

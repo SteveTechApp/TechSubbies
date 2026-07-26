@@ -5,6 +5,12 @@ import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
 
 export const usersRouter = Router();
 
+// Validate the current server-issued session. Keep this route before
+// /:profileId so "me" is not interpreted as a profile id.
+usersRouter.get("/me", requireAuth, async (req: AuthedRequest, res) => {
+  return res.json(toPublicUser(req.authUser!));
+});
+
 // GET /api/users - list all profiles (for search/browse screens).
 usersRouter.get("/", async (_req, res) => {
   return res.json(listUsers().map(toPublicUser));

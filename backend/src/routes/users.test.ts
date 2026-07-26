@@ -48,6 +48,25 @@ describe("GET /api/users/:profileId", () => {
   });
 });
 
+describe("GET /api/users/me", () => {
+  it("returns the authenticated account for a valid server-issued token", async () => {
+    const res = await request(app).get("/api/users/me").set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.id).toBe(userId);
+    expect(res.body.role).toBe("Engineer");
+  });
+
+  it("rejects a missing or invalid session", async () => {
+    const missing = await request(app).get("/api/users/me");
+    expect(missing.status).toBe(401);
+
+    const invalid = await request(app)
+      .get("/api/users/me")
+      .set("Authorization", "Bearer forged-token");
+    expect(invalid.status).toBe(401);
+  });
+});
+
 describe("PATCH /api/users/me", () => {
   it("rejects the request without a token", async () => {
     const res = await request(app).patch("/api/users/me").send({ minDayRate: 200 });

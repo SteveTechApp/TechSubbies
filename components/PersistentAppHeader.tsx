@@ -2,13 +2,7 @@
 
 
 import { TechSubbiesLogo } from './TechSubbiesLogo';
-type DemoSession = {
-  id?: string;
-  name?: string;
-  email?: string;
-  role?: string;
-  signedInAt?: string;
-};
+import { clearDemoSession, getDemoSession, type DemoSession } from "../data/demoAccounts";
 
 type NavLink = {
   label: string;
@@ -22,7 +16,6 @@ type NavGroup = {
   links: NavLink[];
 };
 
-const demoSessionKey = "techsubbies_demo_session";
 const logoIconSrc = "/techsubbies-logo-transparent.png";
 const logoFallbackSrc = "/techsubbies-logo.svg";
 
@@ -71,25 +64,6 @@ const navGroups: NavGroup[] = [
     ],
   },
 ];
-function readDemoSession(): DemoSession | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const raw = window.localStorage.getItem(demoSessionKey);
-
-  if (!raw) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(raw) as DemoSession;
-  } catch {
-    window.localStorage.removeItem(demoSessionKey);
-    return null;
-  }
-}
-
 function isActiveHref(href: string) {
   if (typeof window === "undefined") {
     return false;
@@ -120,11 +94,11 @@ function BrandLogo() {
 export default function PersistentAppHeader() {
   const [isOpen, setIsOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
-  const [session, setSession] = useState<DemoSession | null>(() => readDemoSession());
+  const [session, setSession] = useState<DemoSession | null>(() => getDemoSession());
 
   useEffect(() => {
     function refresh() {
-      setSession(readDemoSession());
+      setSession(getDemoSession());
     }
 
     window.addEventListener("storage", refresh);
@@ -139,7 +113,7 @@ export default function PersistentAppHeader() {
   const currentPath = typeof window === "undefined" ? "/" : window.location.pathname;
 
   function logout() {
-    window.localStorage.removeItem(demoSessionKey);
+    clearDemoSession();
     setSession(null);
     window.location.href = "/";
   }
