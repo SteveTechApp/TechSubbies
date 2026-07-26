@@ -10,7 +10,9 @@ export const authRouter = Router();
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8, "Password must be at least 8 characters."),
-  role: z.string().min(1),
+  // Privileged roles such as Admin must never be assignable through the
+  // public registration endpoint.
+  role: z.enum(["Engineer", "Company", "Resourcing Company"]),
   name: z.string().min(1),
   // Full role-specific profile object the frontend already builds
   // (EngineerProfile / CompanyProfile / ResourcingCompanyProfile shape).

@@ -12,14 +12,10 @@ import {
   updateContractTimesheets,
 } from "../lib/db.js";
 import { toPublicContract, toPublicInvoice } from "../lib/publicContract.js";
-import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
+import { requireAuth, requireRole, type AuthedRequest } from "../middleware/auth.js";
 
 export const contractsRouter = Router();
 export const invoicesRouter = Router();
-
-// Matches the `Role` enum values in types/index.ts.
-const COMPANY_ROLES = new Set(["Company", "Resourcing Company"]);
-const COMPANY_SIDE_ROLES = new Set(["Company", "Resourcing Company", "Admin"]);
 
 // Matches the string values of the `MilestoneStatus`/`ContractStatus`/
 // `TimesheetStatus` enums in types/index.ts exactly, so a contract created
@@ -79,15 +75,11 @@ const contractSchema = z.object({
 // Resourcing Company only). Starts life as "Pending Signature" - ready for
 // the engineer to review and sign straight away, rather than sitting in an
 // unreachable draft state.
-contractsRouter.post("/", requireAuth, async (req: AuthedRequest, res) => {
-  const poster = findUserById(req.userId!);
-  if (!poster) {
-    return res.status(404).json({ error: "Account not found." });
-  }
-  if (!COMPANY_ROLES.has(poster.role)) {
-    return res.status(403).json({ error: "Only company accounts can create contracts." });
-  }
-
+contractsRouter.post(
+  "/",
+  requireAuth,
+  requireRole("Company", "Resourcing Company"),
+  async (req: AuthedRequest, res) => {
   const parsed = contractSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues.map((i) => i.message).join(", ") });
@@ -97,7 +89,7 @@ contractsRouter.post("/", requireAuth, async (req: AuthedRequest, res) => {
   const milestonesWithStatus = milestones.map((m) => ({ ...m, status: MILESTONE_STATUS.AWAITING_FUNDING }));
 
   const contract = createContract(
-    poster.id,
+    req.userId!,
     engineerId,
     jobId,
     CONTRACT_STATUS.PENDING_SIGNATURE,
@@ -105,7 +97,8 @@ contractsRouter.post("/", requireAuth, async (req: AuthedRequest, res) => {
     milestonesWithStatus
   );
   return res.status(201).json(toPublicContract(contract));
-});
+  }
+);
 
 // GET /api/contracts/me - every contract where the signed-in user is
 // either the company or the engineer party.

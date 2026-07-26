@@ -41,6 +41,19 @@ describe("POST /api/auth/register", () => {
     expect(res.status).toBe(400);
   });
 
+  it("rejects attempts to self-register as an admin", async () => {
+    const response = await request(app).post("/api/auth/register").send({
+      email: "attacker@example.com",
+      password: "strong-password",
+      role: "Admin",
+      name: "Unauthorised Admin",
+      profileData: {},
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/Invalid enum value|Invalid option/i);
+  });
+
   it("rejects a duplicate email", async () => {
     await request(app).post("/api/auth/register").send({
       email: "dupe@example.com",

@@ -5,20 +5,15 @@ import {
   createJob,
   findApplication,
   findJobById,
-  findUserById,
   listActiveJobs,
   listApplicationsForEngineer,
   listApplicationsForJob,
   updateJob,
 } from "../lib/db.js";
 import { toPublicApplication, toPublicJob } from "../lib/publicJob.js";
-import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
+import { requireAuth, requireRole, type AuthedRequest } from "../middleware/auth.js";
 
 export const jobsRouter = Router();
-
-// Roles that are allowed to post/manage jobs. Matches the `Role` enum
-// values in types/index.ts ("Company", "Resourcing Company", ...).
-const COMPANY_ROLES = new Set(["Company", "Resourcing Company"]);
 
 const jobSchema = z.object({
   title: z.string().min(1),
@@ -54,21 +49,13 @@ jobsRouter.get("/:jobId", async (req, res) => {
 });
 
 // POST /api/jobs - create a job posting (Company / Resourcing Company only).
-jobsRouter.post("/", requireAuth, async (req: AuthedRequest, res) => {
-  const poster = findUserById(req.userId!);
-  if (!poster) {
-    return res.status(404).json({ error: "Account not found." });
-  }
-  if (!COMPANY_ROLES.has(poster.role)) {
-    return res.status(403).json({ error: "Only company accounts can post jobs." });
-  }
-
+jobsRouter.post("/", requireAuth, requireRole("Company", "Resourcing Company"), async (req: AuthedRequest, res) => {
   const parsed = jobSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues.map((i) => i.message).join(", ") });
   }
 
-  const job = createJob(poster.id, parsed.data);
+  const job = createJob(req.userId!, parsed.data);
   return res.status(201).json(toPublicJob(job));
 });
 
@@ -97,15 +84,7 @@ jobsRouter.patch("/:jobId", requireAuth, async (req: AuthedRequest, res) => {
 });
 
 // POST /api/jobs/:jobId/apply - an engineer applies for a job.
-jobsRouter.post("/:jobId/apply", requireAuth, async (req: AuthedRequest, res) => {
-  const applicant = findUserById(req.userId!);
-  if (!applicant) {
-    return res.status(404).json({ error: "Account not found." });
-  }
-  if (applicant.role !== "Engineer") {
-    return res.status(403).json({ error: "Only engineer accounts can apply for jobs." });
-  }
-
+jobsRouter.post("/:jobId/apply", requireAuth, requireRole("Engineer"), async (req: AuthedRequest, res) => {
   const job = findJobById(req.params.jobId);
   if (!job) {
     return res.status(404).json({ error: "Job not found." });
@@ -114,11 +93,11 @@ jobsRouter.post("/:jobId/apply", requireAuth, async (req: AuthedRequest, res) =>
     return res.status(409).json({ error: "This job is no longer accepting applications." });
   }
 
-  if (findApplication(job.id, applicant.id)) {
+  if (findApplication(job.id, req.userId!)) {
     return res.status(409).json({ error: "You've already applied for this job." });
   }
 
-  const application = createApplication(job.id, applicant.id, "Applied");
+  const application = createApplication(job.id, req.userId!, "Applied");
   return res.status(201).json(toPublicApplication(application));
 });
 
@@ -140,10 +119,6 @@ jobsRouter.get("/:jobId/applications", requireAuth, async (req: AuthedRequest, r
 // since it shares all its helpers with the jobs routes above.
 export const applicationsRouter = Router();
 
-applicationsRouter.get("/me", requireAuth, async (req: AuthedRequest, res) => {
-  const user = findUserById(req.userId!);
-  if (!user) {
-    return res.status(404).json({ error: "Account not found." });
-  }
-  return res.json(listApplicationsForEngineer(user.id).map(toPublicApplication));
+applicationsRouter.get("/me", requireAuth, requireRole("Engineer"), async (req: AuthedRequest, res) => {
+  return res.json(listApplicationsForEngineer(req.userId!).map(toPublicApplication));
 });

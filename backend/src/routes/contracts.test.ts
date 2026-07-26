@@ -9,6 +9,8 @@ process.env.DB_FILE = TEST_DB;
 process.env.JWT_SECRET = "test-secret";
 
 const { createApp } = await import("../app.js");
+const { createUser } = await import("../lib/db.js");
+const { signToken } = await import("../middleware/auth.js");
 const app = createApp();
 
 async function registerAs(role: string, email: string, name: string) {
@@ -24,7 +26,18 @@ async function registerAs(role: string, email: string, name: string) {
 
 const registerCompany = (email: string, name: string) => registerAs("Company", email, name);
 const registerEngineer = (email: string, name: string) => registerAs("Engineer", email, name);
-const registerAdmin = (email: string, name: string) => registerAs("Admin", email, name);
+const registerAdmin = async (email: string, name: string) => {
+  // Admins are provisioned internally; public registration deliberately
+  // rejects this role.
+  const user = createUser({
+    email,
+    password: "not-used-by-this-test",
+    role: "Admin",
+    name,
+    profile: JSON.stringify({ name, contact: { email } }),
+  });
+  return { token: signToken(user.id), id: user.id };
+};
 
 function sampleContractBody(engineerId: string) {
   return {
