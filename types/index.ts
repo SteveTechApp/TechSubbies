@@ -253,6 +253,7 @@ export interface AdminProfile extends UserProfile {
 export interface User {
     id: string;
     role: Role;
+    emailVerified?: boolean;
     profile: EngineerProfile | CompanyProfile | ResourcingCompanyProfile | AdminProfile;
 }
 

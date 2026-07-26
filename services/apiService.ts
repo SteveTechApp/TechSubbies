@@ -152,6 +152,54 @@ const apiService = {
     }
   },
 
+  requestPasswordReset: async (email: string): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/auth/password-reset/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!response.ok) throw new Error('Could not request a password reset.');
+  },
+
+  confirmPasswordReset: async (token: string, newPassword: string): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/auth/password-reset/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, newPassword }),
+    });
+    const data = response.status === 204 ? null : await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not reset the password.');
+  },
+
+  confirmEmailVerification: async (token: string): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/auth/verification/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not verify the email address.');
+  },
+
+  resendEmailVerification: async (): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/auth/verification/request`, { method: 'POST' });
+    if (!response.ok && response.status !== 204) {
+      const data = await response.json();
+      throw new Error(data?.error || 'Could not resend the verification email.');
+    }
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/auth/password/change`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    const data = response.status === 204 ? null : await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not change the password.');
+    clearAuthToken();
+  },
+
   // Looks up a single profile by id from the backend (public data, no
   // auth required to read it - matches GET /users/:profileId in the spec).
   getUserById: async (id: string): Promise<User | null> => {

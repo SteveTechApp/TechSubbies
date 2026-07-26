@@ -56,6 +56,10 @@ const WatchDemoPage = lazy(() => import("./views/WatchDemoPage"));
 const RoleSkillBuilderPage = lazy(() => import("./views/RoleSkillBuilderPage"));
 const EngineerProfileSetupPage = lazy(() => import("./views/EngineerProfileSetupPage"));
 const EngineerPersonalBusinessProfilePage = lazy(() => import("./views/EngineerPersonalBusinessProfilePage"));
+const ForgotPasswordPage = lazy(() => import("./views/AccountAccessPages").then((m) => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage = lazy(() => import("./views/AccountAccessPages").then((m) => ({ default: m.ResetPasswordPage })));
+const VerifyEmailPage = lazy(() => import("./views/AccountAccessPages").then((m) => ({ default: m.VerifyEmailPage })));
+const AccountSecurityPage = lazy(() => import("./views/AccountAccessPages").then((m) => ({ default: m.AccountSecurityPage })));
 
 function PageLoadingFallback() {
   return (
@@ -80,6 +84,9 @@ const publicDirectPaths = new Set([
   "/",
   "/login",
   "/signin",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
   "/company/signup",
   "/engineer/signup",
   "/resourcing/signup",
@@ -300,6 +307,10 @@ const { page, setPage } = useNavigation();
       <Route path="/engineer/product-awareness" element={renderPersistentShell(<ProductAwarenessExperiencePage />)} />
       <Route path="/login" element={renderPersistentShell(<DemoLoginPage onSignedIn={handleDemoSignedIn} />)} />
       <Route path="/signin" element={renderPersistentShell(<DemoLoginPage onSignedIn={handleDemoSignedIn} />)} />
+      <Route path="/forgot-password" element={renderPersistentShell(<ForgotPasswordPage />)} />
+      <Route path="/reset-password" element={renderPersistentShell(<ResetPasswordPage />)} />
+      <Route path="/verify-email" element={renderPersistentShell(<VerifyEmailPage />)} />
+      <Route path="/account/security" element={renderPersistentShell(<AccountSecurityPage />)} />
       <Route path="/company/signup" element={<CompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
       <Route path="/engineer/signup" element={<EngineerSignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
       <Route path="/resourcing/signup" element={<ResourcingCompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />

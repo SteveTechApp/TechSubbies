@@ -61,6 +61,7 @@ const navGroups: NavGroup[] = [
       { label: "Engineer Demo", href: "/watch-demo#engineer" },
       { label: "Resourcing Company Demo", href: "/watch-demo#resourcing_company" },
       { label: "Client Demo", href: "/watch-demo#hiring_company" },
+      { label: "Account security", href: "/account/security", protected: true },
     ],
   },
 ];

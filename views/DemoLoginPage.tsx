@@ -131,6 +131,13 @@ export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
           </button>
 
           <a
+            href="/forgot-password"
+            className="mt-4 block text-center text-sm font-semibold text-cyan-200 hover:text-cyan-100"
+          >
+            Forgot password?
+          </a>
+
+          <a
             href="/"
             className="mt-4 block text-center text-sm font-semibold text-slate-400 hover:text-cyan-200"
           >
