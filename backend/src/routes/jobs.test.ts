@@ -9,6 +9,7 @@ process.env.DB_FILE = TEST_DB;
 process.env.JWT_SECRET = "test-secret";
 
 const { createApp } = await import("../app.js");
+const { markEmailVerified } = await import("../lib/db.js");
 const app = createApp();
 
 async function registerCompany(email: string, name: string) {
@@ -19,6 +20,7 @@ async function registerCompany(email: string, name: string) {
     name,
     profileData: {},
   });
+  markEmailVerified(res.body.user.id);
   return { token: res.body.token as string, id: res.body.user.id as string };
 }
 
@@ -30,6 +32,7 @@ async function registerEngineer(email: string, name: string) {
     name,
     profileData: {},
   });
+  markEmailVerified(res.body.user.id);
   return { token: res.body.token as string, id: res.body.user.id as string };
 }
 
@@ -46,6 +49,35 @@ const sampleJob = {
   jobRole: "senior-av-installer",
   skillRequirements: [{ name: "Crestron", importance: "must-have" }],
 };
+
+describe("marketplace email verification", () => {
+  it("blocks an unverified account from creating marketplace state", async () => {
+    const registered = await request(app).post("/api/auth/register").send({
+      email: "unverified-company@example.com",
+      password: "correcthorsebattery",
+      role: "Company",
+      name: "Unverified Company",
+      profileData: {},
+    });
+
+    const response = await request(app)
+      .post("/api/jobs")
+      .set("Authorization", `Bearer ${registered.body.token}`)
+      .send(sampleJob);
+
+    expect(response.status).toBe(403);
+    expect(response.body).toEqual({
+      error: "Verify your email address before performing marketplace actions.",
+      code: "EMAIL_VERIFICATION_REQUIRED",
+    });
+  });
+
+  it("keeps public marketplace reads available without verification", async () => {
+    const response = await request(app).get("/api/jobs");
+
+    expect(response.status).toBe(200);
+  });
+});
 
 describe("jobs", () => {
   it("lets a company post a job and lists it publicly", async () => {

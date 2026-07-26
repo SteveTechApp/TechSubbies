@@ -57,3 +57,22 @@ export function requireRole(...allowedRoles: string[]) {
     next();
   };
 }
+
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+// Marketplace reads remain available according to each route's existing
+// access policy. Any action that changes marketplace state requires both a
+// valid session and a verified email address.
+export function requireVerifiedEmailForMutation(req: AuthedRequest, res: Response, next: NextFunction) {
+  if (SAFE_METHODS.has(req.method)) return next();
+
+  return requireAuth(req, res, () => {
+    if (!req.authUser?.emailVerified) {
+      return res.status(403).json({
+        error: "Verify your email address before performing marketplace actions.",
+        code: "EMAIL_VERIFICATION_REQUIRED",
+      });
+    }
+    next();
+  });
+}

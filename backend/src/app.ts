@@ -12,6 +12,7 @@ import { conversationsRouter } from "./routes/conversations.js";
 import { requireCsrf, securityHeaders } from "./middleware/security.js";
 import { createRateLimiter } from "./middleware/rateLimit.js";
 import { frontendOrigin, validateRuntimeConfig } from "./lib/config.js";
+import { requireVerifiedEmailForMutation } from "./middleware/auth.js";
 
 export function createApp() {
   validateRuntimeConfig();
@@ -40,6 +41,18 @@ export function createApp() {
   app.use("/api/auth", authRateLimit, authRouter);
   app.use("/api/users", usersRouter);
   app.use("/api/ai", aiRateLimit, aiRouter);
+  app.use(
+    [
+      "/api/partnerships",
+      "/api/company-attachments",
+      "/api/jobs",
+      "/api/applications",
+      "/api/contracts",
+      "/api/invoices",
+      "/api/conversations",
+    ],
+    requireVerifiedEmailForMutation
+  );
   app.use("/api/partnerships", partnershipsRouter);
   app.use("/api/company-attachments", companyAttachmentsRouter);
   app.use("/api/jobs", jobsRouter);
