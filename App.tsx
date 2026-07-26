@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import PersistentAppHeader from "./components/PersistentAppHeader";
+import EmailVerificationBanner from "./components/EmailVerificationBanner";
 import { clearDemoSession, getDemoSession, type DemoSession } from "./data/demoAccounts";
 import { useNavigation } from './context/NavigationContext';
 import { useAuth } from './context/AuthContext';
@@ -172,6 +173,7 @@ const { page, setPage } = useNavigation();
   const renderPersistentShell = (content: React.ReactNode, showFooter = false) => (
     <div className="flex min-h-screen flex-col bg-slate-950">
       <PersistentAppHeader />
+      <EmailVerificationBanner />
       <main className="flex-grow">
         <Suspense fallback={<PageLoadingFallback />}>{content}</Suspense>
       </main>
@@ -283,6 +285,7 @@ const { page, setPage } = useNavigation();
     return (
         <div className="flex flex-col min-h-screen">
             <PersistentAppHeader />
+            <EmailVerificationBanner />
             <main className="flex-grow">
                 <Suspense fallback={<PageLoadingFallback />}>{renderPage()}</Suspense>
             </main>
