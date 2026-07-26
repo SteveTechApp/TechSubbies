@@ -6,6 +6,7 @@ import { useAppContext } from '../../context/InteractionContext';
 import { getDistance, findLocationsInRegion } from '../../utils/locationUtils';
 import { LocationAutocomplete } from '../LocationAutocomplete';
 import { getSkillBand } from '../../utils/skillBands';
+import { isEngineerAvailable } from '../../utils/availability';
 
 interface Filters {
     searchTerm: string;
@@ -17,6 +18,8 @@ interface Filters {
     hasSkillsProfile: boolean;
     discipline: string;
     minSkillLevel: number;
+    neededFrom: string;
+    neededTo: string;
 }
 
 const initialFilters: Filters = {
@@ -29,15 +32,18 @@ const initialFilters: Filters = {
     hasSkillsProfile: false,
     discipline: 'all',
     minSkillLevel: 0,
+    neededFrom: '',
+    neededTo: '',
 };
 
 interface FindTalentFiltersProps {
     engineers: EngineerProfile[];
     myJobs: Job[];
     onFilterChange: (filteredEngineers: EngineerProfile[]) => void;
+    onBudgetChange?: (maxDayRate: number) => void;
 }
 
-export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTalentFiltersProps) => {
+export const FindTalentFilters = ({ engineers, myJobs, onFilterChange, onBudgetChange }: FindTalentFiltersProps) => {
     const { geminiService } = useAppContext();
     const [filters, setFilters] = useState<Filters>(initialFilters);
     const [isAiLoading, setIsAiLoading] = useState(false);
@@ -48,6 +54,10 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTal
             applyFilters();
         }
     }, [filters, engineers]);
+
+    useEffect(() => {
+        onBudgetChange?.(filters.maxDayRate);
+    }, [filters.maxDayRate]);
 
     const handleFilterChange = (field: keyof Filters, value: any) => {
         setFilters(prev => ({ ...prev, [field]: value }));
@@ -134,7 +144,13 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTal
         if (filters.discipline !== 'all') {
             filtered = filtered.filter(e => e.discipline === filters.discipline);
         }
-        
+
+        // Availability - only applied when a date (or range) is actually
+        // requested, so this filter has no effect until a company sets it.
+        if (filters.neededFrom) {
+            filtered = filtered.filter(e => isEngineerAvailable(e, filters.neededFrom, filters.neededTo || filters.neededFrom));
+        }
+
         // Remove match score when not using AI match
         onFilterChange(filtered.map(e => ({ ...e, matchScore: undefined })));
     };
@@ -225,6 +241,27 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange }: FindTal
                         <input type="checkbox" checked={filters.hasSkillsProfile} onChange={e => handleFilterChange('hasSkillsProfile', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" disabled={!!filters.jobForMatch}/>
                         <span className="ml-2 text-sm">Skills Profile Only</span>
                     </label>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium">Needed for dates</label>
+                    <p className="text-xs text-gray-500 mb-1">Only show engineers who are actually free for this job.</p>
+                    <div className="grid grid-cols-2 gap-2">
+                        <input
+                            type="date"
+                            value={filters.neededFrom}
+                            onChange={e => handleFilterChange('neededFrom', e.target.value)}
+                            className="w-full border p-2 rounded text-sm"
+                            disabled={!!filters.jobForMatch}
+                        />
+                        <input
+                            type="date"
+                            value={filters.neededTo}
+                            onChange={e => handleFilterChange('neededTo', e.target.value)}
+                            className="w-full border p-2 rounded text-sm"
+                            disabled={!!filters.jobForMatch || !filters.neededFrom}
+                        />
+                    </div>
                 </div>
 
                 <button onClick={resetFilters} className="w-full text-sm text-blue-600 hover:underline">Reset All Filters</button>

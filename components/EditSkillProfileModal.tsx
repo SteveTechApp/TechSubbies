@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 // FIX: Corrected import path for types.
-import { SelectedJobRole, JobRoleDefinition, RatedSkill } from '../types';
+import { SelectedJobRole, JobRoleDefinition, RatedSkill, Job, Review, Certification } from '../types';
 import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';
 // FIX: Corrected import path for icons.
-import { X, Save, Plus, Trash2 } from './Icons';
+import { X, Save, Plus, Trash2, Award, Briefcase, TrendingUp } from './Icons';
 import { getSkillBand, DEFAULT_SKILL_RATING } from '../utils/skillBands';
+import { computeSkillEvidence, findCompletedJobEvidenceForSkill, findVerifiedCertificateEvidenceForSkill } from '../utils/skillEvidence';
 
 interface EditSkillProfileModalProps {
     isOpen: boolean;
@@ -12,6 +13,15 @@ interface EditSkillProfileModalProps {
     onSave: (role: SelectedJobRole) => void;
     availableRoles: JobRoleDefinition[];
     initialRole?: SelectedJobRole;
+    // Evidence loop inputs (all optional so this modal still works exactly
+    // as before if a caller doesn't have them handy yet - see
+    // utils/skillEvidence.ts). When supplied, each skill shows how its
+    // self-rating is being backed up by real completed jobs and verified
+    // certificates, without taking away the self-rating slider itself.
+    engineerId?: string;
+    jobs?: Job[];
+    reviews?: Review[];
+    certifications?: Certification[];
 }
 
 const getRatingStyles = (rating: number): { bg: string; text: string; accent: string; descriptor: string } => {
@@ -19,7 +29,7 @@ const getRatingStyles = (rating: number): { bg: string; text: string; accent: st
     return { bg: band.bg, text: band.text, accent: band.accent, descriptor: band.label };
 };
 
-export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles, initialRole }: EditSkillProfileModalProps) => {
+export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles, initialRole, engineerId, jobs, reviews, certifications }: EditSkillProfileModalProps) => {
     const [selectedRoleDef, setSelectedRoleDef] = useState<JobRoleDefinition | null>(null);
     const [currentRole, setCurrentRole] = useState<SelectedJobRole | null>(initialRole || null);
     const [openAddMenu, setOpenAddMenu] = useState<string | null>(null);
@@ -66,6 +76,19 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
         }
     };
     
+    // Evidence loop: for a given skill, look at any completed jobs (backed
+    // by a review) and verified certificates the engineer has that relate
+    // to it, and blend them with the self-rating - see utils/skillEvidence.ts.
+    // Returns null when we don't have enough context to compute this (no
+    // engineerId/jobs/reviews supplied), so the UI can simply not show
+    // anything rather than a misleading "no evidence" message.
+    const getEvidenceForSkill = (skillName: string, selfRating: number) => {
+        if (!engineerId || !jobs || !reviews) return null;
+        const completedJobs = findCompletedJobEvidenceForSkill(skillName, jobs, reviews, engineerId);
+        const verifiedCertificates = findVerifiedCertificateEvidenceForSkill(skillName, certifications || []);
+        return computeSkillEvidence({ skillName, selfRating, completedJobs, verifiedCertificates });
+    };
+
     const recalculateScore = (skills: RatedSkill[]) => {
         const totalScore = skills.reduce((acc, skill) => acc + skill.rating, 0);
         return skills.length > 0 ? Math.round(totalScore / skills.length) : 0;
@@ -156,7 +179,8 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
                                                 {categorySkillsInRole.map(skill => {
                                                     const skillDef = category.skills.find(cs => cs.name === skill.name)!;
                                                     const ratingStyles = getRatingStyles(skill.rating);
-                                                    
+                                                    const evidence = getEvidenceForSkill(skillDef.name, skill.rating);
+
                                                     return (
                                                         <div key={skillDef.name} className="py-3">
                                                             <div className="flex justify-between items-center mb-1">
@@ -181,6 +205,28 @@ export const EditSkillProfileModal = ({ isOpen, onClose, onSave, availableRoles,
                                                                 onChange={(e) => handleSkillChange(skillDef.name, e.target.value)}
                                                                 className={`w-full h-2 rounded-lg appearance-none cursor-pointer ${ratingStyles.accent}`}
                                                             />
+                                                            {evidence && evidence.hasEvidence && (
+                                                                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600 bg-green-50 border border-green-100 rounded px-2 py-1.5">
+                                                                    <span className="flex items-center font-semibold text-green-700">
+                                                                        <TrendingUp size={13} className="mr-1" /> Evidence-backed score: {evidence.effectiveRating}
+                                                                    </span>
+                                                                    {evidence.trail.filter(e => e.source === 'completed-job').length > 0 && (
+                                                                        <span className="flex items-center">
+                                                                            <Briefcase size={12} className="mr-1" />
+                                                                            {evidence.trail.filter(e => e.source === 'completed-job').length} completed job(s)
+                                                                        </span>
+                                                                    )}
+                                                                    {evidence.trail.filter(e => e.source === 'verified-certificate').length > 0 && (
+                                                                        <span className="flex items-center">
+                                                                            <Award size={12} className="mr-1" />
+                                                                            {evidence.trail.filter(e => e.source === 'verified-certificate').length} verified certificate(s)
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            {evidence && !evidence.hasEvidence && (
+                                                                <p className="mt-1 text-xs text-gray-400">Self-rated only - no completed jobs or verified certificates for this skill yet.</p>
+                                                            )}
                                                         </div>
                                                     );
                                                 })}

@@ -4,6 +4,7 @@ import { useAppContext } from '../context/InteractionContext';
 // FIX: Corrected import path for types.
 import { Job, EngineerProfile, Contract, ContractType, ContractStatus, Currency, Milestone, MilestoneStatus } from '../types';
 import { X, FileText, Plus, Trash2 } from './Icons';
+import { requiresLeadSupervision, hasLeadSupervisionConfirmed } from '../utils/leadSupervision';
 
 interface CreateContractModalProps {
     isOpen: boolean;
@@ -30,7 +31,18 @@ export const CreateContractModal = ({ isOpen, onClose, job, engineer, onSendForS
     const [description, setDescription] = useState(getBoilerplate(type, companyName, engineer.name));
     const [amount, setAmount] = useState(job.dayRate);
     const [milestones, setMilestones] = useState<Omit<Milestone, 'status'>[]>([{ id: `ms-${generateUniqueId()}`, description: 'Initial Milestone', amount: Number(job.dayRate) }]);
-    
+    const [overrideReason, setOverrideReason] = useState('');
+
+    // Real check, at the point a contract actually gets created - not just
+    // the self-declared checkbox at job-posting time (JobPostStep1). If the
+    // job needed a lead/supervisor confirmed and that was never done, this
+    // blocks sending the contract unless the company explicitly records why
+    // (e.g. "client's own supervisor on site") rather than letting it
+    // through silently. See utils/leadSupervision.ts.
+    const needsLead = requiresLeadSupervision(job);
+    const leadConfirmed = hasLeadSupervisionConfirmed(job);
+    const needsOverride = needsLead && !leadConfirmed;
+
     useEffect(() => {
         if(isOpen) {
             const initialType = ContractType.SOW;
@@ -65,6 +77,11 @@ export const CreateContractModal = ({ isOpen, onClose, job, engineer, onSendForS
     const totalMilestoneAmount = milestones.reduce((sum, m) => sum + Number(m.amount), 0);
 
     const handleSend = () => {
+        if (needsOverride && !overrideReason.trim()) {
+            alert('This role needs a lead engineer or supervisor confirmed before a contract can be sent. Either go back and update the job posting, or explain below why none is needed.');
+            return;
+        }
+
         const finalAmount = type === ContractType.SOW ? totalMilestoneAmount : amount;
         const finalMilestones = type === ContractType.SOW ? milestones.map(m => ({ ...m, status: MilestoneStatus.AWAITING_FUNDING })) : [];
 
@@ -72,10 +89,15 @@ export const CreateContractModal = ({ isOpen, onClose, job, engineer, onSendForS
             id: `contract-${generateUniqueId()}`,
             jobId: job.id, companyId: job.companyId, engineerId: engineer.id,
             type, description, amount: finalAmount, currency: job.currency,
-            status: ContractStatus.DRAFT,
+            // Ready for the engineer to sign right away, rather than
+            // sitting in an unreachable "Draft" state forever (a contract
+            // created here has already been reviewed by the company - it's
+            // the same moment as clicking "Send for Signature").
+            status: ContractStatus.PENDING_SIGNATURE,
             engineerSignature: null, companySignature: null,
             milestones: finalMilestones,
             jobTitle: job.title,
+            ...(needsOverride ? { supervisionOverrideReason: overrideReason.trim() } : {}),
         };
         onSendForSignature(newContract);
         onClose();
@@ -133,13 +155,30 @@ export const CreateContractModal = ({ isOpen, onClose, job, engineer, onSendForS
                             className="w-full border p-2 rounded text-sm bg-gray-50"
                         />
                     </div>
+                    {needsOverride && (
+                        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+                            <p className="font-bold">This role needs a lead engineer or supervisor</p>
+                            <p className="mt-1">
+                                "{job.title}" wasn't confirmed as supervised when it was posted. Go back and update the job posting if a lead should be arranged, or explain below why this contract can proceed without one (e.g. "client's own supervisor on site"). This is kept on the contract for the record.
+                            </p>
+                            <label className="block font-semibold mt-3 mb-1">Reason for proceeding without a confirmed lead</label>
+                            <input
+                                type="text"
+                                value={overrideReason}
+                                onChange={e => setOverrideReason(e.target.value)}
+                                placeholder="e.g. Client's own supervisor will be on site"
+                                className="w-full border p-2 rounded"
+                            />
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex justify-end space-x-4 mt-6 pt-4 border-t">
                     <button onClick={onClose} className="px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
                     <button
                         onClick={handleSend}
-                        className="px-6 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700"
+                        disabled={needsOverride && !overrideReason.trim()}
+                        className="px-6 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 disabled:bg-blue-300"
                     >
                         Send for Signature
                     </button>

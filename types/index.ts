@@ -120,10 +120,24 @@ export enum NotificationType {
     CONTRACT_UPDATE = 'contract_update',
 }
 
+// This drives two separate things: (1) which of the app's own UI strings
+// are shown, via i18n.ts (currently only a couple of strings are actually
+// translated - most UI text is still English-only), and (2) which
+// language incoming chat messages get auto-translated into, via
+// geminiService.translateText / ChatWindow.tsx. Adding a language here
+// makes it available for chat translation immediately even before its
+// full UI dictionary in i18n.ts is filled in - see the fallback in
+// SettingsContext's t().
 export enum Language {
     ENGLISH = 'English',
     FRENCH = 'French',
     SPANISH = 'Spanish',
+    GERMAN = 'German',
+    ITALIAN = 'Italian',
+    PORTUGUESE = 'Portuguese',
+    POLISH = 'Polish',
+    DUTCH = 'Dutch',
+    ROMANIAN = 'Romanian',
 }
 
 export enum SkillImportance {
@@ -164,6 +178,12 @@ export interface UserProfile {
     };
 }
 
+export interface UnavailableDateRange {
+    start: Date;
+    end: Date;
+    reason?: string;
+}
+
 export interface EngineerProfile extends UserProfile {
     discipline: Discipline;
     country: Country;
@@ -175,6 +195,16 @@ export interface EngineerProfile extends UserProfile {
     maxDayRate: number;
     currency: Currency;
     availability: Date;
+    // Specific dates the engineer has already marked as booked/unavailable
+    // (holiday, another job, etc) - on top of the single `availability`
+    // ("available from") date above. See utils/availability.ts for the
+    // logic that reads these alongside `availability`.
+    unavailableDates?: UnavailableDateRange[];
+    // How many days' notice the engineer needs before a booking can start.
+    noticePeriodDays?: number;
+    // How far the engineer is willing to travel from `location`, in miles.
+    // Distinct from a search radius - this is the engineer's own stated limit.
+    workingRadiusMiles?: number;
     selectedJobRoles?: SelectedJobRole[]; // Detailed skills profiles
     cv?: {
         fileName: string;
@@ -278,6 +308,16 @@ export interface Job {
     jobRole: string;
     skillRequirements: JobSkillRequirement[];
     status: 'active' | 'closed' | 'filled';
+    // Self-declared at posting time for junior/labour/assistant-type roles
+    // (see utils/leadSupervision.ts) - who's actually supervising this
+    // engineer on site. Checked again, for real, when a contract is
+    // created (see components/CreateContractModal.tsx).
+    supervisionArrangement?: string;
+    supervisionDisclaimerAccepted?: boolean;
+    // Optional day-rate ceiling the customer has set for this role. When
+    // present, used to flag (not filter out) staffing options that exceed
+    // it - see utils/teamComposition.ts.
+    budgetCeiling?: number;
 }
 
 export interface Application {
@@ -356,6 +396,11 @@ export interface Contract {
     companySignature: Signature | null;
     milestones: Milestone[];
     timesheets?: Timesheet[];
+    // Set when a company overrides the "needs a lead/supervisor" check at
+    // contract-creation time instead of fixing the underlying job posting -
+    // e.g. "client's own supervisor on site". Kept for audit rather than
+    // silently letting the contract through. See utils/leadSupervision.ts.
+    supervisionOverrideReason?: string;
 }
 
 export enum TransactionType {

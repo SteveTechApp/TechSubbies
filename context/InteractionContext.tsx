@@ -42,6 +42,10 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     // --- Communication ---
     startConversationAndNavigate: (otherPartyProfileId: string, navigateCallback: () => void) => void;
     sendMessage: (conversationId: string, text: string) => Promise<void>;
+    // Polls the real backend for any new messages in a conversation and
+    // merges them in - used by ChatWindow while a conversation is open,
+    // since there's no push/WebSocket connection (see apiService.ts).
+    refreshConversationMessages: (conversationId: string) => void;
     // --- AI & Gemini ---
     getApplicantDeepDive: (job: Job, engineer: EngineerProfile) => Promise<any>;
     // FIX: Add missing method definition
@@ -139,8 +143,17 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
 
     const applyForJob = (jobId: string, engineerId: string) => {
         const newApp = { jobId, engineerId, date: new Date(), status: ApplicationStatus.APPLIED, reviewed: false };
+        // Optimistic update so the UI responds immediately, then persist to
+        // the real backend (see apiService.applyForJob). If the backend
+        // rejects it (e.g. already applied, job closed), roll the optimistic
+        // entry back out rather than leaving a phantom application in view.
         setAppData(prev => ({ ...prev, applications: [...prev.applications, newApp] }));
-        alert('Application submitted!');
+        apiService.applyForJob(jobId, engineerId)
+            .then(() => alert('Application submitted!'))
+            .catch((error: any) => {
+                setAppData(prev => ({ ...prev, applications: prev.applications.filter(a => a !== newApp) }));
+                alert(error?.message || 'Could not submit application.');
+            });
     };
     
     const applyForJobWithCredit = (jobId: string) => {
@@ -161,9 +174,29 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         alert('Invite sent!');
     };
 
-    // --- Other interactions, mocked for now ---
-    const createContract = (contract: Contract) => setAppData(prev => ({...prev, contracts: [...prev.contracts, contract]}));
+    // --- Contracts, milestones, timesheets & invoices ---
+    // Each of these applies its change locally right away (so the UI feels
+    // instant) and then persists it to the real backend in the background
+    // (see apiService.ts / backend/src/routes/contracts.ts). If the backend
+    // confirms it, the locally-applied change is replaced with the
+    // authoritative version it returns; if the backend rejects it (or there
+    // simply isn't a signed-in backend session), the earlier
+    // optimistic/local state stands - a null response from apiService means
+    // "nothing to reconcile with", not "undo this". Failure only rolls back
+    // when the backend actively said no. Mirrors the pattern already used
+    // for applyForJob above.
+    const createContract = (contract: Contract) => {
+        setAppData(prev => ({ ...prev, contracts: [...prev.contracts, contract] }));
+        apiService.createContract(contract)
+            .then(saved => setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contract.id ? saved : c) })))
+            .catch((error: any) => {
+                setAppData(prev => ({ ...prev, contracts: prev.contracts.filter(c => c.id !== contract.id) }));
+                alert(error?.message || 'Could not create contract.');
+            });
+    };
+
     const signContract = (contractId: string, signatureName: string) => {
+        const previousContracts = data.contracts;
         setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => {
             if (c.id === contractId) {
                 if(user?.role === Role.ENGINEER) return { ...c, status: ContractStatus.SIGNED, engineerSignature: { name: signatureName, date: new Date() } };
@@ -171,26 +204,79 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
             }
             return c;
         })}));
+        apiService.signContract(contractId, signatureName)
+            .then(updated => {
+                if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
+            })
+            .catch((error: any) => {
+                setAppData(prev => ({ ...prev, contracts: previousContracts }));
+                alert(error?.message || 'Could not save your signature.');
+            });
     };
     const fundMilestone = (contractId: string, milestoneId: string) => {
+        const previousContracts = data.contracts;
         setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? {...m, status: MilestoneStatus.FUNDED_IN_PROGRESS} : m) } : c) }));
+        apiService.fundMilestone(contractId, milestoneId)
+            .then(updated => {
+                if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
+            })
+            .catch((error: any) => {
+                setAppData(prev => ({ ...prev, contracts: previousContracts }));
+                alert(error?.message || 'Could not fund milestone.');
+            });
     };
     const submitMilestoneForApproval = (contractId: string, milestoneId: string) => {
+        const previousContracts = data.contracts;
         setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? {...m, status: MilestoneStatus.SUBMITTED_FOR_APPROVAL} : m) } : c) }));
+        apiService.submitMilestoneForApproval(contractId, milestoneId)
+            .then(updated => {
+                if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
+            })
+            .catch((error: any) => {
+                setAppData(prev => ({ ...prev, contracts: previousContracts }));
+                alert(error?.message || 'Could not submit milestone for approval.');
+            });
     };
     const approveMilestone = (contractId: string, milestoneId: string) => {
+        const previousContracts = data.contracts;
         setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? {...m, status: MilestoneStatus.APPROVED_PENDING_INVOICE} : m) } : c) }));
+        apiService.approveMilestone(contractId, milestoneId)
+            .then(updated => {
+                if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
+            })
+            .catch((error: any) => {
+                setAppData(prev => ({ ...prev, contracts: previousContracts }));
+                alert(error?.message || 'Could not approve milestone.');
+            });
     };
 
     const submitTimesheet = (contractId: string, timesheetData: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => {
+        const previousContracts = data.contracts;
         const newTimesheet: Timesheet = { ...timesheetData, id: `ts-${Date.now()}`, contractId, engineerId: user!.profile.id, status: TimesheetStatus.SUBMITTED };
         setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, timesheets: [...(c.timesheets || []), newTimesheet] } : c) }));
+        apiService.submitTimesheet(contractId, timesheetData)
+            .then(updated => {
+                if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
+            })
+            .catch((error: any) => {
+                setAppData(prev => ({ ...prev, contracts: previousContracts }));
+                alert(error?.message || 'Could not submit timesheet.');
+            });
     };
 
     const approveTimesheet = (contractId: string, timesheetId: string) => {
-         setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, timesheets: (c.timesheets || []).map(ts => ts.id === timesheetId ? {...ts, status: TimesheetStatus.PAID } : ts) } : c) }));
+        const previousContracts = data.contracts;
+        setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, timesheets: (c.timesheets || []).map(ts => ts.id === timesheetId ? {...ts, status: TimesheetStatus.PAID } : ts) } : c) }));
+        apiService.approveTimesheet(contractId, timesheetId)
+            .then(updated => {
+                if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
+            })
+            .catch((error: any) => {
+                setAppData(prev => ({ ...prev, contracts: previousContracts }));
+                alert(error?.message || 'Could not approve timesheet.');
+            });
     };
-    
+
     const generateInvoice = (contractId: string, paymentTerms: PaymentTerms) => {
          const contract = data.contracts.find(c => c.id === contractId);
          if (!contract) return;
@@ -198,7 +284,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
          const itemsToInvoice = contract.milestones
              .filter(m => m.status === MilestoneStatus.APPROVED_PENDING_INVOICE)
              .map(m => ({ description: `Milestone: ${m.description}`, amount: m.amount }));
-         
+
          const total = itemsToInvoice.reduce((sum, item) => sum + item.amount, 0);
 
          const newInvoice: Invoice = {
@@ -213,20 +299,92 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
              status: InvoiceStatus.SENT
          };
 
+         const previousInvoices = data.invoices;
+         const previousContracts = data.contracts;
+
          setAppData(prev => ({ ...prev, invoices: [...prev.invoices, newInvoice], contracts: prev.contracts.map(c => c.id === contractId ? {...c, milestones: c.milestones.map(m => m.status === MilestoneStatus.APPROVED_PENDING_INVOICE ? {...m, status: MilestoneStatus.COMPLETED_PAID} : m)} : c)}));
-         alert("Invoice generated and sent!");
+
+         apiService.generateInvoice(contractId, paymentTerms)
+            .then(saved => {
+                if (saved) setAppData(prev => ({ ...prev, invoices: prev.invoices.map(inv => inv.id === newInvoice.id ? saved : inv) }));
+                alert("Invoice generated and sent!");
+            })
+            .catch((error: any) => {
+                setAppData(prev => ({ ...prev, invoices: previousInvoices, contracts: previousContracts }));
+                alert(error?.message || 'Could not generate invoice.');
+            });
     };
     
+    // otherPartyProfileId is a *profile* id (engineer/company), while
+    // conversations are keyed by *user* ids - findUserByProfileId bridges
+    // the two, same lookup ChatWindow/MessagesView already rely on.
     const startConversationAndNavigate = (otherPartyProfileId: string, navigateCallback: () => void) => {
-        alert(`Starting conversation with ${otherPartyProfileId}`);
+        const otherUser = data.findUserByProfileId(otherPartyProfileId);
+        if (!user || !otherUser) {
+            navigateCallback();
+            return;
+        }
+
+        const existing = data.conversations.find(
+            c => c.participantIds.includes(user.id) && c.participantIds.includes(otherUser.id)
+        );
+        if (existing) {
+            navigateCallback();
+            return;
+        }
+
+        const optimisticConversation: Conversation = {
+            id: `convo-${Date.now()}`,
+            participantIds: [user.id, otherUser.id],
+            lastMessageTimestamp: new Date(),
+            lastMessageText: '',
+        };
+        setAppData(prev => ({ ...prev, conversations: [optimisticConversation, ...prev.conversations] }));
+        apiService.startOrGetConversation(otherUser.id)
+            .then(saved => {
+                if (saved) setAppData(prev => ({ ...prev, conversations: prev.conversations.map(c => c.id === optimisticConversation.id ? saved : c) }));
+            })
+            .catch((error: any) => {
+                setAppData(prev => ({ ...prev, conversations: prev.conversations.filter(c => c.id !== optimisticConversation.id) }));
+                alert(error?.message || 'Could not start conversation.');
+            });
         navigateCallback();
     };
 
     const sendMessage = async (conversationId: string, text: string) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
         const newMessage = { id: `msg-${Date.now()}`, conversationId, senderId: user!.id, text, timestamp: new Date(), isRead: false };
-        setAppData(prev => ({...prev, messages: [...prev.messages, newMessage]}));
+        setAppData(prev => ({
+            ...prev,
+            messages: [...prev.messages, newMessage],
+            conversations: prev.conversations.map(c => c.id === conversationId ? { ...c, lastMessageText: text, lastMessageTimestamp: newMessage.timestamp } : c),
+        }));
         realtimeService.simulateNewMessage(conversationId, newMessage); // Simulate push
+
+        try {
+            const saved = await apiService.sendMessage(conversationId, text);
+            if (saved) {
+                setAppData(prev => ({ ...prev, messages: prev.messages.map(m => m.id === newMessage.id ? saved : m) }));
+            }
+        } catch (error: any) {
+            setAppData(prev => ({ ...prev, messages: prev.messages.filter(m => m.id !== newMessage.id) }));
+            alert(error?.message || 'Could not send message.');
+        }
+    };
+
+    // Pulls the latest messages for a conversation from the real backend
+    // and merges them in. Called on an interval by ChatWindow while a
+    // conversation is open, to approximate real-time delivery without a
+    // WebSocket connection. `null` means "no session, or unreachable" - left
+    // alone rather than treated as "no messages", so it can never wipe out
+    // messages that only exist locally (e.g. no backend running at all).
+    const refreshConversationMessages = (conversationId: string) => {
+        apiService.getBackendMessagesForConversation(conversationId).then(backendMessages => {
+            if (backendMessages === null) return;
+            setAppData(prev => {
+                const otherConversationsMessages = prev.messages.filter(m => m.conversationId !== conversationId);
+                return { ...prev, messages: [...otherConversationsMessages, ...backendMessages] };
+            });
+        });
     };
 
     const getApplicantDeepDive = async (job: Job, engineer: EngineerProfile) => ({ analysis: { summary: "This is a mock AI summary.", strengths: ["Good with Crestron"], areas_to_probe: ["Biamp experience"], interview_questions: ["Tell me about your largest project."] }});
@@ -322,6 +480,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         generateInvoice,
         startConversationAndNavigate,
         sendMessage,
+        refreshConversationMessages,
         getApplicantDeepDive,
         analyzeProductForFeatures,
         toggleUserStatus,

@@ -47,7 +47,7 @@ export const EngineerDashboard = () => {
             case 'My Network':
                  return <MyNetworkView setActiveView={setActiveView} />;
             case 'Availability':
-                return <AvailabilityView profile={engineerProfile} onUpdateAvailability={(date) => updateEngineerProfile({ id: engineerProfile.id, availability: date })} setActiveView={setActiveView} />;
+                return <AvailabilityView profile={engineerProfile} onUpdateProfile={updateEngineerProfile} setActiveView={setActiveView} />;
             case 'Contracts':
                 return <ContractsView setActiveView={setActiveView} />;
             case 'Invoices':

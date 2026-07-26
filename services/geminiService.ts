@@ -360,6 +360,15 @@ class GeminiService {
         return this.generateWithSchema(prompt, schema);
     }
 
+    // Used by ChatWindow.tsx to translate an incoming message into the
+    // reader's preferred language (SettingsContext's `language`). Detects
+    // the source language server-side so the UI can label the original
+    // ("Show original (French)") without asking the user what language
+    // they wrote in.
+    async translateText(text: string, targetLanguage: string): Promise<{ translatedText?: string; detectedSourceLanguage?: string; error?: string }> {
+        return postJSON('/ai/translate', { text, targetLanguage });
+    }
+
     // Simple mock for AI auto-reply
     getAutoReply(incomingMessage: string): string {
         const lowerCaseMessage = incomingMessage.toLowerCase();

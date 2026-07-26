@@ -48,6 +48,86 @@ db.exec(`
   );
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS jobs (
+    id TEXT PRIMARY KEY,
+    companyId TEXT NOT NULL,
+    data TEXT NOT NULL,
+    status TEXT NOT NULL,
+    postedDate TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS applications (
+    id TEXT PRIMARY KEY,
+    jobId TEXT NOT NULL,
+    engineerId TEXT NOT NULL,
+    status TEXT NOT NULL,
+    reviewed INTEGER NOT NULL DEFAULT 0,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL,
+    UNIQUE(jobId, engineerId)
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS contracts (
+    id TEXT PRIMARY KEY,
+    jobId TEXT NOT NULL,
+    companyId TEXT NOT NULL,
+    engineerId TEXT NOT NULL,
+    data TEXT NOT NULL,
+    status TEXT NOT NULL,
+    engineerSignature TEXT,
+    companySignature TEXT,
+    milestones TEXT NOT NULL DEFAULT '[]',
+    timesheets TEXT NOT NULL DEFAULT '[]',
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS invoices (
+    id TEXT PRIMARY KEY,
+    contractId TEXT NOT NULL,
+    companyId TEXT NOT NULL,
+    engineerId TEXT NOT NULL,
+    items TEXT NOT NULL,
+    total REAL NOT NULL,
+    issueDate TEXT NOT NULL,
+    dueDate TEXT NOT NULL,
+    status TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS conversations (
+    id TEXT PRIMARY KEY,
+    participantAId TEXT NOT NULL,
+    participantBId TEXT NOT NULL,
+    lastMessageText TEXT NOT NULL DEFAULT '',
+    lastMessageTimestamp TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+  );
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS messages (
+    id TEXT PRIMARY KEY,
+    conversationId TEXT NOT NULL,
+    senderId TEXT NOT NULL,
+    text TEXT NOT NULL,
+    timestamp TEXT NOT NULL,
+    isRead INTEGER NOT NULL DEFAULT 0
+  );
+`);
+
 export interface UserRow {
   id: string;
   email: string;
@@ -200,4 +280,340 @@ export function updateCompanyAttachmentRequestStatus(
   const now = new Date().toISOString();
   db.prepare("UPDATE company_attachment_requests SET status = ?, updatedAt = ? WHERE id = ?").run(status, now, id);
   return findCompanyAttachmentRequestById(id);
+}
+
+// --- Jobs ---
+// The job-specific fields (title, description, dayRate, skillRequirements,
+// etc - see types/index.ts `Job` on the frontend) are stored as a single
+// JSON blob, the same pattern as `users.profile`, so the frontend's Job
+// shape can evolve without a matching migration every time.
+
+export interface JobRow {
+  id: string;
+  companyId: string;
+  data: string;
+  status: string;
+  postedDate: string;
+  updatedAt: string;
+}
+
+export function createJob(companyId: string, data: Record<string, unknown>): JobRow {
+  const id = randomUUID();
+  const now = new Date().toISOString();
+  db.prepare(
+    "INSERT INTO jobs (id, companyId, data, status, postedDate, updatedAt) VALUES (?, ?, ?, 'active', ?, ?)"
+  ).run(id, companyId, JSON.stringify(data), now, now);
+  return findJobById(id)!;
+}
+
+export function findJobById(id: string): JobRow | undefined {
+  return db.prepare("SELECT * FROM jobs WHERE id = ?").get(id) as unknown as JobRow | undefined;
+}
+
+export function listActiveJobs(): JobRow[] {
+  return db.prepare("SELECT * FROM jobs WHERE status = 'active' ORDER BY postedDate DESC").all() as unknown as JobRow[];
+}
+
+export function listJobsForCompany(companyId: string): JobRow[] {
+  return db
+    .prepare("SELECT * FROM jobs WHERE companyId = ? ORDER BY postedDate DESC")
+    .all(companyId) as unknown as JobRow[];
+}
+
+export function updateJob(
+  id: string,
+  updates: { data?: Record<string, unknown>; status?: string }
+): JobRow | undefined {
+  const existing = findJobById(id);
+  if (!existing) return undefined;
+
+  const mergedData = updates.data ? { ...JSON.parse(existing.data), ...updates.data } : JSON.parse(existing.data);
+  const status = updates.status || existing.status;
+  const now = new Date().toISOString();
+
+  db.prepare("UPDATE jobs SET data = ?, status = ?, updatedAt = ? WHERE id = ?").run(
+    JSON.stringify(mergedData),
+    status,
+    now,
+    id
+  );
+  return findJobById(id);
+}
+
+// --- Applications ---
+
+export interface ApplicationRow {
+  id: string;
+  jobId: string;
+  engineerId: string;
+  status: string;
+  reviewed: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function createApplication(jobId: string, engineerId: string, status: string): ApplicationRow {
+  const id = randomUUID();
+  const now = new Date().toISOString();
+  db.prepare(
+    "INSERT INTO applications (id, jobId, engineerId, status, reviewed, createdAt, updatedAt) VALUES (?, ?, ?, ?, 0, ?, ?)"
+  ).run(id, jobId, engineerId, status, now, now);
+  return findApplicationById(id)!;
+}
+
+export function findApplicationById(id: string): ApplicationRow | undefined {
+  return db.prepare("SELECT * FROM applications WHERE id = ?").get(id) as unknown as ApplicationRow | undefined;
+}
+
+export function findApplication(jobId: string, engineerId: string): ApplicationRow | undefined {
+  return db
+    .prepare("SELECT * FROM applications WHERE jobId = ? AND engineerId = ?")
+    .get(jobId, engineerId) as unknown as ApplicationRow | undefined;
+}
+
+export function listApplicationsForJob(jobId: string): ApplicationRow[] {
+  return db
+    .prepare("SELECT * FROM applications WHERE jobId = ? ORDER BY createdAt DESC")
+    .all(jobId) as unknown as ApplicationRow[];
+}
+
+export function listApplicationsForEngineer(engineerId: string): ApplicationRow[] {
+  return db
+    .prepare("SELECT * FROM applications WHERE engineerId = ? ORDER BY createdAt DESC")
+    .all(engineerId) as unknown as ApplicationRow[];
+}
+
+export function updateApplicationStatus(id: string, status: string, reviewed?: boolean): ApplicationRow | undefined {
+  const existing = findApplicationById(id);
+  if (!existing) return undefined;
+  const now = new Date().toISOString();
+  db.prepare("UPDATE applications SET status = ?, reviewed = ?, updatedAt = ? WHERE id = ?").run(
+    status,
+    reviewed === undefined ? existing.reviewed : reviewed ? 1 : 0,
+    now,
+    id
+  );
+  return findApplicationById(id);
+}
+
+// --- Contracts, milestones & timesheets ---
+// Like `jobs.data`, the free-form contract fields (description, amount,
+// currency, type, jobTitle...) live in a JSON blob so the frontend's
+// Contract shape can evolve without a migration. Milestones, timesheets and
+// the two signatures get their own columns (still JSON-encoded) because
+// they're each updated independently and often - keeping them separate
+// avoids re-writing the whole blob on every milestone tick.
+
+export interface ContractRow {
+  id: string;
+  jobId: string;
+  companyId: string;
+  engineerId: string;
+  data: string;
+  status: string;
+  engineerSignature: string | null;
+  companySignature: string | null;
+  milestones: string;
+  timesheets: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function createContract(
+  companyId: string,
+  engineerId: string,
+  jobId: string,
+  status: string,
+  data: Record<string, unknown>,
+  milestones: unknown[]
+): ContractRow {
+  const id = randomUUID();
+  const now = new Date().toISOString();
+  db.prepare(
+    "INSERT INTO contracts (id, jobId, companyId, engineerId, data, status, engineerSignature, companySignature, milestones, timesheets, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, ?, '[]', ?, ?)"
+  ).run(id, jobId, companyId, engineerId, JSON.stringify(data), status, JSON.stringify(milestones), now, now);
+  return findContractById(id)!;
+}
+
+export function findContractById(id: string): ContractRow | undefined {
+  return db.prepare("SELECT * FROM contracts WHERE id = ?").get(id) as unknown as ContractRow | undefined;
+}
+
+export function listContractsForUser(userId: string): ContractRow[] {
+  return db
+    .prepare("SELECT * FROM contracts WHERE companyId = ? OR engineerId = ? ORDER BY createdAt DESC")
+    .all(userId, userId) as unknown as ContractRow[];
+}
+
+export function updateContractSignature(
+  id: string,
+  field: "engineerSignature" | "companySignature",
+  signature: { name: string; date: string },
+  status: string
+): ContractRow | undefined {
+  const now = new Date().toISOString();
+  db.prepare(`UPDATE contracts SET ${field} = ?, status = ?, updatedAt = ? WHERE id = ?`).run(
+    JSON.stringify(signature),
+    status,
+    now,
+    id
+  );
+  return findContractById(id);
+}
+
+export function updateContractMilestones(id: string, milestones: unknown[]): ContractRow | undefined {
+  const now = new Date().toISOString();
+  db.prepare("UPDATE contracts SET milestones = ?, updatedAt = ? WHERE id = ?").run(
+    JSON.stringify(milestones),
+    now,
+    id
+  );
+  return findContractById(id);
+}
+
+export function updateContractTimesheets(id: string, timesheets: unknown[]): ContractRow | undefined {
+  const now = new Date().toISOString();
+  db.prepare("UPDATE contracts SET timesheets = ?, updatedAt = ? WHERE id = ?").run(
+    JSON.stringify(timesheets),
+    now,
+    id
+  );
+  return findContractById(id);
+}
+
+// --- Invoices ---
+
+export interface InvoiceRow {
+  id: string;
+  contractId: string;
+  companyId: string;
+  engineerId: string;
+  items: string;
+  total: number;
+  issueDate: string;
+  dueDate: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function createInvoice(input: {
+  contractId: string;
+  companyId: string;
+  engineerId: string;
+  items: unknown[];
+  total: number;
+  dueDate: string;
+}): InvoiceRow {
+  const id = randomUUID();
+  const now = new Date().toISOString();
+  db.prepare(
+    "INSERT INTO invoices (id, contractId, companyId, engineerId, items, total, issueDate, dueDate, status, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Sent', ?, ?)"
+  ).run(
+    id,
+    input.contractId,
+    input.companyId,
+    input.engineerId,
+    JSON.stringify(input.items),
+    input.total,
+    now,
+    input.dueDate,
+    now,
+    now
+  );
+  return findInvoiceById(id)!;
+}
+
+export function findInvoiceById(id: string): InvoiceRow | undefined {
+  return db.prepare("SELECT * FROM invoices WHERE id = ?").get(id) as unknown as InvoiceRow | undefined;
+}
+
+export function listInvoicesForUser(userId: string): InvoiceRow[] {
+  return db
+    .prepare("SELECT * FROM invoices WHERE companyId = ? OR engineerId = ? ORDER BY createdAt DESC")
+    .all(userId, userId) as unknown as InvoiceRow[];
+}
+
+// --- Conversations & messages ---
+// Every conversation in this app is a 1:1 chat between two users, so the
+// two participants get their own indexed columns (participantAId /
+// participantBId) rather than a JSON blob - that makes "find the
+// conversation between these two people" and "list my conversations" plain
+// indexed lookups instead of a JSON scan.
+
+export interface ConversationRow {
+  id: string;
+  participantAId: string;
+  participantBId: string;
+  lastMessageText: string;
+  lastMessageTimestamp: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function createConversation(userAId: string, userBId: string): ConversationRow {
+  const id = randomUUID();
+  const now = new Date().toISOString();
+  db.prepare(
+    "INSERT INTO conversations (id, participantAId, participantBId, lastMessageText, lastMessageTimestamp, createdAt, updatedAt) VALUES (?, ?, ?, '', ?, ?, ?)"
+  ).run(id, userAId, userBId, now, now, now);
+  return findConversationById(id)!;
+}
+
+export function findConversationById(id: string): ConversationRow | undefined {
+  return db.prepare("SELECT * FROM conversations WHERE id = ?").get(id) as unknown as ConversationRow | undefined;
+}
+
+export function findConversationBetween(userAId: string, userBId: string): ConversationRow | undefined {
+  return db
+    .prepare(
+      "SELECT * FROM conversations WHERE (participantAId = ? AND participantBId = ?) OR (participantAId = ? AND participantBId = ?)"
+    )
+    .get(userAId, userBId, userBId, userAId) as unknown as ConversationRow | undefined;
+}
+
+export function listConversationsForUser(userId: string): ConversationRow[] {
+  return db
+    .prepare(
+      "SELECT * FROM conversations WHERE participantAId = ? OR participantBId = ? ORDER BY lastMessageTimestamp DESC"
+    )
+    .all(userId, userId) as unknown as ConversationRow[];
+}
+
+function touchConversation(id: string, lastMessageText: string, lastMessageTimestamp: string) {
+  db.prepare("UPDATE conversations SET lastMessageText = ?, lastMessageTimestamp = ?, updatedAt = ? WHERE id = ?").run(
+    lastMessageText,
+    lastMessageTimestamp,
+    lastMessageTimestamp,
+    id
+  );
+}
+
+export interface MessageRow {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  text: string;
+  timestamp: string;
+  isRead: number;
+}
+
+export function createMessage(conversationId: string, senderId: string, text: string): MessageRow {
+  const id = randomUUID();
+  const now = new Date().toISOString();
+  db.prepare(
+    "INSERT INTO messages (id, conversationId, senderId, text, timestamp, isRead) VALUES (?, ?, ?, ?, ?, 0)"
+  ).run(id, conversationId, senderId, text, now);
+  touchConversation(conversationId, text, now);
+  return findMessageById(id)!;
+}
+
+export function findMessageById(id: string): MessageRow | undefined {
+  return db.prepare("SELECT * FROM messages WHERE id = ?").get(id) as unknown as MessageRow | undefined;
+}
+
+export function listMessagesForConversation(conversationId: string): MessageRow[] {
+  return db
+    .prepare("SELECT * FROM messages WHERE conversationId = ? ORDER BY timestamp ASC")
+    .all(conversationId) as unknown as MessageRow[];
 }

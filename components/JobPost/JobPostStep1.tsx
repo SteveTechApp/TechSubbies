@@ -3,6 +3,7 @@ import { ExperienceLevel } from '../../types';
 import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles';
 import { ArrowRight, Sparkles } from '../Icons';
 import { AIJobHelper } from '../AIJobHelper';
+import { requiresLeadSupervision, hasLeadSupervisionConfirmed } from '../../utils/leadSupervision';
 
 interface JobPostStep1Props {
     jobDetails: any;
@@ -10,33 +11,10 @@ interface JobPostStep1Props {
     onNext: () => void;
 }
 
-const requiresLeadConfirmation = (jobDetails: any) => {
-    const role = String(jobDetails.jobRole || '').toLowerCase();
-    const title = String(jobDetails.title || '').toLowerCase();
-    const level = String(jobDetails.experienceLevel || '').toLowerCase();
-
-    return (
-        level === 'junior' ||
-        role.includes('labour') ||
-        role.includes('helper') ||
-        role.includes('assistant') ||
-        role.includes('site support') ||
-        title.includes('labour') ||
-        title.includes('helper') ||
-        title.includes('assistant') ||
-        title.includes('site support')
-    );
-};
-
-const hasLeadConfirmation = (jobDetails: any) => {
-    const value = String(jobDetails.supervisionArrangement || '').toLowerCase();
-    return ['supervised', 'lead_engineer_present', 'qualified_engineer_present'].includes(value) && Boolean(jobDetails.supervisionDisclaimerAccepted);
-};
-
 export const JobPostStep1 = ({ jobDetails, setJobDetails, onNext }: JobPostStep1Props) => {
     const [showAiHelper, setShowAiHelper] = useState(false);
-    const needsLead = requiresLeadConfirmation(jobDetails);
-    const leadConfirmed = hasLeadConfirmation(jobDetails);
+    const needsLead = requiresLeadSupervision(jobDetails);
+    const leadConfirmed = hasLeadSupervisionConfirmed(jobDetails);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;

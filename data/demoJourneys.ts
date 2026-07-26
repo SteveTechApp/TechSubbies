@@ -252,7 +252,7 @@ export const demoJourneys: DemoJourney[] = [
         userAction: "Confirm who to use and keep alternatives visible.",
         platformResponse: "TechSubbies keeps the project, shortlist and communication trail together.",
         expectedResult: "The business finds relevant available engineers without using a traditional recruitment process.",
-        description: "The expected result is speed, clarity and reduced admin around short-term skilled labour.",
+        description: "This is where skill fit, availability and verification come together into a shortlist the company can act on straight away.",
         metrics: [
           { label: "Outcome", value: "Shortlist ready", detail: "Suitable engineers identified" },
           { label: "Admin reduction", value: "High", detail: "Less manual searching" },

@@ -6,6 +6,9 @@ import { usersRouter } from "./routes/users.js";
 import { aiRouter } from "./routes/ai.js";
 import { partnershipsRouter } from "./routes/partnerships.js";
 import { companyAttachmentsRouter } from "./routes/companyAttachments.js";
+import { applicationsRouter, jobsRouter } from "./routes/jobs.js";
+import { contractsRouter, invoicesRouter } from "./routes/contracts.js";
+import { conversationsRouter } from "./routes/conversations.js";
 
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
 
@@ -24,6 +27,11 @@ export function createApp() {
   app.use("/api/ai", aiRouter);
   app.use("/api/partnerships", partnershipsRouter);
   app.use("/api/company-attachments", companyAttachmentsRouter);
+  app.use("/api/jobs", jobsRouter);
+  app.use("/api/applications", applicationsRouter);
+  app.use("/api/contracts", contractsRouter);
+  app.use("/api/invoices", invoicesRouter);
+  app.use("/api/conversations", conversationsRouter);
 
   // Keep this last: catches anything unmatched under /api.
   app.use("/api", (_req, res) => {

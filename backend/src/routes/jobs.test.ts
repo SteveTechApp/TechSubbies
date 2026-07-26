@@ -1,0 +1,217 @@
+import fs from "node:fs";
+import path from "node:path";
+import { describe, it, expect } from "vitest";
+import request from "supertest";
+
+const TEST_DB = path.join(process.cwd(), "data", "test-jobs.db");
+fs.rmSync(TEST_DB, { force: true });
+process.env.DB_FILE = TEST_DB;
+process.env.JWT_SECRET = "test-secret";
+
+const { createApp } = await import("../app.js");
+const app = createApp();
+
+async function registerCompany(email: string, name: string) {
+  const res = await request(app).post("/api/auth/register").send({
+    email,
+    password: "correcthorsebattery",
+    role: "Company",
+    name,
+    profileData: {},
+  });
+  return { token: res.body.token as string, id: res.body.user.id as string };
+}
+
+async function registerEngineer(email: string, name: string) {
+  const res = await request(app).post("/api/auth/register").send({
+    email,
+    password: "correcthorsebattery",
+    role: "Engineer",
+    name,
+    profileData: {},
+  });
+  return { token: res.body.token as string, id: res.body.user.id as string };
+}
+
+const sampleJob = {
+  title: "AV Install Engineer",
+  description: "Boardroom AV install, 3 days.",
+  location: "London, UK",
+  dayRate: "250",
+  duration: "3 days",
+  currency: "£",
+  startDate: null,
+  jobType: "Contract",
+  experienceLevel: "Senior",
+  jobRole: "senior-av-installer",
+  skillRequirements: [{ name: "Crestron", importance: "must-have" }],
+};
+
+describe("jobs", () => {
+  it("lets a company post a job and lists it publicly", async () => {
+    const company = await registerCompany("jobs-co-a@example.com", "Job Co A");
+
+    const postRes = await request(app)
+      .post("/api/jobs")
+      .set("Authorization", `Bearer ${company.token}`)
+      .send(sampleJob);
+
+    expect(postRes.status).toBe(201);
+    expect(postRes.body.companyId).toBe(company.id);
+    expect(postRes.body.status).toBe("active");
+
+    const listRes = await request(app).get("/api/jobs");
+    expect(listRes.status).toBe(200);
+    expect(listRes.body.some((j: any) => j.id === postRes.body.id)).toBe(true);
+  });
+
+  it("persists the supervision self-declaration fields for junior/support roles", async () => {
+    const company = await registerCompany("jobs-co-supervision@example.com", "Job Co Supervision");
+
+    const postRes = await request(app)
+      .post("/api/jobs")
+      .set("Authorization", `Bearer ${company.token}`)
+      .send({
+        ...sampleJob,
+        experienceLevel: "Junior",
+        supervisionArrangement: "lead_engineer_present",
+        supervisionDisclaimerAccepted: true,
+      });
+
+    expect(postRes.status).toBe(201);
+    expect(postRes.body.supervisionArrangement).toBe("lead_engineer_present");
+    expect(postRes.body.supervisionDisclaimerAccepted).toBe(true);
+  });
+
+  it("rejects job postings from non-company accounts", async () => {
+    const engineer = await registerEngineer("jobs-eng-reject@example.com", "Eng Reject");
+
+    const postRes = await request(app)
+      .post("/api/jobs")
+      .set("Authorization", `Bearer ${engineer.token}`)
+      .send(sampleJob);
+
+    expect(postRes.status).toBe(403);
+  });
+
+  it("rejects an incomplete job posting", async () => {
+    const company = await registerCompany("jobs-co-incomplete@example.com", "Job Co Incomplete");
+
+    const postRes = await request(app)
+      .post("/api/jobs")
+      .set("Authorization", `Bearer ${company.token}`)
+      .send({ title: "Missing fields" });
+
+    expect(postRes.status).toBe(400);
+  });
+
+  it("only lets the posting company update its own job", async () => {
+    const company = await registerCompany("jobs-co-b@example.com", "Job Co B");
+    const otherCompany = await registerCompany("jobs-co-c@example.com", "Job Co C");
+
+    const postRes = await request(app)
+      .post("/api/jobs")
+      .set("Authorization", `Bearer ${company.token}`)
+      .send(sampleJob);
+
+    const wrongUpdate = await request(app)
+      .patch(`/api/jobs/${postRes.body.id}`)
+      .set("Authorization", `Bearer ${otherCompany.token}`)
+      .send({ status: "closed" });
+    expect(wrongUpdate.status).toBe(403);
+
+    const rightUpdate = await request(app)
+      .patch(`/api/jobs/${postRes.body.id}`)
+      .set("Authorization", `Bearer ${company.token}`)
+      .send({ status: "closed" });
+    expect(rightUpdate.status).toBe(200);
+    expect(rightUpdate.body.status).toBe("closed");
+  });
+});
+
+describe("applications", () => {
+  it("lets an engineer apply once, and blocks a duplicate application", async () => {
+    const company = await registerCompany("jobs-co-d@example.com", "Job Co D");
+    const engineer = await registerEngineer("jobs-eng-a@example.com", "Eng A");
+
+    const job = await request(app)
+      .post("/api/jobs")
+      .set("Authorization", `Bearer ${company.token}`)
+      .send(sampleJob);
+
+    const applyRes = await request(app)
+      .post(`/api/jobs/${job.body.id}/apply`)
+      .set("Authorization", `Bearer ${engineer.token}`);
+    expect(applyRes.status).toBe(201);
+    expect(applyRes.body.status).toBe("Applied");
+
+    const dupeRes = await request(app)
+      .post(`/api/jobs/${job.body.id}/apply`)
+      .set("Authorization", `Bearer ${engineer.token}`);
+    expect(dupeRes.status).toBe(409);
+  });
+
+  it("rejects applications from non-engineer accounts", async () => {
+    const company = await registerCompany("jobs-co-e@example.com", "Job Co E");
+    const otherCompany = await registerCompany("jobs-co-f@example.com", "Job Co F");
+
+    const job = await request(app)
+      .post("/api/jobs")
+      .set("Authorization", `Bearer ${company.token}`)
+      .send(sampleJob);
+
+    const applyRes = await request(app)
+      .post(`/api/jobs/${job.body.id}/apply`)
+      .set("Authorization", `Bearer ${otherCompany.token}`);
+    expect(applyRes.status).toBe(403);
+  });
+
+  it("only lets the posting company see its job's applicants", async () => {
+    const company = await registerCompany("jobs-co-g@example.com", "Job Co G");
+    const otherCompany = await registerCompany("jobs-co-h@example.com", "Job Co H");
+    const engineer = await registerEngineer("jobs-eng-b@example.com", "Eng B");
+
+    const job = await request(app)
+      .post("/api/jobs")
+      .set("Authorization", `Bearer ${company.token}`)
+      .send(sampleJob);
+
+    await request(app)
+      .post(`/api/jobs/${job.body.id}/apply`)
+      .set("Authorization", `Bearer ${engineer.token}`);
+
+    const wrongView = await request(app)
+      .get(`/api/jobs/${job.body.id}/applications`)
+      .set("Authorization", `Bearer ${otherCompany.token}`);
+    expect(wrongView.status).toBe(403);
+
+    const rightView = await request(app)
+      .get(`/api/jobs/${job.body.id}/applications`)
+      .set("Authorization", `Bearer ${company.token}`);
+    expect(rightView.status).toBe(200);
+    expect(rightView.body).toHaveLength(1);
+    expect(rightView.body[0].engineerId).toBe(engineer.id);
+  });
+
+  it("lets an engineer list their own applications", async () => {
+    const company = await registerCompany("jobs-co-i@example.com", "Job Co I");
+    const engineer = await registerEngineer("jobs-eng-c@example.com", "Eng C");
+
+    const job = await request(app)
+      .post("/api/jobs")
+      .set("Authorization", `Bearer ${company.token}`)
+      .send(sampleJob);
+
+    await request(app)
+      .post(`/api/jobs/${job.body.id}/apply`)
+      .set("Authorization", `Bearer ${engineer.token}`);
+
+    const mineRes = await request(app)
+      .get("/api/applications/me")
+      .set("Authorization", `Bearer ${engineer.token}`);
+
+    expect(mineRes.status).toBe(200);
+    expect(mineRes.body).toHaveLength(1);
+    expect(mineRes.body[0].jobId).toBe(job.body.id);
+  });
+});
