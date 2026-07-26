@@ -11,7 +11,9 @@ export interface AuthedRequest extends Request {
 const JWT_SECRET = process.env.JWT_SECRET || "insecure-dev-secret-change-me";
 
 export function signToken(userId: string): string {
-  return jwt.sign({ sub: userId }, JWT_SECRET, { expiresIn: "7d" });
+  const user = findUserById(userId);
+  if (!user) throw new Error("Cannot create a session for a missing account.");
+  return jwt.sign({ sub: userId, sv: user.sessionVersion }, JWT_SECRET, { expiresIn: "7d" });
 }
 
 // Browser sessions use an HttpOnly cookie. Bearer tokens remain supported
@@ -23,10 +25,13 @@ export function requireAuth(req: AuthedRequest, res: Response, next: NextFunctio
   const token = cookieToken || bearerToken;
   if (!token) return res.status(401).json({ error: "Authentication is required." });
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as { sub: string };
+    const payload = jwt.verify(token, JWT_SECRET) as { sub: string; sv?: number };
     const user = findUserById(payload.sub);
     if (!user) {
       return res.status(401).json({ error: "The account for this session no longer exists." });
+    }
+    if (payload.sv !== user.sessionVersion) {
+      return res.status(401).json({ error: "This session has been revoked." });
     }
     req.userId = user.id;
     req.authUser = user;

@@ -11,7 +11,16 @@ process.env.DB_FILE = TEST_DB;
 process.env.JWT_SECRET = "test-secret";
 
 const { createApp } = await import("../app.js");
+const { developmentEmailOutbox } = await import("../lib/email.js");
 const app = createApp();
+
+function tokenFromLastEmail(): string {
+  const email = developmentEmailOutbox.at(-1);
+  if (!email) throw new Error("Expected an email in the development outbox.");
+  const token = new URL(email.text).searchParams.get("token");
+  if (!token) throw new Error("Expected a token in the development email.");
+  return token;
+}
 
 describe("POST /api/auth/register", () => {
   it("creates a new account and returns a token", async () => {
@@ -141,5 +150,77 @@ describe("POST /api/auth/login", () => {
     });
 
     expect(res.status).toBe(401);
+  });
+});
+
+describe("email verification and password recovery", () => {
+  it("verifies an email with a hashed, single-use token", async () => {
+    const registered = await request(app).post("/api/auth/register").send({
+      email: "verify@example.com",
+      password: "correcthorsebattery",
+      role: "Engineer",
+      name: "Verify Me",
+    });
+    expect(registered.body.user.emailVerified).toBe(false);
+    const token = tokenFromLastEmail();
+
+    const verified = await request(app).post("/api/auth/verification/confirm").send({ token });
+    expect(verified.status).toBe(200);
+    expect(verified.body.verified).toBe(true);
+
+    const reused = await request(app).post("/api/auth/verification/confirm").send({ token });
+    expect(reused.status).toBe(400);
+  });
+
+  it("uses the same reset-request response for known and unknown accounts", async () => {
+    const known = await request(app)
+      .post("/api/auth/password-reset/request")
+      .send({ email: "verify@example.com" });
+    const unknown = await request(app)
+      .post("/api/auth/password-reset/request")
+      .send({ email: "unknown@example.com" });
+    expect(known.status).toBe(202);
+    expect(unknown.status).toBe(202);
+    expect(known.body).toEqual(unknown.body);
+  });
+
+  it("resets a password with a single-use token", async () => {
+    await request(app).post("/api/auth/password-reset/request").send({ email: "verify@example.com" });
+    const token = tokenFromLastEmail();
+    const reset = await request(app)
+      .post("/api/auth/password-reset/confirm")
+      .send({ token, newPassword: "a-new-secure-password" });
+    expect(reset.status).toBe(204);
+
+    const login = await request(app).post("/api/auth/login").send({
+      email: "verify@example.com",
+      password: "a-new-secure-password",
+    });
+    expect(login.status).toBe(200);
+  });
+
+  it("changes a signed-in password after checking the current password", async () => {
+    const registered = await request(app).post("/api/auth/register").send({
+      email: "change-password@example.com",
+      password: "original-password",
+      role: "Company",
+      name: "Password Change",
+    });
+    const rejected = await request(app)
+      .post("/api/auth/password/change")
+      .set("Authorization", `Bearer ${registered.body.token}`)
+      .send({ currentPassword: "wrong-password", newPassword: "replacement-password" });
+    expect(rejected.status).toBe(401);
+
+    const changed = await request(app)
+      .post("/api/auth/password/change")
+      .set("Authorization", `Bearer ${registered.body.token}`)
+      .send({ currentPassword: "original-password", newPassword: "replacement-password" });
+    expect(changed.status).toBe(204);
+
+    const revoked = await request(app)
+      .get("/api/users/me")
+      .set("Authorization", `Bearer ${registered.body.token}`);
+    expect(revoked.status).toBe(401);
   });
 });

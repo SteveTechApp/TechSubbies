@@ -21,9 +21,31 @@ db.exec(`
     role TEXT NOT NULL,
     name TEXT NOT NULL,
     profile TEXT NOT NULL,
+    emailVerified INTEGER NOT NULL DEFAULT 0,
+    sessionVersion INTEGER NOT NULL DEFAULT 0,
     createdAt TEXT NOT NULL,
     updatedAt TEXT NOT NULL
   );
+`);
+
+// Existing development databases pre-date email verification.
+const userColumns = db.prepare("PRAGMA table_info(users)").all() as unknown as { name: string }[];
+if (!userColumns.some((column) => column.name === "emailVerified")) {
+  db.exec("ALTER TABLE users ADD COLUMN emailVerified INTEGER NOT NULL DEFAULT 0");
+}
+if (!userColumns.some((column) => column.name === "sessionVersion")) {
+  db.exec("ALTER TABLE users ADD COLUMN sessionVersion INTEGER NOT NULL DEFAULT 0");
+}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS account_tokens (
+    tokenHash TEXT PRIMARY KEY,
+    userId TEXT NOT NULL,
+    type TEXT NOT NULL,
+    expiresAt TEXT NOT NULL,
+    createdAt TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS account_tokens_user_type ON account_tokens(userId, type);
 `);
 
 db.exec(`
@@ -135,6 +157,8 @@ export interface UserRow {
   role: string;
   name: string;
   profile: string;
+  emailVerified: number;
+  sessionVersion: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -163,6 +187,20 @@ export function createUser(input: { email: string; password: string; role: strin
 export function updateUserProfile(id: string, profile: string, name: string): UserRow | undefined {
   const now = new Date().toISOString();
   db.prepare("UPDATE users SET profile = ?, name = ?, updatedAt = ? WHERE id = ?").run(profile, name, now, id);
+  return findUserById(id);
+}
+
+export function markEmailVerified(id: string): UserRow | undefined {
+  db.prepare("UPDATE users SET emailVerified = 1, updatedAt = ? WHERE id = ?").run(new Date().toISOString(), id);
+  return findUserById(id);
+}
+
+export function updateUserPassword(id: string, passwordHash: string): UserRow | undefined {
+  db.prepare("UPDATE users SET password = ?, sessionVersion = sessionVersion + 1, updatedAt = ? WHERE id = ?").run(
+    passwordHash,
+    new Date().toISOString(),
+    id
+  );
   return findUserById(id);
 }
 
