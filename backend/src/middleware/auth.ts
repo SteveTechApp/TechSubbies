@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { findUserById, type UserRow } from "../lib/db.js";
+import { parseCookies, SESSION_COOKIE } from "./security.js";
 
 export interface AuthedRequest extends Request {
   userId?: string;
@@ -13,15 +14,14 @@ export function signToken(userId: string): string {
   return jwt.sign({ sub: userId }, JWT_SECRET, { expiresIn: "7d" });
 }
 
-// Protects routes that require a signed-in user. Expects
-// `Authorization: Bearer <token>` and attaches `req.userId` on success.
+// Browser sessions use an HttpOnly cookie. Bearer tokens remain supported
+// for non-browser API clients and automated tests.
 export function requireAuth(req: AuthedRequest, res: Response, next: NextFunction) {
   const header = req.headers.authorization;
-  if (!header || !header.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Missing or invalid Authorization header." });
-  }
-
-  const token = header.slice("Bearer ".length);
+  const cookieToken = parseCookies(req)[SESSION_COOKIE];
+  const bearerToken = header?.startsWith("Bearer ") ? header.slice("Bearer ".length) : undefined;
+  const token = cookieToken || bearerToken;
+  if (!token) return res.status(401).json({ error: "Authentication is required." });
   try {
     const payload = jwt.verify(token, JWT_SECRET) as { sub: string };
     const user = findUserById(payload.sub);

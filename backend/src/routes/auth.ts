@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createUser, findUserByEmail } from "../lib/db.js";
 import { signToken } from "../middleware/auth.js";
 import { toPublicUser } from "../lib/publicUser.js";
+import { clearAuthCookies, setAuthCookies } from "../middleware/security.js";
 
 export const authRouter = Router();
 
@@ -40,7 +41,11 @@ authRouter.post("/register", async (req, res) => {
   });
 
   const token = signToken(user.id);
-  return res.status(201).json({ token, user: toPublicUser(user) });
+  setAuthCookies(res, token);
+  return res.status(201).json({
+    ...(process.env.NODE_ENV === "production" ? {} : { token }),
+    user: toPublicUser(user),
+  });
 });
 
 const loginSchema = z.object({
@@ -66,5 +71,14 @@ authRouter.post("/login", async (req, res) => {
   }
 
   const token = signToken(user.id);
-  return res.json({ token, user: toPublicUser(user) });
+  setAuthCookies(res, token);
+  return res.json({
+    ...(process.env.NODE_ENV === "production" ? {} : { token }),
+    user: toPublicUser(user),
+  });
+});
+
+authRouter.post("/logout", (_req, res) => {
+  clearAuthCookies(res);
+  return res.status(204).end();
 });

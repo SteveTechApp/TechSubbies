@@ -9,14 +9,17 @@ import { companyAttachmentsRouter } from "./routes/companyAttachments.js";
 import { applicationsRouter, jobsRouter } from "./routes/jobs.js";
 import { contractsRouter, invoicesRouter } from "./routes/contracts.js";
 import { conversationsRouter } from "./routes/conversations.js";
+import { requireCsrf, securityHeaders } from "./middleware/security.js";
 
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
 
 export function createApp() {
   const app = express();
 
-  app.use(cors({ origin: FRONTEND_ORIGIN }));
+  app.use(securityHeaders);
+  app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }));
   app.use(express.json({ limit: "2mb" }));
+  app.use(requireCsrf);
 
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok" });

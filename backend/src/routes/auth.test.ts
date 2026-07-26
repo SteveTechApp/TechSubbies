@@ -28,6 +28,9 @@ describe("POST /api/auth/register", () => {
     expect(res.body.user.role).toBe("Engineer");
     expect(res.body.user.profile.name).toBe("Alice Example");
     expect(res.body.user.profile.contact.email).toBe("alice@example.com");
+    const cookies = res.headers["set-cookie"] as unknown as string[];
+    expect(cookies.some((cookie) => cookie.startsWith("techsubbies_session=") && cookie.includes("HttpOnly"))).toBe(true);
+    expect(cookies.some((cookie) => cookie.startsWith("techsubbies_csrf="))).toBe(true);
   });
 
   it("rejects a password shorter than 8 characters", async () => {
@@ -70,6 +73,34 @@ describe("POST /api/auth/register", () => {
     });
 
     expect(res.status).toBe(409);
+  });
+});
+
+describe("cookie session security", () => {
+  it("requires a matching CSRF token for cookie-authenticated state changes", async () => {
+    const agent = request.agent(app);
+    const login = await agent.post("/api/auth/register").send({
+      email: "cookie-session@example.com",
+      password: "correcthorsebattery",
+      role: "Engineer",
+      name: "Cookie Session",
+    });
+    const cookies = login.headers["set-cookie"] as unknown as string[];
+    const csrfCookie = cookies.find((cookie) => cookie.startsWith("techsubbies_csrf="));
+    const csrfToken = decodeURIComponent(csrfCookie!.split(";")[0].split("=")[1]);
+
+    const rejected = await agent.post("/api/auth/logout");
+    expect(rejected.status).toBe(403);
+
+    const accepted = await agent.post("/api/auth/logout").set("X-CSRF-Token", csrfToken);
+    expect(accepted.status).toBe(204);
+  });
+
+  it("adds baseline security headers", async () => {
+    const res = await request(app).get("/api/health");
+    expect(res.headers["x-content-type-options"]).toBe("nosniff");
+    expect(res.headers["x-frame-options"]).toBe("DENY");
+    expect(res.headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
   });
 });
 

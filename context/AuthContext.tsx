@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Role } from '../types';
 import { MOCK_USERS, MOCK_USER_FREE_ENGINEER } from '../data/mockData';
-import apiService, { getAuthToken, clearAuthToken } from '../services/apiService';
+import apiService from '../services/apiService';
 
 interface AuthContextType {
     user: User | null;
@@ -24,7 +24,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // intentionally not persisted - that's a quick local testing shortcut,
     // not a real account.
     useEffect(() => {
-        if (!getAuthToken()) return;
         let cancelled = false;
         apiService.getCurrentUserFromToken().then((restoredUser) => {
             if (!cancelled && restoredUser) {
@@ -43,8 +42,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const logout = () => {
-        clearAuthToken();
         setUser(null);
+        void apiService.logoutSession();
     };
     
     // FIX: Implemented createAndLoginEngineer to fix missing property error.

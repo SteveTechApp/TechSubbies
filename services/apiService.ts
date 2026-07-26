@@ -1,6 +1,7 @@
 import { MOCK_ENGINEERS, MOCK_COMPANIES, MOCK_JOBS, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_CONTRACTS, MOCK_TRANSACTIONS, MOCK_PROJECTS, ALL_MOCK_USERS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_NOTIFICATIONS, MOCK_COLLABORATION_POSTS, MOCK_INVOICES } from '../data/mockData';
 import { MOCK_RESOURCING_COMPANY_1, MOCK_ADMIN_PROFILE, MOCK_FREE_ENGINEER, MOCK_ENGINEER_STEVE } from '../data/modules/mockStaticProfiles';
 import { ApplicationStatus, EngineerProfile, ProfileTier, Role, User, Contract, ContractStatus, MilestoneStatus, Timesheet, TimesheetStatus, PaymentTerms, Invoice, InvoiceStatus, Conversation, Message, ForumPost, Notification, CollaborationPost, CompanyProfile, ResourcingCompanyProfile, Job, Discipline, Currency, Country, ExperienceLevel } from '../types';
+import { secureFetch } from './httpClient';
 
 // --- API Service ---
 // Account creation, login and profile updates now call the real backend
@@ -13,25 +14,24 @@ const simulateDelay = (ms: number = 500) => new Promise(res => setTimeout(res, m
 
 const API_BASE_URL = (typeof process !== 'undefined' && (process as any).env?.API_BASE_URL) || 'http://localhost:4000/api';
 const TOKEN_KEY = 'techsubbies_auth_token';
+const fetch = secureFetch;
+let cookieSessionAvailable = false;
 
 export function getAuthToken(): string | null {
-  try {
-    return window.localStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
+  return cookieSessionAvailable ? "cookie-session" : null;
 }
 
-function saveAuthToken(token: string) {
+function saveAuthToken(_token?: string) {
+  cookieSessionAvailable = true;
   try {
-    window.localStorage.setItem(TOKEN_KEY, token);
+    window.localStorage.removeItem(TOKEN_KEY);
   } catch {
-    // localStorage unavailable (e.g. private browsing) - the session just
-    // won't survive a refresh, which matches the old mock behavior anyway.
+    // no-op
   }
 }
 
 export function clearAuthToken() {
+  cookieSessionAvailable = false;
   try {
     window.localStorage.removeItem(TOKEN_KEY);
   } catch {
@@ -56,7 +56,7 @@ async function backendRegister(payload: { email: string; password: string; role:
   if (!response.ok) {
     throw new Error(data?.error || 'Registration failed.');
   }
-  saveAuthToken(data.token);
+  saveAuthToken();
   return data.user as User;
 }
 
@@ -70,7 +70,7 @@ async function backendLogin(email: string, password: string) {
   if (!response.ok) {
     throw new Error(data?.error || 'Invalid credentials.');
   }
-  saveAuthToken(data.token);
+  saveAuthToken();
   return data.user as User;
 }
 
@@ -144,6 +144,14 @@ const apiService = {
     return backendLogin(email, password);
   },
 
+  logoutSession: async (): Promise<void> => {
+    try {
+      await fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST' });
+    } finally {
+      clearAuthToken();
+    }
+  },
+
   // Looks up a single profile by id from the backend (public data, no
   // auth required to read it - matches GET /users/:profileId in the spec).
   getUserById: async (id: string): Promise<User | null> => {
@@ -167,16 +175,13 @@ const apiService = {
 
   // Restore identity only after the backend validates the signed token.
   getCurrentUserFromToken: async (): Promise<User | null> => {
-    const token = getAuthToken();
-    if (!token) return null;
     try {
-      const response = await fetch(`${API_BASE_URL}/users/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(`${API_BASE_URL}/users/me`);
       if (!response.ok) {
         if (response.status === 401) clearAuthToken();
         return null;
       }
+      saveAuthToken();
       return (await response.json()) as User;
     } catch {
       return null;
