@@ -21,3 +21,24 @@ export function toPublicUser(user: UserRow) {
     },
   };
 }
+
+// Directory/search responses must never expose account contact, identity or
+// payment details. Matching-safe professional fields remain available.
+export function toDirectoryUser(user: UserRow) {
+  const publicUser = toPublicUser(user);
+  const profile = { ...(publicUser.profile as Record<string, unknown>) };
+  [
+    "contact",
+    "email",
+    "phone",
+    "address",
+    "dateOfBirth",
+    "identity",
+    "bankDetails",
+    "paymentDetails",
+    "notificationSettings",
+    "documents",
+  ].forEach((key) => delete profile[key]);
+
+  return { ...publicUser, profile };
+}

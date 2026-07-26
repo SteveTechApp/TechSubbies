@@ -10,14 +10,26 @@ import { applicationsRouter, jobsRouter } from "./routes/jobs.js";
 import { contractsRouter, invoicesRouter } from "./routes/contracts.js";
 import { conversationsRouter } from "./routes/conversations.js";
 import { requireCsrf, securityHeaders } from "./middleware/security.js";
-
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
+import { createRateLimiter } from "./middleware/rateLimit.js";
+import { frontendOrigin, validateRuntimeConfig } from "./lib/config.js";
 
 export function createApp() {
+  validateRuntimeConfig();
   const app = express();
+  const production = process.env.NODE_ENV === "production";
+  const authRateLimit = createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    max: production ? 10 : 100,
+    name: "authentication",
+  });
+  const aiRateLimit = createRateLimiter({
+    windowMs: 60 * 1000,
+    max: production ? 30 : 300,
+    name: "AI",
+  });
 
   app.use(securityHeaders);
-  app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }));
+  app.use(cors({ origin: frontendOrigin(), credentials: true }));
   app.use(express.json({ limit: "2mb" }));
   app.use(requireCsrf);
 
@@ -25,9 +37,9 @@ export function createApp() {
     res.json({ status: "ok" });
   });
 
-  app.use("/api/auth", authRouter);
+  app.use("/api/auth", authRateLimit, authRouter);
   app.use("/api/users", usersRouter);
-  app.use("/api/ai", aiRouter);
+  app.use("/api/ai", aiRateLimit, aiRouter);
   app.use("/api/partnerships", partnershipsRouter);
   app.use("/api/company-attachments", companyAttachmentsRouter);
   app.use("/api/jobs", jobsRouter);

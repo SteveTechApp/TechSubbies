@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { findUserById, listUsers, updateUserProfile } from "../lib/db.js";
-import { toPublicUser } from "../lib/publicUser.js";
+import { toDirectoryUser, toPublicUser } from "../lib/publicUser.js";
 import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
 
 export const usersRouter = Router();
@@ -13,7 +13,13 @@ usersRouter.get("/me", requireAuth, async (req: AuthedRequest, res) => {
 
 // GET /api/users - list all profiles (for search/browse screens).
 usersRouter.get("/", async (_req, res) => {
-  return res.json(listUsers().map(toPublicUser));
+  const requestedLimit = Number(_req.query.limit);
+  const requestedOffset = Number(_req.query.offset);
+  const limit = Number.isFinite(requestedLimit) ? Math.min(100, Math.max(1, Math.floor(requestedLimit))) : 50;
+  const offset = Number.isFinite(requestedOffset) ? Math.max(0, Math.floor(requestedOffset)) : 0;
+  const users = listUsers();
+  res.setHeader("X-Total-Count", String(users.length));
+  return res.json(users.slice(offset, offset + limit).map(toDirectoryUser));
 });
 
 // GET /api/users/:profileId - a single profile.
@@ -22,7 +28,7 @@ usersRouter.get("/:profileId", async (req, res) => {
   if (!user) {
     return res.status(404).json({ error: "Profile not found." });
   }
-  return res.json(toPublicUser(user));
+  return res.json(toDirectoryUser(user));
 });
 
 // PATCH /api/users/me - update the signed-in user's own profile.

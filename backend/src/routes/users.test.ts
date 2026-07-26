@@ -32,6 +32,15 @@ describe("GET /api/users", () => {
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.some((u: any) => u.id === userId)).toBe(true);
+    const listed = res.body.find((u: any) => u.id === userId);
+    expect(listed.profile.contact).toBeUndefined();
+    expect(res.headers["x-total-count"]).toBeTruthy();
+  });
+
+  it("bounds and offsets directory results", async () => {
+    const res = await request(app).get("/api/users?limit=1&offset=0");
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
   });
 });
 
@@ -40,6 +49,7 @@ describe("GET /api/users/:profileId", () => {
     const res = await request(app).get(`/api/users/${userId}`);
     expect(res.status).toBe(200);
     expect(res.body.profile.name).toBe("Carol Example");
+    expect(res.body.profile.contact).toBeUndefined();
   });
 
   it("404s for an id that doesn't exist", async () => {
@@ -54,6 +64,7 @@ describe("GET /api/users/me", () => {
     expect(res.status).toBe(200);
     expect(res.body.id).toBe(userId);
     expect(res.body.role).toBe("Engineer");
+    expect(res.body.profile.contact.email).toBe("carol@example.com");
   });
 
   it("rejects a missing or invalid session", async () => {
