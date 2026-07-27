@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 // FIX: Replaced incorrect context hook 'useInteractions' with the correct hook 'useAppContext'.
 import { useAppContext } from '../context/InteractionContext';
-import { DashboardSidebar } from '../components/DashboardSidebar';
+import { DashboardShell } from '../components/DashboardShell';
 import { CompanyProfile, Job, Role, EngineerProfile } from '../types';
 import { DashboardView } from './CompanyDashboard/DashboardView';
 import { MyJobsView } from './CompanyDashboard/MyJobsView';
@@ -111,11 +111,10 @@ export const CompanyDashboard = () => {
     };
 
     return (
-        <div className="flex h-screen bg-gray-100">
-            <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-1 p-6 overflow-y-auto">
+        <>
+            <DashboardShell activeView={activeView} setActiveView={setActiveView}>
                 {renderView()}
-            </main>
+            </DashboardShell>
             <JobPostModal
                 isOpen={isJobModalOpen}
                 onClose={handleCloseModal}
@@ -129,11 +128,11 @@ export const CompanyDashboard = () => {
                     engineer={applicantForDeepDive.engineer}
                 />
             )}
-            <InstantInviteModal 
+            <InstantInviteModal
                 isOpen={!!justPostedJob}
                 onClose={() => setJustPostedJob(null)}
                 job={justPostedJob}
             />
-        </div>
+        </>
     );
 };

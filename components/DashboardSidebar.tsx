@@ -22,12 +22,15 @@ import {
     Clapperboard,
     LifeBuoy,
     Gift,
-    Handshake
+    Handshake,
+    X
 } from './Icons';
 
 interface DashboardSidebarProps {
     activeView: string;
     setActiveView: (view: string) => void;
+    onNavigate?: () => void;
+    onClose?: () => void;
 }
 
 const ENGINEER_LINKS = [
@@ -85,7 +88,7 @@ const ADMIN_LINKS = [
     { label: 'Platform Settings', icon: Settings },
 ];
 
-export const DashboardSidebar = ({ activeView, setActiveView }: DashboardSidebarProps) => {
+export const DashboardSidebar = ({ activeView, setActiveView, onNavigate, onClose }: DashboardSidebarProps) => {
     const { user, logout } = useAuth();
     
     if (!user) return null;
@@ -111,26 +114,40 @@ export const DashboardSidebar = ({ activeView, setActiveView }: DashboardSidebar
     const commonLinks = [
         { label: 'Help Center', icon: LifeBuoy }
     ];
+    const navigate = (view: string) => {
+        setActiveView(view);
+        onNavigate?.();
+    };
 
     if(user.role !== Role.ENGINEER) {
         // links = [...links, ...commonLinks.filter(l => l.label !== 'Messages')];
     }
 
     return (
-        <aside className="w-64 bg-white flex-shrink-0 flex flex-col border-r shadow-lg">
-            <div className="p-4 border-b">
+        <aside className="flex h-full w-64 flex-shrink-0 flex-col border-r bg-white shadow-lg">
+            <div className="flex items-center justify-between border-b p-4">
                 <Logo className="h-10" />
+                {onClose && (
+                    <button
+                        type="button"
+                        aria-label="Close dashboard navigation"
+                        onClick={onClose}
+                        className="rounded-md p-2 text-gray-600 hover:bg-gray-100 md:hidden"
+                    >
+                        <X size={20} />
+                    </button>
+                )}
             </div>
             <nav className="flex-grow p-2 overflow-y-auto custom-scrollbar">
                 <ul>
                     {links.map(link => (
-                        <NavLink key={link.label} {...link} activeView={activeView} setActiveView={setActiveView} />
+                        <NavLink key={link.label} {...link} activeView={activeView} setActiveView={navigate} />
                     ))}
                 </ul>
                  <div className="mt-4 pt-4 border-t">
                     <ul>
                          {commonLinks.map(link => (
-                            <NavLink key={link.label} {...link} activeView={activeView} setActiveView={setActiveView} />
+                            <NavLink key={link.label} {...link} activeView={activeView} setActiveView={navigate} />
                         ))}
                     </ul>
                 </div>

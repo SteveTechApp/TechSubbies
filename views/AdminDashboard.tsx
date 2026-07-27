@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { DashboardSidebar } from '../components/DashboardSidebar';
+import { DashboardShell } from '../components/DashboardShell';
 import { Role } from '../types';
 import { DashboardView } from './AdminDashboard/DashboardView';
 import { UserManagementView } from './AdminDashboard/UserManagementView';
@@ -37,11 +37,8 @@ export const AdminDashboard = () => {
     };
 
     return (
-        <div className="flex h-screen bg-gray-100">
-            <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-1 p-6 overflow-y-auto">
-                {renderView()}
-            </main>
-        </div>
+        <DashboardShell activeView={activeView} setActiveView={setActiveView}>
+            {renderView()}
+        </DashboardShell>
     );
 };

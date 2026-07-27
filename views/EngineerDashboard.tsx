@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 // FIX: Replaced incorrect context hook 'useInteractions' with the correct hook 'useAppContext'.
 import { useAppContext } from '../context/InteractionContext';
-import { DashboardSidebar } from '../components/DashboardSidebar';
+import { DashboardShell } from '../components/DashboardShell';
 import { EngineerProfile } from '../types';
 import { DashboardView } from './EngineerDashboard/DashboardView';
 import { ProfileManagementView } from './EngineerDashboard/ProfileManagementView';
@@ -27,7 +27,6 @@ export const EngineerDashboard = () => {
     const { user } = useAuth();
     const { updateEngineerProfile, boostProfile, addSkillsToProfile } = useAppContext();
     const [activeView, setActiveView] = useState('Dashboard');
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     if (!user || user.role !== 'Engineer') {
         return <div>Error: Not an engineer user.</div>;
@@ -79,11 +78,8 @@ export const EngineerDashboard = () => {
     };
 
     return (
-        <div className="flex h-screen bg-gray-100">
-            <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-1 p-6 overflow-y-auto">
-                {renderView()}
-            </main>
-        </div>
+        <DashboardShell activeView={activeView} setActiveView={setActiveView}>
+            {renderView()}
+        </DashboardShell>
     );
 };
