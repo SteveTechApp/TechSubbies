@@ -1,9 +1,12 @@
 import { Router } from "express";
 import { z } from "zod";
 import {
-  createContract,
+  createContractAndHireApplication,
   createInvoice,
+  findApplication,
   findContractById,
+  findContractForApplication,
+  findJobById,
   findUserById,
   listContractsForUser,
   listInvoicesForUser,
@@ -11,6 +14,7 @@ import {
   updateContractSignature,
   updateContractTimesheets,
 } from "../lib/db.js";
+import { sendApplicationStatusNotification } from "../lib/applicationNotifications.js";
 import { toPublicContract, toPublicInvoice } from "../lib/publicContract.js";
 import { requireAuth, requireRole, type AuthedRequest } from "../middleware/auth.js";
 
@@ -86,17 +90,50 @@ contractsRouter.post(
   }
 
   const { jobId, engineerId, milestones, ...data } = parsed.data;
-  const milestonesWithStatus = milestones.map((m) => ({ ...m, status: MILESTONE_STATUS.AWAITING_FUNDING }));
+  const job = findJobById(jobId);
+  if (!job) {
+    return res.status(404).json({ error: "Job not found." });
+  }
+  if (job.companyId !== req.userId) {
+    return res.status(403).json({ error: "Only the posting company can create this contract." });
+  }
 
-  const contract = createContract(
+  const engineer = findUserById(engineerId);
+  if (!engineer || engineer.role !== "Engineer" || engineer.deletedAt || engineer.suspendedAt) {
+    return res.status(400).json({ error: "The selected engineer is not available for contracting." });
+  }
+
+  const application = findApplication(jobId, engineerId);
+  if (findContractForApplication(jobId, engineerId)) {
+    return res.status(409).json({ error: "A contract already exists for this application." });
+  }
+  if (!application || application.status !== "Offered") {
+    return res.status(409).json({ error: "A contract requires an offered application for this job." });
+  }
+
+  const milestonesWithStatus = milestones.map((m) => ({ ...m, status: MILESTONE_STATUS.AWAITING_FUNDING }));
+  let jobTitle = "Technical opportunity";
+  try {
+    jobTitle = String(JSON.parse(job.data).title || jobTitle);
+  } catch {
+    // Keep the safe fallback title.
+  }
+
+  const contract = createContractAndHireApplication(
+    application.id,
     req.userId!,
     engineerId,
     jobId,
     CONTRACT_STATUS.PENDING_SIGNATURE,
-    data,
+    { ...data, jobTitle },
     milestonesWithStatus
   );
-  return res.status(201).json(toPublicContract(contract));
+  const notificationSent = await sendApplicationStatusNotification({
+    to: engineer.email,
+    jobTitle,
+    status: "Hired",
+  });
+  return res.status(201).json({ ...toPublicContract(contract), notificationSent });
   }
 );
 

@@ -10,6 +10,7 @@ process.env.JWT_SECRET = "test-secret";
 
 const { createApp } = await import("../app.js");
 const { createUser, markEmailVerified } = await import("../lib/db.js");
+const { developmentEmailOutbox } = await import("../lib/email.js");
 const { signToken } = await import("../middleware/auth.js");
 const app = createApp();
 
@@ -57,6 +58,38 @@ function sampleContractBody(engineerId: string) {
   };
 }
 
+const sampleJobBody = {
+  title: "AV Install Engineer",
+  description: "Boardroom AV installation and commissioning.",
+  location: "London",
+  dayRate: "250",
+  duration: "3 days",
+  currency: "£",
+  startDate: null,
+  jobType: "Contract",
+  experienceLevel: "Senior",
+  jobRole: "AV Engineer",
+  skillRequirements: [],
+};
+
+async function offeredContractBody(
+  company: { token: string },
+  engineer: { token: string; id: string }
+) {
+  const job = await request(app)
+    .post("/api/jobs")
+    .set("Authorization", `Bearer ${company.token}`)
+    .send(sampleJobBody);
+  const application = await request(app)
+    .post(`/api/jobs/${job.body.id}/apply`)
+    .set("Authorization", `Bearer ${engineer.token}`);
+  await request(app)
+    .patch(`/api/applications/${application.body.id}`)
+    .set("Authorization", `Bearer ${company.token}`)
+    .send({ status: "Offered" });
+  return { ...sampleContractBody(engineer.id), jobId: job.body.id };
+}
+
 describe("contracts: creation", () => {
   it("lets a company create a contract, starting Pending Signature with milestones Awaiting Funding", async () => {
     const company = await registerCompany("contracts-co-a@example.com", "Contract Co A");
@@ -65,7 +98,7 @@ describe("contracts: creation", () => {
     const res = await request(app)
       .post("/api/contracts")
       .set("Authorization", `Bearer ${company.token}`)
-      .send(sampleContractBody(engineer.id));
+      .send(await offeredContractBody(company, engineer));
 
     expect(res.status).toBe(201);
     expect(res.body.status).toBe("Pending Signature");
@@ -75,6 +108,57 @@ describe("contracts: creation", () => {
     expect(res.body.milestones.every((m: any) => m.status === "Awaiting Funding")).toBe(true);
     expect(res.body.engineerSignature).toBeNull();
     expect(res.body.companySignature).toBeNull();
+    expect(res.body.notificationSent).toBe(true);
+
+    const applications = await request(app)
+      .get("/api/applications/me")
+      .set("Authorization", `Bearer ${engineer.token}`);
+    expect(applications.body).toEqual([
+      expect.objectContaining({ status: "Hired", reviewed: true }),
+    ]);
+    expect(developmentEmailOutbox.some((email: { to: string; subject: string }) =>
+      email.to === "contracts-eng-a@example.com"
+      && email.subject.includes("hired for AV Install Engineer")
+    )).toBe(true);
+  });
+
+  it("requires an offered applicant on a company-owned job and prevents duplicate contracts", async () => {
+    const company = await registerCompany("contracts-co-guard@example.com", "Guarded Contract Co");
+    const otherCompany = await registerCompany("contracts-co-other@example.com", "Other Contract Co");
+    const engineer = await registerEngineer("contracts-eng-guard@example.com", "Guarded Contract Eng");
+
+    const appliedJob = await request(app)
+      .post("/api/jobs")
+      .set("Authorization", `Bearer ${company.token}`)
+      .send(sampleJobBody);
+    await request(app)
+      .post(`/api/jobs/${appliedJob.body.id}/apply`)
+      .set("Authorization", `Bearer ${engineer.token}`);
+    const beforeOffer = await request(app)
+      .post("/api/contracts")
+      .set("Authorization", `Bearer ${company.token}`)
+      .send({ ...sampleContractBody(engineer.id), jobId: appliedJob.body.id });
+    expect(beforeOffer.status).toBe(409);
+
+    const offeredBody = await offeredContractBody(company, engineer);
+
+    const wrongCompany = await request(app)
+      .post("/api/contracts")
+      .set("Authorization", `Bearer ${otherCompany.token}`)
+      .send(offeredBody);
+    expect(wrongCompany.status).toBe(403);
+
+    const first = await request(app)
+      .post("/api/contracts")
+      .set("Authorization", `Bearer ${company.token}`)
+      .send(offeredBody);
+    expect(first.status).toBe(201);
+
+    const duplicate = await request(app)
+      .post("/api/contracts")
+      .set("Authorization", `Bearer ${company.token}`)
+      .send(offeredBody);
+    expect(duplicate.status).toBe(409);
   });
 
   it("rejects contract creation from an engineer account", async () => {
@@ -98,7 +182,7 @@ describe("contracts: signing", () => {
     const created = await request(app)
       .post("/api/contracts")
       .set("Authorization", `Bearer ${company.token}`)
-      .send(sampleContractBody(engineer.id));
+      .send(await offeredContractBody(company, engineer));
     const contractId = created.body.id;
 
     // Company can't countersign before the engineer has signed.
@@ -140,7 +224,7 @@ describe("contracts: signing", () => {
     const created = await request(app)
       .post("/api/contracts")
       .set("Authorization", `Bearer ${company.token}`)
-      .send(sampleContractBody(engineer.id));
+      .send(await offeredContractBody(company, engineer));
     const contractId = created.body.id;
 
     await request(app)
@@ -164,7 +248,7 @@ describe("contracts: signing", () => {
     const created = await request(app)
       .post("/api/contracts")
       .set("Authorization", `Bearer ${company.token}`)
-      .send(sampleContractBody(engineer.id));
+      .send(await offeredContractBody(company, engineer));
 
     const res = await request(app)
       .patch(`/api/contracts/${created.body.id}/sign`)
@@ -182,7 +266,7 @@ describe("contracts: milestones", () => {
     const created = await request(app)
       .post("/api/contracts")
       .set("Authorization", `Bearer ${company.token}`)
-      .send(sampleContractBody(engineer.id));
+      .send(await offeredContractBody(company, engineer));
     const contractId = created.body.id;
     const milestoneId = created.body.milestones[0].id;
 
@@ -252,7 +336,7 @@ describe("contracts: timesheets and invoicing", () => {
     const created = await request(app)
       .post("/api/contracts")
       .set("Authorization", `Bearer ${company.token}`)
-      .send(sampleContractBody(engineer.id));
+      .send(await offeredContractBody(company, engineer));
     const contractId = created.body.id;
 
     await request(app)
@@ -356,7 +440,7 @@ describe("contracts: listing and access control", () => {
     const created = await request(app)
       .post("/api/contracts")
       .set("Authorization", `Bearer ${company.token}`)
-      .send(sampleContractBody(engineer.id));
+      .send(await offeredContractBody(company, engineer));
 
     const companyList = await request(app).get("/api/contracts/me").set("Authorization", `Bearer ${company.token}`);
     expect(companyList.body.some((c: any) => c.id === created.body.id)).toBe(true);

@@ -124,11 +124,15 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
         }
     };
     
-    const handleContractSent = (contract: any) => {
-        createContract(contract);
-        alert(`Contract sent to ${selectedApplicant?.name} for signature!`);
-        setIsHireModalOpen(false);
-        setSelectedApplicant(null);
+    const handleContractSent = async (contract: any) => {
+        try {
+            await createContract(contract);
+            alert(`Contract sent to ${selectedApplicant?.name} for signature!`);
+            setIsHireModalOpen(false);
+            setSelectedApplicant(null);
+        } catch (error: any) {
+            alert(error?.message || 'Could not send the contract.');
+        }
     };
     
     const handleOpenDeepDive = (engineer: EngineerProfile, job: Job) => {

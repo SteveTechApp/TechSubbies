@@ -32,7 +32,7 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     sendOffer: (jobId: string, engineerId: string) => Promise<void>;
     inviteEngineerToJob: (jobId: string, engineerId: string) => void;
     // --- Contract & Payment Management ---
-    createContract: (contract: any) => void;
+    createContract: (contract: any) => Promise<void>;
     signContract: (contractId: string, signatureName: string) => void;
     fundMilestone: (contractId: string, milestoneId: string) => void;
     submitMilestoneForApproval: (contractId: string, milestoneId: string) => void;
@@ -247,14 +247,23 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
     // "nothing to reconcile with", not "undo this". Failure only rolls back
     // when the backend actively said no. Mirrors the pattern already used
     // for applyForJob above.
-    const createContract = (contract: Contract) => {
+    const createContract = async (contract: Contract) => {
         setAppData(prev => ({ ...prev, contracts: [...prev.contracts, contract] }));
-        apiService.createContract(contract)
-            .then(saved => setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contract.id ? saved : c) })))
-            .catch((error: any) => {
-                setAppData(prev => ({ ...prev, contracts: prev.contracts.filter(c => c.id !== contract.id) }));
-                alert(error?.message || 'Could not create contract.');
-            });
+        try {
+            const saved = await apiService.createContract(contract);
+            setAppData(prev => ({
+                ...prev,
+                contracts: prev.contracts.map(c => c.id === contract.id ? saved : c),
+                applications: prev.applications.map(application =>
+                    application.jobId === contract.jobId && application.engineerId === contract.engineerId
+                        ? { ...application, status: ApplicationStatus.HIRED, reviewed: true }
+                        : application
+                ),
+            }));
+        } catch (error) {
+            setAppData(prev => ({ ...prev, contracts: prev.contracts.filter(c => c.id !== contract.id) }));
+            throw error;
+        }
     };
 
     const signContract = (contractId: string, signatureName: string) => {

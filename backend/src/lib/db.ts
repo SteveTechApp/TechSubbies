@@ -786,8 +786,37 @@ export function createContract(
   return findContractById(id)!;
 }
 
+export function createContractAndHireApplication(
+  applicationId: string,
+  companyId: string,
+  engineerId: string,
+  jobId: string,
+  status: string,
+  data: Record<string, unknown>,
+  milestones: unknown[]
+): ContractRow {
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const contract = createContract(companyId, engineerId, jobId, status, data, milestones);
+    if (!updateApplicationStatus(applicationId, "Hired", true)) {
+      throw new Error("Application disappeared while creating the contract.");
+    }
+    db.exec("COMMIT");
+    return contract;
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
 export function findContractById(id: string): ContractRow | undefined {
   return db.prepare("SELECT * FROM contracts WHERE id = ?").get(id) as unknown as ContractRow | undefined;
+}
+
+export function findContractForApplication(jobId: string, engineerId: string): ContractRow | undefined {
+  return db
+    .prepare("SELECT * FROM contracts WHERE jobId = ? AND engineerId = ?")
+    .get(jobId, engineerId) as unknown as ContractRow | undefined;
 }
 
 export function listContractsForUser(userId: string): ContractRow[] {
