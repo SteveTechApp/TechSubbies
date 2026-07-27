@@ -42,7 +42,6 @@ const generateEngineers = (count: number): EngineerProfile[] => {
             calendarSyncUrl: `https://wingman.com/cal/gen-eng-${i+1}.ics`,
             badges: [],
             contact: { email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`},
-            platformCredits: Math.floor(Math.random() * 5),
             // FIX: Added missing loyaltyPoints property to conform to the EngineerProfile interface.
             loyaltyPoints: 50 + Math.floor(Math.random() * 500),
         });

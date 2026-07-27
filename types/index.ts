@@ -206,7 +206,6 @@ export interface EngineerProfile extends UserProfile {
     complianceScore: number;
     calendarSyncUrl: string;
     badges: Badge[];
-    platformCredits: number;
     loyaltyPoints: number;
     referralCode?: string;
     isBoosted?: boolean;
@@ -397,8 +396,6 @@ export interface Contract {
 
 export enum TransactionType {
     SUBSCRIPTION = 'subscription',
-    PLATFORM_CREDIT_PURCHASE = 'platform_credit_purchase',
-    AI_DEEP_DIVE_PURCHASE = 'ai_deep_dive_purchase',
 }
 
 export interface Transaction {

@@ -3,7 +3,7 @@ import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 // FIX: Replaced incorrect context hook 'useInteractions' with the correct hook 'useAppContext'.
 import { useAppContext } from '../context/InteractionContext';
-import { Job, CompanyProfile, EngineerProfile, ProfileTier } from '../types';
+import { Job, CompanyProfile } from '../types';
 import { MapPin, DollarSign, Clock, Layers, Briefcase, Calendar } from './Icons';
 import { formatDisplayDate } from '../utils/dateFormatter';
 
@@ -15,32 +15,18 @@ interface JobCardProps {
 const JobCardComponent = ({ job, setActiveView }: JobCardProps) => {
     const { companies, applications } = useData();
     const { user } = useAuth();
-    const { applyForJob, applyForJobWithCredit } = useAppContext();
+    const { applyForJob } = useAppContext();
 
     const company = companies.find(c => c.id === job.companyId) as CompanyProfile;
 
     if (!company) return null;
 
-    const engineerProfile = user?.profile as EngineerProfile;
     const hasApplied = user && applications.some(app => app.jobId === job.id && app.engineerId === user.profile.id);
-    const canAfford = engineerProfile ? engineerProfile.platformCredits > 0 : false;
-    const requiresCredit = job.dayRate > '195' && engineerProfile?.profileTier === ProfileTier.BASIC;
 
     const handleApply = () => {
         if (!user || user.role !== 'Engineer') return;
         
-        if (requiresCredit) {
-            if (canAfford) {
-                if (window.confirm("This job is above your plan's day rate limit. Applying will use 1 Platform Credit. Continue?")) {
-                    applyForJobWithCredit(job.id);
-                }
-            } else {
-                alert("You don't have enough Platform Credits to apply for this job. You can buy more in the Billing section.");
-                setActiveView('Billing');
-            }
-        } else {
-            applyForJob(job.id, user.profile.id);
-        }
+        applyForJob(job.id, user.profile.id);
     };
     
     return (
@@ -70,7 +56,6 @@ const JobCardComponent = ({ job, setActiveView }: JobCardProps) => {
                         <Briefcase size={16} className="mr-2"/>
                         {hasApplied ? 'Applied' : 'Apply Now'}
                     </button>
-                    {requiresCredit && !hasApplied && <p className="text-xs text-yellow-600 mt-1 text-right">Requires 1 Platform Credit to apply.</p>}
                 </div>
             )}
         </div>

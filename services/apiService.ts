@@ -546,7 +546,6 @@ const apiService = {
           compliance: data.compliance || {},
           identity: data.identity || {},
           badges: [],
-          platformCredits: 1,
           loyaltyPoints: 0,
         },
       });
@@ -577,7 +576,7 @@ const apiService = {
           calendarSyncUrl: `https://wingman.com/cal/eng-${Date.now()}.ics`,
           badges: [],
           contact: { email: data.email },
-          platformCredits: 1, loyaltyPoints: 0,
+          loyaltyPoints: 0,
       };
       const newUser: User = { id: `user-${newEngineer.id}`, role: Role.ENGINEER, profile: newEngineer };
       MOCK_ENGINEERS.push(newEngineer);

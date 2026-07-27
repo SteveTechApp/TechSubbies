@@ -27,7 +27,6 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     // --- Job & Application Management ---
     postJob: (jobData: any) => Promise<Job>;
     applyForJob: (jobId: string, engineerId: string) => void;
-    applyForJobWithCredit: (jobId: string) => void;
     markApplicationsViewed: (jobId: string) => void;
     sendOffer: (jobId: string, engineerId: string) => Promise<void>;
     rejectApplication: (jobId: string, engineerId: string) => Promise<void>;
@@ -70,7 +69,6 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     postCollaboration: (postData: any) => void;
     proposeCollaboration: (targetEngineerId: string, navigateCallback: () => void) => void;
     // --- Misc ---
-    purchasePlatformCredits: (amount: number) => void;
     redeemLoyaltyPoints: (points: number) => void;
     saveStoryboardAsCaseStudy: (title: string, panels: any[]) => void;
     applicantForDeepDive: { job: Job, engineer: EngineerProfile } | null;
@@ -164,15 +162,6 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
                 setAppData(prev => ({ ...prev, applications: prev.applications.filter(a => a !== newApp) }));
                 alert(error?.message || 'Could not submit application.');
             });
-    };
-    
-    const applyForJobWithCredit = (jobId: string) => {
-        if (!user || user.role !== Role.ENGINEER) return;
-        const profile = user.profile as EngineerProfile;
-        if(profile.platformCredits > 0){
-            updateEngineerProfile({ platformCredits: profile.platformCredits - 1 });
-            applyForJob(jobId, user.profile.id);
-        }
     };
     
     const persistApplicationStatus = async (
@@ -470,12 +459,6 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         cb();
     };
     
-    const purchasePlatformCredits = (amount: number) => {
-        if(!user || user.role !== Role.ENGINEER) return;
-        const currentProfile = user.profile as EngineerProfile;
-        updateEngineerProfile({ platformCredits: (currentProfile.platformCredits || 0) + amount });
-    };
-
     const redeemLoyaltyPoints = (points: number) => {
          if(!user || user.role !== Role.ENGINEER) return;
         const currentProfile = user.profile as EngineerProfile;
@@ -508,7 +491,6 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         reactivateProfile,
         postJob,
         applyForJob,
-        applyForJobWithCredit,
         markApplicationsViewed,
         sendOffer,
         rejectApplication,
@@ -537,7 +519,6 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         markNotificationsAsRead,
         postCollaboration,
         proposeCollaboration,
-        purchasePlatformCredits,
         redeemLoyaltyPoints,
         saveStoryboardAsCaseStudy,
         applicantForDeepDive, 

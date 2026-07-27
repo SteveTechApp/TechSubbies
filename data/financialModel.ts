@@ -16,9 +16,8 @@ const OPERATIONAL_COSTS = {
     insurance: 5000,
     softwareLicensing: 10000,
 
-    // Per-User/Per-Transaction Variable Costs
+    // Per-user variable costs
     hostingCostPer1000UsersPerMonth: 50,
-    transactionFeePercentage: 0.02, // 2% of transaction revenue
 
     // Scalable Staffing Costs
     supportAgentCostPerYear: 35000,
@@ -49,15 +48,10 @@ export const calculateFinancials = (subscriberNumbers: { [key in ProfileTier]?: 
         (subs[ProfileTier.SKILLS] * TIER_PRICES[ProfileTier.SKILLS] * 12) +
         (subs[ProfileTier.BUSINESS] * TIER_PRICES[ProfileTier.BUSINESS] * 12)
     );
-    // Simulate other revenues as a percentage of subscription revenue
-    const annualMicrotransactionRevenue = annualSubscriptionRevenue * 0.15;
-    const annualAdRevenue = annualSubscriptionRevenue * 0.10;
-    const totalAnnualRevenue = annualSubscriptionRevenue + annualMicrotransactionRevenue + annualAdRevenue;
+    const totalAnnualRevenue = annualSubscriptionRevenue;
 
     const revenue = {
         subscriptions: annualSubscriptionRevenue,
-        microtransactions: annualMicrotransactionRevenue,
-        advertising: annualAdRevenue,
         total: totalAnnualRevenue,
     };
 
@@ -65,7 +59,6 @@ export const calculateFinancials = (subscriberNumbers: { [key in ProfileTier]?: 
     const fixedCosts = OPERATIONAL_COSTS.baseSalaries + OPERATIONAL_COSTS.officeRent + OPERATIONAL_COSTS.insurance + OPERATIONAL_COSTS.softwareLicensing;
     
     const variableHostingCost = (totalUsers / 1000) * OPERATIONAL_COSTS.hostingCostPer1000UsersPerMonth * 12;
-    const variableTransactionFee = (annualMicrotransactionRevenue) * OPERATIONAL_COSTS.transactionFeePercentage;
 
     const numSupportAgents = totalUsers > 0 ? Math.floor(totalUsers / OPERATIONAL_COSTS.usersPerSupportAgent) : 0;
     const supportSalaryCost = numSupportAgents * OPERATIONAL_COSTS.supportAgentCostPerYear;
@@ -76,11 +69,11 @@ export const calculateFinancials = (subscriberNumbers: { [key in ProfileTier]?: 
     const totalSalaryCost = OPERATIONAL_COSTS.baseSalaries + supportSalaryCost + developerSalaryCost;
     const nationalInsuranceCost = totalSalaryCost * OPERATIONAL_COSTS.employersNationalInsuranceRate;
     
-    const totalOperatingCosts = fixedCosts + variableHostingCost + variableTransactionFee + supportSalaryCost + developerSalaryCost + nationalInsuranceCost;
+    const totalOperatingCosts = fixedCosts + variableHostingCost + supportSalaryCost + developerSalaryCost + nationalInsuranceCost;
 
     const costs = {
         fixed: fixedCosts,
-        variable: variableHostingCost + variableTransactionFee,
+        variable: variableHostingCost,
         staffing: supportSalaryCost + developerSalaryCost,
         payrollTax: nationalInsuranceCost,
         total: totalOperatingCosts,
