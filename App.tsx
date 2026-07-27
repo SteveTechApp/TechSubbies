@@ -1,12 +1,14 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Navigate, Routes, Route } from 'react-router-dom';
 import PersistentAppHeader from "./components/PersistentAppHeader";
 import EmailVerificationBanner from "./components/EmailVerificationBanner";
 import RoleAccessGate from "./components/RoleAccessGate";
+import RealAccountGate from "./components/RealAccountGate";
 import { clearDemoSession, getDemoSession, type DemoSession } from "./data/demoAccounts";
 import { useNavigation } from './context/NavigationContext';
 import { useAuth } from './context/AuthContext';
 import { Page, Role } from './types';
+import { dashboardPathForRole } from "./utils/accountRoutes";
 
 // Common Components (small, always needed - kept in the main bundle)
 import { Footer } from './components/Footer';
@@ -312,6 +314,14 @@ const { page, setPage } = useNavigation();
 
   return (
     <Routes>
+      <Route
+        path="/"
+        element={
+          isSignedIn
+            ? <Navigate to={dashboardPathForRole(currentRole)} replace />
+            : renderLegacyPage()
+        }
+      />
       <Route path="/opportunity-intake" element={renderPersistentShell(roleGate(<LiveOpportunityIntakePage />, [Role.COMPANY, Role.RESOURCING_COMPANY]))} />
       <Route path="/matching/intake" element={renderPersistentShell(roleGate(<LiveOpportunityIntakePage />, [Role.COMPANY, Role.RESOURCING_COMPANY]))} />
       <Route path="/matching-demo" element={renderPersistentShell(<OpportunityMatchingDemoPage />)} />
@@ -322,7 +332,12 @@ const { page, setPage } = useNavigation();
       <Route path="/forgot-password" element={renderPersistentShell(<ForgotPasswordPage />)} />
       <Route path="/reset-password" element={renderPersistentShell(<ResetPasswordPage />)} />
       <Route path="/verify-email" element={renderPersistentShell(<VerifyEmailPage />)} />
-      <Route path="/account/security" element={renderPersistentShell(<AccountSecurityPage />)} />
+      <Route
+        path="/account/security"
+        element={renderPersistentShell(
+          <RealAccountGate hasRealAccount={Boolean(user)}><AccountSecurityPage /></RealAccountGate>
+        )}
+      />
       <Route path="/engineer/dashboard" element={renderPersistentShell(roleGate(<EngineerDashboard />, [Role.ENGINEER]))} />
       <Route path="/company/dashboard" element={renderPersistentShell(roleGate(<CompanyDashboard />, [Role.COMPANY]))} />
       <Route path="/resourcing/dashboard" element={renderPersistentShell(roleGate(<ResourcingDashboard />, [Role.RESOURCING_COMPANY]))} />
