@@ -399,6 +399,12 @@ describe("admin job moderation", () => {
       .send({ status: "closed", reason: "The listing breaches marketplace posting standards." });
     expect(closed.status).toBe(200);
     expect(closed.body.job.status).toBe("closed");
+    expect(closed.body.notificationSent).toBe(true);
+    expect(developmentEmailOutbox.some((email) =>
+      email.to === "job-moderation-company@example.com"
+      && email.subject.includes("was closed")
+      && email.text.includes("The listing breaches marketplace posting standards.")
+    )).toBe(true);
 
     const hiddenPublicly = await request(app).get("/api/jobs");
     expect(hiddenPublicly.body.some((item: { id: string }) => item.id === job.id)).toBe(false);
@@ -409,6 +415,7 @@ describe("admin job moderation", () => {
       .send({ status: "active" });
     expect(reopened.status).toBe(200);
     expect(reopened.body.job.status).toBe("active");
+    expect(reopened.body.notificationSent).toBe(true);
   });
 
   it("keeps job moderation restricted to administrators", async () => {

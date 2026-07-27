@@ -39,10 +39,11 @@ export const JobManagementView = ({ setActiveView }: { setActiveView: (view: str
         setError('');
         setMessage('');
         try {
-            const updated = await apiService.moderateAdminJob(job.id, closing ? 'closed' : 'active', reason);
-            setJobs((current) => current.map((item) => item.id === job.id ? { ...item, ...updated } : item));
+            const result = await apiService.moderateAdminJob(job.id, closing ? 'closed' : 'active', reason);
+            setJobs((current) => current.map((item) => item.id === job.id ? { ...item, ...result.job } : item));
             setReasons((current) => ({ ...current, [job.id]: '' }));
-            setMessage(closing ? 'The listing was closed and removed from public search.' : 'The listing was reopened.');
+            const delivery = result.notificationSent ? ' The posting company was notified.' : ' The listing changed, but email delivery failed.';
+            setMessage((closing ? 'The listing was closed and removed from public search.' : 'The listing was reopened.') + delivery);
         } catch (reason) {
             setError(reason instanceof Error ? reason.message : 'Could not update job status.');
         } finally {

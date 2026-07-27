@@ -32,10 +32,13 @@ describe('JobManagementView', () => {
     beforeEach(() => {
         vi.mocked(apiService.listAdminJobs).mockResolvedValue({ jobs: [job], total: 1, limit: 25, offset: 0 });
         vi.mocked(apiService.moderateAdminJob).mockResolvedValue({
-            ...job,
-            status: 'closed',
-            moderatedAt: '2026-07-27T12:00:00.000Z',
-            moderationReason: 'Listing breaches marketplace posting standards.',
+            job: {
+                ...job,
+                status: 'closed',
+                moderatedAt: '2026-07-27T12:00:00.000Z',
+                moderationReason: 'Listing breaches marketplace posting standards.',
+            },
+            notificationSent: true,
         });
     });
 
@@ -57,6 +60,7 @@ describe('JobManagementView', () => {
         ));
         expect(await screen.findByText('closed')).toBeVisible();
         expect(screen.getByRole('status')).toHaveTextContent(/removed from public search/i);
+        expect(screen.getByRole('status')).toHaveTextContent(/posting company was notified/i);
     });
 
     it('submits server-side searches', async () => {

@@ -25,6 +25,7 @@ import {
 import { sendPrivacyNotification } from "../lib/privacyNotifications.js";
 import { sendModerationNotification } from "../lib/moderationNotifications.js";
 import { toPublicJob } from "../lib/publicJob.js";
+import { sendJobModerationNotification } from "../lib/jobModerationNotifications.js";
 
 export const adminRouter = Router();
 
@@ -66,7 +67,7 @@ adminRouter.get("/jobs", (req, res) => {
   });
 });
 
-adminRouter.patch("/jobs/:jobId/moderation", (req: AuthedRequest, res) => {
+adminRouter.patch("/jobs/:jobId/moderation", async (req: AuthedRequest, res) => {
   const parsed = z.discriminatedUnion("status", [
     z.object({ status: z.literal("closed"), reason: z.string().trim().min(10).max(500) }),
     z.object({ status: z.literal("active"), reason: z.string().optional() }),
@@ -83,13 +84,29 @@ adminRouter.patch("/jobs/:jobId/moderation", (req: AuthedRequest, res) => {
   if (!updated) {
     return res.status(404).json({ error: "Job not found." });
   }
+  const company = findUserById(updated.companyId);
+  let jobTitle = "Job listing";
+  try {
+    jobTitle = String(JSON.parse(updated.data).title || jobTitle);
+  } catch {
+    // Keep the safe fallback title.
+  }
   recordAccountAudit({
     eventType: parsed.data.status === "closed" ? "job.closed" : "job.reopened",
     outcome: "success",
     userId: updated.companyId,
     requestId: res.locals.requestId,
   });
-  return res.json({ job: toPublicJob(updated) });
+  const notificationSent = company
+    ? await sendJobModerationNotification({
+        to: company.email,
+        title: jobTitle,
+        jobId: updated.id,
+        status: parsed.data.status,
+        reason: updated.moderationReason,
+      })
+    : false;
+  return res.json({ job: toPublicJob(updated), notificationSent });
 });
 
 adminRouter.get("/users", (req, res) => {

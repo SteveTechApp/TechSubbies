@@ -404,7 +404,7 @@ const apiService = {
     jobId: string,
     status: 'active' | 'closed',
     reason?: string
-  ): Promise<AdminJob> => {
+  ): Promise<{ job: AdminJob; notificationSent: boolean }> => {
     const response = await fetch(`${API_BASE_URL}/admin/jobs/${jobId}/moderation`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -412,7 +412,7 @@ const apiService = {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not update job status.');
-    return data.job;
+    return data;
   },
 
   setAdminUserSuspension: async (
