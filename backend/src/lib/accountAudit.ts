@@ -16,6 +16,7 @@ export type AccountAuditEventType =
   | "deletion.processed"
   | "account.suspended"
   | "account.reactivated"
+  | "membership.activated"
   | "job.closed"
   | "job.reopened";
 

@@ -21,6 +21,8 @@ import {
   countAdminJobs,
   listAdminJobs,
   moderateJob,
+  listPendingMembershipSelections,
+  activateRequestedMembership,
 } from "../lib/db.js";
 import { sendPrivacyNotification } from "../lib/privacyNotifications.js";
 import { sendModerationNotification } from "../lib/moderationNotifications.js";
@@ -37,6 +39,31 @@ adminRouter.get("/privacy-summary", (_req, res) => {
 
 adminRouter.get("/metrics", (_req, res) => {
   return res.json({ metrics: getAdminPlatformMetrics() });
+});
+
+adminRouter.get("/membership-selections", (_req, res) => {
+  return res.json({ selections: listPendingMembershipSelections() });
+});
+
+adminRouter.post("/membership-selections/:userId/confirm", (req: AuthedRequest, res) => {
+  const parsed = z.object({ confirmation: z.literal("BILLING VERIFIED") }).safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Type "BILLING VERIFIED" to confirm activation.' });
+  }
+  const updated = activateRequestedMembership(req.params.userId, req.userId!);
+  if (!updated) {
+    return res.status(409).json({ error: "No pending membership selection is available for this account." });
+  }
+  recordAccountAudit({
+    eventType: "membership.activated",
+    outcome: "success",
+    userId: updated.id,
+    requestId: res.locals.requestId,
+  });
+  return res.json({
+    userId: updated.id,
+    activeTier: (JSON.parse(updated.profile) as Record<string, unknown>).profileTier,
+  });
 });
 
 adminRouter.get("/jobs", (req, res) => {

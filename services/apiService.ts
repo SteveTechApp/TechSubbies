@@ -90,6 +90,15 @@ export type AdminJob = {
   moderationReason: string | null;
 };
 
+export type AdminMembershipSelection = {
+  userId: string;
+  email: string;
+  name: string;
+  activeTier: ProfileTier;
+  requestedTier: ProfileTier;
+  requestedAt: string;
+};
+
 export type AccountDeletionStatus = {
   reference: string;
   status: string;
@@ -410,6 +419,26 @@ const apiService = {
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not load platform metrics.');
     return data.metrics;
+  },
+
+  listAdminMembershipSelections: async (): Promise<AdminMembershipSelection[]> => {
+    const response = await fetch(`${API_BASE_URL}/admin/membership-selections`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not load membership requests.');
+    return data.selections;
+  },
+
+  confirmAdminMembershipSelection: async (
+    userId: string
+  ): Promise<{ userId: string; activeTier: ProfileTier }> => {
+    const response = await fetch(`${API_BASE_URL}/admin/membership-selections/${userId}/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirmation: 'BILLING VERIFIED' }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not activate membership.');
+    return data;
   },
 
   listAdminJobs: async (

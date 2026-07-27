@@ -44,6 +44,45 @@ beforeAll(async () => {
   deletionRequestId = requestAccountDeletion(engineer.id).id;
 });
 
+describe("admin membership confirmations", () => {
+  it("lists pending selections and activates only after explicit billing verification", async () => {
+    const selection = await request(app)
+      .post("/api/users/me/membership-selection")
+      .set("Authorization", `Bearer ${engineerToken}`)
+      .send({ tier: "Gold" });
+    expect(selection.status).toBe(202);
+
+    expect((await request(app).get("/api/admin/membership-selections")).status).toBe(401);
+    const queue = await request(app)
+      .get("/api/admin/membership-selections")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(queue.status).toBe(200);
+    expect(queue.body.selections).toContainEqual(expect.objectContaining({
+      userId: engineerId,
+      activeTier: "Bronze",
+      requestedTier: "Gold",
+    }));
+
+    const unconfirmed = await request(app)
+      .post(`/api/admin/membership-selections/${engineerId}/confirm`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ confirmation: "yes" });
+    expect(unconfirmed.status).toBe(400);
+
+    const confirmed = await request(app)
+      .post(`/api/admin/membership-selections/${engineerId}/confirm`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ confirmation: "BILLING VERIFIED" });
+    expect(confirmed.status).toBe(200);
+    expect(confirmed.body.activeTier).toBe("Gold");
+
+    const emptyQueue = await request(app)
+      .get("/api/admin/membership-selections")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(emptyQueue.body.selections.some((item: any) => item.userId === engineerId)).toBe(false);
+  });
+});
+
 describe("admin deletion request reviews", () => {
   it("keeps the privacy queue restricted to administrators", async () => {
     expect((await request(app).get("/api/admin/deletion-requests")).status).toBe(401);

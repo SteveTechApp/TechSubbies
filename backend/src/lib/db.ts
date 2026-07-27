@@ -365,6 +365,64 @@ export function countAdminUsers(queryText: string): number {
   return row.total;
 }
 
+export type MembershipSelection = {
+  userId: string;
+  email: string;
+  name: string;
+  activeTier: string;
+  requestedTier: string;
+  requestedAt: string;
+};
+
+export function listPendingMembershipSelections(): MembershipSelection[] {
+  const rows = db.prepare(`
+    SELECT id, email, name, profile
+    FROM users
+    WHERE role = 'Engineer' AND deletedAt IS NULL AND suspendedAt IS NULL
+    ORDER BY updatedAt ASC
+  `).all() as unknown as Array<{ id: string; email: string; name: string; profile: string }>;
+
+  return rows.flatMap((row) => {
+    try {
+      const profile = JSON.parse(row.profile) as Record<string, unknown>;
+      if (typeof profile.requestedProfileTier !== "string" || typeof profile.membershipRequestedAt !== "string") {
+        return [];
+      }
+      return [{
+        userId: row.id,
+        email: row.email,
+        name: row.name,
+        activeTier: typeof profile.profileTier === "string" ? profile.profileTier : "Bronze",
+        requestedTier: profile.requestedProfileTier,
+        requestedAt: profile.membershipRequestedAt,
+      }];
+    } catch {
+      return [];
+    }
+  });
+}
+
+export function activateRequestedMembership(userId: string, administratorId: string): UserRow | undefined {
+  const user = findUserById(userId);
+  if (!user || user.role !== "Engineer" || user.deletedAt || user.suspendedAt) return undefined;
+
+  let profile: Record<string, unknown>;
+  try {
+    profile = JSON.parse(user.profile) as Record<string, unknown>;
+  } catch {
+    return undefined;
+  }
+  const requestedTier = profile.requestedProfileTier;
+  if (!["Bronze", "Silver", "Gold", "Platinum"].includes(String(requestedTier))) return undefined;
+
+  profile.profileTier = requestedTier;
+  profile.membershipActivatedAt = new Date().toISOString();
+  profile.membershipActivatedBy = administratorId;
+  delete profile.requestedProfileTier;
+  delete profile.membershipRequestedAt;
+  return updateUserProfile(user.id, JSON.stringify(profile), user.name);
+}
+
 export type AdminPlatformMetrics = {
   users: {
     total: number;
