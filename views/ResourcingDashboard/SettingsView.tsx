@@ -5,11 +5,13 @@ import { Save, ShieldCheck } from '../../components/Icons';
 
 interface SettingsViewProps {
     profile: ResourcingCompanyProfile;
-    onSave: (updatedProfile: Partial<ResourcingCompanyProfile>) => void;
+    onSave: (updatedProfile: Partial<ResourcingCompanyProfile>) => Promise<void>;
 }
 
 export const SettingsView = ({ profile, onSave }: SettingsViewProps) => {
     const [formData, setFormData] = useState<Partial<ResourcingCompanyProfile>>(profile);
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
@@ -19,10 +21,18 @@ export const SettingsView = ({ profile, onSave }: SettingsViewProps) => {
         }));
     };
     
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(formData);
-        alert("Settings saved successfully!");
+        setIsSaving(true);
+        setSaveMessage(null);
+        try {
+            await onSave(formData);
+            setSaveMessage({ type: 'success', text: 'Settings saved successfully.' });
+        } catch (error: any) {
+            setSaveMessage({ type: 'error', text: error?.message || 'Could not save settings.' });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -56,12 +66,21 @@ export const SettingsView = ({ profile, onSave }: SettingsViewProps) => {
                 </div>
 
                 <div className="flex justify-end pt-6 mt-6 border-t">
+                     {saveMessage && (
+                        <p
+                            role="status"
+                            className={`mr-auto text-sm font-semibold ${saveMessage.type === 'success' ? 'text-green-700' : 'text-red-700'}`}
+                        >
+                            {saveMessage.text}
+                        </p>
+                     )}
                      <button
                         type="submit"
-                        className="flex items-center px-6 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700"
+                        disabled={isSaving}
+                        className="flex items-center px-6 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
                     >
                         <Save size={18} className="mr-2" />
-                        Save Settings
+                        {isSaving ? 'Saving…' : 'Save Settings'}
                     </button>
                 </div>
             </form>

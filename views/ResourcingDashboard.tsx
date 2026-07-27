@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import { useAppContext } from '../context/InteractionContext';
 import { DashboardShell } from '../components/DashboardShell';
 import { DashboardHelpCenter } from '../components/DashboardHelpCenter';
 import { Role, EngineerProfile, Contract, ResourcingCompanyProfile } from '../types';
@@ -12,10 +13,12 @@ import { AddNewEngineerView } from './ResourcingDashboard/AddNewEngineerView';
 import { MessagesView } from '../views/MessagesView';
 import { PlacementsView } from './ResourcingDashboard/PlacementsView';
 import { AnalyticsView } from './ResourcingDashboard/AnalyticsView';
+import { InvoicesView } from './InvoicesView';
 
 export const ResourcingDashboard = () => {
     const { user } = useAuth();
     const { engineers, applications, contracts } = useData();
+    const { updateCompanyProfile } = useAppContext();
     const [activeView, setActiveView] = useState('Dashboard');
     
     if (!user || user.role !== Role.RESOURCING_COMPANY) {
@@ -47,12 +50,14 @@ export const ResourcingDashboard = () => {
                 return <FindJobsView managedEngineers={managedEngineers} setActiveView={setActiveView} />;
             case 'Contracts':
                 return <PlacementsView managedContracts={managedContracts} setActiveView={setActiveView} />;
+            case 'Invoices':
+                return <InvoicesView />;
             case 'Messages':
                 return <MessagesView />;
             case 'Analytics':
                 return <AnalyticsView />;
             case 'Settings':
-                return <SettingsView profile={resourcingProfile} onSave={() => {}} />;
+                return <SettingsView profile={resourcingProfile} onSave={updateCompanyProfile} />;
             case 'Add New Engineer':
                 return <AddNewEngineerView resourcingCompanyId={user.profile.id} onEngineerAdded={handleEngineerAdded} />;
             case 'Help Center':
