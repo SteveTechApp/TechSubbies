@@ -29,6 +29,15 @@ export type AccountDeletionEligibility = {
   }>;
 };
 
+export type AccountDeletionSummary = {
+  pending: number;
+  approved: number;
+  rejected: number;
+  processed: number;
+  overduePending: number;
+  oldestPendingAt: string | null;
+};
+
 export function findAccountDeletionRequest(userId: string): AccountDeletionRequest | undefined {
   return db.prepare(
     "SELECT * FROM account_deletion_requests WHERE userId = ?"
@@ -158,6 +167,20 @@ export function processAccountDeletionRequest(
   return db.prepare(
     "SELECT * FROM account_deletion_requests WHERE id = ?"
   ).get(id) as unknown as AccountDeletionRequest;
+}
+
+export function getAccountDeletionSummary(now = new Date()): AccountDeletionSummary {
+  const overdueThreshold = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000).toISOString();
+  return db.prepare(`
+    SELECT
+      SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending,
+      SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) AS approved,
+      SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) AS rejected,
+      SUM(CASE WHEN status = 'processed' THEN 1 ELSE 0 END) AS processed,
+      SUM(CASE WHEN status = 'pending' AND requestedAt < ? THEN 1 ELSE 0 END) AS overduePending,
+      MIN(CASE WHEN status = 'pending' THEN requestedAt END) AS oldestPendingAt
+    FROM account_deletion_requests
+  `).get(overdueThreshold) as unknown as AccountDeletionSummary;
 }
 
 export function cancelAccountDeletion(userId: string): AccountDeletionRequest | undefined {

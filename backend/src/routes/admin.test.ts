@@ -51,6 +51,21 @@ describe("admin deletion request reviews", () => {
       .set("Authorization", `Bearer ${engineerToken}`)).status).toBe(403);
   });
 
+  it("provides administrator-only privacy operations totals", async () => {
+    const summary = await request(app)
+      .get("/api/admin/privacy-summary")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(summary.status).toBe(200);
+    expect(summary.body.summary).toMatchObject({
+      pending: expect.any(Number),
+      approved: expect.any(Number),
+      rejected: expect.any(Number),
+      processed: expect.any(Number),
+      overduePending: expect.any(Number),
+    });
+    expect((await request(app).get("/api/admin/privacy-summary")).status).toBe(401);
+  });
+
   it("lists pending requests and records a non-destructive decision", async () => {
     const queued = await request(app)
       .get("/api/admin/deletion-requests")

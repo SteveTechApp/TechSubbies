@@ -5,6 +5,7 @@ import {
   reviewAccountDeletionRequest,
   getAccountDeletionEligibility,
   processAccountDeletionRequest,
+  getAccountDeletionSummary,
 } from "../lib/accountDeletion.js";
 import { recordAccountAudit } from "../lib/accountAudit.js";
 import { requireAuth, requireRole, type AuthedRequest } from "../middleware/auth.js";
@@ -12,6 +13,10 @@ import { requireAuth, requireRole, type AuthedRequest } from "../middleware/auth
 export const adminRouter = Router();
 
 adminRouter.use(requireAuth, requireRole("Admin"));
+
+adminRouter.get("/privacy-summary", (_req, res) => {
+  return res.json({ summary: getAccountDeletionSummary() });
+});
 
 adminRouter.get("/deletion-requests", (req, res) => {
   const parsed = z.enum(["pending", "approved", "rejected", "cancelled", "processed"]).safeParse(req.query.status || "pending");

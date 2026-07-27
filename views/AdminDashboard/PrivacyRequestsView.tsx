@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import apiService, { type AdminDeletionRequest } from '../../services/apiService';
+import apiService, { type AdminDeletionRequest, type AdminPrivacySummary } from '../../services/apiService';
 
-type QueueStatus = 'pending' | 'approved';
+type QueueStatus = 'pending' | 'approved' | 'processed';
 
 export const PrivacyRequestsView = () => {
     const [requests, setRequests] = useState<AdminDeletionRequest[]>([]);
     const [notes, setNotes] = useState<Record<string, string>>({});
     const [confirmations, setConfirmations] = useState<Record<string, string>>({});
     const [status, setStatus] = useState<QueueStatus>('pending');
+    const [summary, setSummary] = useState<AdminPrivacySummary | null>(null);
     const [loading, setLoading] = useState(true);
     const [workingId, setWorkingId] = useState<string | null>(null);
     const [message, setMessage] = useState('');
@@ -21,6 +22,10 @@ export const PrivacyRequestsView = () => {
             .catch((err) => setError(err instanceof Error ? err.message : 'Could not load privacy requests.'))
             .finally(() => setLoading(false));
     }, [status]);
+
+    useEffect(() => {
+        apiService.getAdminPrivacySummary().then(setSummary).catch(() => undefined);
+    }, [requests]);
 
     const review = async (request: AdminDeletionRequest, decision: 'approved' | 'rejected') => {
         const note = notes[request.id]?.trim() || '';
@@ -73,8 +78,25 @@ export const PrivacyRequestsView = () => {
                 </p>
             </div>
 
+            {summary && (
+                <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                    {[
+                        ['Pending', summary.pending],
+                        ['Approved', summary.approved],
+                        ['Processed', summary.processed],
+                        ['Rejected', summary.rejected],
+                        ['Over 28 days', summary.overduePending],
+                    ].map(([label, value]) => (
+                        <div key={label} className="rounded-lg border bg-white p-4 shadow-sm">
+                            <p className="text-sm text-gray-500">{label}</p>
+                            <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             <div className="mb-5 flex gap-2 border-b" aria-label="Privacy request status">
-                {(['pending', 'approved'] as const).map((option) => (
+                {(['pending', 'approved', 'processed'] as const).map((option) => (
                     <button
                         key={option}
                         type="button"
@@ -83,7 +105,9 @@ export const PrivacyRequestsView = () => {
                             status === option ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500'
                         }`}
                     >
-                        {option === 'pending' ? 'Pending review' : 'Approved for processing'}
+                        {option === 'pending'
+                            ? 'Pending review'
+                            : option === 'approved' ? 'Approved for processing' : 'Processed history'}
                     </button>
                 ))}
             </div>
@@ -99,7 +123,9 @@ export const PrivacyRequestsView = () => {
                     <p className="mt-1 text-sm text-gray-500">
                         {status === 'pending'
                             ? 'New account deletion requests will appear here.'
-                            : 'Approved requests awaiting anonymisation will appear here.'}
+                            : status === 'approved'
+                                ? 'Approved requests awaiting anonymisation will appear here.'
+                                : 'Completed anonymisation operations will appear here.'}
                     </p>
                 </div>
             ) : (
@@ -127,7 +153,12 @@ export const PrivacyRequestsView = () => {
                                 </div>
                             )}
 
-                            {status === 'pending' ? (
+                            {status === 'processed' ? (
+                                <div className="mt-4 rounded-md bg-gray-50 p-3 text-sm text-gray-700">
+                                    Processed {request.processedAt ? new Date(request.processedAt).toLocaleString() : 'date unavailable'}.
+                                    Identity and authentication data were anonymised; transaction references were retained.
+                                </div>
+                            ) : status === 'pending' ? (
                                 <>
                                     <label className="mt-4 block text-sm font-medium text-gray-700" htmlFor={`note-${request.id}`}>
                                         Review note

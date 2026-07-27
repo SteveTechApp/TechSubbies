@@ -32,6 +32,15 @@ export type AdminDeletionRequest = {
   };
 };
 
+export type AdminPrivacySummary = {
+  pending: number;
+  approved: number;
+  rejected: number;
+  processed: number;
+  overduePending: number;
+  oldestPendingAt: string | null;
+};
+
 const TOKEN_KEY = 'techsubbies_auth_token';
 const fetch = secureFetch;
 let cookieSessionAvailable = false;
@@ -279,6 +288,13 @@ const apiService = {
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not load privacy requests.');
     return data.requests;
+  },
+
+  getAdminPrivacySummary: async (): Promise<AdminPrivacySummary> => {
+    const response = await fetch(`${API_BASE_URL}/admin/privacy-summary`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not load privacy operations summary.');
+    return data.summary;
   },
 
   reviewAdminDeletionRequest: async (
