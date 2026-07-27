@@ -17,6 +17,7 @@ import {
   findUserById,
   listAdminUsers,
   setUserSuspension,
+  getAdminPlatformMetrics,
 } from "../lib/db.js";
 import { sendPrivacyNotification } from "../lib/privacyNotifications.js";
 import { sendModerationNotification } from "../lib/moderationNotifications.js";
@@ -27,6 +28,10 @@ adminRouter.use(requireAuth, requireRole("Admin"));
 
 adminRouter.get("/privacy-summary", (_req, res) => {
   return res.json({ summary: getAccountDeletionSummary() });
+});
+
+adminRouter.get("/metrics", (_req, res) => {
+  return res.json({ metrics: getAdminPlatformMetrics() });
 });
 
 adminRouter.get("/users", (req, res) => {

@@ -55,6 +55,25 @@ export type AdminUserAccount = {
   updatedAt: string;
 };
 
+export type AdminPlatformMetrics = {
+  users: {
+    total: number;
+    engineers: number;
+    companies: number;
+    resourcingCompanies: number;
+    suspended: number;
+  };
+  marketplace: {
+    jobsTotal: number;
+    jobsActive: number;
+    applications: number;
+    contractsTotal: number;
+    contractsActive: number;
+    invoices: number;
+  };
+  privacyPending: number;
+};
+
 export type AccountDeletionStatus = {
   reference: string;
   status: string;
@@ -341,6 +360,13 @@ const apiService = {
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not load user accounts.');
     return data;
+  },
+
+  getAdminPlatformMetrics: async (): Promise<AdminPlatformMetrics> => {
+    const response = await fetch(`${API_BASE_URL}/admin/metrics`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not load platform metrics.');
+    return data.metrics;
   },
 
   setAdminUserSuspension: async (

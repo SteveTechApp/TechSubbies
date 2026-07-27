@@ -370,6 +370,64 @@ export function countAdminUsers(queryText: string): number {
   return row.total;
 }
 
+export type AdminPlatformMetrics = {
+  users: {
+    total: number;
+    engineers: number;
+    companies: number;
+    resourcingCompanies: number;
+    suspended: number;
+  };
+  marketplace: {
+    jobsTotal: number;
+    jobsActive: number;
+    applications: number;
+    contractsTotal: number;
+    contractsActive: number;
+    invoices: number;
+  };
+  privacyPending: number;
+};
+
+export function getAdminPlatformMetrics(): AdminPlatformMetrics {
+  const users = db.prepare(`
+    SELECT
+      COUNT(*) AS total,
+      COALESCE(SUM(CASE WHEN role = 'Engineer' THEN 1 ELSE 0 END), 0) AS engineers,
+      COALESCE(SUM(CASE WHEN role = 'Company' THEN 1 ELSE 0 END), 0) AS companies,
+      COALESCE(SUM(CASE WHEN role = 'Resourcing Company' THEN 1 ELSE 0 END), 0) AS resourcingCompanies,
+      COALESCE(SUM(CASE WHEN suspendedAt IS NOT NULL THEN 1 ELSE 0 END), 0) AS suspended
+    FROM users WHERE deletedAt IS NULL
+  `).get() as AdminPlatformMetrics["users"];
+  const jobs = db.prepare(`
+    SELECT COUNT(*) AS total,
+      COALESCE(SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END), 0) AS active
+    FROM jobs
+  `).get() as { total: number; active: number };
+  const contracts = db.prepare(`
+    SELECT COUNT(*) AS total,
+      COALESCE(SUM(CASE WHEN status = 'Active' THEN 1 ELSE 0 END), 0) AS active
+    FROM contracts
+  `).get() as { total: number; active: number };
+  const applications = db.prepare("SELECT COUNT(*) AS total FROM applications").get() as { total: number };
+  const invoices = db.prepare("SELECT COUNT(*) AS total FROM invoices").get() as { total: number };
+  const privacy = db.prepare(
+    "SELECT COUNT(*) AS total FROM account_deletion_requests WHERE status = 'pending'"
+  ).get() as { total: number };
+  return {
+    users,
+    marketplace: {
+      jobsTotal: jobs.total,
+      jobsActive: jobs.active,
+      applications: applications.total,
+      contractsTotal: contracts.total,
+      contractsActive: contracts.active,
+      invoices: invoices.total,
+    },
+    privacyPending: privacy.total,
+  };
+}
+
 // --- Partnership requests (engineer <-> engineer "team" pairing) ---
 
 export interface PartnershipRequestRow {

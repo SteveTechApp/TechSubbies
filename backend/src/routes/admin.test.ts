@@ -241,6 +241,31 @@ describe("admin deletion request reviews", () => {
 });
 
 describe("admin account moderation", () => {
+  it("returns live platform metrics only to administrators", async () => {
+    const metrics = await request(app)
+      .get("/api/admin/metrics")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(metrics.status).toBe(200);
+    expect(metrics.body.metrics).toMatchObject({
+      users: {
+        total: expect.any(Number),
+        engineers: expect.any(Number),
+        companies: expect.any(Number),
+        suspended: expect.any(Number),
+      },
+      marketplace: {
+        jobsTotal: expect.any(Number),
+        jobsActive: expect.any(Number),
+        applications: expect.any(Number),
+        contractsTotal: expect.any(Number),
+        contractsActive: expect.any(Number),
+        invoices: expect.any(Number),
+      },
+      privacyPending: expect.any(Number),
+    });
+    expect((await request(app).get("/api/admin/metrics")).status).toBe(401);
+  });
+
   it("lists real accounts and enforces suspension with session revocation", async () => {
     const password = await bcrypt.hash("moderation-password", 10);
     const member = createUser({

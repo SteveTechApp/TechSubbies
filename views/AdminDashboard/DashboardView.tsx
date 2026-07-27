@@ -1,53 +1,70 @@
-﻿import React from 'react';
-// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
-import { useAppContext } from '../../context/InteractionContext';
+import React, { useEffect, useState } from 'react';
 import { StatCard } from '../../components/StatCard';
-import { Role, TransactionType } from '../../types';
-import { Users, Briefcase, DollarSign, UserCheck } from '../../components/Icons';
+import { Users, Briefcase, UserCheck, ShieldCheck } from '../../components/Icons';
+import apiService, { type AdminPlatformMetrics } from '../../services/apiService';
 
 export const DashboardView = ({ setActiveView }: { setActiveView: (view: string) => void }) => {
-    const { allUsers, jobs, transactions } = useAppContext();
+    const [metrics, setMetrics] = useState<AdminPlatformMetrics | null>(null);
+    const [error, setError] = useState('');
 
-    const userCounts = allUsers.reduce((acc, user) => {
-        acc[user.role] = (acc[user.role] || 0) + 1;
-        return acc;
-    }, {} as Record<Role, number>);
+    useEffect(() => {
+        apiService.getAdminPlatformMetrics()
+            .then(setMetrics)
+            .catch((reason) => setError(reason instanceof Error ? reason.message : 'Could not load platform metrics.'));
+    }, []);
 
-    const totalRevenue = transactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const activeJobs = jobs.filter(j => j.status === 'active').length;
+    if (error) {
+        return <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-5 text-red-800">{error}</div>;
+    }
+    if (!metrics) {
+        return <p className="text-gray-600">Loading live platform metrics…</p>;
+    }
 
     return (
         <div>
-            <h1 className="text-xl font-bold mb-4">Admin Dashboard</h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                <StatCard icon={Users} value={allUsers.length.toString()} label="Total Users" colorClass="bg-blue-500" />
-                <StatCard icon={UserCheck} value={(userCounts[Role.ENGINEER] || 0).toString()} label="Engineers" colorClass="bg-green-500" />
-                <StatCard icon={Briefcase} value={activeJobs.toString()} label="Active Jobs" colorClass="bg-indigo-500" />
-                <StatCard icon={DollarSign} value={`£${totalRevenue.toLocaleString()}`} label="Total Transaction Volume" colorClass="bg-yellow-500" />
+            <div className="mb-4 flex items-end justify-between">
+                <div>
+                    <h1 className="text-xl font-bold">Admin Dashboard</h1>
+                    <p className="text-sm text-gray-500">Live operational data from the TechSubbies backend.</p>
+                </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+                <StatCard icon={Users} value={metrics.users.total.toString()} label="Registered Accounts" colorClass="bg-blue-500" />
+                <StatCard icon={UserCheck} value={metrics.users.engineers.toString()} label="Engineers" colorClass="bg-green-500" />
+                <StatCard icon={Briefcase} value={metrics.marketplace.jobsActive.toString()} label="Active Jobs" colorClass="bg-indigo-500" />
+                <StatCard icon={ShieldCheck} value={metrics.marketplace.contractsActive.toString()} label="Active Contracts" colorClass="bg-cyan-600" />
             </div>
 
-            <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-3">
-                 <div className="bg-white p-4 rounded-lg shadow">
-                    <h2 className="text-base font-bold mb-4">Quick Actions</h2>
-                    <div className="grid grid-cols-2 gap-4">
-                       <button onClick={() => setActiveView('Manage Users')} className="p-4 bg-gray-50 rounded-lg text-center hover:bg-gray-100 transition-colors">
-                            <Users className="w-8 h-8 mx-auto text-gray-600 mb-2"/>
-                            <span className="font-semibold text-gray-800 text-sm">Manage Users</span>
+            <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+                <div className="rounded-lg bg-white p-4 shadow">
+                    <h2 className="mb-4 text-base font-bold">Quick Actions</h2>
+                    <div className="grid grid-cols-3 gap-3">
+                        <button onClick={() => setActiveView('Manage Users')} className="rounded-lg bg-gray-50 p-4 text-center hover:bg-gray-100">
+                            <Users className="mx-auto mb-2 h-8 w-8 text-gray-600" />
+                            <span className="text-sm font-semibold">Manage Users</span>
                         </button>
-                         <button onClick={() => setActiveView('Manage Jobs')} className="p-4 bg-gray-50 rounded-lg text-center hover:bg-gray-100 transition-colors">
-                            <Briefcase className="w-8 h-8 mx-auto text-gray-600 mb-2"/>
-                            <span className="font-semibold text-gray-800 text-sm">Manage Jobs</span>
+                        <button onClick={() => setActiveView('Manage Jobs')} className="rounded-lg bg-gray-50 p-4 text-center hover:bg-gray-100">
+                            <Briefcase className="mx-auto mb-2 h-8 w-8 text-gray-600" />
+                            <span className="text-sm font-semibold">Manage Jobs</span>
+                        </button>
+                        <button onClick={() => setActiveView('Privacy Requests')} className="rounded-lg bg-gray-50 p-4 text-center hover:bg-gray-100">
+                            <ShieldCheck className="mx-auto mb-2 h-8 w-8 text-gray-600" />
+                            <span className="text-sm font-semibold">Privacy Requests</span>
                         </button>
                     </div>
                 </div>
 
-                <div className="bg-white p-4 rounded-lg shadow">
-                    <h2 className="text-base font-bold mb-4">Platform Health</h2>
+                <div className="rounded-lg bg-white p-4 shadow">
+                    <h2 className="mb-4 text-base font-bold">Platform Health</h2>
                     <ul className="space-y-3 text-sm">
-                        <li className="flex justify-between"><span>Companies:</span> <span className="font-bold">{userCounts[Role.COMPANY] || 0}</span></li>
-                        <li className="flex justify-between"><span>Resourcing Companies:</span> <span className="font-bold">{userCounts[Role.RESOURCING_COMPANY] || 0}</span></li>
-                        <li className="flex justify-between"><span>Total Jobs Posted:</span> <span className="font-bold">{jobs.length}</span></li>
-                        <li className="flex justify-between"><span>Total Transactions:</span> <span className="font-bold">{transactions.length}</span></li>
+                        <li className="flex justify-between"><span>Companies</span><strong>{metrics.users.companies}</strong></li>
+                        <li className="flex justify-between"><span>Resourcing companies</span><strong>{metrics.users.resourcingCompanies}</strong></li>
+                        <li className="flex justify-between"><span>Suspended accounts</span><strong>{metrics.users.suspended}</strong></li>
+                        <li className="flex justify-between"><span>Jobs posted</span><strong>{metrics.marketplace.jobsTotal}</strong></li>
+                        <li className="flex justify-between"><span>Applications</span><strong>{metrics.marketplace.applications}</strong></li>
+                        <li className="flex justify-between"><span>Contracts</span><strong>{metrics.marketplace.contractsTotal}</strong></li>
+                        <li className="flex justify-between"><span>Invoices</span><strong>{metrics.marketplace.invoices}</strong></li>
+                        <li className="flex justify-between"><span>Pending privacy requests</span><strong>{metrics.privacyPending}</strong></li>
                     </ul>
                 </div>
             </div>
