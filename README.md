@@ -15,9 +15,15 @@ View your app in AI Studio: https://ai.studio/apps/drive/1YybwIyYTK7ZoYAEVujEk_t
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
+2. Copy `.env.local.example` to `.env.local` and set `VITE_API_BASE_URL`
+3. Copy `backend/.env.example` to `backend/.env`; keep secrets such as `GEMINI_API_KEY` on the backend only
+4. Run the backend from `backend/` with `npm start`
+5. Run the frontend:
    `npm run dev`
+
+Production frontend builds must set `VITE_API_BASE_URL` to an HTTPS backend URL
+or a same-origin path such as `/api`. The build fails rather than silently
+connecting customers to `localhost`.
 
 ## Compliance and certification model
 

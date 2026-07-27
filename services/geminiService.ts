@@ -4,13 +4,13 @@ import { EngineerProfile, Job, JobSkillRequirement, Skill, Insight, ExperienceLe
 import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';
 import { shortlistByRequirementScore, getRequiredLevel } from './skillMatching';
 import { secureFetch } from './httpClient';
+import { API_BASE_URL } from './apiConfig';
 
 // All AI calls go through the backend now instead of talking to Google's
 // Gemini API directly from the browser. The API key lives only on the
 // server (backend/.env) - see backend/src/routes/ai.ts. This file keeps
 // the exact same public methods as before so nothing else in the app has
 // to change.
-const API_BASE_URL = (typeof process !== 'undefined' && (process as any).env?.API_BASE_URL) || 'http://localhost:4000/api';
 const fetch = secureFetch;
 
 async function postJSON(path: string, body: unknown): Promise<any> {

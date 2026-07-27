@@ -2,6 +2,7 @@ import { MOCK_ENGINEERS, MOCK_COMPANIES, MOCK_JOBS, MOCK_APPLICATIONS, MOCK_REVI
 import { MOCK_RESOURCING_COMPANY_1, MOCK_ADMIN_PROFILE, MOCK_FREE_ENGINEER, MOCK_ENGINEER_STEVE } from '../data/modules/mockStaticProfiles';
 import { ApplicationStatus, EngineerProfile, ProfileTier, Role, User, Contract, ContractStatus, MilestoneStatus, Timesheet, TimesheetStatus, PaymentTerms, Invoice, InvoiceStatus, Conversation, Message, ForumPost, Notification, CollaborationPost, CompanyProfile, ResourcingCompanyProfile, Job, Discipline, Currency, Country, ExperienceLevel } from '../types';
 import { secureFetch } from './httpClient';
+import { API_BASE_URL } from './apiConfig';
 
 // --- API Service ---
 // Account creation, login and profile updates now call the real backend
@@ -12,7 +13,6 @@ import { secureFetch } from './httpClient';
 
 const simulateDelay = (ms: number = 500) => new Promise(res => setTimeout(res, ms));
 
-const API_BASE_URL = (typeof process !== 'undefined' && (process as any).env?.API_BASE_URL) || 'http://localhost:4000/api';
 const TOKEN_KEY = 'techsubbies_auth_token';
 const fetch = secureFetch;
 let cookieSessionAvailable = false;
