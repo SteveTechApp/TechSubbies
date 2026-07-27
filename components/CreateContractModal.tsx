@@ -17,7 +17,7 @@ interface CreateContractModalProps {
 const getBoilerplate = (type: ContractType, companyName: string, engineerName: string) => {
     const common = `This Agreement is made between ${companyName} ("the Client") and ${engineerName} ("the Contractor"). The Contractor agrees to provide services as described herein. This platform, TechSubbies.com, is a facilitator and is not a party to this agreement. Any disputes must be resolved directly between the Client and the Contractor.`;
     if (type === ContractType.SOW) {
-        return `${common}\n\nStatement of Work (SOW): The Contractor will complete the milestones as defined in this contract. Payment will be released from escrow upon successful completion and approval of each milestone.`;
+        return `${common}\n\nStatement of Work (SOW): The Contractor will complete the milestones as defined in this contract. The parties will agree and manage all invoicing, payment and tax obligations directly, outside TechSubbies.`;
     }
     return `${common}\n\nDay Rate Agreement: The Contractor will provide services on a day-rate basis. The Contractor will submit timesheets for approval, and payment will be made based on the agreed day rate.`;
 };
@@ -83,7 +83,7 @@ export const CreateContractModal = ({ isOpen, onClose, job, engineer, onSendForS
         }
 
         const finalAmount = type === ContractType.SOW ? totalMilestoneAmount : amount;
-        const finalMilestones = type === ContractType.SOW ? milestones.map(m => ({ ...m, status: MilestoneStatus.AWAITING_FUNDING })) : [];
+        const finalMilestones = type === ContractType.SOW ? milestones.map(m => ({ ...m, status: MilestoneStatus.NOT_STARTED })) : [];
 
         const newContract: Contract = {
             id: `contract-${generateUniqueId()}`,

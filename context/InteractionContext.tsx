@@ -11,7 +11,7 @@ import {
     User, Role, EngineerProfile, CompanyProfile, Job, Application, Review, Conversation, Message,
     Contract, Transaction, Project, ForumPost, ForumComment, Notification, CollaborationPost, ResourcingCompanyProfile,
     // FIX: Added missing TimesheetStatus and Product-related imports.
-    Invoice, ApplicationStatus, ContractStatus, MilestoneStatus, Timesheet, PaymentTerms, InvoiceStatus, TimesheetStatus, Product, ProductFeatures,
+    ApplicationStatus, ContractStatus, MilestoneStatus, Timesheet, TimesheetStatus, Product, ProductFeatures,
 } from '../types';
 
 interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<typeof useSettings> {
@@ -32,15 +32,14 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     sendOffer: (jobId: string, engineerId: string) => Promise<void>;
     rejectApplication: (jobId: string, engineerId: string) => Promise<void>;
     inviteEngineerToJob: (jobId: string, engineerId: string) => void;
-    // --- Contract & Payment Management ---
+    // --- Direct-party contract and work tracking ---
     createContract: (contract: any) => Promise<void>;
     signContract: (contractId: string, signatureName: string) => void;
-    fundMilestone: (contractId: string, milestoneId: string) => void;
+    startMilestone: (contractId: string, milestoneId: string) => void;
     submitMilestoneForApproval: (contractId: string, milestoneId: string) => void;
     approveMilestone: (contractId: string, milestoneId: string) => void;
     submitTimesheet: (contractId: string, timesheetData: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => void;
     approveTimesheet: (contractId: string, timesheetId: string) => void;
-    generateInvoice: (contractId: string, paymentTerms: PaymentTerms) => void;
     // --- Communication ---
     startConversationAndNavigate: (otherPartyProfileId: string, navigateCallback: () => void) => void;
     sendMessage: (conversationId: string, text: string) => Promise<void>;
@@ -245,7 +244,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         alert('Invite sent!');
     };
 
-    // --- Contracts, milestones, timesheets & invoices ---
+    // --- Direct-party contracts, milestones and timesheets ---
     // Each of these applies its change locally right away (so the UI feels
     // instant) and then persists it to the real backend in the background
     // (see apiService.ts / backend/src/routes/contracts.ts). If the backend
@@ -293,21 +292,21 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
                 alert(error?.message || 'Could not save your signature.');
             });
     };
-    const fundMilestone = (contractId: string, milestoneId: string) => {
+    const startMilestone = (contractId: string, milestoneId: string) => {
         const previousContracts = data.contracts;
-        setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? {...m, status: MilestoneStatus.FUNDED_IN_PROGRESS} : m) } : c) }));
-        apiService.fundMilestone(contractId, milestoneId)
+        setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? {...m, status: MilestoneStatus.IN_PROGRESS} : m) } : c) }));
+        apiService.startMilestone(contractId, milestoneId)
             .then(updated => {
                 if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
             })
             .catch((error: any) => {
                 setAppData(prev => ({ ...prev, contracts: previousContracts }));
-                alert(error?.message || 'Could not fund milestone.');
+                alert(error?.message || 'Could not start milestone.');
             });
     };
     const submitMilestoneForApproval = (contractId: string, milestoneId: string) => {
         const previousContracts = data.contracts;
-        setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? {...m, status: MilestoneStatus.SUBMITTED_FOR_APPROVAL} : m) } : c) }));
+        setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? {...m, status: MilestoneStatus.SUBMITTED} : m) } : c) }));
         apiService.submitMilestoneForApproval(contractId, milestoneId)
             .then(updated => {
                 if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
@@ -319,7 +318,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
     };
     const approveMilestone = (contractId: string, milestoneId: string) => {
         const previousContracts = data.contracts;
-        setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? {...m, status: MilestoneStatus.APPROVED_PENDING_INVOICE} : m) } : c) }));
+        setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? {...m, status: MilestoneStatus.APPROVED} : m) } : c) }));
         apiService.approveMilestone(contractId, milestoneId)
             .then(updated => {
                 if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
@@ -346,7 +345,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
 
     const approveTimesheet = (contractId: string, timesheetId: string) => {
         const previousContracts = data.contracts;
-        setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, timesheets: (c.timesheets || []).map(ts => ts.id === timesheetId ? {...ts, status: TimesheetStatus.PAID } : ts) } : c) }));
+        setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, timesheets: (c.timesheets || []).map(ts => ts.id === timesheetId ? {...ts, status: TimesheetStatus.APPROVED } : ts) } : c) }));
         apiService.approveTimesheet(contractId, timesheetId)
             .then(updated => {
                 if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
@@ -357,45 +356,6 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
             });
     };
 
-    const generateInvoice = (contractId: string, paymentTerms: PaymentTerms) => {
-         const contract = data.contracts.find(c => c.id === contractId);
-         if (!contract) return;
-
-         const itemsToInvoice = contract.milestones
-             .filter(m => m.status === MilestoneStatus.APPROVED_PENDING_INVOICE)
-             .map(m => ({ description: `Milestone: ${m.description}`, amount: m.amount }));
-
-         const total = itemsToInvoice.reduce((sum, item) => sum + item.amount, 0);
-
-         const newInvoice: Invoice = {
-             id: `inv-${Date.now()}`,
-             contractId,
-             companyId: contract.companyId,
-             engineerId: contract.engineerId,
-             items: itemsToInvoice,
-             total,
-             currency: contract.currency,
-             issueDate: new Date(),
-             dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // Mocking Net 14
-             status: InvoiceStatus.SENT
-         };
-
-         const previousInvoices = data.invoices;
-         const previousContracts = data.contracts;
-
-         setAppData(prev => ({ ...prev, invoices: [...prev.invoices, newInvoice], contracts: prev.contracts.map(c => c.id === contractId ? {...c, milestones: c.milestones.map(m => m.status === MilestoneStatus.APPROVED_PENDING_INVOICE ? {...m, status: MilestoneStatus.COMPLETED_PAID} : m)} : c)}));
-
-         apiService.generateInvoice(contractId, paymentTerms)
-            .then(saved => {
-                if (saved) setAppData(prev => ({ ...prev, invoices: prev.invoices.map(inv => inv.id === newInvoice.id ? saved : inv) }));
-                alert("Invoice generated and sent!");
-            })
-            .catch((error: any) => {
-                setAppData(prev => ({ ...prev, invoices: previousInvoices, contracts: previousContracts }));
-                alert(error?.message || 'Could not generate invoice.');
-            });
-    };
-    
     // otherPartyProfileId is a *profile* id (engineer/company), while
     // conversations are keyed by *user* ids - findUserByProfileId bridges
     // the two, same lookup ChatWindow/MessagesView already rely on.
@@ -555,12 +515,11 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         inviteEngineerToJob,
         createContract,
         signContract,
-        fundMilestone,
+        startMilestone,
         submitMilestoneForApproval,
         approveMilestone,
         submitTimesheet,
         approveTimesheet,
-        generateInvoice,
         startConversationAndNavigate,
         sendMessage,
         refreshConversationMessages,

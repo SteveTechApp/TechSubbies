@@ -87,17 +87,15 @@ export enum ContractType {
 }
 
 export enum MilestoneStatus {
-    AWAITING_FUNDING = 'Awaiting Funding',
-    FUNDED_IN_PROGRESS = 'In Progress',
-    SUBMITTED_FOR_APPROVAL = 'Submitted for Approval',
-    APPROVED_PENDING_INVOICE = 'Approved - Pending Invoice',
-    COMPLETED_PAID = 'Completed & Paid',
+    NOT_STARTED = 'Not Started',
+    IN_PROGRESS = 'In Progress',
+    SUBMITTED = 'Submitted for Approval',
+    APPROVED = 'Approved',
 }
 
 export enum TimesheetStatus {
     SUBMITTED = 'submitted',
     APPROVED = 'approved',
-    PAID = 'paid',
 }
 
 export enum InvoiceStatus {
@@ -412,9 +410,6 @@ export interface Contract {
 
 export enum TransactionType {
     SUBSCRIPTION = 'subscription',
-    ESCROW_FUNDING = 'escrow_funding',
-    PAYOUT = 'payout',
-    PLATFORM_FEE = 'platform_fee',
     PLATFORM_CREDIT_PURCHASE = 'platform_credit_purchase',
     AI_DEEP_DIVE_PURCHASE = 'ai_deep_dive_purchase',
 }

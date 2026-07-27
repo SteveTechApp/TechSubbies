@@ -42,8 +42,8 @@ export const ForEngineersPage = ({ onNavigate }: ForEngineersPageProps) => {
             <HighlightCard icon={Handshake} title="Direct Client Access">
               No recruiters in the middle. Communicate, negotiate, and sign contracts directly with the hiring companies.
             </HighlightCard>
-            <HighlightCard icon={DollarSign} title="Secure & Prompt Payments">
-                Utilize our escrow system for milestone projects. Once work is approved, payment is released. No more chasing invoices.
+            <HighlightCard icon={DollarSign} title="Keep Your Full Agreed Fee">
+                Agree your rate and payment terms directly with the company. TechSubbies does not take commission from your work or control how you invoice and get paid.
             </HighlightCard>
              <HighlightCard icon={Users} title="Build Your Network">
                 Every completed contract adds a client to your permanent network, making it easy to get repeat work from companies who trust you.

@@ -44,7 +44,7 @@ All endpoints should be prefixed with `/api`.
 - `GET /contracts`: Get all contracts for the authenticated user.
 - `POST /contracts`: Create a new draft contract.
 - `POST /contracts/:contractId/sign`: E-sign a contract.
-- `POST /contracts/:contractId/milestones/:milestoneId/fund`: Fund an escrow milestone.
+- `PATCH /contracts/:contractId/milestones/:milestoneId/start`: Confirm that milestone work may begin. TechSubbies does not process payment.
 - `POST /contracts/:contractId/milestones/:milestoneId/approve`: Approve a completed milestone.
 
 ---
@@ -67,12 +67,12 @@ The client calls this endpoint *after* successfully uploading the file to the `u
 
 ---
 
-## 4. Payments (Stripe Integration)
+## 4. Membership Billing
 
-The backend will handle creating PaymentIntents. The client will use the returned secret to confirm the payment with Stripe.js.
+Any future Stripe integration is limited to TechSubbies membership and optional platform-feature purchases. Payments for engineering services remain entirely between the company and engineer.
 
-### `POST /api/payments/create-intent`
-- **Request Body:** `{ "amount": 500, "currency": "gbp", "description": "Fund Milestone" }` (Amount in pence/cents)
+### `POST /api/billing/create-membership-intent`
+- **Request Body:** `{ "planId": "engineer-pro", "currency": "gbp" }`
 - **Success Response (200):** `{ "clientSecret": "pi_..." }`
 
 ---

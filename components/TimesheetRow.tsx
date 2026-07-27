@@ -14,7 +14,6 @@ const StatusBadge = ({ status }: { status: string }) => {
     const STATUS_INFO: Record<string, { text: string, color: string }> = {
         submitted: { text: 'Submitted', color: 'bg-yellow-100 text-yellow-800' },
         approved: { text: 'Approved', color: 'bg-blue-100 text-blue-800' },
-        paid: { text: 'Paid', color: 'bg-green-100 text-green-800' },
     };
     const info = STATUS_INFO[status] || { text: status, color: 'bg-gray-200 text-gray-800' };
     return <span className={`px-3 py-1 text-xs font-bold rounded-full ${info.color}`}>{info.text}</span>;
@@ -39,7 +38,7 @@ export const TimesheetRow = ({ timesheet, contract, userRole }: TimesheetRowProp
         if ((userRole === Role.COMPANY || userRole === Role.ADMIN) && timesheet.status === 'submitted') {
             return (
                 <button onClick={handleApprove} className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700">
-                    Approve & Pay
+                    Approve Timesheet
                 </button>
             );
         }

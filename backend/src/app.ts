@@ -7,7 +7,7 @@ import { aiRouter } from "./routes/ai.js";
 import { partnershipsRouter } from "./routes/partnerships.js";
 import { companyAttachmentsRouter } from "./routes/companyAttachments.js";
 import { applicationsRouter, jobsRouter } from "./routes/jobs.js";
-import { contractsRouter, invoicesRouter } from "./routes/contracts.js";
+import { contractsRouter } from "./routes/contracts.js";
 import { conversationsRouter } from "./routes/conversations.js";
 import { adminRouter } from "./routes/admin.js";
 import { requireCsrf, securityHeaders } from "./middleware/security.js";
@@ -72,7 +72,6 @@ export function createApp(options: AppOptions = {}) {
       "/api/jobs",
       "/api/applications",
       "/api/contracts",
-      "/api/invoices",
       "/api/conversations",
     ],
     requireVerifiedEmailForMutation
@@ -82,7 +81,6 @@ export function createApp(options: AppOptions = {}) {
   app.use("/api/jobs", jobsRouter);
   app.use("/api/applications", applicationsRouter);
   app.use("/api/contracts", contractsRouter);
-  app.use("/api/invoices", invoicesRouter);
   app.use("/api/conversations", conversationsRouter);
 
   // Keep this last: catches anything unmatched under /api.

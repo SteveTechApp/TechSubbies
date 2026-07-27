@@ -19,7 +19,6 @@ import { ContractsView } from './ContractsView';
 import { ProjectPlannerView } from './CompanyDashboard/ProjectPlannerView';
 import { ProjectTrackingView } from './CompanyDashboard/ProjectTrackingView';
 import { AnalyticsView } from './CompanyDashboard/AnalyticsView';
-import { InvoicesView } from './InvoicesView';
 
 export const CompanyDashboard = () => {
     const { user } = useAuth();
@@ -84,8 +83,6 @@ export const CompanyDashboard = () => {
                 return <ProjectTrackingView />;
             case 'Contracts':
                 return <ContractsView setActiveView={setActiveView} />;
-             case 'Invoices':
-                return <InvoicesView />;
             case 'Messages':
                 return <MessagesView />;
             case 'Analytics':

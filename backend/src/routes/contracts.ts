@@ -2,35 +2,31 @@ import { Router } from "express";
 import { z } from "zod";
 import {
   createContractAndHireApplication,
-  createInvoice,
   findApplication,
   findContractById,
   findContractForApplication,
   findJobById,
   findUserById,
   listContractsForUser,
-  listInvoicesForUser,
   updateContractMilestones,
   updateContractSignature,
   updateContractTimesheets,
 } from "../lib/db.js";
 import { sendApplicationStatusNotification } from "../lib/applicationNotifications.js";
-import { toPublicContract, toPublicInvoice } from "../lib/publicContract.js";
+import { toPublicContract } from "../lib/publicContract.js";
 import { requireAuth, requireRole, type AuthedRequest } from "../middleware/auth.js";
 
 export const contractsRouter = Router();
-export const invoicesRouter = Router();
 
 // Matches the string values of the `MilestoneStatus`/`ContractStatus`/
 // `TimesheetStatus` enums in types/index.ts exactly, so a contract created
 // here slots straight into the frontend's existing status-badge/permission
 // logic (see views/ContractDetailsView.tsx) without any translation layer.
 const MILESTONE_STATUS = {
-  AWAITING_FUNDING: "Awaiting Funding",
-  FUNDED_IN_PROGRESS: "In Progress",
-  SUBMITTED_FOR_APPROVAL: "Submitted for Approval",
-  APPROVED_PENDING_INVOICE: "Approved - Pending Invoice",
-  COMPLETED_PAID: "Completed & Paid",
+  NOT_STARTED: "Not Started",
+  IN_PROGRESS: "In Progress",
+  SUBMITTED: "Submitted for Approval",
+  APPROVED: "Approved",
 } as const;
 
 const CONTRACT_STATUS = {
@@ -41,14 +37,8 @@ const CONTRACT_STATUS = {
 
 const TIMESHEET_STATUS = {
   SUBMITTED: "submitted",
-  PAID: "paid",
+  APPROVED: "approved",
 } as const;
-
-const PAYMENT_TERM_DAYS: Record<string, number> = {
-  "Net 14 Days": 14,
-  "Net 30 Days": 30,
-  "Net 60 Days": 60,
-};
 
 function isParticipant(contract: { companyId: string; engineerId: string }, userId: string): boolean {
   return contract.companyId === userId || contract.engineerId === userId;
@@ -111,7 +101,7 @@ contractsRouter.post(
     return res.status(409).json({ error: "A contract requires an offered application for this job." });
   }
 
-  const milestonesWithStatus = milestones.map((m) => ({ ...m, status: MILESTONE_STATUS.AWAITING_FUNDING }));
+  const milestonesWithStatus = milestones.map((m) => ({ ...m, status: MILESTONE_STATUS.NOT_STARTED }));
   let jobTitle = "Technical opportunity";
   try {
     jobTitle = String(JSON.parse(job.data).title || jobTitle);
@@ -205,10 +195,10 @@ function findMilestone(contract: ReturnType<typeof findContractById>, milestoneI
   return index === -1 ? null : { milestones, index };
 }
 
-// PATCH /api/contracts/:contractId/milestones/:milestoneId/fund - the
-// company (or admin) funds an awaiting milestone into escrow.
+// PATCH /api/contracts/:contractId/milestones/:milestoneId/start - the
+// company (or admin) confirms that work may begin. No payment is processed.
 contractsRouter.patch(
-  "/:contractId/milestones/:milestoneId/fund",
+  "/:contractId/milestones/:milestoneId/start",
   requireAuth,
   async (req: AuthedRequest, res) => {
     const contract = findContractById(req.params.contractId);
@@ -216,23 +206,23 @@ contractsRouter.patch(
 
     const signer = findUserById(req.userId!);
     if (!signer || !(contract.companyId === signer.id || signer.role === "Admin")) {
-      return res.status(403).json({ error: "Only the client can fund a milestone." });
+      return res.status(403).json({ error: "Only the client can start a milestone." });
     }
 
     const found = findMilestone(contract, req.params.milestoneId);
     if (!found) return res.status(404).json({ error: "Milestone not found." });
-    if (found.milestones[found.index].status !== MILESTONE_STATUS.AWAITING_FUNDING) {
-      return res.status(409).json({ error: "This milestone isn't awaiting funding." });
+    if (found.milestones[found.index].status !== MILESTONE_STATUS.NOT_STARTED) {
+      return res.status(409).json({ error: "This milestone has already started." });
     }
 
-    found.milestones[found.index].status = MILESTONE_STATUS.FUNDED_IN_PROGRESS;
+    found.milestones[found.index].status = MILESTONE_STATUS.IN_PROGRESS;
     const updated = updateContractMilestones(contract.id, found.milestones);
     return res.json(toPublicContract(updated!));
   }
 );
 
 // PATCH /api/contracts/:contractId/milestones/:milestoneId/submit - the
-// engineer marks a funded milestone as done, for the company to approve.
+// engineer marks an in-progress milestone as done, for the company to approve.
 contractsRouter.patch(
   "/:contractId/milestones/:milestoneId/submit",
   requireAuth,
@@ -245,18 +235,18 @@ contractsRouter.patch(
 
     const found = findMilestone(contract, req.params.milestoneId);
     if (!found) return res.status(404).json({ error: "Milestone not found." });
-    if (found.milestones[found.index].status !== MILESTONE_STATUS.FUNDED_IN_PROGRESS) {
+    if (found.milestones[found.index].status !== MILESTONE_STATUS.IN_PROGRESS) {
       return res.status(409).json({ error: "This milestone isn't in progress." });
     }
 
-    found.milestones[found.index].status = MILESTONE_STATUS.SUBMITTED_FOR_APPROVAL;
+    found.milestones[found.index].status = MILESTONE_STATUS.SUBMITTED;
     const updated = updateContractMilestones(contract.id, found.milestones);
     return res.json(toPublicContract(updated!));
   }
 );
 
 // PATCH /api/contracts/:contractId/milestones/:milestoneId/approve - the
-// company (or admin) approves a submitted milestone, clearing it to invoice.
+// company (or admin) confirms that submitted work is approved.
 contractsRouter.patch(
   "/:contractId/milestones/:milestoneId/approve",
   requireAuth,
@@ -271,11 +261,11 @@ contractsRouter.patch(
 
     const found = findMilestone(contract, req.params.milestoneId);
     if (!found) return res.status(404).json({ error: "Milestone not found." });
-    if (found.milestones[found.index].status !== MILESTONE_STATUS.SUBMITTED_FOR_APPROVAL) {
+    if (found.milestones[found.index].status !== MILESTONE_STATUS.SUBMITTED) {
       return res.status(409).json({ error: "This milestone hasn't been submitted for approval." });
     }
 
-    found.milestones[found.index].status = MILESTONE_STATUS.APPROVED_PENDING_INVOICE;
+    found.milestones[found.index].status = MILESTONE_STATUS.APPROVED;
     const updated = updateContractMilestones(contract.id, found.milestones);
     return res.json(toPublicContract(updated!));
   }
@@ -315,8 +305,8 @@ contractsRouter.post("/:contractId/timesheets", requireAuth, async (req: AuthedR
 });
 
 // PATCH /api/contracts/:contractId/timesheets/:timesheetId/approve - the
-// company (or admin) approves and pays a submitted timesheet in one step,
-// matching the "Approve & Pay" action in components/TimesheetRow.tsx.
+// company (or admin) approves a submitted timesheet. Payment remains a
+// direct matter between the parties and is not recorded by TechSubbies.
 contractsRouter.patch(
   "/:contractId/timesheets/:timesheetId/approve",
   requireAuth,
@@ -336,66 +326,8 @@ contractsRouter.patch(
       return res.status(409).json({ error: "This timesheet has already been processed." });
     }
 
-    timesheets[index].status = TIMESHEET_STATUS.PAID;
+    timesheets[index].status = TIMESHEET_STATUS.APPROVED;
     const updated = updateContractTimesheets(contract.id, timesheets);
     return res.json(toPublicContract(updated!));
   }
 );
-
-const invoiceSchema = z.object({
-  paymentTerms: z.string().min(1),
-});
-
-// POST /api/contracts/:contractId/invoices - the engineer (contractor)
-// generates an invoice covering every milestone that's approved and
-// waiting to be invoiced, matching the "Generate Invoice" action gated to
-// engineers in views/ContractDetailsView.tsx.
-contractsRouter.post("/:contractId/invoices", requireAuth, async (req: AuthedRequest, res) => {
-  const contract = findContractById(req.params.contractId);
-  if (!contract) return res.status(404).json({ error: "Contract not found." });
-  if (contract.engineerId !== req.userId) {
-    return res.status(403).json({ error: "Only the contractor can generate an invoice for this contract." });
-  }
-
-  const parsed = invoiceSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: "Payment terms are required." });
-  }
-  const days = PAYMENT_TERM_DAYS[parsed.data.paymentTerms] ?? 14;
-
-  const milestones = JSON.parse(contract.milestones) as { description: string; amount: number; status: string }[];
-  const approved = milestones.filter((m) => m.status === MILESTONE_STATUS.APPROVED_PENDING_INVOICE);
-  if (approved.length === 0) {
-    return res.status(409).json({ error: "There are no approved milestones ready to invoice." });
-  }
-
-  const items = approved.map((m) => ({ description: `Milestone: ${m.description}`, amount: m.amount }));
-  const total = items.reduce((sum, item) => sum + item.amount, 0);
-  const dueDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
-  const contractCurrency = (toPublicContract(contract) as Record<string, unknown>).currency;
-  const currency = typeof contractCurrency === "string" ? contractCurrency : "£";
-
-  const invoice = createInvoice({
-    contractId: contract.id,
-    companyId: contract.companyId,
-    engineerId: contract.engineerId,
-    items,
-    total,
-    currency,
-    dueDate,
-  });
-
-  const paidMilestones = milestones.map((m) =>
-    m.status === MILESTONE_STATUS.APPROVED_PENDING_INVOICE ? { ...m, status: MILESTONE_STATUS.COMPLETED_PAID } : m
-  );
-  updateContractMilestones(contract.id, paidMilestones);
-
-  return res.status(201).json(toPublicInvoice(invoice));
-});
-
-// GET /api/invoices/me - every invoice where the signed-in user is either
-// the company or the engineer party. Mounted separately in app.ts, kept
-// here since it shares all its helpers with the contract routes above.
-invoicesRouter.get("/me", requireAuth, async (req: AuthedRequest, res) => {
-  return res.json(listInvoicesForUser(req.userId!).map(toPublicInvoice));
-});

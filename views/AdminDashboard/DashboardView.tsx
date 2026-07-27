@@ -63,7 +63,6 @@ export const DashboardView = ({ setActiveView }: { setActiveView: (view: string)
                         <li className="flex justify-between"><span>Jobs posted</span><strong>{metrics.marketplace.jobsTotal}</strong></li>
                         <li className="flex justify-between"><span>Applications</span><strong>{metrics.marketplace.applications}</strong></li>
                         <li className="flex justify-between"><span>Contracts</span><strong>{metrics.marketplace.contractsTotal}</strong></li>
-                        <li className="flex justify-between"><span>Invoices</span><strong>{metrics.marketplace.invoices}</strong></li>
                         <li className="flex justify-between"><span>Pending privacy requests</span><strong>{metrics.privacyPending}</strong></li>
                     </ul>
                 </div>

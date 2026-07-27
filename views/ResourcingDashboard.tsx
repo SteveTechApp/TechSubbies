@@ -13,7 +13,6 @@ import { AddNewEngineerView } from './ResourcingDashboard/AddNewEngineerView';
 import { MessagesView } from '../views/MessagesView';
 import { PlacementsView } from './ResourcingDashboard/PlacementsView';
 import { AnalyticsView } from './ResourcingDashboard/AnalyticsView';
-import { InvoicesView } from './InvoicesView';
 
 export const ResourcingDashboard = () => {
     const { user } = useAuth();
@@ -50,8 +49,6 @@ export const ResourcingDashboard = () => {
                 return <FindJobsView managedEngineers={managedEngineers} setActiveView={setActiveView} />;
             case 'Contracts':
                 return <PlacementsView managedContracts={managedContracts} setActiveView={setActiveView} />;
-            case 'Invoices':
-                return <InvoicesView />;
             case 'Messages':
                 return <MessagesView />;
             case 'Analytics':

@@ -1,6 +1,6 @@
-import { MOCK_ENGINEERS, MOCK_COMPANIES, MOCK_JOBS, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_CONTRACTS, MOCK_TRANSACTIONS, MOCK_PROJECTS, ALL_MOCK_USERS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_NOTIFICATIONS, MOCK_COLLABORATION_POSTS, MOCK_INVOICES } from '../data/mockData';
+import { MOCK_ENGINEERS, MOCK_COMPANIES, MOCK_JOBS, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_CONTRACTS, MOCK_TRANSACTIONS, MOCK_PROJECTS, ALL_MOCK_USERS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_NOTIFICATIONS, MOCK_COLLABORATION_POSTS } from '../data/mockData';
 import { MOCK_RESOURCING_COMPANY_1, MOCK_ADMIN_PROFILE, MOCK_FREE_ENGINEER, MOCK_ENGINEER_STEVE } from '../data/modules/mockStaticProfiles';
-import { ApplicationStatus, EngineerProfile, ProfileTier, Role, User, Contract, ContractStatus, MilestoneStatus, Timesheet, TimesheetStatus, PaymentTerms, Invoice, InvoiceStatus, Conversation, Message, ForumPost, Notification, CollaborationPost, CompanyProfile, ResourcingCompanyProfile, Job, Discipline, Currency, Country, ExperienceLevel } from '../types';
+import { ApplicationStatus, EngineerProfile, ProfileTier, Role, User, Contract, ContractStatus, MilestoneStatus, Timesheet, TimesheetStatus, Conversation, Message, ForumPost, Notification, CollaborationPost, CompanyProfile, ResourcingCompanyProfile, Job, Discipline, Currency, Country, ExperienceLevel } from '../types';
 import { secureFetch } from './httpClient';
 import { API_BASE_URL } from './apiConfig';
 
@@ -205,14 +205,11 @@ const apiService = {
         real.jobId === application.jobId && real.engineerId === application.engineerId
       )),
     ];
-    // Contracts/invoices are only fetched if there's a saved backend session
-    // (see getBackendContracts/getBackendInvoices below) - merged in
+    // Contracts are only fetched if there's a saved backend session.
     // alongside the demo data the same way jobs are, so a real, signed-in
     // account sees its actual contracts on top of the mock ones.
     const backendContracts = await apiService.getBackendContracts();
     const mergedContracts = [...backendContracts, ...MOCK_CONTRACTS.filter(c => !backendContracts.some(b => b.id === c.id))];
-    const backendInvoices = await apiService.getBackendInvoices();
-    const mergedInvoices = [...backendInvoices, ...MOCK_INVOICES.filter(i => !backendInvoices.some(b => b.id === i.id))];
     // Conversations/messages follow the same "only if there's a saved
     // session" shape - and since a conversation's full history is small,
     // it's pulled in alongside the conversation list itself rather than
@@ -241,7 +238,7 @@ const apiService = {
       forumComments: MOCK_FORUM_COMMENTS,
       notifications: MOCK_NOTIFICATIONS,
       collaborationPosts: MOCK_COLLABORATION_POSTS,
-      invoices: mergedInvoices,
+      invoices: [],
     };
   },
 
@@ -985,7 +982,7 @@ const apiService = {
     }
   },
 
-  // --- CONTRACTS, MILESTONES, TIMESHEETS & INVOICES ---
+  // --- DIRECT-PARTY CONTRACTS, MILESTONES & TIMESHEETS ---
   // Mirrors backend/src/routes/contracts.ts. Each of these tries the real
   // backend first when there's a signed-in session (a saved token). If
   // there's no session, or the backend can't be reached, they resolve to
@@ -1045,16 +1042,16 @@ const apiService = {
     return null;
   },
 
-  fundMilestone: async (contractId: string, milestoneId: string): Promise<Contract | null> => {
+  startMilestone: async (contractId: string, milestoneId: string): Promise<Contract | null> => {
     const token = getAuthToken();
     if (token) {
       try {
-        const response = await fetch(`${API_BASE_URL}/contracts/${contractId}/milestones/${milestoneId}/fund`, {
+        const response = await fetch(`${API_BASE_URL}/contracts/${contractId}/milestones/${milestoneId}/start`, {
           method: 'PATCH',
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await response.json();
-        if (!response.ok) throw new Error(data?.error || 'Could not fund milestone.');
+        if (!response.ok) throw new Error(data?.error || 'Could not start milestone.');
         return data as Contract;
       } catch (error: any) {
         if (!isNetworkError(error)) throw error;
@@ -1144,30 +1141,7 @@ const apiService = {
     return null;
   },
 
-  generateInvoice: async (contractId: string, paymentTerms: PaymentTerms): Promise<Invoice | null> => {
-    const token = getAuthToken();
-    if (token) {
-      try {
-        const response = await fetch(`${API_BASE_URL}/contracts/${contractId}/invoices`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ paymentTerms }),
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data?.error || 'Could not generate invoice.');
-        return data as Invoice;
-      } catch (error: any) {
-        if (!isNetworkError(error)) throw error;
-      }
-    }
-    await simulateDelay(200);
-    return null;
-  },
-
-  // Lists contracts/invoices belonging to the signed-in user on the real
-  // backend, so they can be merged into the demo/mock lists on load (see
-  // getInitialData above). Returns an empty list (rather than throwing) if
-  // there's no session or the backend can't be reached.
+  // Lists contracts belonging to the signed-in user on the real backend.
   getBackendContracts: async (): Promise<Contract[]> => {
     const token = getAuthToken();
     if (!token) return [];
@@ -1175,18 +1149,6 @@ const apiService = {
       const response = await fetch(`${API_BASE_URL}/contracts/me`, { headers: { Authorization: `Bearer ${token}` } });
       if (!response.ok) return [];
       return (await response.json()) as Contract[];
-    } catch {
-      return [];
-    }
-  },
-
-  getBackendInvoices: async (): Promise<Invoice[]> => {
-    const token = getAuthToken();
-    if (!token) return [];
-    try {
-      const response = await fetch(`${API_BASE_URL}/invoices/me`, { headers: { Authorization: `Bearer ${token}` } });
-      if (!response.ok) return [];
-      return (await response.json()) as Invoice[];
     } catch {
       return [];
     }

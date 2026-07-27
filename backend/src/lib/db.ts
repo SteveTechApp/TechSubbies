@@ -179,7 +179,7 @@ db.exec(`
   );
 `);
 
-export const LATEST_SCHEMA_VERSION = 9;
+export const LATEST_SCHEMA_VERSION = 8;
 runMigrations(db, [
   {
     version: 1,
@@ -263,13 +263,6 @@ runMigrations(db, [
       ALTER TABLE jobs ADD COLUMN moderatedAt TEXT;
       ALTER TABLE jobs ADD COLUMN moderatorId TEXT;
       ALTER TABLE jobs ADD COLUMN moderationReason TEXT;
-    `),
-  },
-  {
-    version: 9,
-    name: "invoice-currencies",
-    up: (database) => database.exec(`
-      ALTER TABLE invoices ADD COLUMN currency TEXT NOT NULL DEFAULT '£';
     `),
   },
 ]);
@@ -877,7 +870,6 @@ export interface InvoiceRow {
   engineerId: string;
   items: string;
   total: number;
-  currency: string;
   issueDate: string;
   dueDate: string;
   status: string;
@@ -891,13 +883,12 @@ export function createInvoice(input: {
   engineerId: string;
   items: unknown[];
   total: number;
-  currency: string;
   dueDate: string;
 }): InvoiceRow {
   const id = randomUUID();
   const now = new Date().toISOString();
   db.prepare(
-    "INSERT INTO invoices (id, contractId, companyId, engineerId, items, total, currency, issueDate, dueDate, status, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Sent', ?, ?)"
+    "INSERT INTO invoices (id, contractId, companyId, engineerId, items, total, issueDate, dueDate, status, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Sent', ?, ?)"
   ).run(
     id,
     input.contractId,
@@ -905,7 +896,6 @@ export function createInvoice(input: {
     input.engineerId,
     JSON.stringify(input.items),
     input.total,
-    input.currency,
     now,
     input.dueDate,
     now,

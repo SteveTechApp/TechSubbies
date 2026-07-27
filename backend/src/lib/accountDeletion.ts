@@ -24,7 +24,7 @@ export type AccountDeletionReviewItem = AccountDeletionRequest & {
 export type AccountDeletionEligibility = {
   eligible: boolean;
   blockers: Array<{
-    code: "ACTIVE_CONTRACTS" | "UNPAID_INVOICES" | "LIVE_APPLICATIONS";
+    code: "ACTIVE_CONTRACTS" | "LIVE_APPLICATIONS";
     count: number;
     message: string;
   }>;
@@ -145,11 +145,6 @@ export function getAccountDeletionEligibility(userId: string): AccountDeletionEl
     WHERE (companyId = ? OR engineerId = ?)
       AND status NOT IN ('Completed', 'Cancelled')
   `, userId);
-  const unpaidInvoices = count(`
-    SELECT COUNT(*) AS total FROM invoices
-    WHERE (companyId = ? OR engineerId = ?)
-      AND status != 'Paid'
-  `, userId);
   const liveApplications = db.prepare(`
     SELECT COUNT(*) AS total FROM applications
     WHERE engineerId = ? AND status NOT IN ('Rejected', 'Completed')
@@ -160,11 +155,6 @@ export function getAccountDeletionEligibility(userId: string): AccountDeletionEl
     code: "ACTIVE_CONTRACTS",
     count: activeContracts,
     message: `${activeContracts} contract${activeContracts === 1 ? "" : "s"} must be completed or cancelled.`,
-  });
-  if (unpaidInvoices > 0) blockers.push({
-    code: "UNPAID_INVOICES",
-    count: unpaidInvoices,
-    message: `${unpaidInvoices} invoice${unpaidInvoices === 1 ? "" : "s"} must be paid or otherwise resolved.`,
   });
   if (liveApplications.total > 0) blockers.push({
     code: "LIVE_APPLICATIONS",

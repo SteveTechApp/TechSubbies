@@ -1,6 +1,6 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import apiService, { clearAuthToken } from './apiService';
-import { ApplicationStatus, Contract, ContractStatus, ContractType, Currency, PaymentTerms, Role } from '../types';
+import { ApplicationStatus, Contract, ContractStatus, ContractType, Currency, Role } from '../types';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -143,7 +143,7 @@ describe('apiService.getBackendEngineerApplications', () => {
 // returning the locally-built contract as-is, while the rest resolve to
 // `null` (meaning "nothing to reconcile with, keep the optimistic local
 // update") - see services/apiService.ts and context/InteractionContext.tsx.
-describe('apiService contract/invoice methods without a backend session', () => {
+describe('apiService contract methods without a backend session', () => {
   const sampleContract: Contract = {
     id: 'contract-1',
     jobId: 'job-1',
@@ -171,9 +171,9 @@ describe('apiService contract/invoice methods without a backend session', () => 
     expect(result).toBeNull();
   });
 
-  it('fundMilestone falls back to null', async () => {
+  it('startMilestone falls back to null', async () => {
     clearAuthToken();
-    const result = await apiService.fundMilestone('contract-1', 'ms-1');
+    const result = await apiService.startMilestone('contract-1', 'ms-1');
     expect(result).toBeNull();
   });
 
@@ -183,11 +183,6 @@ describe('apiService contract/invoice methods without a backend session', () => 
     expect(result).toBeNull();
   });
 
-  it('generateInvoice falls back to null', async () => {
-    clearAuthToken();
-    const result = await apiService.generateInvoice('contract-1', PaymentTerms.NET14);
-    expect(result).toBeNull();
-  });
 });
 
 // Same "no backend session -> resolve to null/empty rather than throw"

@@ -91,7 +91,7 @@ async function offeredContractBody(
 }
 
 describe("contracts: creation", () => {
-  it("lets a company create a contract, starting Pending Signature with milestones Awaiting Funding", async () => {
+  it("lets a company create a contract, starting Pending Signature with milestones Not Started", async () => {
     const company = await registerCompany("contracts-co-a@example.com", "Contract Co A");
     const engineer = await registerEngineer("contracts-eng-a@example.com", "Contract Eng A");
 
@@ -105,7 +105,7 @@ describe("contracts: creation", () => {
     expect(res.body.companyId).toBe(company.id);
     expect(res.body.engineerId).toBe(engineer.id);
     expect(res.body.milestones).toHaveLength(2);
-    expect(res.body.milestones.every((m: any) => m.status === "Awaiting Funding")).toBe(true);
+    expect(res.body.milestones.every((m: any) => m.status === "Not Started")).toBe(true);
     expect(res.body.engineerSignature).toBeNull();
     expect(res.body.companySignature).toBeNull();
     expect(res.body.notificationSent).toBe(true);
@@ -282,19 +282,19 @@ describe("contracts: milestones", () => {
     return { company, engineer, contractId, milestoneId };
   }
 
-  it("walks a milestone through fund -> submit -> approve, gated by role", async () => {
+  it("walks a milestone through start -> submit -> approve, gated by role", async () => {
     const { company, engineer, contractId, milestoneId } = await setUpActiveContract();
 
-    const wrongFunder = await request(app)
-      .patch(`/api/contracts/${contractId}/milestones/${milestoneId}/fund`)
+    const wrongStarter = await request(app)
+      .patch(`/api/contracts/${contractId}/milestones/${milestoneId}/start`)
       .set("Authorization", `Bearer ${engineer.token}`);
-    expect(wrongFunder.status).toBe(403);
+    expect(wrongStarter.status).toBe(403);
 
-    const fund = await request(app)
-      .patch(`/api/contracts/${contractId}/milestones/${milestoneId}/fund`)
+    const start = await request(app)
+      .patch(`/api/contracts/${contractId}/milestones/${milestoneId}/start`)
       .set("Authorization", `Bearer ${company.token}`);
-    expect(fund.status).toBe(200);
-    expect(fund.body.milestones.find((m: any) => m.id === milestoneId).status).toBe("In Progress");
+    expect(start.status).toBe(200);
+    expect(start.body.milestones.find((m: any) => m.id === milestoneId).status).toBe("In Progress");
 
     const wrongSubmitter = await request(app)
       .patch(`/api/contracts/${contractId}/milestones/${milestoneId}/submit`)
@@ -311,32 +311,32 @@ describe("contracts: milestones", () => {
       .patch(`/api/contracts/${contractId}/milestones/${milestoneId}/approve`)
       .set("Authorization", `Bearer ${company.token}`);
     expect(approve.status).toBe(200);
-    expect(approve.body.milestones.find((m: any) => m.id === milestoneId).status).toBe("Approved - Pending Invoice");
+    expect(approve.body.milestones.find((m: any) => m.id === milestoneId).status).toBe("Approved");
   });
 
-  it("rejects funding a milestone that isn't awaiting funding", async () => {
+  it("rejects starting a milestone that has already started", async () => {
     const { company, contractId, milestoneId } = await setUpActiveContract();
 
     await request(app)
-      .patch(`/api/contracts/${contractId}/milestones/${milestoneId}/fund`)
+      .patch(`/api/contracts/${contractId}/milestones/${milestoneId}/start`)
       .set("Authorization", `Bearer ${company.token}`);
 
-    const secondFund = await request(app)
-      .patch(`/api/contracts/${contractId}/milestones/${milestoneId}/fund`)
+    const secondStart = await request(app)
+      .patch(`/api/contracts/${contractId}/milestones/${milestoneId}/start`)
       .set("Authorization", `Bearer ${company.token}`);
-    expect(secondFund.status).toBe(409);
+    expect(secondStart.status).toBe(409);
   });
 });
 
-describe("contracts: timesheets and invoicing", () => {
-  async function setUpActiveContract(currency = "£") {
+describe("contracts: timesheets", () => {
+  async function setUpActiveContract() {
     const company = await registerCompany(`contracts-co-ts-${Date.now()}@example.com`, "Contract Co TS");
     const engineer = await registerEngineer(`contracts-eng-ts-${Date.now()}@example.com`, "Contract Eng TS");
 
     const created = await request(app)
       .post("/api/contracts")
       .set("Authorization", `Bearer ${company.token}`)
-      .send({ ...(await offeredContractBody(company, engineer)), currency });
+      .send(await offeredContractBody(company, engineer));
     const contractId = created.body.id;
 
     await request(app)
@@ -351,7 +351,7 @@ describe("contracts: timesheets and invoicing", () => {
     return { company, engineer, contractId };
   }
 
-  it("lets the engineer submit a timesheet and the company approve & pay it", async () => {
+  it("lets the engineer submit a timesheet and the company approve it", async () => {
     const { company, engineer, contractId } = await setUpActiveContract();
 
     const wrongSubmitter = await request(app)
@@ -377,59 +377,7 @@ describe("contracts: timesheets and invoicing", () => {
       .patch(`/api/contracts/${contractId}/timesheets/${timesheetId}/approve`)
       .set("Authorization", `Bearer ${company.token}`);
     expect(approve.status).toBe(200);
-    expect(approve.body.timesheets[0].status).toBe("paid");
-  });
-
-  it("lets the engineer invoice approved milestones and blocks it when none are approved", async () => {
-    const { company, engineer, contractId } = await setUpActiveContract("$");
-
-    const noMilestones = await request(app)
-      .post(`/api/contracts/${contractId}/invoices`)
-      .set("Authorization", `Bearer ${engineer.token}`)
-      .send({ paymentTerms: "Net 14 Days" });
-    expect(noMilestones.status).toBe(409);
-
-    const contract = await request(app)
-      .get(`/api/contracts/${contractId}`)
-      .set("Authorization", `Bearer ${company.token}`);
-    const milestoneId = contract.body.milestones[0].id;
-
-    await request(app)
-      .patch(`/api/contracts/${contractId}/milestones/${milestoneId}/fund`)
-      .set("Authorization", `Bearer ${company.token}`);
-    await request(app)
-      .patch(`/api/contracts/${contractId}/milestones/${milestoneId}/submit`)
-      .set("Authorization", `Bearer ${engineer.token}`);
-    await request(app)
-      .patch(`/api/contracts/${contractId}/milestones/${milestoneId}/approve`)
-      .set("Authorization", `Bearer ${company.token}`);
-
-    const wrongInvoicer = await request(app)
-      .post(`/api/contracts/${contractId}/invoices`)
-      .set("Authorization", `Bearer ${company.token}`)
-      .send({ paymentTerms: "Net 14 Days" });
-    expect(wrongInvoicer.status).toBe(403);
-
-    const invoice = await request(app)
-      .post(`/api/contracts/${contractId}/invoices`)
-      .set("Authorization", `Bearer ${engineer.token}`)
-      .send({ paymentTerms: "Net 14 Days" });
-    expect(invoice.status).toBe(201);
-    expect(invoice.body.total).toBe(250);
-    expect(invoice.body.currency).toBe("$");
-    expect(invoice.body.items).toHaveLength(1);
-
-    const updatedContract = await request(app)
-      .get(`/api/contracts/${contractId}`)
-      .set("Authorization", `Bearer ${company.token}`);
-    expect(updatedContract.body.milestones.find((m: any) => m.id === milestoneId).status).toBe("Completed & Paid");
-
-    const myInvoices = await request(app)
-      .get("/api/invoices/me")
-      .set("Authorization", `Bearer ${engineer.token}`);
-    expect(myInvoices.status).toBe(200);
-    expect(myInvoices.body).toHaveLength(1);
-    expect(myInvoices.body[0].currency).toBe("$");
+    expect(approve.body.timesheets[0].status).toBe("approved");
   });
 });
 

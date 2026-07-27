@@ -71,7 +71,7 @@ export const DashboardHelpCenter = ({ role, setActiveView }: DashboardHelpCenter
                         type="search"
                         value={query}
                         onChange={event => setQuery(event.target.value)}
-                        placeholder="Search contracts, applications, payments or account access"
+                        placeholder="Search contracts, applications, direct payment guidance or account access"
                         className="w-full rounded-lg border-0 bg-white py-3 pl-10 pr-4 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-300"
                     />
                 </label>

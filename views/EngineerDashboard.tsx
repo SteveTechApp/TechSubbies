@@ -17,7 +17,6 @@ import { StoryboardCreatorView } from './EngineerDashboard/StoryboardCreatorView
 import { AnalyticsView } from './EngineerDashboard/AnalyticsView';
 import { ContractsView } from './ContractsView';
 import { FindPartnerView } from './EngineerDashboard/FindPartnerView';
-import { InvoicesView } from './InvoicesView';
 import { ForumView } from './ForumView';
 import { PaymentsView } from './EngineerDashboard/PaymentsView';
 import { LoyaltyView } from './EngineerDashboard/LoyaltyView';
@@ -53,8 +52,6 @@ export const EngineerDashboard = () => {
                 return <AvailabilityView profile={engineerProfile} onUpdateProfile={updateEngineerProfile} setActiveView={setActiveView} />;
             case 'Contracts':
                 return <ContractsView setActiveView={setActiveView} />;
-            case 'Invoices':
-                return <InvoicesView />;
             case 'Messages':
                 return <MessagesView />;
             case 'AI Tools':
