@@ -14,6 +14,7 @@ import { createRateLimiter } from "./middleware/rateLimit.js";
 import { frontendOrigin, validateRuntimeConfig } from "./lib/config.js";
 import { requireVerifiedEmailForMutation } from "./middleware/auth.js";
 import { checkDatabaseConnection } from "./lib/db.js";
+import { requestContext, requestLogger, safeErrorHandler } from "./middleware/observability.js";
 
 type AppOptions = {
   readinessCheck?: () => boolean;
@@ -34,6 +35,8 @@ export function createApp(options: AppOptions = {}) {
     name: "AI",
   });
 
+  app.use(requestContext);
+  app.use(requestLogger);
   app.use(securityHeaders);
   app.use(cors({ origin: frontendOrigin(), credentials: true }));
   app.use(express.json({ limit: "2mb" }));
@@ -84,6 +87,7 @@ export function createApp(options: AppOptions = {}) {
   app.use("/api", (_req, res) => {
     res.status(404).json({ error: "Not found." });
   });
+  app.use(safeErrorHandler);
 
   return app;
 }

@@ -118,6 +118,7 @@ describe("cookie session security", () => {
 
     expect(live.status).toBe(200);
     expect(live.body).toEqual({ status: "ok" });
+    expect(live.headers["x-request-id"]).toMatch(/^[0-9a-f-]{36}$/);
     expect(ready.status).toBe(200);
     expect(ready.body).toEqual({ status: "ready", checks: { database: "ok" } });
   });

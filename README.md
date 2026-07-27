@@ -31,6 +31,11 @@ Deployment probes:
 - `GET /api/health/ready` confirms the backend can query its database.
 - `GET /api/health` remains a backwards-compatible readiness alias.
 
+Every backend response includes `X-Request-Id`. Production request logs contain
+only correlation metadata (method, path, status and duration), never request
+bodies or authorization headers. Unexpected errors return the request ID so
+support can locate the matching server event without exposing stack traces.
+
 ## Compliance and certification model
 
 TechSubbies includes a role-specific compliance taxonomy for safety, AV industry credentials, IT/networking certifications, manufacturer training, project management credentials, insurance, company standards and background checks.
