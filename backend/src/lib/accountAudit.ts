@@ -7,7 +7,8 @@ export type AccountAuditEventType =
   | "login.failed"
   | "email.verified"
   | "password.reset"
-  | "password.changed";
+  | "password.changed"
+  | "sessions.revoked";
 
 export type AccountAuditEvent = {
   id: string;

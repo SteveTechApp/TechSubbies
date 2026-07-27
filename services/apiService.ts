@@ -212,6 +212,15 @@ const apiService = {
     return data.events;
   },
 
+  revokeAllSessions: async (): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/auth/sessions/revoke-all`, { method: 'POST' });
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data?.error || 'Could not sign out all devices.');
+    }
+    clearAuthToken();
+  },
+
   // Looks up a single profile by id from the backend (public data, no
   // auth required to read it - matches GET /users/:profileId in the spec).
   getUserById: async (id: string): Promise<User | null> => {

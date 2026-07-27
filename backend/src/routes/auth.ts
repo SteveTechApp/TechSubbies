@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { createUser, findUserByEmail, findUserById, markEmailVerified, updateUserPassword } from "../lib/db.js";
+import { createUser, findUserByEmail, findUserById, markEmailVerified, revokeUserSessions, updateUserPassword } from "../lib/db.js";
 import { requireAuth, signToken, type AuthedRequest } from "../middleware/auth.js";
 import { toPublicUser } from "../lib/publicUser.js";
 import { clearAuthCookies, setAuthCookies } from "../middleware/security.js";
@@ -226,4 +226,16 @@ authRouter.get("/security-events", requireAuth, (req: AuthedRequest, res) => {
     createdAt: event.createdAt,
   }));
   return res.json({ events });
+});
+
+authRouter.post("/sessions/revoke-all", requireAuth, (req: AuthedRequest, res) => {
+  revokeUserSessions(req.userId!);
+  recordAccountAudit({
+    eventType: "sessions.revoked",
+    outcome: "success",
+    userId: req.userId!,
+    requestId: res.locals.requestId,
+  });
+  clearAuthCookies(res);
+  return res.status(204).end();
 });

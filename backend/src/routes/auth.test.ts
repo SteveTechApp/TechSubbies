@@ -314,3 +314,32 @@ describe("email verification and password recovery", () => {
     expect(revoked.status).toBe(401);
   });
 });
+
+describe("session management", () => {
+  it("revokes every existing token and records the action", async () => {
+    const registered = await request(app).post("/api/auth/register").send({
+      email: "revoke-sessions@example.com",
+      password: "correcthorsebattery",
+      role: "Engineer",
+      name: "Revoke Sessions",
+    });
+    const token = registered.body.token as string;
+
+    const revoked = await request(app)
+      .post("/api/auth/sessions/revoke-all")
+      .set("Authorization", `Bearer ${token}`);
+    expect(revoked.status).toBe(204);
+    expect((revoked.headers["set-cookie"] as unknown as string[]).some(
+      (cookie) => cookie.startsWith("techsubbies_session=;")
+    )).toBe(true);
+
+    const oldSession = await request(app)
+      .get("/api/users/me")
+      .set("Authorization", `Bearer ${token}`);
+    expect(oldSession.status).toBe(401);
+    expect(findAccountAuditByRequestId(revoked.headers["x-request-id"])[0]).toMatchObject({
+      eventType: "sessions.revoked",
+      userId: registered.body.user.id,
+    });
+  });
+});

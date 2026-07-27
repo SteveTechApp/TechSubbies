@@ -263,6 +263,13 @@ export function updateUserPassword(id: string, passwordHash: string): UserRow | 
   return findUserById(id);
 }
 
+export function revokeUserSessions(id: string): UserRow | undefined {
+  db.prepare(
+    "UPDATE users SET sessionVersion = sessionVersion + 1, updatedAt = ? WHERE id = ?"
+  ).run(new Date().toISOString(), id);
+  return findUserById(id);
+}
+
 // --- Partnership requests (engineer <-> engineer "team" pairing) ---
 
 export interface PartnershipRequestRow {

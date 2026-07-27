@@ -27,6 +27,7 @@ vi.mock("../services/apiService", () => ({
     resendEmailVerification: vi.fn(),
     changePassword: vi.fn(),
     listSecurityEvents: vi.fn(),
+    revokeAllSessions: vi.fn(),
   },
 }));
 
@@ -114,5 +115,16 @@ describe("account access pages", () => {
 
     expect(await screen.findByText("Successful sign in")).toBeVisible();
     expect(screen.getByText("Recent security activity")).toBeVisible();
+  });
+
+  it("revokes all sessions from account security", async () => {
+    vi.mocked(apiService.revokeAllSessions).mockResolvedValue();
+    const user = userEvent.setup();
+    render(<AccountSecurityPage />);
+
+    await user.click(screen.getByRole("button", { name: "Sign out all devices" }));
+
+    expect(apiService.revokeAllSessions).toHaveBeenCalledOnce();
+    expect(await screen.findByText("All devices signed out. Please sign in again.")).toBeVisible();
   });
 });
