@@ -78,6 +78,39 @@ describe("GET /api/users/me", () => {
   });
 });
 
+describe("GET /api/users/me/export", () => {
+  it("exports owned account data without credentials or internal audit hashes", async () => {
+    const res = await request(app)
+      .get("/api/users/me/export")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.headers["content-disposition"]).toMatch(/techsubbies-account-\d{4}-\d{2}-\d{2}\.json/);
+    expect(res.body).toMatchObject({
+      format: "techsubbies-account-export",
+      version: 1,
+      account: { id: userId, role: "Engineer" },
+      marketplace: {
+        jobs: expect.any(Array),
+        applications: expect.any(Array),
+        contracts: expect.any(Array),
+        invoices: expect.any(Array),
+        partnerships: expect.any(Array),
+        conversations: expect.any(Array),
+      },
+      securityActivity: expect.any(Array),
+    });
+    const serialized = JSON.stringify(res.body);
+    expect(serialized).not.toContain("correcthorsebattery");
+    expect(serialized).not.toContain('"password"');
+    expect(serialized).not.toContain("subjectHash");
+  });
+
+  it("requires a valid account session", async () => {
+    expect((await request(app).get("/api/users/me/export")).status).toBe(401);
+  });
+});
+
 describe("PATCH /api/users/me", () => {
   it("rejects the request without a token", async () => {
     const res = await request(app).patch("/api/users/me").send({ minDayRate: 200 });

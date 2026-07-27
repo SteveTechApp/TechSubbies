@@ -221,6 +221,13 @@ const apiService = {
     clearAuthToken();
   },
 
+  exportMyAccountData: async (): Promise<unknown> => {
+    const response = await fetch(`${API_BASE_URL}/users/me/export`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not export account data.');
+    return data;
+  },
+
   // Looks up a single profile by id from the backend (public data, no
   // auth required to read it - matches GET /users/:profileId in the spec).
   getUserById: async (id: string): Promise<User | null> => {

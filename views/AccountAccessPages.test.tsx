@@ -28,6 +28,7 @@ vi.mock("../services/apiService", () => ({
     changePassword: vi.fn(),
     listSecurityEvents: vi.fn(),
     revokeAllSessions: vi.fn(),
+    exportMyAccountData: vi.fn(),
   },
 }));
 
@@ -126,5 +127,22 @@ describe("account access pages", () => {
 
     expect(apiService.revokeAllSessions).toHaveBeenCalledOnce();
     expect(await screen.findByText("All devices signed out. Please sign in again.")).toBeVisible();
+  });
+
+  it("downloads a portable account data export", async () => {
+    vi.mocked(apiService.exportMyAccountData).mockResolvedValue({ format: "techsubbies-account-export" });
+    const createObjectURL = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:account-export");
+    const revokeObjectURL = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const user = userEvent.setup();
+    render(<AccountSecurityPage />);
+
+    await user.click(screen.getByRole("button", { name: "Download my data" }));
+
+    expect(apiService.exportMyAccountData).toHaveBeenCalledOnce();
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(click).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:account-export");
+    expect(await screen.findByText("Your account data export has downloaded.")).toBeVisible();
   });
 });

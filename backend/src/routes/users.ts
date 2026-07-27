@@ -2,6 +2,7 @@ import { Router } from "express";
 import { findUserById, listUsers, updateUserProfile } from "../lib/db.js";
 import { toDirectoryUser, toPublicUser } from "../lib/publicUser.js";
 import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
+import { buildAccountDataExport } from "../lib/accountExport.js";
 
 export const usersRouter = Router();
 
@@ -9,6 +10,12 @@ export const usersRouter = Router();
 // /:profileId so "me" is not interpreted as a profile id.
 usersRouter.get("/me", requireAuth, async (req: AuthedRequest, res) => {
   return res.json(toPublicUser(req.authUser!));
+});
+
+usersRouter.get("/me/export", requireAuth, (req: AuthedRequest, res) => {
+  const date = new Date().toISOString().slice(0, 10);
+  res.setHeader("Content-Disposition", `attachment; filename="techsubbies-account-${date}.json"`);
+  return res.json(buildAccountDataExport(req.authUser!));
 });
 
 // GET /api/users - list all profiles (for search/browse screens).
