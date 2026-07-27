@@ -179,7 +179,7 @@ db.exec(`
   );
 `);
 
-export const LATEST_SCHEMA_VERSION = 7;
+export const LATEST_SCHEMA_VERSION = 8;
 runMigrations(db, [
   {
     version: 1,
@@ -254,6 +254,15 @@ runMigrations(db, [
       ALTER TABLE users ADD COLUMN suspendedAt TEXT;
       ALTER TABLE users ADD COLUMN suspensionReason TEXT;
       ALTER TABLE users ADD COLUMN suspendedBy TEXT;
+    `),
+  },
+  {
+    version: 8,
+    name: "job-moderation",
+    up: (database) => database.exec(`
+      ALTER TABLE jobs ADD COLUMN moderatedAt TEXT;
+      ALTER TABLE jobs ADD COLUMN moderatorId TEXT;
+      ALTER TABLE jobs ADD COLUMN moderationReason TEXT;
     `),
   },
 ]);
@@ -557,6 +566,9 @@ export interface JobRow {
   status: string;
   postedDate: string;
   updatedAt: string;
+  moderatedAt: string | null;
+  moderatorId: string | null;
+  moderationReason: string | null;
 }
 
 export function createJob(companyId: string, data: Record<string, unknown>): JobRow {
@@ -599,6 +611,64 @@ export function updateJob(
     now,
     id
   );
+  return findJobById(id);
+}
+
+export type AdminJobRow = JobRow & {
+  companyName: string;
+  companyEmail: string;
+};
+
+export function listAdminJobs(options: {
+  limit: number;
+  offset: number;
+  query: string;
+}): AdminJobRow[] {
+  const query = `%${options.query.trim().toLowerCase()}%`;
+  return db.prepare(`
+    SELECT jobs.*, users.name AS companyName, users.email AS companyEmail
+    FROM jobs
+    JOIN users ON users.id = jobs.companyId
+    WHERE (? = '%%'
+      OR LOWER(json_extract(jobs.data, '$.title')) LIKE ?
+      OR LOWER(users.name) LIKE ?
+      OR LOWER(users.email) LIKE ?
+      OR LOWER(jobs.id) LIKE ?)
+    ORDER BY jobs.postedDate DESC
+    LIMIT ? OFFSET ?
+  `).all(query, query, query, query, query, options.limit, options.offset) as unknown as AdminJobRow[];
+}
+
+export function countAdminJobs(queryText: string): number {
+  const query = `%${queryText.trim().toLowerCase()}%`;
+  const row = db.prepare(`
+    SELECT COUNT(*) AS total
+    FROM jobs
+    JOIN users ON users.id = jobs.companyId
+    WHERE (? = '%%'
+      OR LOWER(json_extract(jobs.data, '$.title')) LIKE ?
+      OR LOWER(users.name) LIKE ?
+      OR LOWER(users.email) LIKE ?
+      OR LOWER(jobs.id) LIKE ?)
+  `).get(query, query, query, query, query) as { total: number };
+  return row.total;
+}
+
+export function moderateJob(
+  id: string,
+  status: "active" | "closed",
+  moderatorId: string,
+  reason: string | null
+): JobRow | undefined {
+  const existing = findJobById(id);
+  if (!existing) return undefined;
+  const now = new Date().toISOString();
+  db.prepare(`
+    UPDATE jobs
+    SET status = ?, moderatedAt = ?, moderatorId = ?,
+        moderationReason = ?, updatedAt = ?
+    WHERE id = ?
+  `).run(status, now, moderatorId, status === "closed" ? reason : null, now, id);
   return findJobById(id);
 }
 

@@ -10,7 +10,7 @@ process.env.DB_FILE = TEST_DB;
 process.env.JWT_SECRET = "test-secret";
 
 const { createApp } = await import("../app.js");
-const { createUser } = await import("../lib/db.js");
+const { createJob, createUser } = await import("../lib/db.js");
 const { db } = await import("../lib/db.js");
 const { requestAccountDeletion } = await import("../lib/accountDeletion.js");
 const { signToken } = await import("../middleware/auth.js");
@@ -351,5 +351,77 @@ describe("admin account moderation", () => {
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ suspended: true, reason: "This reason is long enough for validation." });
     expect(actualSelfSuspend.status).toBe(409);
+  });
+});
+
+describe("admin job moderation", () => {
+  it("searches real jobs and enforces reasoned close and reopen decisions", async () => {
+    const company = createUser({
+      email: "job-moderation-company@example.com",
+      password: "not-used",
+      role: "Company",
+      name: "Job Moderation Company",
+      profile: "{}",
+    });
+    const job = createJob(company.id, {
+      title: "Broadcast Systems Engineer",
+      description: "Commission a broadcast control system.",
+      location: "London",
+      dayRate: "500",
+      duration: "3 months",
+      currency: "£",
+      jobType: "Contract",
+      experienceLevel: "Senior",
+      jobRole: "Broadcast Engineer",
+    });
+
+    const listed = await request(app)
+      .get("/api/admin/jobs?query=broadcast&limit=10")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(listed.status).toBe(200);
+    expect(listed.body).toMatchObject({ total: 1, limit: 10, offset: 0 });
+    expect(listed.body.jobs[0]).toMatchObject({
+      id: job.id,
+      title: "Broadcast Systems Engineer",
+      companyName: "Job Moderation Company",
+      status: "active",
+    });
+
+    const missingReason = await request(app)
+      .patch(`/api/admin/jobs/${job.id}/moderation`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ status: "closed", reason: "short" });
+    expect(missingReason.status).toBe(400);
+
+    const closed = await request(app)
+      .patch(`/api/admin/jobs/${job.id}/moderation`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ status: "closed", reason: "The listing breaches marketplace posting standards." });
+    expect(closed.status).toBe(200);
+    expect(closed.body.job.status).toBe("closed");
+
+    const hiddenPublicly = await request(app).get("/api/jobs");
+    expect(hiddenPublicly.body.some((item: { id: string }) => item.id === job.id)).toBe(false);
+
+    const reopened = await request(app)
+      .patch(`/api/admin/jobs/${job.id}/moderation`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ status: "active" });
+    expect(reopened.status).toBe(200);
+    expect(reopened.body.job.status).toBe("active");
+  });
+
+  it("keeps job moderation restricted to administrators", async () => {
+    const engineer = createUser({
+      email: "job-moderation-engineer@example.com",
+      password: "not-used",
+      role: "Engineer",
+      name: "Job Moderation Engineer",
+      profile: "{}",
+    });
+    expect((await request(app).get("/api/admin/jobs")).status).toBe(401);
+    expect((await request(app)
+      .get("/api/admin/jobs")
+      .set("Authorization", `Bearer ${signToken(engineer.id)}`)).status).toBe(403);
   });
 });

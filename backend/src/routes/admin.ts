@@ -18,9 +18,13 @@ import {
   listAdminUsers,
   setUserSuspension,
   getAdminPlatformMetrics,
+  countAdminJobs,
+  listAdminJobs,
+  moderateJob,
 } from "../lib/db.js";
 import { sendPrivacyNotification } from "../lib/privacyNotifications.js";
 import { sendModerationNotification } from "../lib/moderationNotifications.js";
+import { toPublicJob } from "../lib/publicJob.js";
 
 export const adminRouter = Router();
 
@@ -32,6 +36,60 @@ adminRouter.get("/privacy-summary", (_req, res) => {
 
 adminRouter.get("/metrics", (_req, res) => {
   return res.json({ metrics: getAdminPlatformMetrics() });
+});
+
+adminRouter.get("/jobs", (req, res) => {
+  const parsed = z.object({
+    limit: z.coerce.number().int().min(1).max(100).default(25),
+    offset: z.coerce.number().int().min(0).default(0),
+    query: z.string().trim().max(100).default(""),
+  }).safeParse({
+    limit: req.query.limit,
+    offset: req.query.offset,
+    query: req.query.query,
+  });
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid job search or pagination." });
+  }
+  const jobs = listAdminJobs(parsed.data).map((job) => ({
+    ...toPublicJob(job),
+    companyName: job.companyName,
+    companyEmail: job.companyEmail,
+    moderatedAt: job.moderatedAt,
+    moderationReason: job.moderationReason,
+  }));
+  return res.json({
+    jobs,
+    total: countAdminJobs(parsed.data.query),
+    limit: parsed.data.limit,
+    offset: parsed.data.offset,
+  });
+});
+
+adminRouter.patch("/jobs/:jobId/moderation", (req: AuthedRequest, res) => {
+  const parsed = z.discriminatedUnion("status", [
+    z.object({ status: z.literal("closed"), reason: z.string().trim().min(10).max(500) }),
+    z.object({ status: z.literal("active"), reason: z.string().optional() }),
+  ]).safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Closing a job requires a reason of at least 10 characters." });
+  }
+  const updated = moderateJob(
+    req.params.jobId,
+    parsed.data.status,
+    req.userId!,
+    parsed.data.status === "closed" ? parsed.data.reason : null
+  );
+  if (!updated) {
+    return res.status(404).json({ error: "Job not found." });
+  }
+  recordAccountAudit({
+    eventType: parsed.data.status === "closed" ? "job.closed" : "job.reopened",
+    outcome: "success",
+    userId: updated.companyId,
+    requestId: res.locals.requestId,
+  });
+  return res.json({ job: toPublicJob(updated) });
 });
 
 adminRouter.get("/users", (req, res) => {
