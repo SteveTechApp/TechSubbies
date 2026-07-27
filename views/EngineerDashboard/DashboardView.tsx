@@ -1,5 +1,5 @@
 import React from 'react';
-import { EngineerProfile, ProfileTier } from '../../types';
+import { ApplicationStatus, EngineerProfile, ProfileTier } from '../../types';
 import { StatCard } from '../../components/StatCard';
 import { User, Search, Star, Rocket, Briefcase, Mail } from '../../components/Icons';
 import { useData } from '../../context/DataContext';
@@ -12,9 +12,12 @@ interface DashboardViewProps {
 }
 
 export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, boostProfile }: DashboardViewProps) => {
-    const { applications, reviews } = useData();
+    const { applications, jobs, reviews } = useData();
 
     const myApplications = applications.filter(app => app.engineerId === engineerProfile.id);
+    const recentApplications = [...myApplications]
+        .sort((a, b) => b.date.getTime() - a.date.getTime())
+        .slice(0, 5);
     const myReviews = reviews.filter(rev => rev.engineerId === engineerProfile.id);
     const averageRating = myReviews.length > 0
         ? myReviews.reduce((sum, r) => sum + (r.peerRating + r.customerRating) / 2, 0) / myReviews.length
@@ -82,6 +85,40 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
                     )}
                 </div>
             </div>
+
+            {recentApplications.length > 0 && (
+                <section className="mt-8 rounded-lg bg-white p-6 shadow" aria-labelledby="application-updates-heading">
+                    <div className="mb-4 flex items-center justify-between gap-4">
+                        <h2 id="application-updates-heading" className="text-xl font-bold">Recent application updates</h2>
+                        <button onClick={() => setActiveView('Job Search')} className="text-sm font-semibold text-blue-600 hover:underline">
+                            Find more work
+                        </button>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                        {recentApplications.map(application => {
+                            const job = jobs.find(item => item.id === application.jobId);
+                            const statusClasses = application.status === ApplicationStatus.HIRED
+                                ? 'bg-green-100 text-green-800'
+                                : application.status === ApplicationStatus.OFFERED
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : application.status === ApplicationStatus.REJECTED
+                                        ? 'bg-red-100 text-red-800'
+                                        : 'bg-gray-100 text-gray-700';
+                            return (
+                                <div key={application.id || `${application.jobId}-${application.engineerId}`} className="flex flex-col gap-2 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <p className="font-semibold text-gray-900">{job?.title || 'Technical opportunity'}</p>
+                                        <p className="text-sm text-gray-500">Applied {application.date.toLocaleDateString()}</p>
+                                    </div>
+                                    <span className={`w-fit rounded-full px-3 py-1 text-xs font-bold ${statusClasses}`}>
+                                        {application.status}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </section>
+            )}
         </div>
     );
 };

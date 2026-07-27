@@ -99,6 +99,45 @@ describe('apiService.updateApplicationStatus', () => {
   });
 });
 
+describe('apiService.getBackendEngineerApplications', () => {
+  it('loads the signed-in engineer application history with real dates', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ user: { id: 'engineer-1', role: Role.ENGINEER, profile: {} } }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{
+          id: 'application-1',
+          jobId: 'job-1',
+          engineerId: 'engineer-1',
+          date: '2026-07-27T12:00:00.000Z',
+          status: ApplicationStatus.HIRED,
+          reviewed: true,
+        }],
+      });
+    vi.stubGlobal('fetch', fetchMock);
+    await apiService.loginWithPassword('engineer@example.com', 'password');
+
+    const applications = await apiService.getBackendEngineerApplications();
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('/applications/me'),
+      expect.any(Object)
+    );
+    expect(applications).toEqual([
+      expect.objectContaining({
+        id: 'application-1',
+        status: ApplicationStatus.HIRED,
+        date: new Date('2026-07-27T12:00:00.000Z'),
+      }),
+    ]);
+    clearAuthToken();
+  });
+});
+
 // Same "no backend session -> fall back" shape as postJob/applyForJob
 // above, but these resolve differently: createContract falls back to
 // returning the locally-built contract as-is, while the rest resolve to

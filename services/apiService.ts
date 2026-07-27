@@ -187,7 +187,18 @@ const apiService = {
     const backendCompanies = backendUsers
       .filter(user => user.role === Role.COMPANY || user.role === Role.RESOURCING_COMPANY)
       .map(user => user.profile as CompanyProfile);
-    const backendApplications = await apiService.getBackendCompanyApplications();
+    const backendCompanyApplications = await apiService.getBackendCompanyApplications();
+    const backendEngineerApplications = await apiService.getBackendEngineerApplications();
+    const backendApplications = [
+      ...backendCompanyApplications,
+      ...backendEngineerApplications.filter(application =>
+        !backendCompanyApplications.some(companyApplication =>
+          companyApplication.id === application.id
+          || (companyApplication.jobId === application.jobId
+            && companyApplication.engineerId === application.engineerId)
+        )
+      ),
+    ];
     const mergedApplications = [
       ...backendApplications,
       ...MOCK_APPLICATIONS.filter(application => !backendApplications.some(real =>
@@ -949,6 +960,20 @@ const apiService = {
   getBackendCompanyApplications: async (): Promise<Application[]> => {
     try {
       const response = await fetch(`${API_BASE_URL}/applications/company`);
+      if (!response.ok) return [];
+      const applications = await response.json() as Array<Application & { date: string | Date }>;
+      return applications.map(application => ({
+        ...application,
+        date: new Date(application.date),
+      }));
+    } catch {
+      return [];
+    }
+  },
+
+  getBackendEngineerApplications: async (): Promise<Application[]> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/applications/me`);
       if (!response.ok) return [];
       const applications = await response.json() as Array<Application & { date: string | Date }>;
       return applications.map(application => ({
