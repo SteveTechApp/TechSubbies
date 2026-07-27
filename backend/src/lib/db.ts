@@ -179,7 +179,7 @@ db.exec(`
   );
 `);
 
-export const LATEST_SCHEMA_VERSION = 6;
+export const LATEST_SCHEMA_VERSION = 7;
 runMigrations(db, [
   {
     version: 1,
@@ -247,6 +247,15 @@ runMigrations(db, [
       ALTER TABLE account_deletion_requests ADD COLUMN userMessage TEXT;
     `),
   },
+  {
+    version: 7,
+    name: "account-suspensions",
+    up: (database) => database.exec(`
+      ALTER TABLE users ADD COLUMN suspendedAt TEXT;
+      ALTER TABLE users ADD COLUMN suspensionReason TEXT;
+      ALTER TABLE users ADD COLUMN suspendedBy TEXT;
+    `),
+  },
 ]);
 
 export interface UserRow {
@@ -259,6 +268,9 @@ export interface UserRow {
   emailVerified: number;
   sessionVersion: number;
   deletedAt: string | null;
+  suspendedAt: string | null;
+  suspensionReason: string | null;
+  suspendedBy: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -309,6 +321,53 @@ export function revokeUserSessions(id: string): UserRow | undefined {
     "UPDATE users SET sessionVersion = sessionVersion + 1, updatedAt = ? WHERE id = ?"
   ).run(new Date().toISOString(), id);
   return findUserById(id);
+}
+
+export function setUserSuspension(
+  id: string,
+  suspended: boolean,
+  reason: string | null,
+  administratorId: string
+): UserRow | undefined {
+  const existing = findUserById(id);
+  if (!existing || existing.deletedAt) return undefined;
+  const now = new Date().toISOString();
+  db.prepare(`
+    UPDATE users
+    SET suspendedAt = ?, suspensionReason = ?, suspendedBy = ?,
+        sessionVersion = sessionVersion + 1, updatedAt = ?
+    WHERE id = ?
+  `).run(
+    suspended ? now : null,
+    suspended ? reason : null,
+    suspended ? administratorId : null,
+    now,
+    id
+  );
+  return findUserById(id);
+}
+
+export function listAdminUsers(options: { limit: number; offset: number; query: string }) {
+  const query = `%${options.query.trim().toLowerCase()}%`;
+  return db.prepare(`
+    SELECT id, email, role, name, emailVerified, suspendedAt,
+           suspensionReason, createdAt, updatedAt
+    FROM users
+    WHERE deletedAt IS NULL
+      AND (? = '%%' OR LOWER(email) LIKE ? OR LOWER(name) LIKE ?)
+    ORDER BY createdAt DESC
+    LIMIT ? OFFSET ?
+  `).all(query, query, query, options.limit, options.offset);
+}
+
+export function countAdminUsers(queryText: string): number {
+  const query = `%${queryText.trim().toLowerCase()}%`;
+  const row = db.prepare(`
+    SELECT COUNT(*) AS total FROM users
+    WHERE deletedAt IS NULL
+      AND (? = '%%' OR LOWER(email) LIKE ? OR LOWER(name) LIKE ?)
+  `).get(query, query, query) as { total: number };
+  return row.total;
 }
 
 // --- Partnership requests (engineer <-> engineer "team" pairing) ---

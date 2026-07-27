@@ -12,7 +12,12 @@ import {
 } from "../lib/accountDeletion.js";
 import { recordAccountAudit } from "../lib/accountAudit.js";
 import { requireAuth, requireRole, type AuthedRequest } from "../middleware/auth.js";
-import { findUserById } from "../lib/db.js";
+import {
+  countAdminUsers,
+  findUserById,
+  listAdminUsers,
+  setUserSuspension,
+} from "../lib/db.js";
 import { sendPrivacyNotification } from "../lib/privacyNotifications.js";
 
 export const adminRouter = Router();
@@ -21,6 +26,66 @@ adminRouter.use(requireAuth, requireRole("Admin"));
 
 adminRouter.get("/privacy-summary", (_req, res) => {
   return res.json({ summary: getAccountDeletionSummary() });
+});
+
+adminRouter.get("/users", (req, res) => {
+  const parsed = z.object({
+    limit: z.coerce.number().int().min(1).max(100).default(25),
+    offset: z.coerce.number().int().min(0).default(0),
+    query: z.string().trim().max(100).default(""),
+  }).safeParse({
+    limit: req.query.limit,
+    offset: req.query.offset,
+    query: req.query.query,
+  });
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid user search or pagination." });
+  }
+  return res.json({
+    users: listAdminUsers(parsed.data),
+    total: countAdminUsers(parsed.data.query),
+    limit: parsed.data.limit,
+    offset: parsed.data.offset,
+  });
+});
+
+adminRouter.patch("/users/:userId/suspension", (req: AuthedRequest, res) => {
+  const parsed = z.discriminatedUnion("suspended", [
+    z.object({ suspended: z.literal(true), reason: z.string().trim().min(10).max(500) }),
+    z.object({ suspended: z.literal(false), reason: z.string().optional() }),
+  ]).safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Suspension requires a reason of at least 10 characters." });
+  }
+  if (req.params.userId === req.userId) {
+    return res.status(409).json({ error: "Administrators cannot suspend their own account." });
+  }
+  const updated = setUserSuspension(
+    req.params.userId,
+    parsed.data.suspended,
+    parsed.data.suspended ? parsed.data.reason : null,
+    req.userId!
+  );
+  if (!updated) {
+    return res.status(404).json({ error: "Account not found." });
+  }
+  recordAccountAudit({
+    eventType: parsed.data.suspended ? "account.suspended" : "account.reactivated",
+    outcome: "success",
+    userId: updated.id,
+    requestId: res.locals.requestId,
+  });
+  return res.json({
+    user: {
+      id: updated.id,
+      email: updated.email,
+      role: updated.role,
+      name: updated.name,
+      suspendedAt: updated.suspendedAt,
+      suspensionReason: updated.suspensionReason,
+      updatedAt: updated.updatedAt,
+    },
+  });
 });
 
 adminRouter.get("/deletion-requests", (req, res) => {

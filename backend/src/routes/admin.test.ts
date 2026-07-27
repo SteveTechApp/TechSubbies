@@ -239,3 +239,82 @@ describe("admin deletion request reviews", () => {
     expect(oldSession.status).toBe(401);
   });
 });
+
+describe("admin account moderation", () => {
+  it("lists real accounts and enforces suspension with session revocation", async () => {
+    const password = await bcrypt.hash("moderation-password", 10);
+    const member = createUser({
+      email: "moderated-member@example.com",
+      password,
+      role: "Company",
+      name: "Moderated Member",
+      profile: "{}",
+    });
+    const memberToken = signToken(member.id);
+
+    const listed = await request(app)
+      .get("/api/admin/users?query=moderated-member&limit=10")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(listed.status).toBe(200);
+    expect(listed.body).toMatchObject({ total: 1, limit: 10, offset: 0 });
+    expect(listed.body.users[0]).toMatchObject({
+      id: member.id,
+      email: "moderated-member@example.com",
+      suspendedAt: null,
+    });
+
+    const suspended = await request(app)
+      .patch(`/api/admin/users/${member.id}/suspension`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ suspended: true, reason: "Repeated marketplace policy violations." });
+    expect(suspended.status).toBe(200);
+    expect(suspended.body.user).toMatchObject({
+      id: member.id,
+      suspendedAt: expect.any(String),
+      suspensionReason: "Repeated marketplace policy violations.",
+    });
+
+    const revokedSession = await request(app)
+      .get("/api/users/me")
+      .set("Authorization", `Bearer ${memberToken}`);
+    expect(revokedSession.status).toBe(403);
+    expect(revokedSession.body.error).toMatch(/suspended/i);
+
+    const blockedLogin = await request(app)
+      .post("/api/auth/login")
+      .send({ email: "moderated-member@example.com", password: "moderation-password" });
+    expect(blockedLogin.status).toBe(401);
+
+    const reactivated = await request(app)
+      .patch(`/api/admin/users/${member.id}/suspension`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ suspended: false });
+    expect(reactivated.status).toBe(200);
+    expect(reactivated.body.user.suspendedAt).toBeNull();
+
+    const stillRevokedSession = await request(app)
+      .get("/api/users/me")
+      .set("Authorization", `Bearer ${memberToken}`);
+    expect(stillRevokedSession.status).toBe(401);
+
+    const login = await request(app)
+      .post("/api/auth/login")
+      .send({ email: "moderated-member@example.com", password: "moderation-password" });
+    expect(login.status).toBe(200);
+  });
+
+  it("requires a meaningful reason and prevents self-suspension", async () => {
+    const shortReason = await request(app)
+      .patch(`/api/admin/users/${engineerId}/suspension`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ suspended: true, reason: "Too short" });
+    expect(shortReason.status).toBe(400);
+
+    const admin = db.prepare("SELECT id FROM users WHERE email = 'privacy-admin@example.com'").get() as { id: string };
+    const actualSelfSuspend = await request(app)
+      .patch(`/api/admin/users/${admin.id}/suspension`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ suspended: true, reason: "This reason is long enough for validation." });
+    expect(actualSelfSuspend.status).toBe(409);
+  });
+});

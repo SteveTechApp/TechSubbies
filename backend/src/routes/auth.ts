@@ -85,7 +85,7 @@ authRouter.post("/login", async (req, res) => {
   const { email, password } = parsed.data;
 
   const user = findUserByEmail(email);
-  if (!user || user.deletedAt) {
+  if (!user || user.deletedAt || user.suspendedAt) {
     recordAccountAudit({
       eventType: "login.failed",
       outcome: "failure",

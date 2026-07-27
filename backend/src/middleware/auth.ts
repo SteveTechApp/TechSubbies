@@ -33,6 +33,9 @@ export function requireAuth(req: AuthedRequest, res: Response, next: NextFunctio
     if (user.deletedAt) {
       return res.status(401).json({ error: "This account has been deactivated." });
     }
+    if (user.suspendedAt) {
+      return res.status(403).json({ error: "This account is suspended. Contact TechSubbies support." });
+    }
     if (payload.sv !== user.sessionVersion) {
       return res.status(401).json({ error: "This session has been revoked." });
     }
