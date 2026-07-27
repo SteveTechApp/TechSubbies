@@ -4,11 +4,14 @@
 import { TechSubbiesLogo } from './TechSubbiesLogo';
 import { clearDemoSession, getDemoSession, type DemoSession } from "../data/demoAccounts";
 import { useAuth } from "../context/AuthContext";
+import { Role } from "../types";
 
 type NavLink = {
   label: string;
   href: string;
   protected?: boolean;
+  allowedRoles?: Role[];
+  requiresRealAccount?: boolean;
 };
 
 type NavGroup = {
@@ -26,10 +29,10 @@ const navGroups: NavGroup[] = [
     href: "/engineer/signup",
     links: [
       { label: "Engineer signup", href: "/engineer/signup" },
-      { label: "Profile hub", href: "/engineer/profile", protected: true },
-      { label: "Personal / business profile", href: "/engineer/personal-business-profile", protected: true },
-      { label: "Role skills profile", href: "/engineer/skills-profile", protected: true },
-      { label: "Availability", href: "/engineer/availability", protected: true },
+      { label: "Profile hub", href: "/engineer/profile", protected: true, allowedRoles: [Role.ENGINEER, Role.ADMIN] },
+      { label: "Personal / business profile", href: "/engineer/personal-business-profile", protected: true, allowedRoles: [Role.ENGINEER, Role.ADMIN] },
+      { label: "Role skills profile", href: "/engineer/skills-profile", protected: true, allowedRoles: [Role.ENGINEER, Role.ADMIN] },
+      { label: "Availability", href: "/engineer/availability", protected: true, allowedRoles: [Role.ENGINEER, Role.ADMIN] },
     ],
   },
   {
@@ -37,8 +40,8 @@ const navGroups: NavGroup[] = [
     href: "/company/signup",
     links: [
       { label: "Find Talent", href: "/company/signup" },
-      { label: "Post a Project", href: "/opportunity-intake", protected: true },
-      { label: "Company dashboard", href: "/company/dashboard", protected: true },
+      { label: "Post a Project", href: "/opportunity-intake", protected: true, allowedRoles: [Role.COMPANY, Role.RESOURCING_COMPANY, Role.ADMIN] },
+      { label: "Company dashboard", href: "/company/dashboard", protected: true, allowedRoles: [Role.COMPANY, Role.RESOURCING_COMPANY, Role.ADMIN] },
     ],
   },
   {
@@ -46,8 +49,8 @@ const navGroups: NavGroup[] = [
     href: "/resourcing/signup",
     links: [
       { label: "Resourcing company signup", href: "/resourcing/signup" },
-      { label: "Engineer management", href: "/company/engineers", protected: true },
-      { label: "Opportunity matching", href: "/matching/intake", protected: true },
+      { label: "Engineer management", href: "/company/engineers", protected: true, allowedRoles: [Role.COMPANY, Role.RESOURCING_COMPANY, Role.ADMIN] },
+      { label: "Opportunity matching", href: "/matching/intake", protected: true, allowedRoles: [Role.COMPANY, Role.RESOURCING_COMPANY, Role.ADMIN] },
     ],
   },
   {
@@ -62,10 +65,22 @@ const navGroups: NavGroup[] = [
       { label: "Engineer Demo", href: "/watch-demo#engineer" },
       { label: "Resourcing Company Demo", href: "/watch-demo#resourcing_company" },
       { label: "Client Demo", href: "/watch-demo#hiring_company" },
-      { label: "Account security", href: "/account/security", protected: true },
+      { label: "Account security", href: "/account/security", protected: true, requiresRealAccount: true },
     ],
   },
 ];
+
+export function isNavLinkVisible(
+  link: NavLink,
+  accountRole: string | undefined,
+  isAuthenticated: boolean,
+  hasRealAccount: boolean
+) {
+  if (!isAuthenticated) return true;
+  if (link.requiresRealAccount && !hasRealAccount) return false;
+  if (!link.allowedRoles) return true;
+  return Boolean(accountRole && link.allowedRoles.includes(accountRole as Role));
+}
 function isActiveHref(href: string) {
   if (typeof window === "undefined") {
     return false;
@@ -122,6 +137,8 @@ export default function PersistentAppHeader() {
       }
     : session;
   const isAuthenticated = Boolean(identity);
+  const visibleLinks = (group: NavGroup) =>
+    group.links.filter((link) => isNavLinkVisible(link, identity?.role, isAuthenticated, Boolean(user)));
 
   function logout() {
     if (user) {
@@ -180,7 +197,7 @@ export default function PersistentAppHeader() {
                       </div>
 
                       <div className="space-y-1">
-                        {group.links.map((link) => {
+                        {visibleLinks(group).map((link) => {
                           const linkPath = link.href.split("#")[0];
                           const activeLink = currentPath === linkPath;
 
@@ -272,7 +289,7 @@ export default function PersistentAppHeader() {
                 <h2 className="text-sm font-bold text-cyan-300">{group.label}</h2>
 
                 <div className="mt-3 space-y-2">
-                  {group.links.map((link) => (
+                  {visibleLinks(group).map((link) => (
                     <a
                       key={link.href}
                       href={link.href}

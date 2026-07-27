@@ -1,7 +1,7 @@
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import PersistentAppHeader from "./PersistentAppHeader";
+import PersistentAppHeader, { isNavLinkVisible } from "./PersistentAppHeader";
 import { Role } from "../types";
 
 const auth = vi.hoisted(() => ({
@@ -46,5 +46,31 @@ describe("PersistentAppHeader account state", () => {
     expect(screen.getByText("Alex Engineer")).toBeVisible();
     expect(screen.getByText(Role.ENGINEER)).toBeVisible();
     expect(screen.getByRole("button", { name: "Logout" })).toBeVisible();
+  });
+
+  it("filters protected workflow links for the signed-in role", () => {
+    expect(isNavLinkVisible(
+      { label: "Engineer profile", href: "/engineer/profile", protected: true, allowedRoles: [Role.ENGINEER] },
+      Role.COMPANY,
+      true,
+      true
+    )).toBe(false);
+    expect(isNavLinkVisible(
+      { label: "Post project", href: "/opportunity-intake", protected: true, allowedRoles: [Role.COMPANY] },
+      Role.COMPANY,
+      true,
+      true
+    )).toBe(true);
+  });
+
+  it("keeps discovery links visible to visitors but hides real-account settings from demos", () => {
+    const accountSecurity = {
+      label: "Account security",
+      href: "/account/security",
+      protected: true,
+      requiresRealAccount: true,
+    };
+    expect(isNavLinkVisible(accountSecurity, undefined, false, false)).toBe(true);
+    expect(isNavLinkVisible(accountSecurity, Role.ADMIN, true, false)).toBe(false);
   });
 });
