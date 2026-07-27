@@ -10,6 +10,7 @@ process.env.JWT_SECRET = "test-secret";
 
 const { createApp } = await import("../app.js");
 const app = createApp();
+const { developmentEmailOutbox } = await import("../lib/email.js");
 
 let token: string;
 let userId: string;
@@ -130,6 +131,10 @@ describe("account deletion requests", () => {
       cancelledAt: null,
     });
     expect(created.body.request).not.toHaveProperty("userId");
+    expect(created.body.notificationSent).toBe(true);
+    expect(developmentEmailOutbox.some((email) =>
+      email.to === "carol@example.com" && email.subject.includes("deletion request")
+    )).toBe(true);
 
     const status = await request(app)
       .get("/api/users/me/deletion-request")

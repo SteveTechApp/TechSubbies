@@ -9,6 +9,8 @@ import {
 } from "../lib/accountDeletion.js";
 import { recordAccountAudit } from "../lib/accountAudit.js";
 import { requireAuth, requireRole, type AuthedRequest } from "../middleware/auth.js";
+import { findUserById } from "../lib/db.js";
+import { sendPrivacyNotification } from "../lib/privacyNotifications.js";
 
 export const adminRouter = Router();
 
@@ -30,7 +32,7 @@ adminRouter.get("/deletion-requests", (req, res) => {
   return res.json({ requests });
 });
 
-adminRouter.patch("/deletion-requests/:requestId", (req: AuthedRequest, res) => {
+adminRouter.patch("/deletion-requests/:requestId", async (req: AuthedRequest, res) => {
   const parsed = z.object({
     decision: z.enum(["approved", "rejected"]),
     note: z.string().trim().min(10).max(1000),
@@ -71,13 +73,18 @@ adminRouter.patch("/deletion-requests/:requestId", (req: AuthedRequest, res) => 
     userId: reviewed.userId,
     requestId: res.locals.requestId,
   });
+  const notificationSent = await sendPrivacyNotification(
+    queued.accountEmail,
+    parsed.data.decision
+  );
   return res.json({
     request: reviewed,
     processingNotice: "No account data has been deleted. Complete retention and active-marketplace checks first.",
+    notificationSent,
   });
 });
 
-adminRouter.post("/deletion-requests/:requestId/process", (req: AuthedRequest, res) => {
+adminRouter.post("/deletion-requests/:requestId/process", async (req: AuthedRequest, res) => {
   const parsed = z.object({
     confirmation: z.literal("ANONYMISE ACCOUNT"),
   }).safeParse(req.body);
@@ -85,6 +92,10 @@ adminRouter.post("/deletion-requests/:requestId/process", (req: AuthedRequest, r
     return res.status(400).json({ error: 'Type "ANONYMISE ACCOUNT" to confirm final processing.' });
   }
 
+  const approved = listAccountDeletionRequests("approved").find(
+    (request) => request.id === req.params.requestId
+  );
+  const accountEmail = approved ? findUserById(approved.userId)?.email : undefined;
   const processed = processAccountDeletionRequest(req.params.requestId, req.userId!);
   if (!processed) {
     return res.status(409).json({
@@ -97,8 +108,12 @@ adminRouter.post("/deletion-requests/:requestId/process", (req: AuthedRequest, r
     userId: processed.userId,
     requestId: res.locals.requestId,
   });
+  const notificationSent = accountEmail
+    ? await sendPrivacyNotification(accountEmail, "processed")
+    : false;
   return res.json({
     request: processed,
     processingNotice: "Direct identity and authentication data were anonymised; transactional references were retained.",
+    notificationSent,
   });
 });

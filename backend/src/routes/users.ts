@@ -11,6 +11,7 @@ import {
   requestAccountDeletion,
 } from "../lib/accountDeletion.js";
 import { recordAccountAudit } from "../lib/accountAudit.js";
+import { sendPrivacyNotification } from "../lib/privacyNotifications.js";
 
 export const usersRouter = Router();
 
@@ -55,7 +56,11 @@ usersRouter.post("/me/deletion-request", requireAuth, async (req: AuthedRequest,
     userId: req.userId!,
     requestId: res.locals.requestId,
   });
-  return res.status(202).json({ request: publicDeletionRequest(req.userId!) });
+  const notificationSent = await sendPrivacyNotification(req.authUser!.email, "requested");
+  return res.status(202).json({
+    request: publicDeletionRequest(req.userId!),
+    notificationSent,
+  });
 });
 
 usersRouter.delete("/me/deletion-request", requireAuth, (req: AuthedRequest, res) => {

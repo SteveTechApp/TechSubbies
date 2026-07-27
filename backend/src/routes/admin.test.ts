@@ -14,6 +14,7 @@ const { createUser } = await import("../lib/db.js");
 const { db } = await import("../lib/db.js");
 const { requestAccountDeletion } = await import("../lib/accountDeletion.js");
 const { signToken } = await import("../middleware/auth.js");
+const { developmentEmailOutbox } = await import("../lib/email.js");
 const app = createApp();
 
 let adminToken: string;
@@ -89,6 +90,10 @@ describe("admin deletion request reviews", () => {
       reviewedAt: expect.any(String),
     });
     expect(reviewed.body.processingNotice).toMatch(/No account data has been deleted/);
+    expect(reviewed.body.notificationSent).toBe(true);
+    expect(developmentEmailOutbox.some((email) =>
+      email.to === "privacy-engineer@example.com" && email.subject.includes("approved")
+    )).toBe(true);
 
     const pending = await request(app)
       .get("/api/admin/deletion-requests")
@@ -168,6 +173,9 @@ describe("admin deletion request reviews", () => {
       processedAt: expect.any(String),
       processorId: expect.any(String),
     });
+    expect(developmentEmailOutbox.some((email) =>
+      email.to === "privacy-engineer@example.com" && email.subject.includes("anonymised")
+    )).toBe(true);
 
     const account = db.prepare("SELECT * FROM users WHERE id = ?").get(engineerId) as {
       email: string;
