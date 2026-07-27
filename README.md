@@ -46,6 +46,14 @@ Run only one backend instance against a SQLite database file. Horizontal scaling
 or multi-region deployment requires migrating the repository layer to a managed
 database such as PostgreSQL rather than sharing SQLite over a network filesystem.
 
+Create an online, integrity-checked backup without stopping the backend:
+
+`cd backend && npm run db:backup`
+
+Set `DB_BACKUP_DIR` to persistent storage outside the application release
+directory. Schedule this command and copy backups to a separate failure domain;
+the command never overwrites an existing backup.
+
 ## Compliance and certification model
 
 TechSubbies includes a role-specific compliance taxonomy for safety, AV industry credentials, IT/networking certifications, manufacturer training, project management credentials, insurance, company standards and background checks.
