@@ -4,12 +4,14 @@ import { db } from "./db.js";
 export type AccountDeletionRequest = {
   id: string;
   userId: string;
-  status: "pending" | "cancelled" | "approved" | "rejected";
+  status: "pending" | "cancelled" | "approved" | "rejected" | "processed";
   requestedAt: string;
   cancelledAt: string | null;
   reviewedAt: string | null;
   reviewerId: string | null;
   resolutionNote: string | null;
+  processedAt: string | null;
+  processorId: string | null;
 };
 
 export type AccountDeletionReviewItem = AccountDeletionRequest & {
@@ -119,6 +121,43 @@ export function getAccountDeletionEligibility(userId: string): AccountDeletionEl
     message: `${liveApplications.total} live job application${liveApplications.total === 1 ? "" : "s"} must be resolved.`,
   });
   return { eligible: blockers.length === 0, blockers };
+}
+
+export function processAccountDeletionRequest(
+  id: string,
+  processorId: string
+): AccountDeletionRequest | undefined {
+  const request = db.prepare(
+    "SELECT * FROM account_deletion_requests WHERE id = ? AND status = 'approved'"
+  ).get(id) as unknown as AccountDeletionRequest | undefined;
+  if (!request || !getAccountDeletionEligibility(request.userId).eligible) return undefined;
+
+  const now = new Date().toISOString();
+  const anonymousEmail = `deleted+${request.userId}@deleted.techsubbies.invalid`;
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    db.prepare(`
+      UPDATE users
+      SET email = ?, password = ?, name = 'Deleted account',
+          profile = '{"name":"Deleted account","status":"deleted"}',
+          emailVerified = 0, sessionVersion = sessionVersion + 1,
+          deletedAt = ?, updatedAt = ?
+      WHERE id = ? AND deletedAt IS NULL
+    `).run(anonymousEmail, `disabled-${randomUUID()}`, now, now, request.userId);
+    db.prepare("DELETE FROM account_tokens WHERE userId = ?").run(request.userId);
+    db.prepare(`
+      UPDATE account_deletion_requests
+      SET status = 'processed', processedAt = ?, processorId = ?
+      WHERE id = ? AND status = 'approved'
+    `).run(now, processorId, id);
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+  return db.prepare(
+    "SELECT * FROM account_deletion_requests WHERE id = ?"
+  ).get(id) as unknown as AccountDeletionRequest;
 }
 
 export function cancelAccountDeletion(userId: string): AccountDeletionRequest | undefined {

@@ -30,6 +30,9 @@ export function requireAuth(req: AuthedRequest, res: Response, next: NextFunctio
     if (!user) {
       return res.status(401).json({ error: "The account for this session no longer exists." });
     }
+    if (user.deletedAt) {
+      return res.status(401).json({ error: "This account has been deactivated." });
+    }
     if (payload.sv !== user.sessionVersion) {
       return res.status(401).json({ error: "This session has been revoked." });
     }

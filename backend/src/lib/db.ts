@@ -179,7 +179,7 @@ db.exec(`
   );
 `);
 
-export const LATEST_SCHEMA_VERSION = 4;
+export const LATEST_SCHEMA_VERSION = 5;
 runMigrations(db, [
   {
     version: 1,
@@ -231,6 +231,15 @@ runMigrations(db, [
       ALTER TABLE account_deletion_requests ADD COLUMN resolutionNote TEXT;
     `),
   },
+  {
+    version: 5,
+    name: "account-deletion-processing",
+    up: (database) => database.exec(`
+      ALTER TABLE users ADD COLUMN deletedAt TEXT;
+      ALTER TABLE account_deletion_requests ADD COLUMN processedAt TEXT;
+      ALTER TABLE account_deletion_requests ADD COLUMN processorId TEXT;
+    `),
+  },
 ]);
 
 export interface UserRow {
@@ -242,6 +251,7 @@ export interface UserRow {
   profile: string;
   emailVerified: number;
   sessionVersion: number;
+  deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -255,7 +265,7 @@ export function findUserById(id: string): UserRow | undefined {
 }
 
 export function listUsers(): UserRow[] {
-  return db.prepare("SELECT * FROM users ORDER BY createdAt DESC").all() as unknown as UserRow[];
+  return db.prepare("SELECT * FROM users WHERE deletedAt IS NULL ORDER BY createdAt DESC").all() as unknown as UserRow[];
 }
 
 export function createUser(input: { email: string; password: string; role: string; name: string; profile: string }): UserRow {

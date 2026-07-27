@@ -4,6 +4,7 @@ import {
   listAccountDeletionRequests,
   reviewAccountDeletionRequest,
   getAccountDeletionEligibility,
+  processAccountDeletionRequest,
 } from "../lib/accountDeletion.js";
 import { recordAccountAudit } from "../lib/accountAudit.js";
 import { requireAuth, requireRole, type AuthedRequest } from "../middleware/auth.js";
@@ -13,7 +14,7 @@ export const adminRouter = Router();
 adminRouter.use(requireAuth, requireRole("Admin"));
 
 adminRouter.get("/deletion-requests", (req, res) => {
-  const parsed = z.enum(["pending", "approved", "rejected", "cancelled"]).safeParse(req.query.status || "pending");
+  const parsed = z.enum(["pending", "approved", "rejected", "cancelled", "processed"]).safeParse(req.query.status || "pending");
   if (!parsed.success) {
     return res.status(400).json({ error: "Unsupported deletion request status." });
   }
@@ -68,5 +69,31 @@ adminRouter.patch("/deletion-requests/:requestId", (req: AuthedRequest, res) => 
   return res.json({
     request: reviewed,
     processingNotice: "No account data has been deleted. Complete retention and active-marketplace checks first.",
+  });
+});
+
+adminRouter.post("/deletion-requests/:requestId/process", (req: AuthedRequest, res) => {
+  const parsed = z.object({
+    confirmation: z.literal("ANONYMISE ACCOUNT"),
+  }).safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Type "ANONYMISE ACCOUNT" to confirm final processing.' });
+  }
+
+  const processed = processAccountDeletionRequest(req.params.requestId, req.userId!);
+  if (!processed) {
+    return res.status(409).json({
+      error: "Only an approved, eligible, unprocessed request can be processed.",
+    });
+  }
+  recordAccountAudit({
+    eventType: "deletion.processed",
+    outcome: "success",
+    userId: processed.userId,
+    requestId: res.locals.requestId,
+  });
+  return res.json({
+    request: processed,
+    processingNotice: "Direct identity and authentication data were anonymised; transactional references were retained.",
   });
 });

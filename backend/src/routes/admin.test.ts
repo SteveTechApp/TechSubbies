@@ -18,6 +18,7 @@ const app = createApp();
 
 let adminToken: string;
 let engineerToken: string;
+let engineerId: string;
 let deletionRequestId: string;
 
 beforeAll(async () => {
@@ -37,6 +38,7 @@ beforeAll(async () => {
     profile: "{}",
   });
   engineerToken = signToken(engineer.id);
+  engineerId = engineer.id;
   adminToken = signToken(admin.id);
   deletionRequestId = requestAccountDeletion(engineer.id).id;
 });
@@ -132,5 +134,40 @@ describe("admin deletion request reviews", () => {
       .send({ decision: "rejected", note: "Resolve the live application before resubmitting." });
     expect(rejection.status).toBe(200);
     expect(rejection.body.request.status).toBe("rejected");
+  });
+
+  it("requires typed confirmation and anonymises an approved account", async () => {
+    const missingConfirmation = await request(app)
+      .post(`/api/admin/deletion-requests/${deletionRequestId}/process`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ confirmation: "DELETE" });
+    expect(missingConfirmation.status).toBe(400);
+
+    const processed = await request(app)
+      .post(`/api/admin/deletion-requests/${deletionRequestId}/process`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ confirmation: "ANONYMISE ACCOUNT" });
+    expect(processed.status).toBe(200);
+    expect(processed.body.request).toMatchObject({
+      status: "processed",
+      processedAt: expect.any(String),
+      processorId: expect.any(String),
+    });
+
+    const account = db.prepare("SELECT * FROM users WHERE id = ?").get(engineerId) as {
+      email: string;
+      name: string;
+      deletedAt: string | null;
+      sessionVersion: number;
+    };
+    expect(account.email).toBe(`deleted+${engineerId}@deleted.techsubbies.invalid`);
+    expect(account.name).toBe("Deleted account");
+    expect(account.deletedAt).toEqual(expect.any(String));
+    expect(account.sessionVersion).toBe(1);
+
+    const oldSession = await request(app)
+      .get("/api/users/me")
+      .set("Authorization", `Bearer ${engineerToken}`);
+    expect(oldSession.status).toBe(401);
   });
 });

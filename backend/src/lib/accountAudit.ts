@@ -12,7 +12,8 @@ export type AccountAuditEventType =
   | "deletion.requested"
   | "deletion.cancelled"
   | "deletion.approved"
-  | "deletion.rejected";
+  | "deletion.rejected"
+  | "deletion.processed";
 
 export type AccountAuditEvent = {
   id: string;

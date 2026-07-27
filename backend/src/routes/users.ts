@@ -35,6 +35,7 @@ function publicDeletionRequest(userId: string) {
     cancelledAt: request.cancelledAt,
     reviewedAt: request.reviewedAt,
     resolutionNote: request.resolutionNote,
+    processedAt: request.processedAt,
   };
 }
 
