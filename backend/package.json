@@ -8,7 +8,8 @@
     "start": "node --import tsx src/index.ts",
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "db:backup": "tsx src/scripts/backupDatabase.ts"
+    "db:backup": "tsx src/scripts/backupDatabase.ts",
+    "db:verify-backup": "tsx src/scripts/verifyDatabaseBackup.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

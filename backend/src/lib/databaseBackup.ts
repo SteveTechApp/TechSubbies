@@ -35,3 +35,35 @@ export async function createVerifiedDatabaseBackup(source: DatabaseSync, destina
     bytes: fs.statSync(resolvedDestination).size,
   };
 }
+
+const REQUIRED_TABLES = ["users", "jobs", "applications", "contracts", "invoices"];
+
+export function verifyDatabaseBackup(backupPath: string) {
+  const resolvedPath = path.resolve(backupPath);
+  if (!fs.existsSync(resolvedPath) || !fs.statSync(resolvedPath).isFile()) {
+    throw new Error("Backup file does not exist.");
+  }
+
+  const copy = new DatabaseSync(resolvedPath, { readOnly: true });
+  try {
+    const integrity = copy.prepare("PRAGMA integrity_check").get() as { integrity_check?: string };
+    if (integrity.integrity_check !== "ok") {
+      throw new Error("Backup integrity verification failed.");
+    }
+    const rows = copy.prepare(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN (?, ?, ?, ?, ?)"
+    ).all(...REQUIRED_TABLES) as unknown as { name: string }[];
+    const tableNames = new Set(rows.map((row) => row.name));
+    const missingTables = REQUIRED_TABLES.filter((table) => !tableNames.has(table));
+    if (missingTables.length) {
+      throw new Error(`Backup is missing required tables: ${missingTables.join(", ")}.`);
+    }
+    return {
+      path: resolvedPath,
+      bytes: fs.statSync(resolvedPath).size,
+      requiredTables: REQUIRED_TABLES.length,
+    };
+  } finally {
+    copy.close();
+  }
+}

@@ -3,7 +3,11 @@ import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
-import { createBackupFilename, createVerifiedDatabaseBackup } from "./databaseBackup.js";
+import {
+  createBackupFilename,
+  createVerifiedDatabaseBackup,
+  verifyDatabaseBackup,
+} from "./databaseBackup.js";
 
 const temporaryDirectories: string[] = [];
 
@@ -46,5 +50,35 @@ describe("database backup", () => {
     await expect(createVerifiedDatabaseBackup(source, destination)).rejects.toThrow(/already exists/);
     expect(fs.readFileSync(destination, "utf8")).toBe("keep me");
     source.close();
+  });
+
+  it("verifies integrity and required marketplace tables without modifying the backup", () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "techsubbies-backup-test-"));
+    temporaryDirectories.push(directory);
+    const backupPath = path.join(directory, "complete.sqlite");
+    const backup = new DatabaseSync(backupPath);
+    for (const table of ["users", "jobs", "applications", "contracts", "invoices"]) {
+      backup.exec(`CREATE TABLE ${table} (id TEXT PRIMARY KEY)`);
+    }
+    backup.close();
+    const before = fs.statSync(backupPath);
+
+    const result = verifyDatabaseBackup(backupPath);
+    const after = fs.statSync(backupPath);
+
+    expect(result.requiredTables).toBe(5);
+    expect(after.size).toBe(before.size);
+    expect(after.mtimeMs).toBe(before.mtimeMs);
+  });
+
+  it("rejects a structurally incomplete database", () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "techsubbies-backup-test-"));
+    temporaryDirectories.push(directory);
+    const backupPath = path.join(directory, "incomplete.sqlite");
+    const backup = new DatabaseSync(backupPath);
+    backup.exec("CREATE TABLE users (id TEXT PRIMARY KEY)");
+    backup.close();
+
+    expect(() => verifyDatabaseBackup(backupPath)).toThrow(/missing required tables/);
   });
 });

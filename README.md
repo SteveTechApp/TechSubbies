@@ -54,6 +54,15 @@ Set `DB_BACKUP_DIR` to persistent storage outside the application release
 directory. Schedule this command and copy backups to a separate failure domain;
 the command never overwrites an existing backup.
 
+Regularly run a restore drill against a selected backup without touching the
+live database:
+
+`cd backend && $env:BACKUP_FILE="D:\backups\techsubbies-example.sqlite"; npm run db:verify-backup`
+
+The command opens the file read-only, runs SQLite integrity checks and confirms
+that the core marketplace tables are present. A non-zero exit code means the
+backup must not be treated as recoverable.
+
 ## Compliance and certification model
 
 TechSubbies includes a role-specific compliance taxonomy for safety, AV industry credentials, IT/networking certifications, manufacturer training, project management credentials, insurance, company standards and background checks.
