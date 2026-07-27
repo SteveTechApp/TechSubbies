@@ -3,10 +3,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { Currency, ProfileTier } from '../../types';
 
-const updateEngineerProfile = vi.fn().mockResolvedValue(undefined);
+const requestMembershipChange = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('../../context/InteractionContext', () => ({
-    useAppContext: () => ({ updateEngineerProfile }),
+    useAppContext: () => ({ requestMembershipChange }),
 }));
 
 import { PaymentsView } from './PaymentsView';
@@ -27,10 +27,10 @@ describe('PaymentsView', () => {
         expect(screen.getByText('£15/month')).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole('button', { name: /Gold Skills Profile/ }));
-        fireEvent.click(screen.getByRole('button', { name: 'Confirm Gold' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Request Gold' }));
 
-        await waitFor(() => expect(updateEngineerProfile).toHaveBeenCalledWith({ profileTier: ProfileTier.SKILLS }));
-        expect(screen.getByRole('status')).toHaveTextContent('Membership changed to Gold.');
+        await waitFor(() => expect(requestMembershipChange).toHaveBeenCalledWith(ProfileTier.SKILLS));
+        expect(screen.getByRole('status')).toHaveTextContent('Gold selected. Your active plan remains Bronze until billing is confirmed.');
     });
 
     it('makes the work-fee boundary explicit', () => {

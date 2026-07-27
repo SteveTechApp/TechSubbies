@@ -677,6 +677,33 @@ const apiService = {
     return data as User;
   },
 
+  requestMembershipChange: async (tier: ProfileTier): Promise<{
+    activeTier: ProfileTier;
+    requestedTier: ProfileTier;
+    requestedAt: string;
+  }> => {
+    const token = getAuthToken();
+    if (token) {
+      const response = await fetch(`${API_BASE_URL}/users/me/membership-selection`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ tier }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || 'Could not record your membership selection.');
+      }
+      return data;
+    }
+
+    await simulateDelay(200);
+    return {
+      activeTier: ProfileTier.BASIC,
+      requestedTier: tier,
+      requestedAt: new Date().toISOString(),
+    };
+  },
+
   // --- ENGINEER PARTNERSHIPS ("team" pairing) ---
   // Requires the signed-in user to have a real backend account (a token
   // saved from registration/login). Mirrors backend/src/routes/partnerships.ts.

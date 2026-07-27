@@ -28,6 +28,39 @@ usersRouter.get("/me/export", requireAuth, (req: AuthedRequest, res) => {
   return res.json(buildAccountDataExport(req.authUser!));
 });
 
+const membershipTierSchema = z.enum(["Bronze", "Silver", "Gold", "Platinum"]);
+
+// Records a member's commercial selection without granting paid
+// entitlements. The active profileTier is changed only after billing
+// confirmation is implemented and verified server-side.
+usersRouter.post("/me/membership-selection", requireAuth, (req: AuthedRequest, res) => {
+  if (req.authUser!.role !== "Engineer") {
+    return res.status(403).json({ error: "Membership plans are available to engineer accounts." });
+  }
+  const parsed = z.object({ tier: membershipTierSchema }).safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Select a valid membership tier." });
+  }
+
+  let profile: Record<string, unknown> = {};
+  try {
+    profile = JSON.parse(req.authUser!.profile);
+  } catch {
+    profile = {};
+  }
+  const requestedAt = new Date().toISOString();
+  profile.requestedProfileTier = parsed.data.tier;
+  profile.membershipRequestedAt = requestedAt;
+  const updated = updateUserProfile(req.userId!, JSON.stringify(profile), req.authUser!.name);
+
+  return res.status(202).json({
+    activeTier: profile.profileTier ?? "Bronze",
+    requestedTier: parsed.data.tier,
+    requestedAt,
+    user: toPublicUser(updated!),
+  });
+});
+
 function publicDeletionRequest(userId: string) {
   const request = findAccountDeletionRequest(userId);
   if (!request) return null;
@@ -129,7 +162,14 @@ usersRouter.patch("/me", requireAuth, async (req: AuthedRequest, res) => {
     currentProfile = {};
   }
 
-  const updates = req.body && typeof req.body === "object" ? req.body : {};
+  const updates = req.body && typeof req.body === "object"
+    ? { ...(req.body as Record<string, unknown>) }
+    : {};
+  // Membership is server-owned commercial state. Generic profile edits
+  // must never activate a paid plan or forge a pending selection.
+  delete updates.profileTier;
+  delete updates.requestedProfileTier;
+  delete updates.membershipRequestedAt;
   const mergedProfile = { ...currentProfile, ...updates };
 
   const updated = updateUserProfile(

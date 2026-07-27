@@ -37,12 +37,19 @@ authRouter.post("/register", async (req, res) => {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
+  const safeProfileData = { ...profileData };
+  delete safeProfileData.profileTier;
+  delete safeProfileData.requestedProfileTier;
+  delete safeProfileData.membershipRequestedAt;
+  if (role === "Engineer") {
+    safeProfileData.profileTier = "Bronze";
+  }
   const user = createUser({
     email,
     password: passwordHash,
     role,
     name,
-    profile: JSON.stringify({ ...profileData, name, contact: { email, ...(profileData.contact || {}) } }),
+    profile: JSON.stringify({ ...safeProfileData, name, contact: { email, ...(safeProfileData.contact || {}) } }),
   });
 
   const token = signToken(user.id);

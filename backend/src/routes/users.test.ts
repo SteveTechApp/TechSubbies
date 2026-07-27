@@ -183,6 +183,17 @@ describe("PATCH /api/users/me", () => {
     expect(res.body.profile.minDayRate).toBe(200);
   });
 
+  it("does not allow generic profile updates to grant paid membership", async () => {
+    const res = await request(app)
+      .patch("/api/users/me")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ profileTier: "Platinum", minDayRate: 225 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.profile.profileTier).not.toBe("Platinum");
+    expect(res.body.profile.minDayRate).toBe(225);
+  });
+
   it("rejects a tampered/invalid token", async () => {
     const res = await request(app)
       .patch("/api/users/me")
@@ -190,5 +201,32 @@ describe("PATCH /api/users/me", () => {
       .send({ minDayRate: 999 });
 
     expect(res.status).toBe(401);
+  });
+});
+
+describe("POST /api/users/me/membership-selection", () => {
+  it("records a requested tier without activating paid entitlements", async () => {
+    const res = await request(app)
+      .post("/api/users/me/membership-selection")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ tier: "Gold" });
+
+    expect(res.status).toBe(202);
+    expect(res.body).toMatchObject({
+      activeTier: "Bronze",
+      requestedTier: "Gold",
+      requestedAt: expect.any(String),
+    });
+    expect(res.body.user.profile.profileTier).not.toBe("Gold");
+    expect(res.body.user.profile.requestedProfileTier).toBe("Gold");
+  });
+
+  it("rejects invalid tiers", async () => {
+    const res = await request(app)
+      .post("/api/users/me/membership-selection")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ tier: "Enterprise" });
+
+    expect(res.status).toBe(400);
   });
 });

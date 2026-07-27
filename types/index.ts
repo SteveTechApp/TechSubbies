@@ -176,6 +176,8 @@ export interface EngineerProfile extends UserProfile {
     experience: number;
     experienceLevel: ExperienceLevel;
     profileTier: ProfileTier;
+    requestedProfileTier?: ProfileTier;
+    membershipRequestedAt?: string;
     minDayRate: number;
     maxDayRate: number;
     currency: Currency;

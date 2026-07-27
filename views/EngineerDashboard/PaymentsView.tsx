@@ -14,7 +14,7 @@ interface PaymentsViewProps {
 }
 
 export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
-    const { updateEngineerProfile } = useAppContext();
+    const { requestMembershipChange } = useAppContext();
     const [isManaging, setIsManaging] = useState(false);
     const [selectedTier, setSelectedTier] = useState<ProfileTier>(profile.profileTier);
     const [isSaving, setIsSaving] = useState(false);
@@ -36,8 +36,8 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
         setIsSaving(true);
         setMessage('');
         try {
-            await updateEngineerProfile({ profileTier: selectedTier });
-            setMessage(`Membership changed to ${selectedTier}.`);
+            await requestMembershipChange(selectedTier);
+            setMessage(`${selectedTier} selected. Your active plan remains ${profile.profileTier} until billing is confirmed.`);
             setIsManaging(false);
         } catch {
             setMessage('The membership could not be updated. Please try again.');
@@ -74,6 +74,11 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
                                 <p className="text-sm font-semibold text-blue-700">Current plan</p>
                                 <p className="text-2xl font-bold text-blue-900">{profile.profileTier} · {currentPlan.name}</p>
                                 <p className="mt-1 text-sm text-blue-700">{formatMonthlyMembershipPrice(currentPlan)}</p>
+                                {profile.requestedProfileTier && profile.requestedProfileTier !== profile.profileTier && (
+                                    <p className="mt-2 text-sm font-semibold text-amber-700">
+                                        {profile.requestedProfileTier} selected · awaiting billing confirmation
+                                    </p>
+                                )}
                             </div>
                             <button
                                 onClick={() => setIsManaging(true)}
@@ -161,7 +166,7 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
                                 disabled={isSaving}
                                 className="rounded-md bg-blue-600 px-6 py-3 font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                {isSaving ? 'Updating…' : selectedTier === profile.profileTier ? 'Keep Current Plan' : `Confirm ${selectedTier}`}
+                                {isSaving ? 'Saving selection…' : selectedTier === profile.profileTier ? 'Keep Current Plan' : `Request ${selectedTier}`}
                             </button>
                         </div>
                     </section>

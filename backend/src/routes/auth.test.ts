@@ -27,6 +27,23 @@ function tokenFromLastEmail(): string {
 }
 
 describe("POST /api/auth/register", () => {
+  it("always provisions public engineer registrations on Bronze", async () => {
+    const response = await request(app).post("/api/auth/register").send({
+      email: "membership-tamper@example.com",
+      password: "correcthorsebattery",
+      role: "Engineer",
+      name: "Membership Tamper",
+      profileData: {
+        profileTier: "Platinum",
+        requestedProfileTier: "Platinum",
+      },
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.user.profile.profileTier).toBe("Bronze");
+    expect(response.body.user.profile.requestedProfileTier).toBeUndefined();
+  });
+
   it("creates a new account and returns a token", async () => {
     const res = await request(app).post("/api/auth/register").send({
       email: "alice@example.com",

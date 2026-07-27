@@ -11,7 +11,7 @@ import {
     User, Role, EngineerProfile, CompanyProfile, Job, Application, Review, Conversation, Message,
     Contract, Transaction, Project, ForumPost, ForumComment, Notification, CollaborationPost, ResourcingCompanyProfile,
     // FIX: Added missing TimesheetStatus and Product-related imports.
-    ApplicationStatus, ContractStatus, MilestoneStatus, Timesheet, TimesheetStatus, Product, ProductFeatures,
+    ApplicationStatus, ContractStatus, MilestoneStatus, Timesheet, TimesheetStatus, Product, ProductFeatures, ProfileTier,
 } from '../types';
 
 interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<typeof useSettings> {
@@ -20,6 +20,7 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     currentPageContext: string;
     // --- Profile Management ---
     updateEngineerProfile: (profileData: Partial<EngineerProfile>) => Promise<void>;
+    requestMembershipChange: (tier: ProfileTier) => Promise<void>;
     updateCompanyProfile: (profileData: Partial<CompanyProfile>) => Promise<void>;
     boostProfile: () => void;
     addSkillsToProfile: (skills: any[]) => void;
@@ -127,6 +128,25 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         });
         setAppData(prev => ({ ...prev, companies: prev.companies.map(c => c.id === user.profile.id ? { ...c, ...profileData } : c) }));
         await apiService.updateCompanyProfile(user.profile.id, profileData);
+    };
+
+    const requestMembershipChange = async (tier: ProfileTier) => {
+        if (!user || user.role !== Role.ENGINEER) return;
+        const selection = await apiService.requestMembershipChange(tier);
+        const pendingMembership = {
+            requestedProfileTier: selection.requestedTier,
+            membershipRequestedAt: selection.requestedAt,
+        };
+        auth.setUser(previous => {
+            if (!previous || previous.role !== Role.ENGINEER) return previous;
+            return { ...previous, profile: { ...previous.profile, ...pendingMembership } };
+        });
+        setAppData(previous => ({
+            ...previous,
+            engineers: previous.engineers.map(engineer =>
+                engineer.id === user.profile.id ? { ...engineer, ...pendingMembership } : engineer
+            ),
+        }));
     };
 
     const boostProfile = () => updateEngineerProfile({ isBoosted: true });
@@ -485,6 +505,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         createAndLoginResourcingCompany: auth.createAndLoginResourcingCompany,
         createAndLoginEngineer: auth.createAndLoginEngineer,
         updateEngineerProfile,
+        requestMembershipChange,
         updateCompanyProfile,
         boostProfile,
         addSkillsToProfile,
