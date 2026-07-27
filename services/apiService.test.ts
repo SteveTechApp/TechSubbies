@@ -59,6 +59,46 @@ describe('apiService.applyForJob', () => {
   });
 });
 
+describe('apiService.updateApplicationStatus', () => {
+  it('patches a persisted application and converts its date', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ user: { id: 'company-1', role: Role.COMPANY, profile: {} } }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+        id: 'application-1',
+        jobId: 'job-1',
+        engineerId: 'eng-1',
+        date: '2026-07-27T10:00:00.000Z',
+        status: ApplicationStatus.OFFERED,
+        reviewed: true,
+        }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+    await apiService.loginWithPassword('company@example.com', 'password');
+
+    const result = await apiService.updateApplicationStatus('application-1', ApplicationStatus.OFFERED);
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('/applications/application-1'),
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ status: ApplicationStatus.OFFERED }),
+      })
+    );
+    expect(result).toEqual(expect.objectContaining({
+      id: 'application-1',
+      status: ApplicationStatus.OFFERED,
+      date: new Date('2026-07-27T10:00:00.000Z'),
+    }));
+    clearAuthToken();
+  });
+});
+
 // Same "no backend session -> fall back" shape as postJob/applyForJob
 // above, but these resolve differently: createContract falls back to
 // returning the locally-built contract as-is, while the rest resolve to

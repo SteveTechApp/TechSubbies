@@ -49,6 +49,10 @@ const JobCard = ({ job, onSelect, onEdit, onDelete }: { job: Job, onSelect: () =
 }
 
 const ApplicantCard = ({ applicant, application, onDeepDive, onHire }: { applicant: EngineerProfile, application: Application, onDeepDive: () => void, onHire: () => void }) => {
+    const hiringComplete = application.status === ApplicationStatus.HIRED
+        || application.status === ApplicationStatus.REJECTED
+        || application.status === ApplicationStatus.COMPLETED;
+
     return (
         <div className={`flex items-center gap-4 p-3 bg-white rounded-lg border relative ${application.isFeatured ? 'border-amber-400' : 'border-gray-200'}`}>
             {application.isFeatured && (
@@ -60,12 +64,24 @@ const ApplicantCard = ({ applicant, application, onDeepDive, onHire }: { applica
             <div className="flex-grow">
                 <h4 className="font-bold">{applicant.name}</h4>
                 <p className="text-sm text-blue-600">{applicant.discipline}</p>
+                <span className="mt-1 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
+                    {application.status}
+                </span>
             </div>
             <div className="flex items-center gap-2">
                 <button onClick={onDeepDive} className="px-3 py-1.5 text-sm bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 font-semibold flex items-center gap-2">
                     <BrainCircuit size={14} /> AI Deep Dive
                 </button>
-                <button onClick={onHire} className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 font-semibold">Hire & Send Contract</button>
+                <button
+                    onClick={onHire}
+                    disabled={hiringComplete}
+                    className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-300 font-semibold"
+                >
+                    {application.status === ApplicationStatus.HIRED ? 'Hired' :
+                        application.status === ApplicationStatus.REJECTED ? 'Rejected' :
+                        application.status === ApplicationStatus.COMPLETED ? 'Completed' :
+                        'Hire & Send Contract'}
+                </button>
             </div>
         </div>
     )
@@ -74,7 +90,7 @@ const ApplicantCard = ({ applicant, application, onDeepDive, onHire }: { applica
 
 export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
     const { applications, engineers } = useData();
-    const { createContract, sendOffer, setApplicantForDeepDive } = useAppContext();
+    const { createContract, markApplicationsViewed, sendOffer, setApplicantForDeepDive } = useAppContext();
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [selectedApplicant, setSelectedApplicant] = useState<EngineerProfile | null>(null);
     const [isHireModalOpen, setIsHireModalOpen] = useState(false);
@@ -97,11 +113,15 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
             });
     }, [selectedJob, applications, engineers]);
     
-    const handleHire = (engineer: EngineerProfile) => {
+    const handleHire = async (engineer: EngineerProfile) => {
         if (!selectedJob) return;
-        sendOffer(selectedJob.id, engineer.id);
-        setSelectedApplicant(engineer);
-        setIsHireModalOpen(true);
+        try {
+            await sendOffer(selectedJob.id, engineer.id);
+            setSelectedApplicant(engineer);
+            setIsHireModalOpen(true);
+        } catch (error: any) {
+            alert(error?.message || 'Could not send the offer.');
+        }
     };
     
     const handleContractSent = (contract: any) => {
@@ -157,7 +177,10 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
                     <JobCard 
                         key={job.id} 
                         job={job}
-                        onSelect={() => setSelectedJob(job)}
+                        onSelect={() => {
+                            setSelectedJob(job);
+                            markApplicationsViewed(job.id);
+                        }}
                         onEdit={() => alert(`Editing job: ${job.title}`)}
                         onDelete={() => alert(`Deleting job: ${job.title}`)}
                     />

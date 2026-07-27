@@ -324,6 +324,7 @@ export interface Job {
 }
 
 export interface Application {
+    id?: string;
     jobId: string;
     engineerId: string;
     date: Date;

@@ -890,6 +890,28 @@ const apiService = {
     return newApplication;
   },
 
+  updateApplicationStatus: async (
+    applicationId: string,
+    status: ApplicationStatus.VIEWED | ApplicationStatus.OFFERED | ApplicationStatus.HIRED | ApplicationStatus.REJECTED
+  ): Promise<Application | null> => {
+    const token = getAuthToken();
+    if (!token) return null;
+
+    const response = await fetch(`${API_BASE_URL}/applications/${applicationId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ status }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.error || 'Could not update the application.');
+    }
+    return {
+      ...(data as Application),
+      date: new Date(data.date),
+    };
+  },
+
   // Lists jobs posted on the real backend, so they can be merged into the
   // demo/mock job list on load (see getInitialData above). Returns an
   // empty list rather than throwing if the backend can't be reached, since

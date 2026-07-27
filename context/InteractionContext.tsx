@@ -28,7 +28,8 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     postJob: (jobData: any) => Promise<Job>;
     applyForJob: (jobId: string, engineerId: string) => void;
     applyForJobWithCredit: (jobId: string) => void;
-    sendOffer: (jobId: string, engineerId: string) => void;
+    markApplicationsViewed: (jobId: string) => void;
+    sendOffer: (jobId: string, engineerId: string) => Promise<void>;
     inviteEngineerToJob: (jobId: string, engineerId: string) => void;
     // --- Contract & Payment Management ---
     createContract: (contract: any) => void;
@@ -149,7 +150,16 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         // entry back out rather than leaving a phantom application in view.
         setAppData(prev => ({ ...prev, applications: [...prev.applications, newApp] }));
         apiService.applyForJob(jobId, engineerId)
-            .then(() => alert('Application submitted!'))
+            .then(saved => {
+                setAppData(prev => ({
+                    ...prev,
+                    applications: prev.applications.map(app => app === newApp ? {
+                        ...saved,
+                        date: new Date(saved.date),
+                    } : app),
+                }));
+                alert('Application submitted!');
+            })
             .catch((error: any) => {
                 setAppData(prev => ({ ...prev, applications: prev.applications.filter(a => a !== newApp) }));
                 alert(error?.message || 'Could not submit application.');
@@ -165,8 +175,60 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         }
     };
     
-    const sendOffer = (jobId: string, engineerId: string) => {
-        setAppData(prev => ({ ...prev, applications: prev.applications.map(app => app.jobId === jobId && app.engineerId === engineerId ? { ...app, status: ApplicationStatus.OFFERED } : app) }));
+    const persistApplicationStatus = async (
+        application: Application,
+        status: ApplicationStatus.VIEWED | ApplicationStatus.OFFERED
+    ) => {
+        const previousStatus = application.status;
+        const previousReviewed = application.reviewed;
+        setAppData(prev => ({
+            ...prev,
+            applications: prev.applications.map(app =>
+                app.jobId === application.jobId && app.engineerId === application.engineerId
+                    ? { ...app, status, reviewed: true }
+                    : app
+            ),
+        }));
+
+        if (!application.id) return;
+        try {
+            const saved = await apiService.updateApplicationStatus(application.id, status);
+            if (saved) {
+                setAppData(prev => ({
+                    ...prev,
+                    applications: prev.applications.map(app =>
+                        app.id === application.id ? saved : app
+                    ),
+                }));
+            }
+        } catch (error) {
+            setAppData(prev => ({
+                ...prev,
+                applications: prev.applications.map(app =>
+                    app.id === application.id
+                        ? { ...app, status: previousStatus, reviewed: previousReviewed }
+                        : app
+                ),
+            }));
+            throw error;
+        }
+    };
+
+    const markApplicationsViewed = (jobId: string) => {
+        const unreviewed = data.applications.filter(
+            application => application.jobId === jobId && application.status === ApplicationStatus.APPLIED
+        );
+        void Promise.allSettled(
+            unreviewed.map(application => persistApplicationStatus(application, ApplicationStatus.VIEWED))
+        );
+    };
+
+    const sendOffer = async (jobId: string, engineerId: string) => {
+        const application = data.applications.find(
+            app => app.jobId === jobId && app.engineerId === engineerId
+        );
+        if (!application) throw new Error('Application not found.');
+        await persistApplicationStatus(application, ApplicationStatus.OFFERED);
     };
 
     const inviteEngineerToJob = (jobId: string, engineerId: string) => {
@@ -468,6 +530,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         postJob,
         applyForJob,
         applyForJobWithCredit,
+        markApplicationsViewed,
         sendOffer,
         inviteEngineerToJob,
         createContract,
