@@ -21,6 +21,7 @@ import { InvoicesView } from './InvoicesView';
 import { ForumView } from './ForumView';
 import { PaymentsView } from './EngineerDashboard/PaymentsView';
 import { LoyaltyView } from './EngineerDashboard/LoyaltyView';
+import { ApplicationsView } from './EngineerDashboard/ApplicationsView';
 
 export const EngineerDashboard = () => {
     const { user } = useAuth();
@@ -42,6 +43,8 @@ export const EngineerDashboard = () => {
                 return <ProfileManagementView profile={engineerProfile} onSave={updateEngineerProfile} setActiveView={setActiveView} />;
             case 'Job Search':
                  return <JobSearchView setActiveView={setActiveView} />;
+            case 'Applications':
+                return <ApplicationsView engineerProfile={engineerProfile} setActiveView={setActiveView} />;
             case 'Find a Partner':
                 return <FindPartnerView setActiveView={setActiveView} />;
             case 'My Network':

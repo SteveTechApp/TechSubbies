@@ -90,8 +90,8 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
                 <section className="mt-8 rounded-lg bg-white p-6 shadow" aria-labelledby="application-updates-heading">
                     <div className="mb-4 flex items-center justify-between gap-4">
                         <h2 id="application-updates-heading" className="text-xl font-bold">Recent application updates</h2>
-                        <button onClick={() => setActiveView('Job Search')} className="text-sm font-semibold text-blue-600 hover:underline">
-                            Find more work
+                        <button onClick={() => setActiveView('Applications')} className="text-sm font-semibold text-blue-600 hover:underline">
+                            View all applications
                         </button>
                     </div>
                     <div className="divide-y divide-gray-100">
@@ -107,7 +107,7 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
                             return (
                                 <div key={application.id || `${application.jobId}-${application.engineerId}`} className="flex flex-col gap-2 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
-                                        <p className="font-semibold text-gray-900">{job?.title || 'Technical opportunity'}</p>
+                                        <p className="font-semibold text-gray-900">{application.jobTitle || job?.title || 'Technical opportunity'}</p>
                                         <p className="text-sm text-gray-500">Applied {application.date.toLocaleDateString()}</p>
                                     </div>
                                     <span className={`w-fit rounded-full px-3 py-1 text-xs font-bold ${statusClasses}`}>

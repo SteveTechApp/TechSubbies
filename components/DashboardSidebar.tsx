@@ -34,6 +34,7 @@ const ENGINEER_LINKS = [
     { label: 'Dashboard', icon: LayoutDashboard },
     { label: 'Manage Profile', icon: User },
     { label: 'Job Search', icon: Search },
+    { label: 'Applications', icon: ClipboardList },
     { label: 'My Network', icon: Users },
     { label: 'Find a Partner', icon: Handshake },
     { label: 'Availability', icon: CalendarDays },

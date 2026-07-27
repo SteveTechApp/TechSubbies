@@ -327,6 +327,9 @@ export interface Application {
     id?: string;
     jobId: string;
     engineerId: string;
+    jobTitle?: string;
+    jobLocation?: string;
+    companyName?: string;
     date: Date;
     status: ApplicationStatus;
     reviewed: boolean;

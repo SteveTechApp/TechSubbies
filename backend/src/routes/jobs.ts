@@ -218,5 +218,22 @@ applicationsRouter.patch(
 );
 
 applicationsRouter.get("/me", requireAuth, requireRole("Engineer"), async (req: AuthedRequest, res) => {
-  return res.json(listApplicationsForEngineer(req.userId!).map(toPublicApplication));
+  return res.json(listApplicationsForEngineer(req.userId!).map((application) => {
+    const job = findJobById(application.jobId);
+    const company = job ? findUserById(job.companyId) : undefined;
+    let jobData: Record<string, unknown> = {};
+    if (job) {
+      try {
+        jobData = JSON.parse(job.data) as Record<string, unknown>;
+      } catch {
+        // Keep safe fallbacks for damaged legacy job data.
+      }
+    }
+    return {
+      ...toPublicApplication(application),
+      jobTitle: String(jobData.title || "Technical opportunity"),
+      jobLocation: String(jobData.location || ""),
+      companyName: company?.name || "TechSubbies client",
+    };
+  }));
 });

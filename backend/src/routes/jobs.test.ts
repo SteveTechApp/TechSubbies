@@ -272,7 +272,14 @@ describe("company application feed", () => {
       .get("/api/applications/me")
       .set("Authorization", `Bearer ${engineer.token}`);
     expect(ownFeed.body).toEqual([
-      expect.objectContaining({ id: applied.body.id, status: "Hired", reviewed: true }),
+      expect.objectContaining({
+        id: applied.body.id,
+        status: "Hired",
+        reviewed: true,
+        jobTitle: "AV Install Engineer",
+        jobLocation: "London, UK",
+        companyName: "Application Status Company",
+      }),
     ]);
   });
 
