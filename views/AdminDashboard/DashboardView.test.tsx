@@ -17,7 +17,6 @@ describe('Admin DashboardView', () => {
                 applications: 31,
                 contractsTotal: 12,
                 contractsActive: 5,
-                invoices: 9,
             },
             privacyPending: 3,
         });

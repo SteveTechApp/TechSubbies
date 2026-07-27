@@ -36,7 +36,7 @@ export async function createVerifiedDatabaseBackup(source: DatabaseSync, destina
   };
 }
 
-const REQUIRED_TABLES = ["users", "jobs", "applications", "contracts", "invoices"];
+const REQUIRED_TABLES = ["users", "jobs", "applications", "contracts"];
 
 export function verifyDatabaseBackup(backupPath: string) {
   const resolvedPath = path.resolve(backupPath);
@@ -51,7 +51,7 @@ export function verifyDatabaseBackup(backupPath: string) {
       throw new Error("Backup integrity verification failed.");
     }
     const rows = copy.prepare(
-      "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN (?, ?, ?, ?, ?)"
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN (?, ?, ?, ?)"
     ).all(...REQUIRED_TABLES) as unknown as { name: string }[];
     const tableNames = new Set(rows.map((row) => row.name));
     const missingTables = REQUIRED_TABLES.filter((table) => !tableNames.has(table));

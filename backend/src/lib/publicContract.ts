@@ -1,4 +1,4 @@
-import type { ContractRow, InvoiceRow } from "./db.js";
+import type { ContractRow } from "./db.js";
 
 function parseJson<T>(value: string | null, fallback: T): T {
   if (!value) return fallback;
@@ -28,21 +28,5 @@ export function toPublicContract(contract: ContractRow) {
     companySignature: parseJson(contract.companySignature, null),
     milestones: parseJson(contract.milestones, []),
     timesheets: parseJson(contract.timesheets, []),
-  };
-}
-
-// Shapes a database invoice row into the `Invoice` shape the frontend
-// expects (see types/index.ts `Invoice`).
-export function toPublicInvoice(invoice: InvoiceRow) {
-  return {
-    id: invoice.id,
-    contractId: invoice.contractId,
-    companyId: invoice.companyId,
-    engineerId: invoice.engineerId,
-    items: parseJson(invoice.items, []),
-    total: invoice.total,
-    issueDate: invoice.issueDate,
-    dueDate: invoice.dueDate,
-    status: invoice.status,
   };
 }

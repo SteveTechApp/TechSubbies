@@ -69,7 +69,6 @@ export type AdminPlatformMetrics = {
     applications: number;
     contractsTotal: number;
     contractsActive: number;
-    invoices: number;
   };
   privacyPending: number;
 };
@@ -238,7 +237,6 @@ const apiService = {
       forumComments: MOCK_FORUM_COMMENTS,
       notifications: MOCK_NOTIFICATIONS,
       collaborationPosts: MOCK_COLLABORATION_POSTS,
-      invoices: [],
     };
   },
 

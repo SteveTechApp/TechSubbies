@@ -57,7 +57,7 @@ describe("database backup", () => {
     temporaryDirectories.push(directory);
     const backupPath = path.join(directory, "complete.sqlite");
     const backup = new DatabaseSync(backupPath);
-    for (const table of ["users", "jobs", "applications", "contracts", "invoices"]) {
+    for (const table of ["users", "jobs", "applications", "contracts"]) {
       backup.exec(`CREATE TABLE ${table} (id TEXT PRIMARY KEY)`);
     }
     backup.close();
@@ -66,7 +66,7 @@ describe("database backup", () => {
     const result = verifyDatabaseBackup(backupPath);
     const after = fs.statSync(backupPath);
 
-    expect(result.requiredTables).toBe(5);
+    expect(result.requiredTables).toBe(4);
     expect(after.size).toBe(before.size);
     expect(after.mtimeMs).toBe(before.mtimeMs);
   });

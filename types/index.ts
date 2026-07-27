@@ -98,19 +98,6 @@ export enum TimesheetStatus {
     APPROVED = 'approved',
 }
 
-export enum InvoiceStatus {
-    DRAFT = 'Draft',
-    SENT = 'Sent',
-    PAID = 'Paid',
-    OVERDUE = 'Overdue',
-}
-
-export enum PaymentTerms {
-    NET14 = 'Net 14 Days',
-    NET30 = 'Net 30 Days',
-    NET60 = 'Net 60 Days',
-}
-
 export enum NotificationType {
     MESSAGE = 'message',
     NEW_JOB_MATCH = 'new_job_match',
@@ -423,25 +410,6 @@ export interface Transaction {
     amount: number; // Negative for debits, positive for credits
     date: Date;
 }
-
-export interface InvoiceItem {
-    description: string;
-    amount: number;
-}
-
-export interface Invoice {
-    id: string;
-    contractId: string;
-    companyId: string;
-    engineerId: string;
-    items: InvoiceItem[];
-    total: number;
-    currency: Currency;
-    issueDate: Date;
-    dueDate: Date;
-    status: InvoiceStatus;
-}
-
 
 // --- Other ---
 export interface ProjectRole {

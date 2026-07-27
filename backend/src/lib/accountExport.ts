@@ -2,7 +2,6 @@ import {
   listApplicationsForEngineer,
   listContractsForUser,
   listConversationsForUser,
-  listInvoicesForUser,
   listJobsForCompany,
   listMessagesForConversation,
   listPartnershipRequestsForUser,
@@ -11,20 +10,19 @@ import {
 import { listAccountAuditForUser } from "./accountAudit.js";
 import { toPublicUser } from "./publicUser.js";
 import { toPublicApplication, toPublicJob } from "./publicJob.js";
-import { toPublicContract, toPublicInvoice } from "./publicContract.js";
+import { toPublicContract } from "./publicContract.js";
 
 export function buildAccountDataExport(user: UserRow, generatedAt = new Date().toISOString()) {
   const conversations = listConversationsForUser(user.id);
   return {
     format: "techsubbies-account-export",
-    version: 1,
+    version: 2,
     generatedAt,
     account: toPublicUser(user),
     marketplace: {
       jobs: listJobsForCompany(user.id).map(toPublicJob),
       applications: listApplicationsForEngineer(user.id).map(toPublicApplication),
       contracts: listContractsForUser(user.id).map(toPublicContract),
-      invoices: listInvoicesForUser(user.id).map(toPublicInvoice),
       partnerships: listPartnershipRequestsForUser(user.id),
       conversations: conversations.map((conversation) => ({
         ...conversation,

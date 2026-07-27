@@ -259,7 +259,6 @@ describe("admin account moderation", () => {
         applications: expect.any(Number),
         contractsTotal: expect.any(Number),
         contractsActive: expect.any(Number),
-        invoices: expect.any(Number),
       },
       privacyPending: expect.any(Number),
     });

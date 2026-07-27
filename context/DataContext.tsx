@@ -1,12 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { EngineerProfile, CompanyProfile, Job, Application, Review, User, Conversation, Message, Contract, Transaction, Project, ForumPost, ForumComment, Notification, CollaborationPost, ResourcingCompanyProfile, Invoice } from '../types';
+import { EngineerProfile, CompanyProfile, Job, Application, Review, User, Conversation, Message, Contract, Transaction, Project, ForumPost, ForumComment, Notification, CollaborationPost, ResourcingCompanyProfile } from '../types';
 import apiService from '../services/apiService';
 
 const initialAppState = {
     engineers: [], companies: [], jobs: [], applications: [], reviews: [], allUsers: [],
     conversations: [], messages: [], contracts: [], transactions: [], projects: [],
     forumPosts: [], forumComments: [], notifications: [], collaborationPosts: [],
-    invoices: [],
 };
 
 interface DataContextType {
@@ -26,7 +25,6 @@ interface DataContextType {
     forumComments: ForumComment[];
     notifications: Notification[];
     collaborationPosts: CollaborationPost[];
-    invoices: Invoice[];
     setAppData: React.Dispatch<React.SetStateAction<typeof initialAppState>>;
     findUserById: (userId: string) => User | undefined;
     findUserByProfileId: (profileId: string) => User | undefined;

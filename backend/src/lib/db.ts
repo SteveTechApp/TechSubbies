@@ -141,22 +141,6 @@ db.exec(`
 `);
 
 db.exec(`
-  CREATE TABLE IF NOT EXISTS invoices (
-    id TEXT PRIMARY KEY,
-    contractId TEXT NOT NULL,
-    companyId TEXT NOT NULL,
-    engineerId TEXT NOT NULL,
-    items TEXT NOT NULL,
-    total REAL NOT NULL,
-    issueDate TEXT NOT NULL,
-    dueDate TEXT NOT NULL,
-    status TEXT NOT NULL,
-    createdAt TEXT NOT NULL,
-    updatedAt TEXT NOT NULL
-  );
-`);
-
-db.exec(`
   CREATE TABLE IF NOT EXISTS conversations (
     id TEXT PRIMARY KEY,
     participantAId TEXT NOT NULL,
@@ -395,7 +379,6 @@ export type AdminPlatformMetrics = {
     applications: number;
     contractsTotal: number;
     contractsActive: number;
-    invoices: number;
   };
   privacyPending: number;
 };
@@ -421,7 +404,6 @@ export function getAdminPlatformMetrics(): AdminPlatformMetrics {
     FROM contracts
   `).get() as { total: number; active: number };
   const applications = db.prepare("SELECT COUNT(*) AS total FROM applications").get() as { total: number };
-  const invoices = db.prepare("SELECT COUNT(*) AS total FROM invoices").get() as { total: number };
   const privacy = db.prepare(
     "SELECT COUNT(*) AS total FROM account_deletion_requests WHERE status = 'pending'"
   ).get() as { total: number };
@@ -433,7 +415,6 @@ export function getAdminPlatformMetrics(): AdminPlatformMetrics {
       applications: applications.total,
       contractsTotal: contracts.total,
       contractsActive: contracts.active,
-      invoices: invoices.total,
     },
     privacyPending: privacy.total,
   };
@@ -859,59 +840,6 @@ export function updateContractTimesheets(id: string, timesheets: unknown[]): Con
     id
   );
   return findContractById(id);
-}
-
-// --- Invoices ---
-
-export interface InvoiceRow {
-  id: string;
-  contractId: string;
-  companyId: string;
-  engineerId: string;
-  items: string;
-  total: number;
-  issueDate: string;
-  dueDate: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export function createInvoice(input: {
-  contractId: string;
-  companyId: string;
-  engineerId: string;
-  items: unknown[];
-  total: number;
-  dueDate: string;
-}): InvoiceRow {
-  const id = randomUUID();
-  const now = new Date().toISOString();
-  db.prepare(
-    "INSERT INTO invoices (id, contractId, companyId, engineerId, items, total, issueDate, dueDate, status, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Sent', ?, ?)"
-  ).run(
-    id,
-    input.contractId,
-    input.companyId,
-    input.engineerId,
-    JSON.stringify(input.items),
-    input.total,
-    now,
-    input.dueDate,
-    now,
-    now
-  );
-  return findInvoiceById(id)!;
-}
-
-export function findInvoiceById(id: string): InvoiceRow | undefined {
-  return db.prepare("SELECT * FROM invoices WHERE id = ?").get(id) as unknown as InvoiceRow | undefined;
-}
-
-export function listInvoicesForUser(userId: string): InvoiceRow[] {
-  return db
-    .prepare("SELECT * FROM invoices WHERE companyId = ? OR engineerId = ? ORDER BY createdAt DESC")
-    .all(userId, userId) as unknown as InvoiceRow[];
 }
 
 // --- Conversations & messages ---

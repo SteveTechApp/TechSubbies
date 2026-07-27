@@ -89,13 +89,12 @@ describe("GET /api/users/me/export", () => {
     expect(res.headers["content-disposition"]).toMatch(/techsubbies-account-\d{4}-\d{2}-\d{2}\.json/);
     expect(res.body).toMatchObject({
       format: "techsubbies-account-export",
-      version: 1,
+      version: 2,
       account: { id: userId, role: "Engineer" },
       marketplace: {
         jobs: expect.any(Array),
         applications: expect.any(Array),
         contracts: expect.any(Array),
-        invoices: expect.any(Array),
         partnerships: expect.any(Array),
         conversations: expect.any(Array),
       },
