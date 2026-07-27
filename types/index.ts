@@ -309,6 +309,8 @@ export interface Job {
     jobRole: string;
     skillRequirements: JobSkillRequirement[];
     status: 'active' | 'closed' | 'filled';
+    moderatedAt?: string | null;
+    moderationReason?: string | null;
     // Self-declared at posting time for junior/labour/assistant-type roles
     // (see utils/leadSupervision.ts) - who's actually supervising this
     // engineer on site. Checked again, for real, when a contract is

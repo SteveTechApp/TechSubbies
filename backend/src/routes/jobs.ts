@@ -8,6 +8,7 @@ import {
   listActiveJobs,
   listApplicationsForEngineer,
   listApplicationsForJob,
+  listJobsForCompany,
   updateJob,
 } from "../lib/db.js";
 import { toPublicApplication, toPublicJob } from "../lib/publicJob.js";
@@ -37,6 +38,16 @@ const jobSchema = z.object({
 // GET /api/jobs - public list of active jobs (search/browse screens).
 jobsRouter.get("/", async (_req, res) => {
   return res.json(listActiveJobs().map(toPublicJob));
+});
+
+// GET /api/jobs/mine - all jobs owned by the signed-in company, including
+// closed/filled and administrator-moderated listings.
+jobsRouter.get("/mine", requireAuth, requireRole("Company", "Resourcing Company"), (req: AuthedRequest, res) => {
+  return res.json(listJobsForCompany(req.userId!).map((job) => ({
+    ...toPublicJob(job),
+    moderatedAt: job.moderatedAt,
+    moderationReason: job.moderationReason,
+  })));
 });
 
 // GET /api/jobs/:jobId - a single job.
@@ -79,6 +90,11 @@ jobsRouter.patch("/:jobId", requireAuth, async (req: AuthedRequest, res) => {
   }
 
   const { status, ...data } = parsed.data;
+  if (status === "active" && job.moderatorId && job.status === "closed") {
+    return res.status(403).json({
+      error: "An administrator closed this listing. Contact TechSubbies support before it can be reopened.",
+    });
+  }
   const updated = updateJob(job.id, { data, status });
   return res.json(toPublicJob(updated!));
 });

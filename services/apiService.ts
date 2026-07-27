@@ -173,7 +173,12 @@ const apiService = {
     // job sees it here too. Falls back to just the mock list if the
     // backend isn't reachable.
     const backendJobs = await apiService.getBackendJobs();
-    const mergedJobs = [...backendJobs, ...MOCK_JOBS.filter(j => !backendJobs.some(b => b.id === j.id))];
+    const backendOwnedJobs = await apiService.getBackendOwnedJobs();
+    const realJobs = [
+      ...backendOwnedJobs,
+      ...backendJobs.filter(job => !backendOwnedJobs.some(owned => owned.id === job.id)),
+    ];
+    const mergedJobs = [...realJobs, ...MOCK_JOBS.filter(j => !realJobs.some(b => b.id === j.id))];
     // Contracts/invoices are only fetched if there's a saved backend session
     // (see getBackendContracts/getBackendInvoices below) - merged in
     // alongside the demo data the same way jobs are, so a real, signed-in
@@ -877,6 +882,16 @@ const apiService = {
   getBackendJobs: async (): Promise<Job[]> => {
     try {
       const response = await fetch(`${API_BASE_URL}/jobs`);
+      if (!response.ok) return [];
+      return (await response.json()) as Job[];
+    } catch {
+      return [];
+    }
+  },
+
+  getBackendOwnedJobs: async (): Promise<Job[]> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/jobs/mine`);
       if (!response.ok) return [];
       return (await response.json()) as Job[];
     } catch {

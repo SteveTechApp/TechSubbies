@@ -158,6 +158,19 @@ describe("jobs", () => {
       .send({ status: "closed" });
     expect(rightUpdate.status).toBe(200);
     expect(rightUpdate.body.status).toBe("closed");
+
+    const ownedJobs = await request(app)
+      .get("/api/jobs/mine")
+      .set("Authorization", `Bearer ${company.token}`);
+    expect(ownedJobs.status).toBe(200);
+    expect(ownedJobs.body.some((job: { id: string; status: string }) =>
+      job.id === postRes.body.id && job.status === "closed"
+    )).toBe(true);
+
+    const otherOwnedJobs = await request(app)
+      .get("/api/jobs/mine")
+      .set("Authorization", `Bearer ${otherCompany.token}`);
+    expect(otherOwnedJobs.body.some((job: { id: string }) => job.id === postRes.body.id)).toBe(false);
   });
 });
 
