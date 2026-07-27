@@ -22,6 +22,7 @@ import { ForumView } from './ForumView';
 import { PaymentsView } from './EngineerDashboard/PaymentsView';
 import { LoyaltyView } from './EngineerDashboard/LoyaltyView';
 import { ApplicationsView } from './EngineerDashboard/ApplicationsView';
+import { DashboardHelpCenter } from '../components/DashboardHelpCenter';
 
 export const EngineerDashboard = () => {
     const { user } = useAuth();
@@ -72,6 +73,8 @@ export const EngineerDashboard = () => {
                 return <LoyaltyView profile={engineerProfile} setActiveView={setActiveView} />;
             case 'Settings':
                 return <SettingsView profile={engineerProfile} onSave={updateEngineerProfile} setActiveView={setActiveView} />;
+            case 'Help Center':
+                return <DashboardHelpCenter role={user.role} setActiveView={setActiveView} />;
             default:
                 return <div>View not found</div>;
         }

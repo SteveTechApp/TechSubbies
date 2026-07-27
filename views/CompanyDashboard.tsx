@@ -4,6 +4,7 @@ import { useData } from '../context/DataContext';
 // FIX: Replaced incorrect context hook 'useInteractions' with the correct hook 'useAppContext'.
 import { useAppContext } from '../context/InteractionContext';
 import { DashboardShell } from '../components/DashboardShell';
+import { DashboardHelpCenter } from '../components/DashboardHelpCenter';
 import { CompanyProfile, Job, Role, EngineerProfile } from '../types';
 import { DashboardView } from './CompanyDashboard/DashboardView';
 import { MyJobsView } from './CompanyDashboard/MyJobsView';
@@ -91,6 +92,8 @@ export const CompanyDashboard = () => {
                 return <AnalyticsView />;
             case 'Settings':
                 return <SettingsView profile={companyProfile} onSave={updateCompanyProfile} />;
+            case 'Help Center':
+                return <DashboardHelpCenter role={user.role} setActiveView={setActiveView} />;
             default:
                 return <div>View not found</div>;
         }

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { DashboardShell } from '../components/DashboardShell';
+import { DashboardHelpCenter } from '../components/DashboardHelpCenter';
 import { Role, EngineerProfile, Contract, ResourcingCompanyProfile } from '../types';
 import { DashboardView } from './ResourcingDashboard/DashboardView';
 import { ManageEngineersView } from './ResourcingDashboard/ManageEngineersView';
@@ -54,6 +55,8 @@ export const ResourcingDashboard = () => {
                 return <SettingsView profile={resourcingProfile} onSave={() => {}} />;
             case 'Add New Engineer':
                 return <AddNewEngineerView resourcingCompanyId={user.profile.id} onEngineerAdded={handleEngineerAdded} />;
+            case 'Help Center':
+                return <DashboardHelpCenter role={user.role} setActiveView={setActiveView} />;
             default:
                 return <div>View not found</div>;
         }
