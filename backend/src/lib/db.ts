@@ -724,6 +724,16 @@ export function listApplicationsForEngineer(engineerId: string): ApplicationRow[
     .all(engineerId) as unknown as ApplicationRow[];
 }
 
+export function listApplicationsForCompany(companyId: string): ApplicationRow[] {
+  return db.prepare(`
+    SELECT applications.*
+    FROM applications
+    JOIN jobs ON jobs.id = applications.jobId
+    WHERE jobs.companyId = ?
+    ORDER BY applications.createdAt DESC
+  `).all(companyId) as unknown as ApplicationRow[];
+}
+
 export function updateApplicationStatus(id: string, status: string, reviewed?: boolean): ApplicationRow | undefined {
   const existing = findApplicationById(id);
   if (!existing) return undefined;

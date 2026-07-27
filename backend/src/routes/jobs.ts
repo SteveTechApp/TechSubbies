@@ -8,6 +8,7 @@ import {
   listActiveJobs,
   listApplicationsForEngineer,
   listApplicationsForJob,
+  listApplicationsForCompany,
   listJobsForCompany,
   updateJob,
 } from "../lib/db.js";
@@ -137,6 +138,10 @@ jobsRouter.get("/:jobId/applications", requireAuth, async (req: AuthedRequest, r
 // Mounted separately in app.ts under /api/applications, kept in this file
 // since it shares all its helpers with the jobs routes above.
 export const applicationsRouter = Router();
+
+applicationsRouter.get("/company", requireAuth, requireRole("Company", "Resourcing Company"), (req: AuthedRequest, res) => {
+  return res.json(listApplicationsForCompany(req.userId!).map(toPublicApplication));
+});
 
 applicationsRouter.get("/me", requireAuth, requireRole("Engineer"), async (req: AuthedRequest, res) => {
   return res.json(listApplicationsForEngineer(req.userId!).map(toPublicApplication));

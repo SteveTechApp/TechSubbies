@@ -179,6 +179,21 @@ const apiService = {
       ...backendJobs.filter(job => !backendOwnedJobs.some(owned => owned.id === job.id)),
     ];
     const mergedJobs = [...realJobs, ...MOCK_JOBS.filter(j => !realJobs.some(b => b.id === j.id))];
+    const backendUsers = await apiService.getBackendDirectoryUsers();
+    const mergedUsers = [...backendUsers, ...ALL_MOCK_USERS.filter(user => !backendUsers.some(real => real.id === user.id))];
+    const backendEngineers = backendUsers
+      .filter(user => user.role === Role.ENGINEER)
+      .map(user => user.profile as EngineerProfile);
+    const backendCompanies = backendUsers
+      .filter(user => user.role === Role.COMPANY || user.role === Role.RESOURCING_COMPANY)
+      .map(user => user.profile as CompanyProfile);
+    const backendApplications = await apiService.getBackendCompanyApplications();
+    const mergedApplications = [
+      ...backendApplications,
+      ...MOCK_APPLICATIONS.filter(application => !backendApplications.some(real =>
+        real.jobId === application.jobId && real.engineerId === application.engineerId
+      )),
+    ];
     // Contracts/invoices are only fetched if there's a saved backend session
     // (see getBackendContracts/getBackendInvoices below) - merged in
     // alongside the demo data the same way jobs are, so a real, signed-in
@@ -200,12 +215,12 @@ const apiService = {
     const backendMessages = backendMessageLists.flatMap(list => list ?? []);
     const mergedMessages = [...backendMessages, ...MOCK_MESSAGES.filter(m => !backendMessages.some(b => b.id === m.id))];
     return {
-      engineers: [...MOCK_ENGINEERS, MOCK_ENGINEER_STEVE, MOCK_FREE_ENGINEER],
-      companies: [...MOCK_COMPANIES, MOCK_RESOURCING_COMPANY_1],
+      engineers: [...backendEngineers, ...[...MOCK_ENGINEERS, MOCK_ENGINEER_STEVE, MOCK_FREE_ENGINEER].filter(engineer => !backendEngineers.some(real => real.id === engineer.id))],
+      companies: [...backendCompanies, ...MOCK_COMPANIES.filter(company => !backendCompanies.some(real => real.id === company.id)), MOCK_RESOURCING_COMPANY_1],
       jobs: mergedJobs,
-      applications: MOCK_APPLICATIONS,
+      applications: mergedApplications,
       reviews: MOCK_REVIEWS,
-      allUsers: ALL_MOCK_USERS,
+      allUsers: mergedUsers,
       conversations: mergedConversations,
       messages: mergedMessages,
       contracts: mergedContracts,
@@ -894,6 +909,30 @@ const apiService = {
       const response = await fetch(`${API_BASE_URL}/jobs/mine`);
       if (!response.ok) return [];
       return (await response.json()) as Job[];
+    } catch {
+      return [];
+    }
+  },
+
+  getBackendDirectoryUsers: async (): Promise<User[]> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users?limit=100`);
+      if (!response.ok) return [];
+      return (await response.json()) as User[];
+    } catch {
+      return [];
+    }
+  },
+
+  getBackendCompanyApplications: async (): Promise<Application[]> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/applications/company`);
+      if (!response.ok) return [];
+      const applications = await response.json() as Array<Application & { date: string | Date }>;
+      return applications.map(application => ({
+        ...application,
+        date: new Date(application.date),
+      }));
     } catch {
       return [];
     }

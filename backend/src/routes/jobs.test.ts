@@ -177,6 +177,40 @@ describe("jobs", () => {
   });
 });
 
+describe("company application feed", () => {
+  it("returns persisted applicants only for jobs owned by the signed-in company", async () => {
+    const company = await registerCompany("application-feed-company@example.com", "Application Feed Company");
+    const otherCompany = await registerCompany("application-feed-other@example.com", "Other Feed Company");
+    const engineer = await registerEngineer("application-feed-engineer@example.com", "Application Feed Engineer");
+
+    const posted = await request(app)
+      .post("/api/jobs")
+      .set("Authorization", `Bearer ${company.token}`)
+      .send(sampleJob);
+    await request(app)
+      .post(`/api/jobs/${posted.body.id}/apply`)
+      .set("Authorization", `Bearer ${engineer.token}`);
+
+    const owned = await request(app)
+      .get("/api/applications/company")
+      .set("Authorization", `Bearer ${company.token}`);
+    expect(owned.status).toBe(200);
+    expect(owned.body).toEqual([
+      expect.objectContaining({ jobId: posted.body.id, engineerId: engineer.id }),
+    ]);
+
+    const other = await request(app)
+      .get("/api/applications/company")
+      .set("Authorization", `Bearer ${otherCompany.token}`);
+    expect(other.status).toBe(200);
+    expect(other.body).toEqual([]);
+
+    expect((await request(app)
+      .get("/api/applications/company")
+      .set("Authorization", `Bearer ${engineer.token}`)).status).toBe(403);
+  });
+});
+
 describe("applications", () => {
   it("lets an engineer apply once, and blocks a duplicate application", async () => {
     const company = await registerCompany("jobs-co-d@example.com", "Job Co D");
