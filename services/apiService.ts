@@ -200,6 +200,18 @@ const apiService = {
     clearAuthToken();
   },
 
+  listSecurityEvents: async (): Promise<Array<{
+    id: string;
+    eventType: string;
+    outcome: string;
+    createdAt: string;
+  }>> => {
+    const response = await fetch(`${API_BASE_URL}/auth/security-events`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not load security activity.');
+    return data.events;
+  },
+
   // Looks up a single profile by id from the backend (public data, no
   // auth required to read it - matches GET /users/:profileId in the spec).
   getUserById: async (id: string): Promise<User | null> => {

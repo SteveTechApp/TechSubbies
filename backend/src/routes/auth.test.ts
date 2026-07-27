@@ -179,6 +179,27 @@ describe("POST /api/auth/login", () => {
     expect(res.body.user.role).toBe("Company");
   });
 
+  it("lets a user review only privacy-filtered security events", async () => {
+    const login = await request(app).post("/api/auth/login").send({
+      email: "bob@example.com",
+      password: "correcthorsebattery",
+    });
+    const response = await request(app)
+      .get("/api/auth/security-events")
+      .set("Authorization", `Bearer ${login.body.token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.events.length).toBeGreaterThan(0);
+    expect(response.body.events[0]).toEqual(expect.objectContaining({
+      id: expect.any(String),
+      eventType: expect.any(String),
+      outcome: expect.any(String),
+      createdAt: expect.any(String),
+    }));
+    expect(response.body.events[0]).not.toHaveProperty("subjectHash");
+    expect(response.body.events[0]).not.toHaveProperty("userId");
+  });
+
   it("rejects the wrong password", async () => {
     const res = await request(app).post("/api/auth/login").send({
       email: "bob@example.com",

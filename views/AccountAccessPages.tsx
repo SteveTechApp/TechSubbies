@@ -75,6 +75,11 @@ export function AccountSecurityPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState({ error: "", success: "" });
+  const [events, setEvents] = useState<Array<{ id: string; eventType: string; outcome: string; createdAt: string }>>([]);
+
+  useEffect(() => {
+    apiService.listSecurityEvents().then(setEvents).catch(() => undefined);
+  }, []);
 
   async function change(event: React.FormEvent) {
     event.preventDefault();
@@ -85,5 +90,14 @@ export function AccountSecurityPage() {
     } catch (reason: any) { setMessage({ error: reason.message, success: "" }); }
   }
 
-  return <Shell title="Account security"><p className="mt-3 text-sm text-slate-400">Email status: <strong className={user?.emailVerified ? "text-emerald-300" : "text-amber-300"}>{user?.emailVerified ? "Verified" : "Not verified"}</strong></p>{!user?.emailVerified && <button className={buttonClass} onClick={() => apiService.resendEmailVerification().then(() => setMessage({ error: "", success: "Verification email queued." })).catch((reason) => setMessage({ error: reason.message, success: "" }))}>Resend verification email</button>}<Message {...message} /><form onSubmit={change}><label className="mt-5 block text-sm font-semibold">Current password<input required type="password" autoComplete="current-password" className={inputClass} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} /></label><label className="mt-4 block text-sm font-semibold">New password<input required minLength={8} type="password" autoComplete="new-password" className={inputClass} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} /></label><button className={buttonClass}>Change password</button></form></Shell>;
+  const eventLabels: Record<string, string> = {
+    "account.registered": "Account created",
+    "login.succeeded": "Successful sign in",
+    "login.failed": "Failed sign-in attempt",
+    "email.verified": "Email verified",
+    "password.reset": "Password reset",
+    "password.changed": "Password changed",
+  };
+
+  return <Shell title="Account security"><p className="mt-3 text-sm text-slate-400">Email status: <strong className={user?.emailVerified ? "text-emerald-300" : "text-amber-300"}>{user?.emailVerified ? "Verified" : "Not verified"}</strong></p>{!user?.emailVerified && <button className={buttonClass} onClick={() => apiService.resendEmailVerification().then(() => setMessage({ error: "", success: "Verification email queued." })).catch((reason) => setMessage({ error: reason.message, success: "" }))}>Resend verification email</button>}<Message {...message} /><form onSubmit={change}><label className="mt-5 block text-sm font-semibold">Current password<input required type="password" autoComplete="current-password" className={inputClass} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} /></label><label className="mt-4 block text-sm font-semibold">New password<input required minLength={8} type="password" autoComplete="new-password" className={inputClass} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} /></label><button className={buttonClass}>Change password</button></form><section className="mt-8 border-t border-white/10 pt-6"><h2 className="text-lg font-bold text-cyan-200">Recent security activity</h2>{events.length === 0 ? <p className="mt-3 text-sm text-slate-400">No security activity is available yet.</p> : <ul className="mt-3 space-y-2">{events.map((event) => <li key={event.id} className="rounded-xl border border-white/10 bg-slate-950 p-3"><div className="text-sm font-semibold">{eventLabels[event.eventType] || "Account security event"}</div><time className="mt-1 block text-xs text-slate-500" dateTime={event.createdAt}>{new Date(event.createdAt).toLocaleString()}</time></li>)}</ul>}</section></Shell>;
 }

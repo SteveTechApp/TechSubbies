@@ -26,6 +26,7 @@ vi.mock("../services/apiService", () => ({
     confirmEmailVerification: vi.fn(),
     resendEmailVerification: vi.fn(),
     changePassword: vi.fn(),
+    listSecurityEvents: vi.fn(),
   },
 }));
 
@@ -34,6 +35,7 @@ describe("account access pages", () => {
     vi.clearAllMocks();
     window.history.replaceState({}, "", "/");
     authState.user.emailVerified = false;
+    vi.mocked(apiService.listSecurityEvents).mockResolvedValue([]);
   });
 
   it("requests password reset instructions without revealing account existence", async () => {
@@ -99,5 +101,18 @@ describe("account access pages", () => {
 
     expect(apiService.resendEmailVerification).toHaveBeenCalledOnce();
     expect(await screen.findByText("Verification email queued.")).toBeVisible();
+  });
+
+  it("shows privacy-filtered recent security activity", async () => {
+    vi.mocked(apiService.listSecurityEvents).mockResolvedValue([{
+      id: "event-1",
+      eventType: "login.succeeded",
+      outcome: "success",
+      createdAt: "2026-07-27T12:00:00.000Z",
+    }]);
+    render(<AccountSecurityPage />);
+
+    expect(await screen.findByText("Successful sign in")).toBeVisible();
+    expect(screen.getByText("Recent security activity")).toBeVisible();
   });
 });

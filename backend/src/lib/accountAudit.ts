@@ -61,3 +61,10 @@ export function findAccountAuditByRequestId(requestId: string): AccountAuditEven
     "SELECT * FROM account_audit_events WHERE requestId = ? ORDER BY createdAt ASC"
   ).all(requestId) as unknown as AccountAuditEvent[];
 }
+
+export function listAccountAuditForUser(userId: string, limit = 20): AccountAuditEvent[] {
+  const safeLimit = Math.max(1, Math.min(50, Math.trunc(limit)));
+  return db.prepare(
+    "SELECT * FROM account_audit_events WHERE userId = ? ORDER BY createdAt DESC LIMIT ?"
+  ).all(userId, safeLimit) as unknown as AccountAuditEvent[];
+}

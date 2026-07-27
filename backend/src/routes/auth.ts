@@ -8,7 +8,7 @@ import { clearAuthCookies, setAuthCookies } from "../middleware/security.js";
 import { consumeAccountToken, issueAccountToken } from "../lib/accountTokens.js";
 import { sendEmail } from "../lib/email.js";
 import { frontendOrigin } from "../lib/config.js";
-import { recordAccountAudit } from "../lib/accountAudit.js";
+import { listAccountAuditForUser, recordAccountAudit } from "../lib/accountAudit.js";
 
 export const authRouter = Router();
 
@@ -216,4 +216,14 @@ authRouter.post("/password/change", requireAuth, async (req: AuthedRequest, res)
     requestId: res.locals.requestId,
   });
   return res.status(204).end();
+});
+
+authRouter.get("/security-events", requireAuth, (req: AuthedRequest, res) => {
+  const events = listAccountAuditForUser(req.userId!).map((event) => ({
+    id: event.id,
+    eventType: event.eventType,
+    outcome: event.outcome,
+    createdAt: event.createdAt,
+  }));
+  return res.json({ events });
 });
