@@ -4,12 +4,14 @@ import {
   createApplication,
   createJob,
   findApplication,
+  findApplicationById,
   findJobById,
   listActiveJobs,
   listApplicationsForEngineer,
   listApplicationsForJob,
   listApplicationsForCompany,
   listJobsForCompany,
+  updateApplicationStatus,
   updateJob,
 } from "../lib/db.js";
 import { toPublicApplication, toPublicJob } from "../lib/publicJob.js";
@@ -142,6 +144,55 @@ export const applicationsRouter = Router();
 applicationsRouter.get("/company", requireAuth, requireRole("Company", "Resourcing Company"), (req: AuthedRequest, res) => {
   return res.json(listApplicationsForCompany(req.userId!).map(toPublicApplication));
 });
+
+const applicationStatusSchema = z.object({
+  status: z.enum(["Viewed", "Offered", "Hired", "Rejected"]),
+});
+
+const applicationStatusTransitions: Record<string, string[]> = {
+  Applied: ["Viewed", "Offered", "Rejected"],
+  Viewed: ["Offered", "Rejected"],
+  Offered: ["Hired", "Rejected"],
+  Hired: [],
+  Rejected: [],
+};
+
+applicationsRouter.patch(
+  "/:applicationId",
+  requireAuth,
+  requireRole("Company", "Resourcing Company"),
+  (req: AuthedRequest, res) => {
+    const application = findApplicationById(req.params.applicationId);
+    if (!application) {
+      return res.status(404).json({ error: "Application not found." });
+    }
+
+    const job = findJobById(application.jobId);
+    if (!job || job.companyId !== req.userId) {
+      return res.status(403).json({ error: "Only the posting company can update this application." });
+    }
+
+    const parsed = applicationStatusSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues.map((issue) => issue.message).join(", ") });
+    }
+
+    if (parsed.data.status === application.status) {
+      return res.json(toPublicApplication(updateApplicationStatus(application.id, application.status, true)!));
+    }
+
+    const allowedStatuses = applicationStatusTransitions[application.status] || [];
+    if (!allowedStatuses.includes(parsed.data.status)) {
+      return res.status(409).json({
+        error: `Application status cannot change from ${application.status} to ${parsed.data.status}.`,
+      });
+    }
+
+    return res.json(toPublicApplication(
+      updateApplicationStatus(application.id, parsed.data.status, true)!
+    ));
+  }
+);
 
 applicationsRouter.get("/me", requireAuth, requireRole("Engineer"), async (req: AuthedRequest, res) => {
   return res.json(listApplicationsForEngineer(req.userId!).map(toPublicApplication));

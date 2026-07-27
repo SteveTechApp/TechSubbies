@@ -209,6 +209,86 @@ describe("company application feed", () => {
       .get("/api/applications/company")
       .set("Authorization", `Bearer ${engineer.token}`)).status).toBe(403);
   });
+
+  it("lets only the posting company progress an application through valid statuses", async () => {
+    const company = await registerCompany("application-status-company@example.com", "Application Status Company");
+    const otherCompany = await registerCompany("application-status-other@example.com", "Other Status Company");
+    const engineer = await registerEngineer("application-status-engineer@example.com", "Application Status Engineer");
+
+    const posted = await request(app)
+      .post("/api/jobs")
+      .set("Authorization", `Bearer ${company.token}`)
+      .send(sampleJob);
+    const applied = await request(app)
+      .post(`/api/jobs/${posted.body.id}/apply`)
+      .set("Authorization", `Bearer ${engineer.token}`);
+
+    const forbidden = await request(app)
+      .patch(`/api/applications/${applied.body.id}`)
+      .set("Authorization", `Bearer ${otherCompany.token}`)
+      .send({ status: "Viewed" });
+    expect(forbidden.status).toBe(403);
+
+    const viewed = await request(app)
+      .patch(`/api/applications/${applied.body.id}`)
+      .set("Authorization", `Bearer ${company.token}`)
+      .send({ status: "Viewed" });
+    expect(viewed.status).toBe(200);
+    expect(viewed.body).toEqual(expect.objectContaining({
+      id: applied.body.id,
+      status: "Viewed",
+      reviewed: true,
+    }));
+
+    const offered = await request(app)
+      .patch(`/api/applications/${applied.body.id}`)
+      .set("Authorization", `Bearer ${company.token}`)
+      .send({ status: "Offered" });
+    expect(offered.status).toBe(200);
+    expect(offered.body.status).toBe("Offered");
+
+    const hired = await request(app)
+      .patch(`/api/applications/${applied.body.id}`)
+      .set("Authorization", `Bearer ${company.token}`)
+      .send({ status: "Hired" });
+    expect(hired.status).toBe(200);
+    expect(hired.body.status).toBe("Hired");
+
+    const reversed = await request(app)
+      .patch(`/api/applications/${applied.body.id}`)
+      .set("Authorization", `Bearer ${company.token}`)
+      .send({ status: "Rejected" });
+    expect(reversed.status).toBe(409);
+
+    const ownFeed = await request(app)
+      .get("/api/applications/me")
+      .set("Authorization", `Bearer ${engineer.token}`);
+    expect(ownFeed.body).toEqual([
+      expect.objectContaining({ id: applied.body.id, status: "Hired", reviewed: true }),
+    ]);
+  });
+
+  it("validates application status updates and blocks engineer updates", async () => {
+    const company = await registerCompany("application-validation-company@example.com", "Validation Company");
+    const engineer = await registerEngineer("application-validation-engineer@example.com", "Validation Engineer");
+    const posted = await request(app)
+      .post("/api/jobs")
+      .set("Authorization", `Bearer ${company.token}`)
+      .send(sampleJob);
+    const applied = await request(app)
+      .post(`/api/jobs/${posted.body.id}/apply`)
+      .set("Authorization", `Bearer ${engineer.token}`);
+
+    expect((await request(app)
+      .patch(`/api/applications/${applied.body.id}`)
+      .set("Authorization", `Bearer ${company.token}`)
+      .send({ status: "Completed" })).status).toBe(400);
+
+    expect((await request(app)
+      .patch(`/api/applications/${applied.body.id}`)
+      .set("Authorization", `Bearer ${engineer.token}`)
+      .send({ status: "Viewed" })).status).toBe(403);
+  });
 });
 
 describe("applications", () => {
