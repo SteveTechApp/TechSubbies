@@ -12,7 +12,9 @@ process.env.JWT_SECRET = "test-secret";
 
 const { createApp } = await import("../app.js");
 const { developmentEmailOutbox, resetEmailProvider, setEmailProvider } = await import("../lib/email.js");
-const { getDatabaseRuntimeSettings } = await import("../lib/db.js");
+const { getDatabaseRuntimeSettings, LATEST_SCHEMA_VERSION } = await import("../lib/db.js");
+const { currentSchemaVersion } = await import("../lib/migrations.js");
+const { db } = await import("../lib/db.js");
 const app = createApp();
 
 function tokenFromLastEmail(): string {
@@ -142,6 +144,10 @@ describe("cookie session security", () => {
       foreignKeys: true,
       busyTimeoutMs: 5000,
     });
+  });
+
+  it("records the current schema migration version", () => {
+    expect(currentSchemaVersion(db)).toBe(LATEST_SCHEMA_VERSION);
   });
 });
 

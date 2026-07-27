@@ -46,6 +46,11 @@ Run only one backend instance against a SQLite database file. Horizontal scaling
 or multi-region deployment requires migrating the repository layer to a managed
 database such as PostgreSQL rather than sharing SQLite over a network filesystem.
 
+Schema changes are tracked in `schema_migrations` and applied in ordered,
+transactional steps during backend startup. Failed migrations roll back without
+recording a version, and readiness remains unavailable unless the database is at
+the application’s latest schema version.
+
 Create an online, integrity-checked backup without stopping the backend:
 
 `cd backend && npm run db:backup`

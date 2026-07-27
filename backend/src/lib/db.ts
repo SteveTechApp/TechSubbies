@@ -2,6 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { currentSchemaVersion, runMigrations } from "./migrations.js";
 
 // Uses Node's built-in SQLite module (stable since Node 22.5, no native
 // binary download required) rather than a database engine that needs to
@@ -25,7 +26,7 @@ db.exec(`
 
 export function checkDatabaseConnection(): boolean {
   const result = db.prepare("SELECT 1 AS ok").get() as { ok?: number } | undefined;
-  return result?.ok === 1;
+  return result?.ok === 1 && currentSchemaVersion(db) === LATEST_SCHEMA_VERSION;
 }
 
 export function getDatabaseRuntimeSettings() {
@@ -177,6 +178,16 @@ db.exec(`
     isRead INTEGER NOT NULL DEFAULT 0
   );
 `);
+
+export const LATEST_SCHEMA_VERSION = 1;
+runMigrations(db, [{
+  version: 1,
+  name: "baseline-marketplace-schema",
+  // The existing idempotent CREATE TABLE statements above establish the
+  // baseline for new and pre-migration databases. Future schema changes must
+  // be added as ordered migrations here.
+  up: () => undefined,
+}]);
 
 export interface UserRow {
   id: string;
