@@ -78,6 +78,7 @@ const RESOURCING_LINKS = [
 const ADMIN_LINKS = [
     { label: 'Dashboard', icon: LayoutDashboard },
     { label: 'Manage Users', icon: Users },
+    { label: 'Privacy Requests', icon: ShieldCheck },
     { label: 'Manage Jobs', icon: Briefcase },
     { label: 'Monetization', icon: DollarSign },
     { label: 'Platform Settings', icon: Settings },

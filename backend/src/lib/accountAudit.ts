@@ -10,7 +10,9 @@ export type AccountAuditEventType =
   | "password.changed"
   | "sessions.revoked"
   | "deletion.requested"
-  | "deletion.cancelled";
+  | "deletion.cancelled"
+  | "deletion.approved"
+  | "deletion.rejected";
 
 export type AccountAuditEvent = {
   id: string;

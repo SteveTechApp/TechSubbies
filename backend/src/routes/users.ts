@@ -33,6 +33,8 @@ function publicDeletionRequest(userId: string) {
     status: request.status,
     requestedAt: request.requestedAt,
     cancelledAt: request.cancelledAt,
+    reviewedAt: request.reviewedAt,
+    resolutionNote: request.resolutionNote,
   };
 }
 

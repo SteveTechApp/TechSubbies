@@ -179,7 +179,7 @@ db.exec(`
   );
 `);
 
-export const LATEST_SCHEMA_VERSION = 3;
+export const LATEST_SCHEMA_VERSION = 4;
 runMigrations(db, [
   {
     version: 1,
@@ -220,6 +220,15 @@ runMigrations(db, [
       );
       CREATE INDEX account_deletion_requests_status
         ON account_deletion_requests(status, requestedAt);
+    `),
+  },
+  {
+    version: 4,
+    name: "account-deletion-request-reviews",
+    up: (database) => database.exec(`
+      ALTER TABLE account_deletion_requests ADD COLUMN reviewedAt TEXT;
+      ALTER TABLE account_deletion_requests ADD COLUMN reviewerId TEXT;
+      ALTER TABLE account_deletion_requests ADD COLUMN resolutionNote TEXT;
     `),
   },
 ]);

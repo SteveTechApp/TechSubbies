@@ -7,6 +7,7 @@ import { UserManagementView } from './AdminDashboard/UserManagementView';
 import { JobManagementView } from './AdminDashboard/JobManagementView';
 import { MonetizationView } from './AdminDashboard/MonetizationView';
 import { PlatformSettingsView } from './AdminDashboard/PlatformSettingsView';
+import { PrivacyRequestsView } from './AdminDashboard/PrivacyRequestsView';
 
 export const AdminDashboard = () => {
     const { user } = useAuth();
@@ -24,6 +25,8 @@ export const AdminDashboard = () => {
                 return <UserManagementView />;
             case 'Manage Jobs':
                 return <JobManagementView setActiveView={setActiveView} />;
+            case 'Privacy Requests':
+                return <PrivacyRequestsView />;
             case 'Monetization':
                 return <MonetizationView />;
             case 'Platform Settings':

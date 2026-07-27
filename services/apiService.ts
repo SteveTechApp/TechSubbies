@@ -13,6 +13,19 @@ import { API_BASE_URL } from './apiConfig';
 
 const simulateDelay = (ms: number = 500) => new Promise(res => setTimeout(res, ms));
 
+export type AdminDeletionRequest = {
+  id: string;
+  userId: string;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  requestedAt: string;
+  reviewedAt: string | null;
+  reviewerId: string | null;
+  resolutionNote: string | null;
+  accountEmail: string;
+  accountName: string;
+  accountRole: string;
+};
+
 const TOKEN_KEY = 'techsubbies_auth_token';
 const fetch = secureFetch;
 let cookieSessionAvailable = false;
@@ -250,6 +263,28 @@ const apiService = {
     const response = await fetch(`${API_BASE_URL}/users/me/deletion-request`, { method: 'DELETE' });
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not cancel account deletion.');
+    return data.request;
+  },
+
+  listAdminDeletionRequests: async (): Promise<AdminDeletionRequest[]> => {
+    const response = await fetch(`${API_BASE_URL}/admin/deletion-requests`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not load privacy requests.');
+    return data.requests;
+  },
+
+  reviewAdminDeletionRequest: async (
+    requestId: string,
+    decision: 'approved' | 'rejected',
+    note: string
+  ): Promise<AdminDeletionRequest> => {
+    const response = await fetch(`${API_BASE_URL}/admin/deletion-requests/${requestId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decision, note }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not review privacy request.');
     return data.request;
   },
 

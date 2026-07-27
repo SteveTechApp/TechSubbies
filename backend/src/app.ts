@@ -9,6 +9,7 @@ import { companyAttachmentsRouter } from "./routes/companyAttachments.js";
 import { applicationsRouter, jobsRouter } from "./routes/jobs.js";
 import { contractsRouter, invoicesRouter } from "./routes/contracts.js";
 import { conversationsRouter } from "./routes/conversations.js";
+import { adminRouter } from "./routes/admin.js";
 import { requireCsrf, securityHeaders } from "./middleware/security.js";
 import { createRateLimiter } from "./middleware/rateLimit.js";
 import { frontendOrigin, validateRuntimeConfig } from "./lib/config.js";
@@ -62,6 +63,7 @@ export function createApp(options: AppOptions = {}) {
 
   app.use("/api/auth", authRateLimit, authRouter);
   app.use("/api/users", usersRouter);
+  app.use("/api/admin", adminRouter);
   app.use("/api/ai", aiRateLimit, aiRouter);
   app.use(
     [
