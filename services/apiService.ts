@@ -43,6 +43,18 @@ export type AdminPrivacySummary = {
   oldestPendingAt: string | null;
 };
 
+export type AdminUserAccount = {
+  id: string;
+  email: string;
+  role: string;
+  name: string;
+  emailVerified: number;
+  suspendedAt: string | null;
+  suspensionReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type AccountDeletionStatus = {
   reference: string;
   status: string;
@@ -315,6 +327,35 @@ const apiService = {
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not load privacy operations summary.');
     return data.summary;
+  },
+
+  listAdminUsers: async (
+    options: { limit?: number; offset?: number; query?: string } = {}
+  ): Promise<{ users: AdminUserAccount[]; total: number; limit: number; offset: number }> => {
+    const parameters = new URLSearchParams({
+      limit: String(options.limit ?? 25),
+      offset: String(options.offset ?? 0),
+      query: options.query ?? '',
+    });
+    const response = await fetch(`${API_BASE_URL}/admin/users?${parameters}`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not load user accounts.');
+    return data;
+  },
+
+  setAdminUserSuspension: async (
+    userId: string,
+    suspended: boolean,
+    reason?: string
+  ): Promise<AdminUserAccount> => {
+    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/suspension`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ suspended, ...(suspended ? { reason } : {}) }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not update account status.');
+    return data.user;
   },
 
   reviewAdminDeletionRequest: async (
