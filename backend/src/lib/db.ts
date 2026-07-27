@@ -13,6 +13,11 @@ fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
 
 export const db = new DatabaseSync(DB_FILE);
 
+export function checkDatabaseConnection(): boolean {
+  const result = db.prepare("SELECT 1 AS ok").get() as { ok?: number } | undefined;
+  return result?.ok === 1;
+}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,

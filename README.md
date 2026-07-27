@@ -25,6 +25,12 @@ Production frontend builds must set `VITE_API_BASE_URL` to an HTTPS backend URL
 or a same-origin path such as `/api`. The build fails rather than silently
 connecting customers to `localhost`.
 
+Deployment probes:
+
+- `GET /api/health/live` confirms the backend process is running.
+- `GET /api/health/ready` confirms the backend can query its database.
+- `GET /api/health` remains a backwards-compatible readiness alias.
+
 ## Compliance and certification model
 
 TechSubbies includes a role-specific compliance taxonomy for safety, AV industry credentials, IT/networking certifications, manufacturer training, project management credentials, insurance, company standards and background checks.

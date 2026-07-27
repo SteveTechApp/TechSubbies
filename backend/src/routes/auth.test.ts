@@ -111,6 +111,27 @@ describe("cookie session security", () => {
     expect(res.headers["x-frame-options"]).toBe("DENY");
     expect(res.headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
   });
+
+  it("reports process liveness and database readiness separately", async () => {
+    const live = await request(app).get("/api/health/live");
+    const ready = await request(app).get("/api/health/ready");
+
+    expect(live.status).toBe(200);
+    expect(live.body).toEqual({ status: "ok" });
+    expect(ready.status).toBe(200);
+    expect(ready.body).toEqual({ status: "ready", checks: { database: "ok" } });
+  });
+
+  it("returns a non-sensitive 503 when readiness checks fail", async () => {
+    const unavailableApp = createApp({ readinessCheck: () => false });
+    const response = await request(unavailableApp).get("/api/health/ready");
+
+    expect(response.status).toBe(503);
+    expect(response.body).toEqual({
+      status: "unavailable",
+      checks: { database: "unavailable" },
+    });
+  });
 });
 
 describe("POST /api/auth/login", () => {

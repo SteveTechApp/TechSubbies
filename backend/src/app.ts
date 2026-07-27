@@ -13,8 +13,13 @@ import { requireCsrf, securityHeaders } from "./middleware/security.js";
 import { createRateLimiter } from "./middleware/rateLimit.js";
 import { frontendOrigin, validateRuntimeConfig } from "./lib/config.js";
 import { requireVerifiedEmailForMutation } from "./middleware/auth.js";
+import { checkDatabaseConnection } from "./lib/db.js";
 
-export function createApp() {
+type AppOptions = {
+  readinessCheck?: () => boolean;
+};
+
+export function createApp(options: AppOptions = {}) {
   validateRuntimeConfig();
   const app = express();
   const production = process.env.NODE_ENV === "production";
@@ -34,9 +39,23 @@ export function createApp() {
   app.use(express.json({ limit: "2mb" }));
   app.use(requireCsrf);
 
-  app.get("/api/health", (_req, res) => {
+  app.get("/api/health/live", (_req, res) => {
     res.json({ status: "ok" });
   });
+
+  const readinessCheck = options.readinessCheck || checkDatabaseConnection;
+  const readinessHandler = (_req: express.Request, res: express.Response) => {
+    try {
+      if (!readinessCheck()) throw new Error("Readiness check returned false.");
+      return res.json({ status: "ready", checks: { database: "ok" } });
+    } catch {
+      return res.status(503).json({ status: "unavailable", checks: { database: "unavailable" } });
+    }
+  };
+
+  app.get("/api/health/ready", readinessHandler);
+  // Backwards-compatible alias for existing deployment checks.
+  app.get("/api/health", readinessHandler);
 
   app.use("/api/auth", authRateLimit, authRouter);
   app.use("/api/users", usersRouter);
