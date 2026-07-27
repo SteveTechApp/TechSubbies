@@ -442,6 +442,20 @@ const apiService = {
     return data;
   },
 
+  rejectAdminMembershipSelection: async (
+    userId: string,
+    reason: string
+  ): Promise<{ userId: string; activeTier: ProfileTier; notificationSent: boolean }> => {
+    const response = await fetch(`${API_BASE_URL}/admin/membership-selections/${userId}/reject`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not reject membership request.');
+    return data;
+  },
+
   listAdminJobs: async (
     options: { limit?: number; offset?: number; query?: string } = {}
   ): Promise<{ jobs: AdminJob[]; total: number; limit: number; offset: number }> => {

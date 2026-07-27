@@ -422,6 +422,23 @@ export function activateRequestedMembership(userId: string): UserRow | undefined
   return updateUserProfile(user.id, JSON.stringify(profile), user.name);
 }
 
+export function rejectRequestedMembership(userId: string): MembershipSelection | undefined {
+  const selection = listPendingMembershipSelections().find((item) => item.userId === userId);
+  const user = findUserById(userId);
+  if (!selection || !user) return undefined;
+
+  let profile: Record<string, unknown>;
+  try {
+    profile = JSON.parse(user.profile) as Record<string, unknown>;
+  } catch {
+    return undefined;
+  }
+  delete profile.requestedProfileTier;
+  delete profile.membershipRequestedAt;
+  updateUserProfile(user.id, JSON.stringify(profile), user.name);
+  return selection;
+}
+
 export type AdminPlatformMetrics = {
   users: {
     total: number;

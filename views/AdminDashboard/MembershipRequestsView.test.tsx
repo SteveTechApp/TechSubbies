@@ -9,6 +9,7 @@ vi.mock('../../services/apiService', () => ({
     default: {
         listAdminMembershipSelections: vi.fn(),
         confirmAdminMembershipSelection: vi.fn(),
+        rejectAdminMembershipSelection: vi.fn(),
     },
 }));
 
@@ -27,6 +28,11 @@ describe('MembershipRequestsView', () => {
         vi.mocked(apiService.confirmAdminMembershipSelection).mockResolvedValue({
             userId: selection.userId,
             activeTier: ProfileTier.SKILLS,
+            notificationSent: true,
+        });
+        vi.mocked(apiService.rejectAdminMembershipSelection).mockResolvedValue({
+            userId: selection.userId,
+            activeTier: ProfileTier.BASIC,
             notificationSent: true,
         });
         vi.spyOn(window, 'confirm').mockReturnValue(true);
@@ -51,5 +57,24 @@ describe('MembershipRequestsView', () => {
         vi.mocked(apiService.listAdminMembershipSelections).mockResolvedValue([]);
         render(<MembershipRequestsView />);
         expect(await screen.findByText(/No membership requests awaiting verification/i)).toBeVisible();
+    });
+
+    it('requires a reason and rejects without changing the active plan', async () => {
+        const user = userEvent.setup();
+        render(<MembershipRequestsView />);
+        await screen.findByText('Test Engineer');
+
+        await user.click(screen.getByRole('button', { name: 'Reject request' }));
+        expect(screen.getByRole('alert')).toHaveTextContent(/at least 10 characters/i);
+        expect(apiService.rejectAdminMembershipSelection).not.toHaveBeenCalled();
+
+        await user.type(screen.getByLabelText('Rejection reason'), 'Payment could not be verified.');
+        await user.click(screen.getByRole('button', { name: 'Reject request' }));
+        await waitFor(() => expect(apiService.rejectAdminMembershipSelection).toHaveBeenCalledWith(
+            'engineer-1',
+            'Payment could not be verified.'
+        ));
+        expect(await screen.findByRole('status')).toHaveTextContent(/Bronze plan remains active/i);
+        expect(screen.getByRole('status')).toHaveTextContent(/notification email was sent/i);
     });
 });

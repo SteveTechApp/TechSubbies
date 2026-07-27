@@ -20,3 +20,26 @@ export async function sendMembershipActivationNotification(input: {
     return false;
   }
 }
+
+export async function sendMembershipRejectionNotification(input: {
+  to: string;
+  name: string;
+  requestedTier: string;
+  activeTier: string;
+  reason: string;
+}): Promise<boolean> {
+  try {
+    await sendEmail({
+      to: input.to,
+      subject: `Update on your TechSubbies ${input.requestedTier} membership request`,
+      text:
+        `Hello ${input.name},\n\nWe could not verify your ${input.requestedTier} membership request.\n\n` +
+        `Reason: ${input.reason}\n\nYour existing ${input.activeTier} membership remains active. ` +
+        "You can submit another plan selection from Membership & Billing.",
+    });
+    return true;
+  } catch (error) {
+    console.error("Membership rejection notification delivery failed.", error);
+    return false;
+  }
+}

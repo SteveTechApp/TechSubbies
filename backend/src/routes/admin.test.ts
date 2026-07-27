@@ -92,6 +92,48 @@ describe("admin membership confirmations", () => {
       .set("Authorization", `Bearer ${adminToken}`);
     expect(emptyQueue.body.selections.some((item: any) => item.userId === engineerId)).toBe(false);
   });
+
+  it("rejects an unverified request with a reason and keeps the active tier", async () => {
+    const engineer = createUser({
+      email: "membership-rejection@example.com",
+      password: "not-used",
+      role: "Engineer",
+      name: "Membership Rejection",
+      profile: JSON.stringify({ profileTier: "Silver" }),
+    });
+    const token = signToken(engineer.id);
+    await request(app)
+      .post("/api/users/me/membership-selection")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ tier: "Platinum" });
+
+    const missingReason = await request(app)
+      .post(`/api/admin/membership-selections/${engineer.id}/reject`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ reason: "short" });
+    expect(missingReason.status).toBe(400);
+
+    const rejected = await request(app)
+      .post(`/api/admin/membership-selections/${engineer.id}/reject`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ reason: "Membership payment could not be verified." });
+    expect(rejected.status).toBe(200);
+    expect(rejected.body).toMatchObject({
+      activeTier: "Silver",
+      notificationSent: true,
+    });
+
+    const member = await request(app)
+      .get("/api/users/me")
+      .set("Authorization", `Bearer ${token}`);
+    expect(member.body.profile.profileTier).toBe("Silver");
+    expect(member.body.profile).not.toHaveProperty("requestedProfileTier");
+    expect(developmentEmailOutbox.some((email) =>
+      email.to === "membership-rejection@example.com"
+      && email.subject.includes("membership request")
+      && email.text.includes("Membership payment could not be verified.")
+    )).toBe(true);
+  });
 });
 
 describe("admin deletion request reviews", () => {

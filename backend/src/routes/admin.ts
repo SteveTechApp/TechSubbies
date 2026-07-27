@@ -23,12 +23,16 @@ import {
   moderateJob,
   listPendingMembershipSelections,
   activateRequestedMembership,
+  rejectRequestedMembership,
 } from "../lib/db.js";
 import { sendPrivacyNotification } from "../lib/privacyNotifications.js";
 import { sendModerationNotification } from "../lib/moderationNotifications.js";
 import { toPublicJob } from "../lib/publicJob.js";
 import { sendJobModerationNotification } from "../lib/jobModerationNotifications.js";
-import { sendMembershipActivationNotification } from "../lib/membershipNotifications.js";
+import {
+  sendMembershipActivationNotification,
+  sendMembershipRejectionNotification,
+} from "../lib/membershipNotifications.js";
 
 export const adminRouter = Router();
 
@@ -70,6 +74,35 @@ adminRouter.post("/membership-selections/:userId/confirm", async (req: AuthedReq
   return res.json({
     userId: updated.id,
     activeTier: profile.profileTier,
+    notificationSent,
+  });
+});
+
+adminRouter.post("/membership-selections/:userId/reject", async (req: AuthedRequest, res) => {
+  const parsed = z.object({ reason: z.string().trim().min(10).max(500) }).safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Provide a rejection reason of at least 10 characters." });
+  }
+  const selection = rejectRequestedMembership(req.params.userId);
+  if (!selection) {
+    return res.status(409).json({ error: "No pending membership selection is available for this account." });
+  }
+  recordAccountAudit({
+    eventType: "membership.request_rejected",
+    outcome: "success",
+    userId: selection.userId,
+    requestId: res.locals.requestId,
+  });
+  const notificationSent = await sendMembershipRejectionNotification({
+    to: selection.email,
+    name: selection.name,
+    requestedTier: selection.requestedTier,
+    activeTier: selection.activeTier,
+    reason: parsed.data.reason,
+  });
+  return res.json({
+    userId: selection.userId,
+    activeTier: selection.activeTier,
     notificationSent,
   });
 });
