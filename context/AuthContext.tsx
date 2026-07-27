@@ -5,6 +5,7 @@ import apiService from '../services/apiService';
 
 interface AuthContextType {
     user: User | null;
+    isAuthLoading: boolean;
     login: (role: Role) => void;
     logout: () => void;
     createAndLoginEngineer: (data: any) => Promise<void>;
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
+    const [isAuthLoading, setIsAuthLoading] = useState(true);
 
     // Restore a real (backend-backed) session after a page reload, if a
     // login token was saved. Demo-role sessions (via `login` below) are
@@ -29,6 +31,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (!cancelled && restoredUser) {
                 setUser(restoredUser);
             }
+        }).finally(() => {
+            if (!cancelled) {
+                setIsAuthLoading(false);
+            }
         });
         return () => {
             cancelled = true;
@@ -39,10 +45,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Simple login simulation
         // FIX: Correctly log in the mock user for the selected role.
         setUser(MOCK_USERS[role] || null);
+        setIsAuthLoading(false);
     };
 
     const logout = () => {
         setUser(null);
+        setIsAuthLoading(false);
         void apiService.logoutSession();
     };
     
@@ -65,7 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, createAndLoginEngineer, createAndLoginCompany, createAndLoginResourcingCompany, setUser }}>
+        <AuthContext.Provider value={{ user, isAuthLoading, login, logout, createAndLoginEngineer, createAndLoginCompany, createAndLoginResourcingCompany, setUser }}>
             {children}
         </AuthContext.Provider>
     );

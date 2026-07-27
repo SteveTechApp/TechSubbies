@@ -168,7 +168,7 @@ function DemoSessionBar({
 }
 const App = () => {
 const { page, setPage } = useNavigation();
-  const { user } = useAuth();
+  const { user, isAuthLoading } = useAuth();
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
   const renderPersistentShell = (content: React.ReactNode, showFooter = false) => (
     <div className="flex min-h-screen flex-col bg-slate-950">
@@ -215,6 +215,10 @@ const { page, setPage } = useNavigation();
     clearDemoSession();
     setDemoSessionState(null);
     window.location.href = "/";
+  }
+
+  if (!isPublicPath && isAuthLoading && !demoSession) {
+    return renderPersistentShell(<PageLoadingFallback />);
   }
 
   if (!isPublicPath && !isSignedIn) {
