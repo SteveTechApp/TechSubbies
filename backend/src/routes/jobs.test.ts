@@ -297,6 +297,34 @@ describe("company application feed", () => {
       .set("Authorization", `Bearer ${engineer.token}`)
       .send({ status: "Viewed" })).status).toBe(403);
   });
+
+  it("persists rejection decisions and notifies the engineer", async () => {
+    const company = await registerCompany("application-rejection-company@example.com", "Rejection Company");
+    const engineer = await registerEngineer("application-rejection-engineer@example.com", "Rejection Engineer");
+    const posted = await request(app)
+      .post("/api/jobs")
+      .set("Authorization", `Bearer ${company.token}`)
+      .send(sampleJob);
+    const applied = await request(app)
+      .post(`/api/jobs/${posted.body.id}/apply`)
+      .set("Authorization", `Bearer ${engineer.token}`);
+
+    const rejected = await request(app)
+      .patch(`/api/applications/${applied.body.id}`)
+      .set("Authorization", `Bearer ${company.token}`)
+      .send({ status: "Rejected" });
+
+    expect(rejected.status).toBe(200);
+    expect(rejected.body).toEqual(expect.objectContaining({
+      status: "Rejected",
+      reviewed: true,
+      notificationSent: true,
+    }));
+    expect(developmentEmailOutbox.some((email: { to: string; subject: string }) =>
+      email.to === "application-rejection-engineer@example.com"
+      && email.subject.includes("Update on your application")
+    )).toBe(true);
+  });
 });
 
 describe("applications", () => {

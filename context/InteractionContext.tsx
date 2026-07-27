@@ -30,6 +30,7 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     applyForJobWithCredit: (jobId: string) => void;
     markApplicationsViewed: (jobId: string) => void;
     sendOffer: (jobId: string, engineerId: string) => Promise<void>;
+    rejectApplication: (jobId: string, engineerId: string) => Promise<void>;
     inviteEngineerToJob: (jobId: string, engineerId: string) => void;
     // --- Contract & Payment Management ---
     createContract: (contract: any) => Promise<void>;
@@ -177,7 +178,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
     
     const persistApplicationStatus = async (
         application: Application,
-        status: ApplicationStatus.VIEWED | ApplicationStatus.OFFERED
+        status: ApplicationStatus.VIEWED | ApplicationStatus.OFFERED | ApplicationStatus.REJECTED
     ) => {
         const previousStatus = application.status;
         const previousReviewed = application.reviewed;
@@ -229,6 +230,14 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         );
         if (!application) throw new Error('Application not found.');
         await persistApplicationStatus(application, ApplicationStatus.OFFERED);
+    };
+
+    const rejectApplication = async (jobId: string, engineerId: string) => {
+        const application = data.applications.find(
+            app => app.jobId === jobId && app.engineerId === engineerId
+        );
+        if (!application) throw new Error('Application not found.');
+        await persistApplicationStatus(application, ApplicationStatus.REJECTED);
     };
 
     const inviteEngineerToJob = (jobId: string, engineerId: string) => {
@@ -541,6 +550,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         applyForJobWithCredit,
         markApplicationsViewed,
         sendOffer,
+        rejectApplication,
         inviteEngineerToJob,
         createContract,
         signContract,

@@ -48,7 +48,13 @@ const JobCard = ({ job, onSelect, onEdit, onDelete }: { job: Job, onSelect: () =
     )
 }
 
-const ApplicantCard = ({ applicant, application, onDeepDive, onHire }: { applicant: EngineerProfile, application: Application, onDeepDive: () => void, onHire: () => void }) => {
+const ApplicantCard = ({ applicant, application, onDeepDive, onHire, onReject }: {
+    applicant: EngineerProfile,
+    application: Application,
+    onDeepDive: () => void,
+    onHire: () => void,
+    onReject: () => void,
+}) => {
     const hiringComplete = application.status === ApplicationStatus.HIRED
         || application.status === ApplicationStatus.REJECTED
         || application.status === ApplicationStatus.COMPLETED;
@@ -72,6 +78,14 @@ const ApplicantCard = ({ applicant, application, onDeepDive, onHire }: { applica
                 <button onClick={onDeepDive} className="px-3 py-1.5 text-sm bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 font-semibold flex items-center gap-2">
                     <BrainCircuit size={14} /> AI Deep Dive
                 </button>
+                {!hiringComplete && (
+                    <button
+                        onClick={onReject}
+                        className="px-3 py-1.5 text-sm border border-red-300 text-red-700 rounded-md hover:bg-red-50 font-semibold"
+                    >
+                        Reject
+                    </button>
+                )}
                 <button
                     onClick={onHire}
                     disabled={hiringComplete}
@@ -90,7 +104,7 @@ const ApplicantCard = ({ applicant, application, onDeepDive, onHire }: { applica
 
 export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
     const { applications, engineers } = useData();
-    const { createContract, markApplicationsViewed, sendOffer, setApplicantForDeepDive } = useAppContext();
+    const { createContract, markApplicationsViewed, rejectApplication, sendOffer, setApplicantForDeepDive } = useAppContext();
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [selectedApplicant, setSelectedApplicant] = useState<EngineerProfile | null>(null);
     const [isHireModalOpen, setIsHireModalOpen] = useState(false);
@@ -134,6 +148,18 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
             alert(error?.message || 'Could not send the contract.');
         }
     };
+
+    const handleReject = async (engineer: EngineerProfile) => {
+        if (!selectedJob) return;
+        if (!window.confirm(`Reject ${engineer.name}'s application for ${selectedJob.title}? This decision cannot be reversed.`)) {
+            return;
+        }
+        try {
+            await rejectApplication(selectedJob.id, engineer.id);
+        } catch (error: any) {
+            alert(error?.message || 'Could not reject the application.');
+        }
+    };
     
     const handleOpenDeepDive = (engineer: EngineerProfile, job: Job) => {
         setApplicantForDeepDive({ engineer, job });
@@ -154,6 +180,7 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
                                 application={application}
                                 onDeepDive={() => handleOpenDeepDive(engineer, selectedJob)}
                                 onHire={() => handleHire(engineer)}
+                                onReject={() => handleReject(engineer)}
                             />
                         ))}
                     </div>
