@@ -82,7 +82,11 @@ describe("admin deletion request reviews", () => {
     const reviewed = await request(app)
       .patch(`/api/admin/deletion-requests/${deletionRequestId}`)
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ decision: "approved", note: "Identity confirmed; retention checks still required." });
+      .send({
+        decision: "approved",
+        note: "Identity confirmed; retention checks still required.",
+        userMessage: "Your request passed our identity and account checks.",
+      });
     expect(reviewed.status).toBe(200);
     expect(reviewed.body.request).toMatchObject({
       id: deletionRequestId,
@@ -112,7 +116,11 @@ describe("admin deletion request reviews", () => {
     const duplicate = await request(app)
       .patch(`/api/admin/deletion-requests/${deletionRequestId}`)
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ decision: "rejected", note: "This should not overwrite the prior review." });
+      .send({
+        decision: "rejected",
+        note: "This should not overwrite the prior review.",
+        userMessage: "This request has already received a decision.",
+      });
     expect(duplicate.status).toBe(409);
   });
 
@@ -145,14 +153,22 @@ describe("admin deletion request reviews", () => {
     const approval = await request(app)
       .patch(`/api/admin/deletion-requests/${blockedRequest.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ decision: "approved", note: "Attempt approval while application remains live." });
+      .send({
+        decision: "approved",
+        note: "Attempt approval while application remains live.",
+        userMessage: "Your live application must be resolved before approval.",
+      });
     expect(approval.status).toBe(409);
     expect(approval.body.eligibility.eligible).toBe(false);
 
     const rejection = await request(app)
       .patch(`/api/admin/deletion-requests/${blockedRequest.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ decision: "rejected", note: "Resolve the live application before resubmitting." });
+      .send({
+        decision: "rejected",
+        note: "Resolve the live application before resubmitting.",
+        userMessage: "Please resolve your live job application and submit again.",
+      });
     expect(rejection.status).toBe(200);
     expect(rejection.body.request.status).toBe("rejected");
   });

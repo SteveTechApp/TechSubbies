@@ -151,7 +151,7 @@ describe("account access pages", () => {
   });
 
   it("submits and cancels an account deletion request", async () => {
-    const pending = { reference: "privacy-ref-1", status: "pending", requestedAt: "2026-07-27T12:00:00.000Z", responseDueAt: "2026-08-26T12:00:00.000Z", cancelledAt: null, reviewedAt: null, resolutionNote: null, processedAt: null };
+    const pending = { reference: "privacy-ref-1", status: "pending", requestedAt: "2026-07-27T12:00:00.000Z", responseDueAt: "2026-08-26T12:00:00.000Z", cancelledAt: null, reviewedAt: null, userMessage: null, processedAt: null };
     vi.mocked(apiService.requestAccountDeletion).mockResolvedValue(pending);
     vi.mocked(apiService.cancelAccountDeletion).mockResolvedValue({ ...pending, status: "cancelled", cancelledAt: "2026-07-27T13:00:00.000Z" });
     const user = userEvent.setup();
@@ -176,7 +176,7 @@ describe("account access pages", () => {
       responseDueAt: "2026-08-26T12:00:00.000Z",
       cancelledAt: null,
       reviewedAt: "2026-07-28T12:00:00.000Z",
-      resolutionNote: "Checks completed.",
+      userMessage: "Checks completed.",
       processedAt: null,
     });
     render(<AccountSecurityPage />);
@@ -194,7 +194,7 @@ describe("account access pages", () => {
       responseDueAt: "2026-08-26T12:00:00.000Z",
       cancelledAt: null,
       reviewedAt: "2026-07-28T12:00:00.000Z",
-      resolutionNote: "Complete the active contract before trying again.",
+      userMessage: "Complete the active contract before trying again.",
       processedAt: null,
     });
     render(<AccountSecurityPage />);

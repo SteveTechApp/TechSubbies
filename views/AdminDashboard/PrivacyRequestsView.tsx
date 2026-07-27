@@ -6,6 +6,7 @@ type QueueStatus = 'pending' | 'approved' | 'processed';
 export const PrivacyRequestsView = () => {
     const [requests, setRequests] = useState<AdminDeletionRequest[]>([]);
     const [notes, setNotes] = useState<Record<string, string>>({});
+    const [userMessages, setUserMessages] = useState<Record<string, string>>({});
     const [confirmations, setConfirmations] = useState<Record<string, string>>({});
     const [status, setStatus] = useState<QueueStatus>('pending');
     const [summary, setSummary] = useState<AdminPrivacySummary | null>(null);
@@ -29,15 +30,16 @@ export const PrivacyRequestsView = () => {
 
     const review = async (request: AdminDeletionRequest, decision: 'approved' | 'rejected') => {
         const note = notes[request.id]?.trim() || '';
-        if (note.length < 10) {
-            setError('Add a review note of at least 10 characters before deciding.');
+        const userMessage = userMessages[request.id]?.trim() || '';
+        if (note.length < 10 || userMessage.length < 10) {
+            setError('Add both internal and user-facing notes of at least 10 characters before deciding.');
             return;
         }
         setWorkingId(request.id);
         setError('');
         setMessage('');
         try {
-            await apiService.reviewAdminDeletionRequest(request.id, decision, note);
+            await apiService.reviewAdminDeletionRequest(request.id, decision, note, userMessage);
             setRequests((current) => current.filter((item) => item.id !== request.id));
             setMessage(decision === 'approved'
                 ? 'Request approved for processing. No account data has been changed yet.'
@@ -167,7 +169,7 @@ export const PrivacyRequestsView = () => {
                             ) : status === 'pending' ? (
                                 <>
                                     <label className="mt-4 block text-sm font-medium text-gray-700" htmlFor={`note-${request.id}`}>
-                                        Review note
+                                        Internal audit note
                                     </label>
                                     <textarea
                                         id={`note-${request.id}`}
@@ -175,6 +177,17 @@ export const PrivacyRequestsView = () => {
                                         maxLength={1000}
                                         value={notes[request.id] || ''}
                                         onChange={(event) => setNotes((current) => ({ ...current, [request.id]: event.target.value }))}
+                                        className="mt-1 w-full rounded-md border border-gray-300 p-2"
+                                    />
+                                    <label className="mt-4 block text-sm font-medium text-gray-700" htmlFor={`user-message-${request.id}`}>
+                                        Explanation shown to the account holder
+                                    </label>
+                                    <textarea
+                                        id={`user-message-${request.id}`}
+                                        rows={3}
+                                        maxLength={1000}
+                                        value={userMessages[request.id] || ''}
+                                        onChange={(event) => setUserMessages((current) => ({ ...current, [request.id]: event.target.value }))}
                                         className="mt-1 w-full rounded-md border border-gray-300 p-2"
                                     />
                                     <div className="mt-3 flex flex-wrap gap-3">
@@ -199,7 +212,10 @@ export const PrivacyRequestsView = () => {
                             ) : (
                                 <>
                                     <p className="mt-4 text-sm text-gray-600">
-                                        Review note: {request.resolutionNote || 'No note recorded'}
+                                        Internal review note: {request.resolutionNote || 'No note recorded'}
+                                    </p>
+                                    <p className="mt-1 text-sm text-gray-600">
+                                        User explanation: {request.userMessage || 'No explanation recorded'}
                                     </p>
                                     <label className="mt-3 block text-sm font-medium text-gray-700" htmlFor={`confirmation-${request.id}`}>
                                         Type <strong>ANONYMISE ACCOUNT</strong> to confirm

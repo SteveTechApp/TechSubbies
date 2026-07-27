@@ -86,7 +86,7 @@ export function AccountSecurityPage() {
     responseDueAt?: string;
     cancelledAt: string | null;
     reviewedAt?: string | null;
-    resolutionNote?: string | null;
+    userMessage?: string | null;
     processedAt?: string | null;
   } | null>(null);
 
@@ -183,7 +183,7 @@ export function AccountSecurityPage() {
     <>
       <div className="mt-4 rounded-xl border border-red-300/30 bg-red-300/10 p-4">
         <p className="font-semibold text-red-200">Action required</p>
-        <p className="mt-1 text-sm text-slate-300">{deletionRequest.resolutionNote || "The request could not be processed. Resolve outstanding requirements before trying again."}</p>
+        <p className="mt-1 text-sm text-slate-300">{deletionRequest.userMessage || "The request could not be processed. Resolve outstanding requirements before trying again."}</p>
       </div>
       {newDeletionRequestForm}
     </>

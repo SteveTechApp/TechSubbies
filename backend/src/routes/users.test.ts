@@ -133,6 +133,7 @@ describe("account deletion requests", () => {
       cancelledAt: null,
     });
     expect(created.body.request).not.toHaveProperty("userId");
+    expect(created.body.request).not.toHaveProperty("resolutionNote");
     expect(created.body.notificationSent).toBe(true);
     expect(developmentEmailOutbox.some((email) =>
       email.to === "carol@example.com" && email.subject.includes("deletion request")

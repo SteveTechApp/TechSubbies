@@ -38,7 +38,7 @@ function publicDeletionRequest(userId: string) {
     responseDueAt: accountDeletionResponseDueAt(request.requestedAt),
     cancelledAt: request.cancelledAt,
     reviewedAt: request.reviewedAt,
-    resolutionNote: request.resolutionNote,
+    userMessage: request.userMessage,
     processedAt: request.processedAt,
   };
 }

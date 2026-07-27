@@ -179,7 +179,7 @@ db.exec(`
   );
 `);
 
-export const LATEST_SCHEMA_VERSION = 5;
+export const LATEST_SCHEMA_VERSION = 6;
 runMigrations(db, [
   {
     version: 1,
@@ -238,6 +238,13 @@ runMigrations(db, [
       ALTER TABLE users ADD COLUMN deletedAt TEXT;
       ALTER TABLE account_deletion_requests ADD COLUMN processedAt TEXT;
       ALTER TABLE account_deletion_requests ADD COLUMN processorId TEXT;
+    `),
+  },
+  {
+    version: 6,
+    name: "privacy-review-user-messages",
+    up: (database) => database.exec(`
+      ALTER TABLE account_deletion_requests ADD COLUMN userMessage TEXT;
     `),
   },
 ]);

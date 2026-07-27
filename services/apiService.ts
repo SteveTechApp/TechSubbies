@@ -22,6 +22,7 @@ export type AdminDeletionRequest = {
   reviewedAt: string | null;
   reviewerId: string | null;
   resolutionNote: string | null;
+  userMessage: string | null;
   processedAt: string | null;
   processorId: string | null;
   accountEmail: string;
@@ -49,7 +50,7 @@ export type AccountDeletionStatus = {
   responseDueAt: string;
   cancelledAt: string | null;
   reviewedAt: string | null;
-  resolutionNote: string | null;
+  userMessage: string | null;
   processedAt: string | null;
 };
 
@@ -312,12 +313,13 @@ const apiService = {
   reviewAdminDeletionRequest: async (
     requestId: string,
     decision: 'approved' | 'rejected',
-    note: string
+    note: string,
+    userMessage: string
   ): Promise<AdminDeletionRequest> => {
     const response = await fetch(`${API_BASE_URL}/admin/deletion-requests/${requestId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ decision, note }),
+      body: JSON.stringify({ decision, note, userMessage }),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not review privacy request.');

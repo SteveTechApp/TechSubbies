@@ -38,10 +38,11 @@ adminRouter.patch("/deletion-requests/:requestId", async (req: AuthedRequest, re
   const parsed = z.object({
     decision: z.enum(["approved", "rejected"]),
     note: z.string().trim().min(10).max(1000),
+    userMessage: z.string().trim().min(10).max(1000),
   }).safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({
-      error: "Choose approved or rejected and provide a review note of at least 10 characters.",
+      error: "Choose approved or rejected and provide internal and user-facing notes of at least 10 characters.",
     });
   }
 
@@ -63,7 +64,8 @@ adminRouter.patch("/deletion-requests/:requestId", async (req: AuthedRequest, re
     req.params.requestId,
     req.userId!,
     parsed.data.decision,
-    parsed.data.note
+    parsed.data.note,
+    parsed.data.userMessage
   );
   if (!reviewed) {
     return res.status(409).json({ error: "This request is missing or has already been reviewed." });

@@ -10,6 +10,7 @@ export type AccountDeletionRequest = {
   reviewedAt: string | null;
   reviewerId: string | null;
   resolutionNote: string | null;
+  userMessage: string | null;
   processedAt: string | null;
   processorId: string | null;
 };
@@ -55,7 +56,7 @@ export function requestAccountDeletion(userId: string): AccountDeletionRequest {
     db.prepare(`
       UPDATE account_deletion_requests
       SET status = 'pending', requestedAt = ?, cancelledAt = NULL,
-          reviewedAt = NULL, reviewerId = NULL, resolutionNote = NULL
+          reviewedAt = NULL, reviewerId = NULL, resolutionNote = NULL, userMessage = NULL
       WHERE userId = ?
     `).run(now, userId);
   } else {
@@ -83,13 +84,14 @@ export function reviewAccountDeletionRequest(
   id: string,
   reviewerId: string,
   decision: "approved" | "rejected",
-  resolutionNote: string
+  resolutionNote: string,
+  userMessage: string
 ): AccountDeletionRequest | undefined {
   const result = db.prepare(`
     UPDATE account_deletion_requests
-    SET status = ?, reviewedAt = ?, reviewerId = ?, resolutionNote = ?
+    SET status = ?, reviewedAt = ?, reviewerId = ?, resolutionNote = ?, userMessage = ?
     WHERE id = ? AND status = 'pending'
-  `).run(decision, new Date().toISOString(), reviewerId, resolutionNote, id);
+  `).run(decision, new Date().toISOString(), reviewerId, resolutionNote, userMessage, id);
   if (result.changes === 0) return undefined;
   return db.prepare(
     "SELECT * FROM account_deletion_requests WHERE id = ?"
