@@ -41,6 +41,15 @@ export type AdminPrivacySummary = {
   oldestPendingAt: string | null;
 };
 
+export type AccountDeletionStatus = {
+  status: string;
+  requestedAt: string;
+  cancelledAt: string | null;
+  reviewedAt: string | null;
+  resolutionNote: string | null;
+  processedAt: string | null;
+};
+
 const TOKEN_KEY = 'techsubbies_auth_token';
 const fetch = secureFetch;
 let cookieSessionAvailable = false;
@@ -256,14 +265,14 @@ const apiService = {
     return data;
   },
 
-  getDeletionRequest: async (): Promise<{ status: string; requestedAt: string; cancelledAt: string | null } | null> => {
+  getDeletionRequest: async (): Promise<AccountDeletionStatus | null> => {
     const response = await fetch(`${API_BASE_URL}/users/me/deletion-request`);
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not load deletion request.');
     return data.request;
   },
 
-  requestAccountDeletion: async (password: string): Promise<{ status: string; requestedAt: string; cancelledAt: string | null }> => {
+  requestAccountDeletion: async (password: string): Promise<AccountDeletionStatus> => {
     const response = await fetch(`${API_BASE_URL}/users/me/deletion-request`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -274,7 +283,7 @@ const apiService = {
     return data.request;
   },
 
-  cancelAccountDeletion: async (): Promise<{ status: string; requestedAt: string; cancelledAt: string | null }> => {
+  cancelAccountDeletion: async (): Promise<AccountDeletionStatus> => {
     const response = await fetch(`${API_BASE_URL}/users/me/deletion-request`, { method: 'DELETE' });
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not cancel account deletion.');

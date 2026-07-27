@@ -151,7 +151,7 @@ describe("account access pages", () => {
   });
 
   it("submits and cancels an account deletion request", async () => {
-    const pending = { status: "pending", requestedAt: "2026-07-27T12:00:00.000Z", cancelledAt: null };
+    const pending = { status: "pending", requestedAt: "2026-07-27T12:00:00.000Z", cancelledAt: null, reviewedAt: null, resolutionNote: null, processedAt: null };
     vi.mocked(apiService.requestAccountDeletion).mockResolvedValue(pending);
     vi.mocked(apiService.cancelAccountDeletion).mockResolvedValue({ ...pending, status: "cancelled", cancelledAt: "2026-07-27T13:00:00.000Z" });
     const user = userEvent.setup();
@@ -165,5 +165,37 @@ describe("account access pages", () => {
     await user.click(screen.getByRole("button", { name: "Cancel deletion request" }));
     expect(apiService.cancelAccountDeletion).toHaveBeenCalledOnce();
     expect(await screen.findByText("Account deletion request cancelled.")).toBeVisible();
+  });
+
+  it("shows approved privacy requests without offering a duplicate request", async () => {
+    vi.mocked(apiService.getDeletionRequest).mockResolvedValue({
+      status: "approved",
+      requestedAt: "2026-07-27T12:00:00.000Z",
+      cancelledAt: null,
+      reviewedAt: "2026-07-28T12:00:00.000Z",
+      resolutionNote: "Checks completed.",
+      processedAt: null,
+    });
+    render(<AccountSecurityPage />);
+
+    expect(await screen.findByText("Approved for processing")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Request account deletion" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cancel deletion request" })).not.toBeInTheDocument();
+  });
+
+  it("shows the rejection reason and permits resubmission", async () => {
+    vi.mocked(apiService.getDeletionRequest).mockResolvedValue({
+      status: "rejected",
+      requestedAt: "2026-07-27T12:00:00.000Z",
+      cancelledAt: null,
+      reviewedAt: "2026-07-28T12:00:00.000Z",
+      resolutionNote: "Complete the active contract before trying again.",
+      processedAt: null,
+    });
+    render(<AccountSecurityPage />);
+
+    expect(await screen.findByText("Action required")).toBeVisible();
+    expect(screen.getByText("Complete the active contract before trying again.")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Request account deletion" })).toBeVisible();
   });
 });

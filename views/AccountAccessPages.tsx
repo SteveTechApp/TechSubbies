@@ -79,7 +79,14 @@ export function AccountSecurityPage() {
   const [revoking, setRevoking] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [deletionPassword, setDeletionPassword] = useState("");
-  const [deletionRequest, setDeletionRequest] = useState<{ status: string; requestedAt: string; cancelledAt: string | null } | null>(null);
+  const [deletionRequest, setDeletionRequest] = useState<{
+    status: string;
+    requestedAt: string;
+    cancelledAt: string | null;
+    reviewedAt?: string | null;
+    resolutionNote?: string | null;
+    processedAt?: string | null;
+  } | null>(null);
 
   useEffect(() => {
     apiService.listSecurityEvents().then(setEvents).catch(() => undefined);
@@ -144,5 +151,43 @@ export function AccountSecurityPage() {
     }
   }
 
-  return <Shell title="Account security"><p className="mt-3 text-sm text-slate-400">Email status: <strong className={user?.emailVerified ? "text-emerald-300" : "text-amber-300"}>{user?.emailVerified ? "Verified" : "Not verified"}</strong></p>{!user?.emailVerified && <button className={buttonClass} onClick={() => apiService.resendEmailVerification().then(() => setMessage({ error: "", success: "Verification email queued." })).catch((reason) => setMessage({ error: reason.message, success: "" }))}>Resend verification email</button>}<Message {...message} /><form onSubmit={change}><label className="mt-5 block text-sm font-semibold">Current password<input required type="password" autoComplete="current-password" className={inputClass} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} /></label><label className="mt-4 block text-sm font-semibold">New password<input required minLength={8} type="password" autoComplete="new-password" className={inputClass} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} /></label><button className={buttonClass}>Change password</button></form><section className="mt-8 border-t border-white/10 pt-6"><h2 className="text-lg font-bold text-cyan-200">Your data</h2><p className="mt-2 text-sm text-slate-400">Download a portable JSON copy of your profile and marketplace activity.</p><button disabled={exporting} className="mt-4 w-full rounded-xl border border-cyan-300/30 px-5 py-3 font-bold text-cyan-100 hover:bg-cyan-300/10 disabled:opacity-60" onClick={downloadDataExport}>{exporting ? "Preparing export..." : "Download my data"}</button></section><section className="mt-8 border-t border-white/10 pt-6"><h2 className="text-lg font-bold text-cyan-200">Active sessions</h2><p className="mt-2 text-sm text-slate-400">If you suspect another device has access, sign out every session including this one.</p><button disabled={revoking} className="mt-4 w-full rounded-xl border border-red-300/30 px-5 py-3 font-bold text-red-100 hover:bg-red-300/10 disabled:opacity-60" onClick={() => { setRevoking(true); apiService.revokeAllSessions().then(() => { setMessage({ error: "", success: "All devices signed out. Please sign in again." }); window.setTimeout(logout, 1000); }).catch((reason) => { setMessage({ error: reason.message, success: "" }); setRevoking(false); }); }}>{revoking ? "Signing out..." : "Sign out all devices"}</button></section><section className="mt-8 border-t border-red-300/20 pt-6"><h2 className="text-lg font-bold text-red-200">Delete account</h2><p className="mt-2 text-sm text-slate-400">Request account deletion for privacy review. Transaction records may be retained where legally required.</p>{deletionRequest?.status === "pending" ? <><p className="mt-3 text-sm font-semibold text-amber-200">Deletion requested on {new Date(deletionRequest.requestedAt).toLocaleDateString()}.</p><button className="mt-4 w-full rounded-xl border border-white/20 px-5 py-3 font-bold" onClick={cancelDeletionRequest}>Cancel deletion request</button></> : <><label className="mt-4 block text-sm font-semibold">Confirm password<input type="password" autoComplete="current-password" className={inputClass} value={deletionPassword} onChange={(event) => setDeletionPassword(event.target.value)} /></label><button disabled={!deletionPassword} className="mt-4 w-full rounded-xl border border-red-300/30 px-5 py-3 font-bold text-red-100 disabled:opacity-60" onClick={submitDeletionRequest}>Request account deletion</button></>}</section><section className="mt-8 border-t border-white/10 pt-6"><h2 className="text-lg font-bold text-cyan-200">Recent security activity</h2>{events.length === 0 ? <p className="mt-3 text-sm text-slate-400">No security activity is available yet.</p> : <ul className="mt-3 space-y-2">{events.map((event) => <li key={event.id} className="rounded-xl border border-white/10 bg-slate-950 p-3"><div className="text-sm font-semibold">{eventLabels[event.eventType] || "Account security event"}</div><time className="mt-1 block text-xs text-slate-500" dateTime={event.createdAt}>{new Date(event.createdAt).toLocaleString()}</time></li>)}</ul>}</section></Shell>;
+  const newDeletionRequestForm = (
+    <>
+      <label className="mt-4 block text-sm font-semibold">
+        Confirm password
+        <input type="password" autoComplete="current-password" className={inputClass} value={deletionPassword} onChange={(event) => setDeletionPassword(event.target.value)} />
+      </label>
+      <button disabled={!deletionPassword} className="mt-4 w-full rounded-xl border border-red-300/30 px-5 py-3 font-bold text-red-100 disabled:opacity-60" onClick={submitDeletionRequest}>
+        Request account deletion
+      </button>
+    </>
+  );
+
+  const deletionRequestPanel = deletionRequest?.status === "pending" ? (
+    <div className="mt-4 rounded-xl border border-amber-300/30 bg-amber-300/10 p-4">
+      <p className="font-semibold text-amber-200">Pending privacy review</p>
+      <p className="mt-1 text-sm text-slate-300">Deletion requested on {new Date(deletionRequest.requestedAt).toLocaleDateString()}. We will email you when its status changes.</p>
+      <button className="mt-4 w-full rounded-xl border border-white/20 px-5 py-3 font-bold" onClick={cancelDeletionRequest}>Cancel deletion request</button>
+    </div>
+  ) : deletionRequest?.status === "approved" ? (
+    <div className="mt-4 rounded-xl border border-emerald-300/30 bg-emerald-300/10 p-4">
+      <p className="font-semibold text-emerald-200">Approved for processing</p>
+      <p className="mt-1 text-sm text-slate-300">Your account remains active until anonymisation is completed. You will receive a final confirmation email.</p>
+    </div>
+  ) : deletionRequest?.status === "rejected" ? (
+    <>
+      <div className="mt-4 rounded-xl border border-red-300/30 bg-red-300/10 p-4">
+        <p className="font-semibold text-red-200">Action required</p>
+        <p className="mt-1 text-sm text-slate-300">{deletionRequest.resolutionNote || "The request could not be processed. Resolve outstanding requirements before trying again."}</p>
+      </div>
+      {newDeletionRequestForm}
+    </>
+  ) : deletionRequest?.status === "cancelled" ? (
+    <>
+      <p className="mt-4 text-sm text-slate-300">Your previous request was cancelled. You can submit another request below.</p>
+      {newDeletionRequestForm}
+    </>
+  ) : newDeletionRequestForm;
+
+  return <Shell title="Account security"><p className="mt-3 text-sm text-slate-400">Email status: <strong className={user?.emailVerified ? "text-emerald-300" : "text-amber-300"}>{user?.emailVerified ? "Verified" : "Not verified"}</strong></p>{!user?.emailVerified && <button className={buttonClass} onClick={() => apiService.resendEmailVerification().then(() => setMessage({ error: "", success: "Verification email queued." })).catch((reason) => setMessage({ error: reason.message, success: "" }))}>Resend verification email</button>}<Message {...message} /><form onSubmit={change}><label className="mt-5 block text-sm font-semibold">Current password<input required type="password" autoComplete="current-password" className={inputClass} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} /></label><label className="mt-4 block text-sm font-semibold">New password<input required minLength={8} type="password" autoComplete="new-password" className={inputClass} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} /></label><button className={buttonClass}>Change password</button></form><section className="mt-8 border-t border-white/10 pt-6"><h2 className="text-lg font-bold text-cyan-200">Your data</h2><p className="mt-2 text-sm text-slate-400">Download a portable JSON copy of your profile and marketplace activity.</p><button disabled={exporting} className="mt-4 w-full rounded-xl border border-cyan-300/30 px-5 py-3 font-bold text-cyan-100 hover:bg-cyan-300/10 disabled:opacity-60" onClick={downloadDataExport}>{exporting ? "Preparing export..." : "Download my data"}</button></section><section className="mt-8 border-t border-white/10 pt-6"><h2 className="text-lg font-bold text-cyan-200">Active sessions</h2><p className="mt-2 text-sm text-slate-400">If you suspect another device has access, sign out every session including this one.</p><button disabled={revoking} className="mt-4 w-full rounded-xl border border-red-300/30 px-5 py-3 font-bold text-red-100 hover:bg-red-300/10 disabled:opacity-60" onClick={() => { setRevoking(true); apiService.revokeAllSessions().then(() => { setMessage({ error: "", success: "All devices signed out. Please sign in again." }); window.setTimeout(logout, 1000); }).catch((reason) => { setMessage({ error: reason.message, success: "" }); setRevoking(false); }); }}>{revoking ? "Signing out..." : "Sign out all devices"}</button></section><section className="mt-8 border-t border-red-300/20 pt-6"><h2 className="text-lg font-bold text-red-200">Delete account</h2><p className="mt-2 text-sm text-slate-400">Request account deletion for privacy review. Transaction records may be retained where legally required.</p>{deletionRequestPanel}</section><section className="mt-8 border-t border-white/10 pt-6"><h2 className="text-lg font-bold text-cyan-200">Recent security activity</h2>{events.length === 0 ? <p className="mt-3 text-sm text-slate-400">No security activity is available yet.</p> : <ul className="mt-3 space-y-2">{events.map((event) => <li key={event.id} className="rounded-xl border border-white/10 bg-slate-950 p-3"><div className="text-sm font-semibold">{eventLabels[event.eventType] || "Account security event"}</div><time className="mt-1 block text-xs text-slate-500" dateTime={event.createdAt}>{new Date(event.createdAt).toLocaleString()}</time></li>)}</ul>}</section></Shell>;
 }
