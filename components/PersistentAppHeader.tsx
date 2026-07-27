@@ -3,6 +3,7 @@
 
 import { TechSubbiesLogo } from './TechSubbiesLogo';
 import { clearDemoSession, getDemoSession, type DemoSession } from "../data/demoAccounts";
+import { useAuth } from "../context/AuthContext";
 
 type NavLink = {
   label: string;
@@ -93,6 +94,7 @@ function BrandLogo() {
 }
 
 export default function PersistentAppHeader() {
+  const { user, logout: logoutRealAccount } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [session, setSession] = useState<DemoSession | null>(() => getDemoSession());
@@ -112,9 +114,21 @@ export default function PersistentAppHeader() {
   }, []);
 
   const currentPath = typeof window === "undefined" ? "/" : window.location.pathname;
+  const identity = user
+    ? {
+        name: user.profile.name || "Signed in",
+        role: user.role,
+        email: user.profile.contact?.email || "",
+      }
+    : session;
+  const isAuthenticated = Boolean(identity);
 
   function logout() {
-    clearDemoSession();
+    if (user) {
+      logoutRealAccount();
+    } else {
+      clearDemoSession();
+    }
     setSession(null);
     window.location.href = "/";
   }
@@ -184,7 +198,7 @@ export default function PersistentAppHeader() {
                             >
                               <span>{link.label}</span>
 
-                              {link.protected && (
+                              {link.protected && !isAuthenticated && (
                                 <span className="rounded-full border border-white/10 px-2 py-0.5 text-[13px] uppercase tracking-wide opacity-70">
                                   login
                                 </span>
@@ -201,14 +215,14 @@ export default function PersistentAppHeader() {
           </nav>
 
           <div className="ml-auto hidden items-center gap-3 xl:flex">
-            {session ? (
+            {identity ? (
               <>
                 <div className="rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-3 py-2">
                   <div className="text-[13px] font-bold text-cyan-200">
-                    {session.name || "Signed in"}
+                    {identity.name || "Signed in"}
                   </div>
                   <div className="text-[11px] text-slate-500">
-                    {session.role || "User"}
+                    {identity.role || "User"}
                   </div>
                 </div>
 
@@ -271,7 +285,7 @@ export default function PersistentAppHeader() {
                     >
                       <span>{link.label}</span>
 
-                      {link.protected && (
+                      {link.protected && !isAuthenticated && (
                         <span className="rounded-full border border-white/10 px-2 py-0.5 text-[13px] uppercase tracking-wide opacity-70">
                           login
                         </span>
@@ -282,12 +296,14 @@ export default function PersistentAppHeader() {
               </section>
             ))}
 
-            {session && (
+            {identity && (
               <section className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4 md:col-span-2 lg:col-span-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <div className="text-sm font-bold text-cyan-200">{session.name || "Signed in"}</div>
-                    <div className="text-[13px] text-slate-400">{session.role || "User"} · {session.email}</div>
+                    <div className="text-sm font-bold text-cyan-200">{identity.name || "Signed in"}</div>
+                    <div className="text-[13px] text-slate-400">
+                      {identity.role || "User"}{identity.email ? ` · ${identity.email}` : ""}
+                    </div>
                   </div>
 
                   <button
