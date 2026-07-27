@@ -100,6 +100,16 @@ describe("admin deletion request reviews", () => {
       email.to === "privacy-engineer@example.com" && email.subject.includes("approved")
     )).toBe(true);
 
+    const resubmitted = await request(app)
+      .post("/api/users/me/deletion-request")
+      .set("Authorization", `Bearer ${engineerToken}`)
+      .send({ password: "correcthorsebattery" });
+    expect(resubmitted.status).toBe(409);
+    expect(resubmitted.body.request).toMatchObject({
+      reference: deletionRequestId,
+      status: "approved",
+    });
+
     const pending = await request(app)
       .get("/api/admin/deletion-requests")
       .set("Authorization", `Bearer ${adminToken}`);

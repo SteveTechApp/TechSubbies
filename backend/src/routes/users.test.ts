@@ -139,6 +139,17 @@ describe("account deletion requests", () => {
       email.to === "carol@example.com" && email.subject.includes("deletion request")
     )).toBe(true);
 
+    const duplicate = await request(app)
+      .post("/api/users/me/deletion-request")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ password: "correcthorsebattery" });
+    expect(duplicate.status).toBe(200);
+    expect(duplicate.body.alreadyPending).toBe(true);
+    expect(duplicate.body.notificationSent).toBe(false);
+    expect(duplicate.body.request.reference).toBe(created.body.request.reference);
+    expect(duplicate.body.request.requestedAt).toBe(created.body.request.requestedAt);
+    expect(duplicate.body.request.responseDueAt).toBe(created.body.request.responseDueAt);
+
     const status = await request(app)
       .get("/api/users/me/deletion-request")
       .set("Authorization", `Bearer ${token}`);

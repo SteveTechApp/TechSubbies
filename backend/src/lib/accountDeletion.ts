@@ -53,6 +53,9 @@ export function requestAccountDeletion(userId: string): AccountDeletionRequest {
   const existing = findAccountDeletionRequest(userId);
   const now = new Date().toISOString();
   if (existing) {
+    if (existing.status === "pending" || existing.status === "approved") {
+      return existing;
+    }
     db.prepare(`
       UPDATE account_deletion_requests
       SET status = 'pending', requestedAt = ?, cancelledAt = NULL,

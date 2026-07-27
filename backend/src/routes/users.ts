@@ -52,6 +52,20 @@ usersRouter.post("/me/deletion-request", requireAuth, async (req: AuthedRequest,
   if (!parsed.success || !(await bcrypt.compare(parsed.data.password, req.authUser!.password))) {
     return res.status(401).json({ error: "Password confirmation is incorrect." });
   }
+  const existing = findAccountDeletionRequest(req.userId!);
+  if (existing?.status === "approved") {
+    return res.status(409).json({
+      error: "This deletion request is already approved and awaiting processing.",
+      request: publicDeletionRequest(req.userId!),
+    });
+  }
+  if (existing?.status === "pending") {
+    return res.status(200).json({
+      request: publicDeletionRequest(req.userId!),
+      alreadyPending: true,
+      notificationSent: false,
+    });
+  }
   requestAccountDeletion(req.userId!);
   recordAccountAudit({
     eventType: "deletion.requested",
