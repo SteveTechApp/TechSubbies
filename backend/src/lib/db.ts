@@ -402,7 +402,7 @@ export function listPendingMembershipSelections(): MembershipSelection[] {
   });
 }
 
-export function activateRequestedMembership(userId: string, administratorId: string): UserRow | undefined {
+export function activateRequestedMembership(userId: string): UserRow | undefined {
   const user = findUserById(userId);
   if (!user || user.role !== "Engineer" || user.deletedAt || user.suspendedAt) return undefined;
 
@@ -417,7 +417,6 @@ export function activateRequestedMembership(userId: string, administratorId: str
 
   profile.profileTier = requestedTier;
   profile.membershipActivatedAt = new Date().toISOString();
-  profile.membershipActivatedBy = administratorId;
   delete profile.requestedProfileTier;
   delete profile.membershipRequestedAt;
   return updateUserProfile(user.id, JSON.stringify(profile), user.name);

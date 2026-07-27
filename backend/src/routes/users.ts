@@ -170,6 +170,8 @@ usersRouter.patch("/me", requireAuth, async (req: AuthedRequest, res) => {
   delete updates.profileTier;
   delete updates.requestedProfileTier;
   delete updates.membershipRequestedAt;
+  delete updates.membershipActivatedAt;
+  delete updates.membershipActivatedBy;
   const mergedProfile = { ...currentProfile, ...updates };
 
   const updated = updateUserProfile(

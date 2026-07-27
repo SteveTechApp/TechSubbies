@@ -75,9 +75,22 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
                                 <p className="text-2xl font-bold text-blue-900">{profile.profileTier} · {currentPlan.name}</p>
                                 <p className="mt-1 text-sm text-blue-700">{formatMonthlyMembershipPrice(currentPlan)}</p>
                                 {profile.requestedProfileTier && profile.requestedProfileTier !== profile.profileTier && (
-                                    <p className="mt-2 text-sm font-semibold text-amber-700">
-                                        {profile.requestedProfileTier} selected · awaiting billing confirmation
-                                    </p>
+                                    <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                                        <p className="font-semibold">
+                                            {profile.requestedProfileTier} selected · awaiting billing confirmation
+                                        </p>
+                                        {profile.membershipRequestedAt && (
+                                            <time className="mt-1 block text-xs" dateTime={profile.membershipRequestedAt}>
+                                                Requested {new Date(profile.membershipRequestedAt).toLocaleString()}
+                                            </time>
+                                        )}
+                                        <p className="mt-1 text-xs">Your current membership remains active while verification is completed.</p>
+                                    </div>
+                                )}
+                                {!profile.requestedProfileTier && profile.membershipActivatedAt && (
+                                    <time className="mt-2 block text-sm text-blue-800" dateTime={profile.membershipActivatedAt}>
+                                        Active since {new Date(profile.membershipActivatedAt).toLocaleDateString()}
+                                    </time>
                                 )}
                             </div>
                             <button

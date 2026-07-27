@@ -187,10 +187,17 @@ describe("PATCH /api/users/me", () => {
     const res = await request(app)
       .patch("/api/users/me")
       .set("Authorization", `Bearer ${token}`)
-      .send({ profileTier: "Platinum", minDayRate: 225 });
+      .send({
+        profileTier: "Platinum",
+        membershipActivatedAt: "2000-01-01T00:00:00.000Z",
+        membershipActivatedBy: "forged-admin-id",
+        minDayRate: 225,
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.profile.profileTier).not.toBe("Platinum");
+    expect(res.body.profile.membershipActivatedAt).not.toBe("2000-01-01T00:00:00.000Z");
+    expect(res.body.profile).not.toHaveProperty("membershipActivatedBy");
     expect(res.body.profile.minDayRate).toBe(225);
   });
 

@@ -77,6 +77,16 @@ describe("admin membership confirmations", () => {
     expect(confirmed.body.activeTier).toBe("Gold");
     expect(confirmed.body.notificationSent).toBe(true);
 
+    const member = await request(app)
+      .get("/api/users/me")
+      .set("Authorization", `Bearer ${engineerToken}`);
+    expect(member.body.profile).toMatchObject({
+      profileTier: "Gold",
+      membershipActivatedAt: expect.any(String),
+    });
+    expect(member.body.profile).not.toHaveProperty("membershipActivatedBy");
+    expect(member.body.profile).not.toHaveProperty("requestedProfileTier");
+
     const emptyQueue = await request(app)
       .get("/api/admin/membership-selections")
       .set("Authorization", `Bearer ${adminToken}`);

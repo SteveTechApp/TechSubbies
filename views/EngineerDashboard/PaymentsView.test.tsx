@@ -39,4 +39,32 @@ describe('PaymentsView', () => {
         expect(screen.getByText('Zero commission')).toBeInTheDocument();
         expect(screen.getByText(/Applying never consumes credits/)).toBeInTheDocument();
     });
+
+    it('shows pending and activated membership lifecycle dates', () => {
+        const { rerender } = render(
+            <PaymentsView
+                profile={{
+                    ...profile,
+                    requestedProfileTier: ProfileTier.SKILLS,
+                    membershipRequestedAt: '2026-07-27T12:00:00.000Z',
+                }}
+                setActiveView={vi.fn()}
+            />
+        );
+
+        expect(screen.getByText(/Gold selected · awaiting billing confirmation/i)).toBeVisible();
+        expect(screen.getByText(/Your current membership remains active/i)).toBeVisible();
+
+        rerender(
+            <PaymentsView
+                profile={{
+                    ...profile,
+                    profileTier: ProfileTier.SKILLS,
+                    membershipActivatedAt: '2026-07-28T12:00:00.000Z',
+                }}
+                setActiveView={vi.fn()}
+            />
+        );
+        expect(screen.getByText(/Active since/i)).toBeVisible();
+    });
 });

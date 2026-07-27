@@ -51,7 +51,7 @@ adminRouter.post("/membership-selections/:userId/confirm", async (req: AuthedReq
   if (!parsed.success) {
     return res.status(400).json({ error: 'Type "BILLING VERIFIED" to confirm activation.' });
   }
-  const updated = activateRequestedMembership(req.params.userId, req.userId!);
+  const updated = activateRequestedMembership(req.params.userId);
   if (!updated) {
     return res.status(409).json({ error: "No pending membership selection is available for this account." });
   }

@@ -178,6 +178,7 @@ export interface EngineerProfile extends UserProfile {
     profileTier: ProfileTier;
     requestedProfileTier?: ProfileTier;
     membershipRequestedAt?: string;
+    membershipActivatedAt?: string;
     minDayRate: number;
     maxDayRate: number;
     currency: Currency;
