@@ -28,6 +28,7 @@ import { sendPrivacyNotification } from "../lib/privacyNotifications.js";
 import { sendModerationNotification } from "../lib/moderationNotifications.js";
 import { toPublicJob } from "../lib/publicJob.js";
 import { sendJobModerationNotification } from "../lib/jobModerationNotifications.js";
+import { sendMembershipActivationNotification } from "../lib/membershipNotifications.js";
 
 export const adminRouter = Router();
 
@@ -45,7 +46,7 @@ adminRouter.get("/membership-selections", (_req, res) => {
   return res.json({ selections: listPendingMembershipSelections() });
 });
 
-adminRouter.post("/membership-selections/:userId/confirm", (req: AuthedRequest, res) => {
+adminRouter.post("/membership-selections/:userId/confirm", async (req: AuthedRequest, res) => {
   const parsed = z.object({ confirmation: z.literal("BILLING VERIFIED") }).safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: 'Type "BILLING VERIFIED" to confirm activation.' });
@@ -60,9 +61,16 @@ adminRouter.post("/membership-selections/:userId/confirm", (req: AuthedRequest, 
     userId: updated.id,
     requestId: res.locals.requestId,
   });
+  const profile = JSON.parse(updated.profile) as Record<string, unknown>;
+  const notificationSent = await sendMembershipActivationNotification({
+    to: updated.email,
+    name: String(profile.name || "TechSubbies member"),
+    tier: String(profile.profileTier),
+  });
   return res.json({
     userId: updated.id,
-    activeTier: (JSON.parse(updated.profile) as Record<string, unknown>).profileTier,
+    activeTier: profile.profileTier,
+    notificationSent,
   });
 });
 

@@ -27,6 +27,7 @@ describe('MembershipRequestsView', () => {
         vi.mocked(apiService.confirmAdminMembershipSelection).mockResolvedValue({
             userId: selection.userId,
             activeTier: ProfileTier.SKILLS,
+            notificationSent: true,
         });
         vi.spyOn(window, 'confirm').mockReturnValue(true);
     });
@@ -42,6 +43,7 @@ describe('MembershipRequestsView', () => {
         expect(window.confirm).toHaveBeenCalledWith(expect.stringMatching(/external billing has been verified/i));
         await waitFor(() => expect(apiService.confirmAdminMembershipSelection).toHaveBeenCalledWith('engineer-1'));
         expect(await screen.findByRole('status')).toHaveTextContent(/Gold membership is now active/i);
+        expect(screen.getByRole('status')).toHaveTextContent(/confirmation email was sent/i);
         expect(screen.queryByText('engineer@example.com')).not.toBeInTheDocument();
     });
 

@@ -75,6 +75,7 @@ describe("admin membership confirmations", () => {
       .send({ confirmation: "BILLING VERIFIED" });
     expect(confirmed.status).toBe(200);
     expect(confirmed.body.activeTier).toBe("Gold");
+    expect(confirmed.body.notificationSent).toBe(true);
 
     const emptyQueue = await request(app)
       .get("/api/admin/membership-selections")

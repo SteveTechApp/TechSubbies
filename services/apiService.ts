@@ -430,7 +430,7 @@ const apiService = {
 
   confirmAdminMembershipSelection: async (
     userId: string
-  ): Promise<{ userId: string; activeTier: ProfileTier }> => {
+  ): Promise<{ userId: string; activeTier: ProfileTier; notificationSent: boolean }> => {
     const response = await fetch(`${API_BASE_URL}/admin/membership-selections/${userId}/confirm`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -26,9 +26,14 @@ export const MembershipRequestsView = () => {
         setError('');
         setMessage('');
         try {
-            await apiService.confirmAdminMembershipSelection(selection.userId);
+            const result = await apiService.confirmAdminMembershipSelection(selection.userId);
             setSelections((current) => current.filter((item) => item.userId !== selection.userId));
-            setMessage(`${selection.name}'s ${selection.requestedTier} membership is now active.`);
+            setMessage(
+                `${selection.name}'s ${selection.requestedTier} membership is now active. ` +
+                (result.notificationSent
+                    ? 'A confirmation email was sent.'
+                    : 'The confirmation email could not be delivered; please contact them directly.')
+            );
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Could not activate membership.');
         } finally {
