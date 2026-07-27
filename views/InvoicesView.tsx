@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../context/InteractionContext';
 import { FileText, X } from '../components/Icons';
 import { Invoice, InvoiceStatus } from '../types';
+import { formatCurrencyAmount } from '../utils/currencyFormatter';
 import { formatDisplayDate } from '../utils/dateFormatter';
 
 const getStatusClass = (status: InvoiceStatus) => {
@@ -72,7 +73,7 @@ export const InvoicesView = () => {
                                     <tr key={invoice.id}>
                                         <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{invoice.id}</td>
                                         <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-800">{getOtherParty(invoice)?.profile.name || 'TechSubbies member'}</td>
-                                        <td className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-gray-800">£{invoice.total.toFixed(2)}</td>
+                                        <td className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-gray-800">{formatCurrencyAmount(invoice.total, invoice.currency)}</td>
                                         <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{formatDisplayDate(invoice.dueDate)}</td>
                                         <td className="whitespace-nowrap px-6 py-4 text-sm">
                                             <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${getStatusClass(invoice.status)}`}>
@@ -104,7 +105,7 @@ export const InvoicesView = () => {
                                 </div>
                                 <div className="mt-4 flex items-end justify-between gap-3 border-t border-gray-100 pt-3">
                                     <div>
-                                        <p className="text-lg font-bold text-gray-900">£{invoice.total.toFixed(2)}</p>
+                                        <p className="text-lg font-bold text-gray-900">{formatCurrencyAmount(invoice.total, invoice.currency)}</p>
                                         <p className="text-xs text-gray-500">Due {formatDisplayDate(invoice.dueDate)}</p>
                                     </div>
                                     <button onClick={() => setSelectedInvoice(invoice)} className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white">
@@ -170,12 +171,12 @@ export const InvoicesView = () => {
                                 {selectedInvoice.items.map((item, index) => (
                                     <div key={`${item.description}-${index}`} className="flex justify-between gap-4 p-3 text-sm">
                                         <span className="text-gray-700">{item.description}</span>
-                                        <span className="whitespace-nowrap font-semibold text-gray-900">£{item.amount.toFixed(2)}</span>
+                                        <span className="whitespace-nowrap font-semibold text-gray-900">{formatCurrencyAmount(item.amount, selectedInvoice.currency)}</span>
                                     </div>
                                 ))}
                                 <div className="flex justify-between gap-4 bg-gray-50 p-3 font-bold text-gray-900">
                                     <span>Total</span>
-                                    <span>£{selectedInvoice.total.toFixed(2)}</span>
+                                    <span>{formatCurrencyAmount(selectedInvoice.total, selectedInvoice.currency)}</span>
                                 </div>
                             </div>
                         </div>

@@ -41,6 +41,7 @@ export function toPublicInvoice(invoice: InvoiceRow) {
     engineerId: invoice.engineerId,
     items: parseJson(invoice.items, []),
     total: invoice.total,
+    currency: invoice.currency,
     issueDate: invoice.issueDate,
     dueDate: invoice.dueDate,
     status: invoice.status,

@@ -374,6 +374,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
              engineerId: contract.engineerId,
              items: itemsToInvoice,
              total,
+             currency: contract.currency,
              issueDate: new Date(),
              dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // Mocking Net 14
              status: InvoiceStatus.SENT

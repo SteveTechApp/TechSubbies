@@ -148,6 +148,7 @@ export const MOCK_INVOICES: Invoice[] = [
         engineerId: 'eng-2',
         items: [{ description: 'Milestone: Pre-wire & First Fix', amount: 1000 }],
         total: 1000,
+        currency: Currency.GBP,
         issueDate: new Date('2024-08-10'),
         dueDate: new Date('2024-08-24'),
         status: InvoiceStatus.SENT,

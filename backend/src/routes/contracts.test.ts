@@ -329,14 +329,14 @@ describe("contracts: milestones", () => {
 });
 
 describe("contracts: timesheets and invoicing", () => {
-  async function setUpActiveContract() {
+  async function setUpActiveContract(currency = "£") {
     const company = await registerCompany(`contracts-co-ts-${Date.now()}@example.com`, "Contract Co TS");
     const engineer = await registerEngineer(`contracts-eng-ts-${Date.now()}@example.com`, "Contract Eng TS");
 
     const created = await request(app)
       .post("/api/contracts")
       .set("Authorization", `Bearer ${company.token}`)
-      .send(await offeredContractBody(company, engineer));
+      .send({ ...(await offeredContractBody(company, engineer)), currency });
     const contractId = created.body.id;
 
     await request(app)
@@ -381,7 +381,7 @@ describe("contracts: timesheets and invoicing", () => {
   });
 
   it("lets the engineer invoice approved milestones and blocks it when none are approved", async () => {
-    const { company, engineer, contractId } = await setUpActiveContract();
+    const { company, engineer, contractId } = await setUpActiveContract("$");
 
     const noMilestones = await request(app)
       .post(`/api/contracts/${contractId}/invoices`)
@@ -416,6 +416,7 @@ describe("contracts: timesheets and invoicing", () => {
       .send({ paymentTerms: "Net 14 Days" });
     expect(invoice.status).toBe(201);
     expect(invoice.body.total).toBe(250);
+    expect(invoice.body.currency).toBe("$");
     expect(invoice.body.items).toHaveLength(1);
 
     const updatedContract = await request(app)
@@ -428,6 +429,7 @@ describe("contracts: timesheets and invoicing", () => {
       .set("Authorization", `Bearer ${engineer.token}`);
     expect(myInvoices.status).toBe(200);
     expect(myInvoices.body).toHaveLength(1);
+    expect(myInvoices.body[0].currency).toBe("$");
   });
 });
 

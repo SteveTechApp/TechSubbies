@@ -441,6 +441,7 @@ export interface Invoice {
     engineerId: string;
     items: InvoiceItem[];
     total: number;
+    currency: Currency;
     issueDate: Date;
     dueDate: Date;
     status: InvoiceStatus;

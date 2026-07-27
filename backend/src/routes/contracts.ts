@@ -372,6 +372,8 @@ contractsRouter.post("/:contractId/invoices", requireAuth, async (req: AuthedReq
   const items = approved.map((m) => ({ description: `Milestone: ${m.description}`, amount: m.amount }));
   const total = items.reduce((sum, item) => sum + item.amount, 0);
   const dueDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+  const contractCurrency = (toPublicContract(contract) as Record<string, unknown>).currency;
+  const currency = typeof contractCurrency === "string" ? contractCurrency : "£";
 
   const invoice = createInvoice({
     contractId: contract.id,
@@ -379,6 +381,7 @@ contractsRouter.post("/:contractId/invoices", requireAuth, async (req: AuthedReq
     engineerId: contract.engineerId,
     items,
     total,
+    currency,
     dueDate,
   });
 

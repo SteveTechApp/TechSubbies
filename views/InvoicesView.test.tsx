@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { InvoiceStatus, Role } from '../types';
+import { Currency, InvoiceStatus, Role } from '../types';
 
 const { mockUseAppContext } = vi.hoisted(() => ({
     mockUseAppContext: vi.fn(),
@@ -20,6 +20,7 @@ const invoice = {
     engineerId: 'engineer-1',
     items: [{ description: 'Commissioning milestone', amount: 850 }],
     total: 850,
+    currency: Currency.USD,
     issueDate: new Date('2026-07-01'),
     dueDate: new Date('2026-07-15'),
     status: InvoiceStatus.SENT,
@@ -43,7 +44,7 @@ describe('InvoicesView', () => {
         expect(dialog).toBeInTheDocument();
         expect(dialog).toHaveTextContent('Commissioning milestone');
         expect(dialog).toHaveTextContent('contract-100');
-        expect(dialog).toHaveTextContent('£850.00');
+        expect(dialog).toHaveTextContent('$850.00');
 
         fireEvent.keyDown(window, { key: 'Escape' });
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
