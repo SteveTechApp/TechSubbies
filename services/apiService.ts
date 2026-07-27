@@ -74,6 +74,23 @@ export type AdminPlatformMetrics = {
   privacyPending: number;
 };
 
+export type AdminJob = {
+  id: string;
+  companyId: string;
+  title: string;
+  description: string;
+  location: string;
+  dayRate: string;
+  currency: string;
+  startDate?: string | null;
+  status: string;
+  postedDate: string;
+  companyName: string;
+  companyEmail: string;
+  moderatedAt: string | null;
+  moderationReason: string | null;
+};
+
 export type AccountDeletionStatus = {
   reference: string;
   status: string;
@@ -367,6 +384,35 @@ const apiService = {
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not load platform metrics.');
     return data.metrics;
+  },
+
+  listAdminJobs: async (
+    options: { limit?: number; offset?: number; query?: string } = {}
+  ): Promise<{ jobs: AdminJob[]; total: number; limit: number; offset: number }> => {
+    const parameters = new URLSearchParams({
+      limit: String(options.limit ?? 25),
+      offset: String(options.offset ?? 0),
+      query: options.query ?? '',
+    });
+    const response = await fetch(`${API_BASE_URL}/admin/jobs?${parameters}`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not load job listings.');
+    return data;
+  },
+
+  moderateAdminJob: async (
+    jobId: string,
+    status: 'active' | 'closed',
+    reason?: string
+  ): Promise<AdminJob> => {
+    const response = await fetch(`${API_BASE_URL}/admin/jobs/${jobId}/moderation`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, ...(status === 'closed' ? { reason } : {}) }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not update job status.');
+    return data.job;
   },
 
   setAdminUserSuspension: async (
