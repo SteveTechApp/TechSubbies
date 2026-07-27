@@ -10,6 +10,7 @@ process.env.JWT_SECRET = "test-secret";
 
 const { createApp } = await import("../app.js");
 const { markEmailVerified } = await import("../lib/db.js");
+const { developmentEmailOutbox } = await import("../lib/email.js");
 const app = createApp();
 
 async function registerCompany(email: string, name: string) {
@@ -238,6 +239,7 @@ describe("company application feed", () => {
       id: applied.body.id,
       status: "Viewed",
       reviewed: true,
+      notificationSent: false,
     }));
 
     const offered = await request(app)
@@ -246,6 +248,12 @@ describe("company application feed", () => {
       .send({ status: "Offered" });
     expect(offered.status).toBe(200);
     expect(offered.body.status).toBe("Offered");
+    expect(offered.body.notificationSent).toBe(true);
+    expect(developmentEmailOutbox.some((email: { to: string; subject: string; text: string }) =>
+      email.to === "application-status-engineer@example.com"
+      && email.subject.includes("offer for AV Install Engineer")
+      && email.text.includes("Sign in to review")
+    )).toBe(true);
 
     const hired = await request(app)
       .patch(`/api/applications/${applied.body.id}`)

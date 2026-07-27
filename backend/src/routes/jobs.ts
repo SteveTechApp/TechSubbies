@@ -6,6 +6,7 @@ import {
   findApplication,
   findApplicationById,
   findJobById,
+  findUserById,
   listActiveJobs,
   listApplicationsForEngineer,
   listApplicationsForJob,
@@ -14,6 +15,7 @@ import {
   updateApplicationStatus,
   updateJob,
 } from "../lib/db.js";
+import { sendApplicationStatusNotification } from "../lib/applicationNotifications.js";
 import { toPublicApplication, toPublicJob } from "../lib/publicJob.js";
 import { requireAuth, requireRole, type AuthedRequest } from "../middleware/auth.js";
 
@@ -161,7 +163,7 @@ applicationsRouter.patch(
   "/:applicationId",
   requireAuth,
   requireRole("Company", "Resourcing Company"),
-  (req: AuthedRequest, res) => {
+  async (req: AuthedRequest, res) => {
     const application = findApplicationById(req.params.applicationId);
     if (!application) {
       return res.status(404).json({ error: "Application not found." });
@@ -178,7 +180,10 @@ applicationsRouter.patch(
     }
 
     if (parsed.data.status === application.status) {
-      return res.json(toPublicApplication(updateApplicationStatus(application.id, application.status, true)!));
+      return res.json({
+        ...toPublicApplication(updateApplicationStatus(application.id, application.status, true)!),
+        notificationSent: false,
+      });
     }
 
     const allowedStatuses = applicationStatusTransitions[application.status] || [];
@@ -188,9 +193,27 @@ applicationsRouter.patch(
       });
     }
 
-    return res.json(toPublicApplication(
-      updateApplicationStatus(application.id, parsed.data.status, true)!
-    ));
+    const updated = updateApplicationStatus(application.id, parsed.data.status, true)!;
+    const engineer = findUserById(application.engineerId);
+    let jobTitle = "a technical opportunity";
+    try {
+      jobTitle = String(JSON.parse(job.data).title || jobTitle);
+    } catch {
+      // Keep the safe fallback title.
+    }
+    let notificationSent = false;
+    if (engineer && parsed.data.status !== "Viewed") {
+      notificationSent = await sendApplicationStatusNotification({
+        to: engineer.email,
+        jobTitle,
+        status: parsed.data.status,
+      });
+    }
+
+    return res.json({
+      ...toPublicApplication(updated),
+      notificationSent,
+    });
   }
 );
 
