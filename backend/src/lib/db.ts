@@ -13,9 +13,32 @@ fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
 
 export const db = new DatabaseSync(DB_FILE);
 
+// WAL allows readers to continue while a write is committed. A bounded busy
+// timeout absorbs short write contention instead of immediately failing a
+// marketplace action with SQLITE_BUSY.
+db.prepare("PRAGMA journal_mode = WAL").get();
+db.exec(`
+  PRAGMA synchronous = NORMAL;
+  PRAGMA foreign_keys = ON;
+  PRAGMA busy_timeout = 5000;
+`);
+
 export function checkDatabaseConnection(): boolean {
   const result = db.prepare("SELECT 1 AS ok").get() as { ok?: number } | undefined;
   return result?.ok === 1;
+}
+
+export function getDatabaseRuntimeSettings() {
+  const journal = db.prepare("PRAGMA journal_mode").get() as { journal_mode: string };
+  const synchronous = db.prepare("PRAGMA synchronous").get() as { synchronous: number };
+  const foreignKeys = db.prepare("PRAGMA foreign_keys").get() as { foreign_keys: number };
+  const busyTimeout = db.prepare("PRAGMA busy_timeout").get() as { timeout: number };
+  return {
+    journalMode: journal.journal_mode,
+    synchronous: synchronous.synchronous,
+    foreignKeys: foreignKeys.foreign_keys === 1,
+    busyTimeoutMs: busyTimeout.timeout,
+  };
 }
 
 db.exec(`

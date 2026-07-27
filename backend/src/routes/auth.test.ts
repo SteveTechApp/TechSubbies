@@ -12,6 +12,7 @@ process.env.JWT_SECRET = "test-secret";
 
 const { createApp } = await import("../app.js");
 const { developmentEmailOutbox, resetEmailProvider, setEmailProvider } = await import("../lib/email.js");
+const { getDatabaseRuntimeSettings } = await import("../lib/db.js");
 const app = createApp();
 
 function tokenFromLastEmail(): string {
@@ -131,6 +132,15 @@ describe("cookie session security", () => {
     expect(response.body).toEqual({
       status: "unavailable",
       checks: { database: "unavailable" },
+    });
+  });
+
+  it("uses contention-safe SQLite runtime settings", () => {
+    expect(getDatabaseRuntimeSettings()).toEqual({
+      journalMode: "wal",
+      synchronous: 1,
+      foreignKeys: true,
+      busyTimeoutMs: 5000,
     });
   });
 });

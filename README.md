@@ -36,6 +36,16 @@ only correlation metadata (method, path, status and duration), never request
 bodies or authorization headers. Unexpected errors return the request ID so
 support can locate the matching server event without exposing stack traces.
 
+## Database deployment
+
+The backend enables SQLite WAL mode, normal synchronous durability, foreign-key
+checks and a five-second busy timeout. The database file and its `-wal`/`-shm`
+companions must live on persistent local storage and be backed up together.
+
+Run only one backend instance against a SQLite database file. Horizontal scaling
+or multi-region deployment requires migrating the repository layer to a managed
+database such as PostgreSQL rather than sharing SQLite over a network filesystem.
+
 ## Compliance and certification model
 
 TechSubbies includes a role-specific compliance taxonomy for safety, AV industry credentials, IT/networking certifications, manufacturer training, project management credentials, insurance, company standards and background checks.
