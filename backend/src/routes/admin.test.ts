@@ -78,6 +78,24 @@ describe("admin deletion request reviews", () => {
       accountEmail: "privacy-engineer@example.com",
       responseDueAt: expect.any(String),
     });
+    expect(queued.body).toMatchObject({ total: 1, limit: 20, offset: 0 });
+
+    const searched = await request(app)
+      .get("/api/admin/deletion-requests?query=privacy-engineer&limit=1&offset=0")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(searched.status).toBe(200);
+    expect(searched.body.requests).toHaveLength(1);
+    expect(searched.body.total).toBe(1);
+
+    const noMatches = await request(app)
+      .get("/api/admin/deletion-requests?query=not-a-real-account")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(noMatches.body).toMatchObject({ requests: [], total: 0 });
+
+    const invalidPage = await request(app)
+      .get("/api/admin/deletion-requests?limit=1000")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(invalidPage.status).toBe(400);
 
     const reviewed = await request(app)
       .patch(`/api/admin/deletion-requests/${deletionRequestId}`)

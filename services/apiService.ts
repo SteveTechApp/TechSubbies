@@ -295,12 +295,19 @@ const apiService = {
   },
 
   listAdminDeletionRequests: async (
-    status: AdminDeletionRequest['status'] = 'pending'
-  ): Promise<AdminDeletionRequest[]> => {
-    const response = await fetch(`${API_BASE_URL}/admin/deletion-requests?status=${encodeURIComponent(status)}`);
+    status: AdminDeletionRequest['status'] = 'pending',
+    options: { limit?: number; offset?: number; query?: string } = {}
+  ): Promise<{ requests: AdminDeletionRequest[]; total: number; limit: number; offset: number }> => {
+    const parameters = new URLSearchParams({
+      status,
+      limit: String(options.limit ?? 20),
+      offset: String(options.offset ?? 0),
+      query: options.query ?? '',
+    });
+    const response = await fetch(`${API_BASE_URL}/admin/deletion-requests?${parameters}`);
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not load privacy requests.');
-    return data.requests;
+    return data;
   },
 
   getAdminPrivacySummary: async (): Promise<AdminPrivacySummary> => {

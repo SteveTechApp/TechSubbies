@@ -72,15 +72,48 @@ export function requestAccountDeletion(userId: string): AccountDeletionRequest {
   return findAccountDeletionRequest(userId)!;
 }
 
-export function listAccountDeletionRequests(status = "pending"): AccountDeletionReviewItem[] {
+export function listAccountDeletionRequests(
+  status = "pending",
+  options: { limit?: number; offset?: number; query?: string } = {}
+): AccountDeletionReviewItem[] {
+  const limit = Math.max(1, Math.min(100, Math.trunc(options.limit ?? 100)));
+  const offset = Math.max(0, Math.trunc(options.offset ?? 0));
+  const query = `%${(options.query || "").trim().toLowerCase()}%`;
   return db.prepare(`
     SELECT request.*, users.email AS accountEmail, users.name AS accountName,
            users.role AS accountRole
     FROM account_deletion_requests request
     JOIN users ON users.id = request.userId
     WHERE request.status = ?
+      AND (? = '%%' OR LOWER(users.email) LIKE ? OR LOWER(users.name) LIKE ? OR LOWER(request.id) LIKE ?)
     ORDER BY request.requestedAt ASC
-  `).all(status) as unknown as AccountDeletionReviewItem[];
+    LIMIT ? OFFSET ?
+  `).all(status, query, query, query, query, limit, offset) as unknown as AccountDeletionReviewItem[];
+}
+
+export function countAccountDeletionRequests(status: string, queryText = ""): number {
+  const query = `%${queryText.trim().toLowerCase()}%`;
+  const row = db.prepare(`
+    SELECT COUNT(*) AS total
+    FROM account_deletion_requests request
+    JOIN users ON users.id = request.userId
+    WHERE request.status = ?
+      AND (? = '%%' OR LOWER(users.email) LIKE ? OR LOWER(users.name) LIKE ? OR LOWER(request.id) LIKE ?)
+  `).get(status, query, query, query, query) as { total: number };
+  return row.total;
+}
+
+export function findAccountDeletionReviewItem(
+  id: string,
+  status: string
+): AccountDeletionReviewItem | undefined {
+  return db.prepare(`
+    SELECT request.*, users.email AS accountEmail, users.name AS accountName,
+           users.role AS accountRole
+    FROM account_deletion_requests request
+    JOIN users ON users.id = request.userId
+    WHERE request.id = ? AND request.status = ?
+  `).get(id, status) as unknown as AccountDeletionReviewItem | undefined;
 }
 
 export function reviewAccountDeletionRequest(

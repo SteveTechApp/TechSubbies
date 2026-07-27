@@ -7,6 +7,8 @@ import {
   processAccountDeletionRequest,
   getAccountDeletionSummary,
   accountDeletionResponseDueAt,
+  countAccountDeletionRequests,
+  findAccountDeletionReviewItem,
 } from "../lib/accountDeletion.js";
 import { recordAccountAudit } from "../lib/accountAudit.js";
 import { requireAuth, requireRole, type AuthedRequest } from "../middleware/auth.js";
@@ -26,12 +28,29 @@ adminRouter.get("/deletion-requests", (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: "Unsupported deletion request status." });
   }
-  const requests = listAccountDeletionRequests(parsed.data).map((request) => ({
+  const paging = z.object({
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    offset: z.coerce.number().int().min(0).default(0),
+    query: z.string().trim().max(100).default(""),
+  }).safeParse({
+    limit: req.query.limit,
+    offset: req.query.offset,
+    query: req.query.query,
+  });
+  if (!paging.success) {
+    return res.status(400).json({ error: "Invalid privacy queue search or pagination." });
+  }
+  const requests = listAccountDeletionRequests(parsed.data, paging.data).map((request) => ({
     ...request,
     responseDueAt: accountDeletionResponseDueAt(request.requestedAt),
     eligibility: getAccountDeletionEligibility(request.userId),
   }));
-  return res.json({ requests });
+  return res.json({
+    requests,
+    total: countAccountDeletionRequests(parsed.data, paging.data.query),
+    limit: paging.data.limit,
+    offset: paging.data.offset,
+  });
 });
 
 adminRouter.patch("/deletion-requests/:requestId", async (req: AuthedRequest, res) => {
@@ -46,9 +65,7 @@ adminRouter.patch("/deletion-requests/:requestId", async (req: AuthedRequest, re
     });
   }
 
-  const queued = listAccountDeletionRequests("pending").find(
-    (request) => request.id === req.params.requestId
-  );
+  const queued = findAccountDeletionReviewItem(req.params.requestId, "pending");
   if (!queued) {
     return res.status(409).json({ error: "This request is missing or has already been reviewed." });
   }
@@ -96,9 +113,7 @@ adminRouter.post("/deletion-requests/:requestId/process", async (req: AuthedRequ
     return res.status(400).json({ error: 'Type "ANONYMISE ACCOUNT" to confirm final processing.' });
   }
 
-  const approved = listAccountDeletionRequests("approved").find(
-    (request) => request.id === req.params.requestId
-  );
+  const approved = findAccountDeletionReviewItem(req.params.requestId, "approved");
   const accountEmail = approved ? findUserById(approved.userId)?.email : undefined;
   const processed = processAccountDeletionRequest(req.params.requestId, req.userId!);
   if (!processed) {

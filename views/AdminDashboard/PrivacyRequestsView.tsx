@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import apiService, { type AdminDeletionRequest, type AdminPrivacySummary } from '../../services/apiService';
 
 type QueueStatus = 'pending' | 'approved' | 'processed';
+const PAGE_SIZE = 20;
 
 export const PrivacyRequestsView = () => {
     const [requests, setRequests] = useState<AdminDeletionRequest[]>([]);
@@ -9,6 +10,10 @@ export const PrivacyRequestsView = () => {
     const [userMessages, setUserMessages] = useState<Record<string, string>>({});
     const [confirmations, setConfirmations] = useState<Record<string, string>>({});
     const [status, setStatus] = useState<QueueStatus>('pending');
+    const [searchInput, setSearchInput] = useState('');
+    const [query, setQuery] = useState('');
+    const [offset, setOffset] = useState(0);
+    const [total, setTotal] = useState(0);
     const [summary, setSummary] = useState<AdminPrivacySummary | null>(null);
     const [loading, setLoading] = useState(true);
     const [workingId, setWorkingId] = useState<string | null>(null);
@@ -18,11 +23,14 @@ export const PrivacyRequestsView = () => {
     useEffect(() => {
         setLoading(true);
         setError('');
-        apiService.listAdminDeletionRequests(status)
-            .then(setRequests)
+        apiService.listAdminDeletionRequests(status, { limit: PAGE_SIZE, offset, query })
+            .then((result) => {
+                setRequests(result.requests);
+                setTotal(result.total);
+            })
             .catch((err) => setError(err instanceof Error ? err.message : 'Could not load privacy requests.'))
             .finally(() => setLoading(false));
-    }, [status]);
+    }, [status, offset, query]);
 
     useEffect(() => {
         apiService.getAdminPrivacySummary().then(setSummary).catch(() => undefined);
@@ -41,6 +49,7 @@ export const PrivacyRequestsView = () => {
         try {
             await apiService.reviewAdminDeletionRequest(request.id, decision, note, userMessage);
             setRequests((current) => current.filter((item) => item.id !== request.id));
+            setTotal((current) => Math.max(0, current - 1));
             setMessage(decision === 'approved'
                 ? 'Request approved for processing. No account data has been changed yet.'
                 : 'Request rejected and the decision was recorded.');
@@ -63,6 +72,7 @@ export const PrivacyRequestsView = () => {
         try {
             await apiService.processAdminDeletionRequest(request.id, confirmation);
             setRequests((current) => current.filter((item) => item.id !== request.id));
+            setTotal((current) => Math.max(0, current - 1));
             setMessage('Identity and authentication data were anonymised; transaction references were retained.');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Could not process privacy request.');
@@ -102,7 +112,7 @@ export const PrivacyRequestsView = () => {
                     <button
                         key={option}
                         type="button"
-                        onClick={() => setStatus(option)}
+                        onClick={() => { setStatus(option); setOffset(0); }}
                         className={`border-b-2 px-4 py-2 text-sm font-semibold ${
                             status === option ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500'
                         }`}
@@ -113,6 +123,37 @@ export const PrivacyRequestsView = () => {
                     </button>
                 ))}
             </div>
+
+            <form
+                className="mb-5 flex flex-col gap-2 sm:flex-row"
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    setOffset(0);
+                    setQuery(searchInput.trim());
+                }}
+            >
+                <label className="sr-only" htmlFor="privacy-search">Search privacy requests</label>
+                <input
+                    id="privacy-search"
+                    value={searchInput}
+                    onChange={(event) => setSearchInput(event.target.value)}
+                    placeholder="Search name, email, or reference"
+                    maxLength={100}
+                    className="flex-1 rounded-md border border-gray-300 px-3 py-2"
+                />
+                <button type="submit" className="rounded-md bg-blue-700 px-4 py-2 font-semibold text-white">
+                    Search
+                </button>
+                {query && (
+                    <button
+                        type="button"
+                        onClick={() => { setSearchInput(''); setQuery(''); setOffset(0); }}
+                        className="rounded-md border border-gray-300 px-4 py-2 font-semibold text-gray-700"
+                    >
+                        Clear
+                    </button>
+                )}
+            </form>
 
             {error && <div role="alert" className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div>}
             {message && <div role="status" className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-800">{message}</div>}
@@ -241,6 +282,27 @@ export const PrivacyRequestsView = () => {
                             )}
                         </section>
                     ))}
+                    <nav className="flex items-center justify-between rounded-lg border bg-white p-3" aria-label="Privacy request pages">
+                        <button
+                            type="button"
+                            disabled={offset === 0}
+                            onClick={() => setOffset((current) => Math.max(0, current - PAGE_SIZE))}
+                            className="rounded-md border px-3 py-2 text-sm font-semibold disabled:opacity-40"
+                        >
+                            Previous
+                        </button>
+                        <span className="text-sm text-gray-600">
+                            {offset + 1}–{Math.min(offset + requests.length, total)} of {total}
+                        </span>
+                        <button
+                            type="button"
+                            disabled={offset + requests.length >= total}
+                            onClick={() => setOffset((current) => current + PAGE_SIZE)}
+                            className="rounded-md border px-3 py-2 text-sm font-semibold disabled:opacity-40"
+                        >
+                            Next
+                        </button>
+                    </nav>
                 </div>
             )}
         </div>
