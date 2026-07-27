@@ -21,6 +21,8 @@ export type AdminDeletionRequest = {
   reviewedAt: string | null;
   reviewerId: string | null;
   resolutionNote: string | null;
+  processedAt: string | null;
+  processorId: string | null;
   accountEmail: string;
   accountName: string;
   accountRole: string;
@@ -270,8 +272,10 @@ const apiService = {
     return data.request;
   },
 
-  listAdminDeletionRequests: async (): Promise<AdminDeletionRequest[]> => {
-    const response = await fetch(`${API_BASE_URL}/admin/deletion-requests`);
+  listAdminDeletionRequests: async (
+    status: AdminDeletionRequest['status'] = 'pending'
+  ): Promise<AdminDeletionRequest[]> => {
+    const response = await fetch(`${API_BASE_URL}/admin/deletion-requests?status=${encodeURIComponent(status)}`);
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not load privacy requests.');
     return data.requests;
@@ -289,6 +293,17 @@ const apiService = {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not review privacy request.');
+    return data.request;
+  },
+
+  processAdminDeletionRequest: async (requestId: string, confirmation: string): Promise<AdminDeletionRequest> => {
+    const response = await fetch(`${API_BASE_URL}/admin/deletion-requests/${requestId}/process`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirmation }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not process privacy request.');
     return data.request;
   },
 
