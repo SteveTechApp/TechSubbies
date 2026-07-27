@@ -1,13 +1,17 @@
 import React from 'react';
 import { EngineerProfile } from '../../types';
 import { ArrowLeft, CreditCard, DollarSign, ShieldCheck } from '../../components/Icons';
+import { formatMonthlyMembershipPrice, MEMBERSHIP_PLAN_BY_TIER } from '../../data/membershipPlans';
 
 interface PaymentsViewProps {
     profile: EngineerProfile;
     setActiveView: (view: string) => void;
 }
 
-export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => (
+export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
+    const plan = MEMBERSHIP_PLAN_BY_TIER[profile.profileTier];
+
+    return (
     <div>
         <button
             onClick={() => setActiveView('Dashboard')}
@@ -27,7 +31,8 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => (
                     <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-4">
                         <div>
                             <p className="text-sm font-semibold text-blue-700">Current plan</p>
-                            <p className="text-2xl font-bold text-blue-900">{profile.profileTier} Plan</p>
+                            <p className="text-2xl font-bold text-blue-900">{profile.profileTier} · {plan.name}</p>
+                            <p className="mt-1 text-sm text-blue-700">{formatMonthlyMembershipPrice(plan)}</p>
                         </div>
                         <button className="rounded-md bg-blue-600 px-6 py-2 font-bold text-white hover:bg-blue-700">
                             Manage Membership
@@ -56,4 +61,5 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => (
             </aside>
         </div>
     </div>
-);
+    );
+};

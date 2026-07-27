@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { EngineerProfile, SelectedJobRole, ProfileTier } from '../../types';
 import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles';
+import { MEMBERSHIP_PLAN_BY_TIER } from '../../data/membershipPlans';
 import { Plus, Trash2, Edit } from '../Icons';
 import { EditSkillProfileModal } from '../EditSkillProfileModal';
 import { useAppContext } from '../../context/InteractionContext';
@@ -34,13 +35,7 @@ export const SkillsAndRolesSection = ({ profile, formData, setFormData, setActiv
     const roles = useMemo(() => formData.selectedJobRoles || [], [formData.selectedJobRoles]);
     const canUseSpecialistRoles = profile.profileTier !== ProfileTier.BASIC;
 
-    const ROLE_LIMITS: { [key in ProfileTier]: number } = {
-        [ProfileTier.BASIC]: 0,
-        [ProfileTier.PROFESSIONAL]: 1,
-        [ProfileTier.SKILLS]: 3,
-        [ProfileTier.BUSINESS]: 5,
-    };
-    const roleLimit = ROLE_LIMITS[profile.profileTier];
+    const roleLimit = MEMBERSHIP_PLAN_BY_TIER[profile.profileTier].specialistRoleLimit;
     const canAddMoreRoles = roles.length < roleLimit;
 
     const getNextTier = () => {

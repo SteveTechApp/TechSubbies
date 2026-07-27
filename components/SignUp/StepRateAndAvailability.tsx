@@ -8,14 +8,6 @@ interface StepRateAndAvailabilityProps {
 
 export const StepRateAndAvailability = ({ data, onChange }: StepRateAndAvailabilityProps) => {
 
-    const handleMaxRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = parseInt(e.target.value, 10);
-        if (value > 195) {
-            e.target.value = '195';
-        }
-        onChange(e);
-    };
-
     return (
         <div className="fade-in-up">
             <h2 className="text-xl font-semibold mb-4">Step 4: Rate & Availability</h2>
@@ -36,11 +28,11 @@ export const StepRateAndAvailability = ({ data, onChange }: StepRateAndAvailabil
                         </div>
                         <div className="w-1/3">
                             <label className="block text-sm font-medium text-gray-500">Maximum</label>
-                            <input type="number" name="maxDayRate" value={data.maxDayRate} step="5" onChange={handleMaxRateChange} max="195" className="w-full border p-2 rounded" />
+                            <input type="number" name="maxDayRate" value={data.maxDayRate} step="5" onChange={onChange} className="w-full border p-2 rounded" />
                         </div>
                     </div>
                      <div className="mt-2 p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded-md text-sm">
-                        For your free <strong>Basic Profile</strong>, the maximum day rate is capped at £195. You can set a higher rate range after upgrading to a premium profile.
+                        Set the rate range that reflects your services. TechSubbies does not cap your rate or take a percentage of it.
                     </div>
                 </div>
 

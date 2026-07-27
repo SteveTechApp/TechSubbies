@@ -1,11 +1,12 @@
 import { ProfileTier } from '../types';
+import { MEMBERSHIP_PLAN_BY_TIER } from './membershipPlans';
 
 // Pricing data
 export const TIER_PRICES = {
-    [ProfileTier.BASIC]: 0,
-    [ProfileTier.PROFESSIONAL]: 7, // Silver
-    [ProfileTier.SKILLS]: 15,       // Gold
-    [ProfileTier.BUSINESS]: 35,      // Platinum
+    [ProfileTier.BASIC]: MEMBERSHIP_PLAN_BY_TIER[ProfileTier.BASIC].monthlyPrice,
+    [ProfileTier.PROFESSIONAL]: MEMBERSHIP_PLAN_BY_TIER[ProfileTier.PROFESSIONAL].monthlyPrice,
+    [ProfileTier.SKILLS]: MEMBERSHIP_PLAN_BY_TIER[ProfileTier.SKILLS].monthlyPrice,
+    [ProfileTier.BUSINESS]: MEMBERSHIP_PLAN_BY_TIER[ProfileTier.BUSINESS].monthlyPrice,
 };
 
 // Operational cost assumptions

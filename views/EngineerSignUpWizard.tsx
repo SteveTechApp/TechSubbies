@@ -9,6 +9,11 @@ import {
   type SkillRequirement,
 } from "../data/roleExpectations";
 import { useAppContext } from "../context/InteractionContext";
+import {
+  formatMonthlyMembershipPrice,
+  membershipPlanForSpecialistRoles,
+} from "../data/membershipPlans";
+import { ProfileTier } from "../types";
 
 type EngineerSignUpWizardProps = {
   onCancel?: () => void;
@@ -238,7 +243,7 @@ function profileScore(profiles: EngineerRoleProfile[]) {
 }
 
 type SubscriptionEstimate = {
-  tierName: "Free" | "Starter" | "Pro" | "Unlimited";
+  tierName: ProfileTier;
   monthlyPrice: string;
   profileAllowance: string;
   paidProfileCount: number;
@@ -292,61 +297,26 @@ function getSubscriptionEstimate(profiles: EngineerRoleProfile[]): SubscriptionE
     warnings.push("Basic labour or junior support profiles are treated as low-cost access profiles in this estimate.");
   }
 
-  if (paidProfileCount === 0) {
-    return {
-      tierName: "Free",
-      monthlyPrice: "£0/month",
-      profileAllowance: "Basic profile access",
-      paidProfileCount,
-      totalProfileCount,
-      specialistProfileCount,
-      leadProfileCount,
-      explanation:
-        "This looks like a free basic profile. Suitable for low-responsibility support visibility, but it should not rank strongly for specialist or lead opportunities.",
-      warnings,
-    };
+  const plan = membershipPlanForSpecialistRoles(paidProfileCount);
+  if (paidProfileCount > plan.specialistRoleLimit) {
+    warnings.push(`The ${plan.tier} plan currently supports up to ${plan.specialistRoleLimit} specialist role profiles.`);
   }
 
-  if (paidProfileCount <= 3) {
-    return {
-      tierName: "Starter",
-      monthlyPrice: "Indicative £9/month",
-      profileAllowance: "Up to 3 paid role profiles",
-      paidProfileCount,
-      totalProfileCount,
-      specialistProfileCount,
-      leadProfileCount,
-      explanation:
-        "This suits an engineer with a small number of credible paid role profiles, such as AV installer, IT field engineer or one specialist focus.",
-      warnings,
-    };
-  }
-
-  if (paidProfileCount <= 8) {
-    return {
-      tierName: "Pro",
-      monthlyPrice: "Indicative £19/month",
-      profileAllowance: "Up to 8 paid role profiles",
-      paidProfileCount,
-      totalProfileCount,
-      specialistProfileCount,
-      leadProfileCount,
-      explanation:
-        "This suits a multi-skilled engineer who wants to be visible across several AV, IT, hybrid or specialist role profiles.",
-      warnings,
-    };
-  }
+  const explanation = plan.tier === ProfileTier.BASIC
+    ? "Bronze provides free marketplace access. You can apply to suitable opportunities and set your own rates; upgrade when you want specialist profile and AI tools."
+    : `${plan.tier} matches the ${paidProfileCount} specialist role profile${paidProfileCount === 1 ? "" : "s"} selected here. Membership affects profile tools and visibility, never your right to apply or the fee you agree with a company.`;
 
   return {
-    tierName: "Unlimited",
-    monthlyPrice: "Indicative £39/month",
-    profileAllowance: "Unlimited paid role profiles",
+    tierName: plan.tier,
+    monthlyPrice: formatMonthlyMembershipPrice(plan),
+    profileAllowance: plan.specialistRoleLimit === 0
+      ? "Basic marketplace profile"
+      : `Up to ${plan.specialistRoleLimit} specialist role profile${plan.specialistRoleLimit === 1 ? "" : "s"}`,
     paidProfileCount,
     totalProfileCount,
     specialistProfileCount,
     leadProfileCount,
-    explanation:
-      "This suits a broad technical profile, senior freelancer, small technical team or engineer who wants maximum role visibility.",
+    explanation,
     warnings,
   };
 }
@@ -692,7 +662,7 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
             <section className="mt-6 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-5">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
-                  <h3 className="font-bold text-cyan-200">Expected subscription tier</h3>
+                  <h3 className="font-bold text-cyan-200">Expected membership tier</h3>
                   <p className="mt-2 text-sm leading-6 text-slate-300">
                     {subscription.explanation}
                   </p>
@@ -726,7 +696,7 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
 
               {subscription.warnings.length > 0 && (
                 <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/10 p-4">
-                  <div className="text-sm font-bold text-amber-100">Pricing and verification notes</div>
+                  <div className="text-sm font-bold text-amber-100">Membership and verification notes</div>
                   <ul className="mt-2 space-y-1 text-sm leading-6 text-amber-50">
                     {subscription.warnings.map((warning) => (
                       <li key={warning}>- {warning}</li>
@@ -736,7 +706,7 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
               )}
 
               <p className="mt-4 text-xs leading-5 text-slate-500">
-                Pricing is indicative and should later be moved into a shared pricing rules file with regional/local-market adjustments.
+                This estimate uses the same published membership catalogue shown on the pricing and billing pages.
               </p>
             </section>
             <div className="mt-6 flex justify-between">
@@ -1071,7 +1041,7 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
             <section className="mt-5 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-5">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <h3 className="font-bold text-cyan-200">Subscription expectation</h3>
+                  <h3 className="font-bold text-cyan-200">Membership expectation</h3>
                   <p className="mt-2 text-sm leading-6 text-slate-300">{subscription.explanation}</p>
                   <p className="mt-2 text-xs leading-5 text-slate-500">
                     This estimate is based on visible paid profiles, specialist profiles and lead responsibility settings.
