@@ -29,6 +29,9 @@ vi.mock("../services/apiService", () => ({
     listSecurityEvents: vi.fn(),
     revokeAllSessions: vi.fn(),
     exportMyAccountData: vi.fn(),
+    getDeletionRequest: vi.fn(),
+    requestAccountDeletion: vi.fn(),
+    cancelAccountDeletion: vi.fn(),
   },
 }));
 
@@ -38,6 +41,7 @@ describe("account access pages", () => {
     window.history.replaceState({}, "", "/");
     authState.user.emailVerified = false;
     vi.mocked(apiService.listSecurityEvents).mockResolvedValue([]);
+    vi.mocked(apiService.getDeletionRequest).mockResolvedValue(null);
   });
 
   it("requests password reset instructions without revealing account existence", async () => {
@@ -144,5 +148,22 @@ describe("account access pages", () => {
     expect(click).toHaveBeenCalledOnce();
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:account-export");
     expect(await screen.findByText("Your account data export has downloaded.")).toBeVisible();
+  });
+
+  it("submits and cancels an account deletion request", async () => {
+    const pending = { status: "pending", requestedAt: "2026-07-27T12:00:00.000Z", cancelledAt: null };
+    vi.mocked(apiService.requestAccountDeletion).mockResolvedValue(pending);
+    vi.mocked(apiService.cancelAccountDeletion).mockResolvedValue({ ...pending, status: "cancelled", cancelledAt: "2026-07-27T13:00:00.000Z" });
+    const user = userEvent.setup();
+    render(<AccountSecurityPage />);
+
+    await user.type(screen.getByLabelText("Confirm password"), "correct-password");
+    await user.click(screen.getByRole("button", { name: "Request account deletion" }));
+    expect(apiService.requestAccountDeletion).toHaveBeenCalledWith("correct-password");
+    expect(await screen.findByText(/Deletion requested on/)).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Cancel deletion request" }));
+    expect(apiService.cancelAccountDeletion).toHaveBeenCalledOnce();
+    expect(await screen.findByText("Account deletion request cancelled.")).toBeVisible();
   });
 });

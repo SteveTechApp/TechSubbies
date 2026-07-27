@@ -111,6 +111,44 @@ describe("GET /api/users/me/export", () => {
   });
 });
 
+describe("account deletion requests", () => {
+  it("requires password confirmation, creates a pending request and allows cancellation", async () => {
+    const wrongPassword = await request(app)
+      .post("/api/users/me/deletion-request")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ password: "wrong-password" });
+    expect(wrongPassword.status).toBe(401);
+
+    const created = await request(app)
+      .post("/api/users/me/deletion-request")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ password: "correcthorsebattery" });
+    expect(created.status).toBe(202);
+    expect(created.body.request).toMatchObject({
+      status: "pending",
+      requestedAt: expect.any(String),
+      cancelledAt: null,
+    });
+    expect(created.body.request).not.toHaveProperty("userId");
+
+    const status = await request(app)
+      .get("/api/users/me/deletion-request")
+      .set("Authorization", `Bearer ${token}`);
+    expect(status.body.request.status).toBe("pending");
+
+    const cancelled = await request(app)
+      .delete("/api/users/me/deletion-request")
+      .set("Authorization", `Bearer ${token}`);
+    expect(cancelled.status).toBe(200);
+    expect(cancelled.body.request.status).toBe("cancelled");
+    expect(cancelled.body.request.cancelledAt).toEqual(expect.any(String));
+  });
+
+  it("does not reveal deletion status without authentication", async () => {
+    expect((await request(app).get("/api/users/me/deletion-request")).status).toBe(401);
+  });
+});
+
 describe("PATCH /api/users/me", () => {
   it("rejects the request without a token", async () => {
     const res = await request(app).patch("/api/users/me").send({ minDayRate: 200 });

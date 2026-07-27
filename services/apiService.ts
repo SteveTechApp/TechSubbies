@@ -228,6 +228,31 @@ const apiService = {
     return data;
   },
 
+  getDeletionRequest: async (): Promise<{ status: string; requestedAt: string; cancelledAt: string | null } | null> => {
+    const response = await fetch(`${API_BASE_URL}/users/me/deletion-request`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not load deletion request.');
+    return data.request;
+  },
+
+  requestAccountDeletion: async (password: string): Promise<{ status: string; requestedAt: string; cancelledAt: string | null }> => {
+    const response = await fetch(`${API_BASE_URL}/users/me/deletion-request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not request account deletion.');
+    return data.request;
+  },
+
+  cancelAccountDeletion: async (): Promise<{ status: string; requestedAt: string; cancelledAt: string | null }> => {
+    const response = await fetch(`${API_BASE_URL}/users/me/deletion-request`, { method: 'DELETE' });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not cancel account deletion.');
+    return data.request;
+  },
+
   // Looks up a single profile by id from the backend (public data, no
   // auth required to read it - matches GET /users/:profileId in the spec).
   getUserById: async (id: string): Promise<User | null> => {

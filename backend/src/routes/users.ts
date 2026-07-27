@@ -1,8 +1,16 @@
 import { Router } from "express";
+import bcrypt from "bcryptjs";
+import { z } from "zod";
 import { findUserById, listUsers, updateUserProfile } from "../lib/db.js";
 import { toDirectoryUser, toPublicUser } from "../lib/publicUser.js";
 import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
 import { buildAccountDataExport } from "../lib/accountExport.js";
+import {
+  cancelAccountDeletion,
+  findAccountDeletionRequest,
+  requestAccountDeletion,
+} from "../lib/accountDeletion.js";
+import { recordAccountAudit } from "../lib/accountAudit.js";
 
 export const usersRouter = Router();
 
@@ -16,6 +24,50 @@ usersRouter.get("/me/export", requireAuth, (req: AuthedRequest, res) => {
   const date = new Date().toISOString().slice(0, 10);
   res.setHeader("Content-Disposition", `attachment; filename="techsubbies-account-${date}.json"`);
   return res.json(buildAccountDataExport(req.authUser!));
+});
+
+function publicDeletionRequest(userId: string) {
+  const request = findAccountDeletionRequest(userId);
+  if (!request) return null;
+  return {
+    status: request.status,
+    requestedAt: request.requestedAt,
+    cancelledAt: request.cancelledAt,
+  };
+}
+
+usersRouter.get("/me/deletion-request", requireAuth, (req: AuthedRequest, res) => {
+  return res.json({ request: publicDeletionRequest(req.userId!) });
+});
+
+usersRouter.post("/me/deletion-request", requireAuth, async (req: AuthedRequest, res) => {
+  const parsed = z.object({ password: z.string().min(1) }).safeParse(req.body);
+  if (!parsed.success || !(await bcrypt.compare(parsed.data.password, req.authUser!.password))) {
+    return res.status(401).json({ error: "Password confirmation is incorrect." });
+  }
+  requestAccountDeletion(req.userId!);
+  recordAccountAudit({
+    eventType: "deletion.requested",
+    outcome: "success",
+    userId: req.userId!,
+    requestId: res.locals.requestId,
+  });
+  return res.status(202).json({ request: publicDeletionRequest(req.userId!) });
+});
+
+usersRouter.delete("/me/deletion-request", requireAuth, (req: AuthedRequest, res) => {
+  const existing = findAccountDeletionRequest(req.userId!);
+  if (!existing || existing.status !== "pending") {
+    return res.status(404).json({ error: "No pending deletion request was found." });
+  }
+  cancelAccountDeletion(req.userId!);
+  recordAccountAudit({
+    eventType: "deletion.cancelled",
+    outcome: "success",
+    userId: req.userId!,
+    requestId: res.locals.requestId,
+  });
+  return res.json({ request: publicDeletionRequest(req.userId!) });
 });
 
 // GET /api/users - list all profiles (for search/browse screens).

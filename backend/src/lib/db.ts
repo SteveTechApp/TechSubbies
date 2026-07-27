@@ -179,7 +179,7 @@ db.exec(`
   );
 `);
 
-export const LATEST_SCHEMA_VERSION = 2;
+export const LATEST_SCHEMA_VERSION = 3;
 runMigrations(db, [
   {
     version: 1,
@@ -205,6 +205,21 @@ runMigrations(db, [
         ON account_audit_events(userId, createdAt DESC);
       CREATE INDEX account_audit_events_request
         ON account_audit_events(requestId);
+    `),
+  },
+  {
+    version: 3,
+    name: "account-deletion-requests",
+    up: (database) => database.exec(`
+      CREATE TABLE account_deletion_requests (
+        id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL UNIQUE,
+        status TEXT NOT NULL,
+        requestedAt TEXT NOT NULL,
+        cancelledAt TEXT
+      );
+      CREATE INDEX account_deletion_requests_status
+        ON account_deletion_requests(status, requestedAt);
     `),
   },
 ]);
