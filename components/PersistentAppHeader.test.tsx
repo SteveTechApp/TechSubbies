@@ -46,6 +46,7 @@ describe("PersistentAppHeader account state", () => {
     expect(screen.getByText("Alex Engineer")).toBeVisible();
     expect(screen.getByText(Role.ENGINEER)).toBeVisible();
     expect(screen.getByRole("button", { name: "Logout" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Open dashboard" })).toHaveAttribute("href", "/engineer/dashboard");
   });
 
   it("filters protected workflow links for the signed-in role", () => {

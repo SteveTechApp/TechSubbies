@@ -5,6 +5,7 @@ import { TechSubbiesLogo } from './TechSubbiesLogo';
 import { clearDemoSession, getDemoSession, type DemoSession } from "../data/demoAccounts";
 import { useAuth } from "../context/AuthContext";
 import { Role } from "../types";
+import { dashboardPathForRole } from "../utils/accountRoutes";
 
 type NavLink = {
   label: string;
@@ -234,14 +235,18 @@ export default function PersistentAppHeader() {
           <div className="ml-auto hidden items-center gap-3 xl:flex">
             {identity ? (
               <>
-                <div className="rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-3 py-2">
+                <a
+                  href={dashboardPathForRole(identity.role)}
+                  aria-label="Open dashboard"
+                  className="rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 hover:border-cyan-300/50"
+                >
                   <div className="text-[13px] font-bold text-cyan-200">
                     {identity.name || "Signed in"}
                   </div>
                   <div className="text-[11px] text-slate-500">
                     {identity.role || "User"}
                   </div>
-                </div>
+                </a>
 
                 <button
                   type="button"
@@ -323,13 +328,18 @@ export default function PersistentAppHeader() {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={logout}
-                    className="rounded-xl border border-white/10 px-4 py-2 text-sm font-bold text-slate-300 hover:border-cyan-300/60 hover:text-cyan-200"
-                  >
-                    Logout
-                  </button>
+                  <div className="flex gap-2">
+                    <a href={dashboardPathForRole(identity.role)} className="rounded-xl border border-cyan-300/30 px-4 py-2 text-sm font-bold text-cyan-100">
+                      Dashboard
+                    </a>
+                    <button
+                      type="button"
+                      onClick={logout}
+                      className="rounded-xl border border-white/10 px-4 py-2 text-sm font-bold text-slate-300 hover:border-cyan-300/60 hover:text-cyan-200"
+                    >
+                      Logout
+                    </button>
+                  </div>
                 </div>
               </section>
             )}

@@ -7,6 +7,7 @@ import {
 } from "../data/demoAccounts";
 import apiService from "../services/apiService";
 import { useAuth } from "../context/AuthContext";
+import { dashboardPathForRole } from "../utils/accountRoutes";
 
 type DemoLoginPageProps = {
   onSignedIn?: (session: DemoSession) => void;
@@ -31,7 +32,7 @@ export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
     try {
       const realUser = await apiService.loginWithPassword(email, password);
       setUser(realUser);
-      window.location.href = "/";
+      window.location.href = dashboardPathForRole(realUser.role);
       return;
     } catch (reason) {
       // Only use the development fallback when the entered credentials

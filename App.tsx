@@ -323,6 +323,10 @@ const { page, setPage } = useNavigation();
       <Route path="/reset-password" element={renderPersistentShell(<ResetPasswordPage />)} />
       <Route path="/verify-email" element={renderPersistentShell(<VerifyEmailPage />)} />
       <Route path="/account/security" element={renderPersistentShell(<AccountSecurityPage />)} />
+      <Route path="/engineer/dashboard" element={renderPersistentShell(roleGate(<EngineerDashboard />, [Role.ENGINEER]))} />
+      <Route path="/company/dashboard" element={renderPersistentShell(roleGate(<CompanyDashboard />, [Role.COMPANY]))} />
+      <Route path="/resourcing/dashboard" element={renderPersistentShell(roleGate(<ResourcingDashboard />, [Role.RESOURCING_COMPANY]))} />
+      <Route path="/admin/dashboard" element={renderPersistentShell(roleGate(<AdminDashboard />, [Role.ADMIN]))} />
       <Route path="/company/signup" element={<CompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
       <Route path="/engineer/signup" element={<EngineerSignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
       <Route path="/resourcing/signup" element={<ResourcingCompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
