@@ -1,4 +1,4 @@
-const DEVELOPMENT_API_URL = "http://localhost:4000/api";
+const DEVELOPMENT_API_URL = "/api";
 
 export function resolveApiBaseUrl(configured: string | undefined, production: boolean): string {
   const value = configured?.trim();
