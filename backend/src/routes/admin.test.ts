@@ -276,6 +276,17 @@ describe("admin account moderation", () => {
       profile: "{}",
     });
     const memberToken = signToken(member.id);
+    const memberJob = createJob(member.id, {
+      title: "Suspension Visibility Test",
+      description: "A listing used to verify suspension visibility.",
+      location: "Remote",
+      dayRate: "400",
+      duration: "1 month",
+      currency: "£",
+      jobType: "Contract",
+      experienceLevel: "Senior",
+      jobRole: "Engineer",
+    });
 
     const listed = await request(app)
       .get("/api/admin/users?query=moderated-member&limit=10")
@@ -305,6 +316,13 @@ describe("admin account moderation", () => {
       && email.text.includes("Repeated marketplace policy violations.")
     )).toBe(true);
 
+    const hiddenProfile = await request(app).get(`/api/users/${member.id}`);
+    expect(hiddenProfile.status).toBe(404);
+    const publicUsers = await request(app).get("/api/users");
+    expect(publicUsers.body.some((user: { id: string }) => user.id === member.id)).toBe(false);
+    const publicJobs = await request(app).get("/api/jobs");
+    expect(publicJobs.body.some((job: { id: string }) => job.id === memberJob.id)).toBe(false);
+
     const revokedSession = await request(app)
       .get("/api/users/me")
       .set("Authorization", `Bearer ${memberToken}`);
@@ -326,6 +344,8 @@ describe("admin account moderation", () => {
     expect(developmentEmailOutbox.some((email) =>
       email.to === "moderated-member@example.com" && email.subject.includes("reactivated")
     )).toBe(true);
+    const restoredJobs = await request(app).get("/api/jobs");
+    expect(restoredJobs.body.some((job: { id: string }) => job.id === memberJob.id)).toBe(true);
 
     const stillRevokedSession = await request(app)
       .get("/api/users/me")

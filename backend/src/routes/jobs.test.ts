@@ -159,6 +159,9 @@ describe("jobs", () => {
     expect(rightUpdate.status).toBe(200);
     expect(rightUpdate.body.status).toBe("closed");
 
+    const hiddenDirectly = await request(app).get(`/api/jobs/${postRes.body.id}`);
+    expect(hiddenDirectly.status).toBe(404);
+
     const ownedJobs = await request(app)
       .get("/api/jobs/mine")
       .set("Authorization", `Bearer ${company.token}`);

@@ -109,7 +109,7 @@ usersRouter.get("/", async (_req, res) => {
 // GET /api/users/:profileId - a single profile.
 usersRouter.get("/:profileId", async (req, res) => {
   const user = findUserById(req.params.profileId);
-  if (!user) {
+  if (!user || user.deletedAt || user.suspendedAt) {
     return res.status(404).json({ error: "Profile not found." });
   }
   return res.json(toDirectoryUser(user));

@@ -293,7 +293,9 @@ export function findUserById(id: string): UserRow | undefined {
 }
 
 export function listUsers(): UserRow[] {
-  return db.prepare("SELECT * FROM users WHERE deletedAt IS NULL ORDER BY createdAt DESC").all() as unknown as UserRow[];
+  return db.prepare(
+    "SELECT * FROM users WHERE deletedAt IS NULL AND suspendedAt IS NULL ORDER BY createdAt DESC"
+  ).all() as unknown as UserRow[];
 }
 
 export function createUser(input: { email: string; password: string; role: string; name: string; profile: string }): UserRow {
@@ -585,7 +587,14 @@ export function findJobById(id: string): JobRow | undefined {
 }
 
 export function listActiveJobs(): JobRow[] {
-  return db.prepare("SELECT * FROM jobs WHERE status = 'active' ORDER BY postedDate DESC").all() as unknown as JobRow[];
+  return db.prepare(`
+    SELECT jobs.* FROM jobs
+    JOIN users ON users.id = jobs.companyId
+    WHERE jobs.status = 'active'
+      AND users.deletedAt IS NULL
+      AND users.suspendedAt IS NULL
+    ORDER BY jobs.postedDate DESC
+  `).all() as unknown as JobRow[];
 }
 
 export function listJobsForCompany(companyId: string): JobRow[] {

@@ -56,6 +56,9 @@ jobsRouter.get("/:jobId", async (req, res) => {
   if (!job) {
     return res.status(404).json({ error: "Job not found." });
   }
+  if (job.status !== "active") {
+    return res.status(404).json({ error: "Job not found." });
+  }
   return res.json(toPublicJob(job));
 });
 
