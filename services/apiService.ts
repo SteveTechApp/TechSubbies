@@ -24,6 +24,10 @@ export type AdminDeletionRequest = {
   accountEmail: string;
   accountName: string;
   accountRole: string;
+  eligibility: {
+    eligible: boolean;
+    blockers: Array<{ code: string; count: number; message: string }>;
+  };
 };
 
 const TOKEN_KEY = 'techsubbies_auth_token';

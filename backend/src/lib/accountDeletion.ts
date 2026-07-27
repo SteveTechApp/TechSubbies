@@ -18,6 +18,15 @@ export type AccountDeletionReviewItem = AccountDeletionRequest & {
   accountRole: string;
 };
 
+export type AccountDeletionEligibility = {
+  eligible: boolean;
+  blockers: Array<{
+    code: "ACTIVE_CONTRACTS" | "UNPAID_INVOICES" | "LIVE_APPLICATIONS";
+    count: number;
+    message: string;
+  }>;
+};
+
 export function findAccountDeletionRequest(userId: string): AccountDeletionRequest | undefined {
   return db.prepare(
     "SELECT * FROM account_deletion_requests WHERE userId = ?"
@@ -70,6 +79,46 @@ export function reviewAccountDeletionRequest(
   return db.prepare(
     "SELECT * FROM account_deletion_requests WHERE id = ?"
   ).get(id) as unknown as AccountDeletionRequest;
+}
+
+function count(sql: string, userId: string): number {
+  const row = db.prepare(sql).get(userId, userId) as { total: number };
+  return row.total;
+}
+
+export function getAccountDeletionEligibility(userId: string): AccountDeletionEligibility {
+  const activeContracts = count(`
+    SELECT COUNT(*) AS total FROM contracts
+    WHERE (companyId = ? OR engineerId = ?)
+      AND status NOT IN ('Completed', 'Cancelled')
+  `, userId);
+  const unpaidInvoices = count(`
+    SELECT COUNT(*) AS total FROM invoices
+    WHERE (companyId = ? OR engineerId = ?)
+      AND status != 'Paid'
+  `, userId);
+  const liveApplications = db.prepare(`
+    SELECT COUNT(*) AS total FROM applications
+    WHERE engineerId = ? AND status NOT IN ('Rejected', 'Completed')
+  `).get(userId) as { total: number };
+
+  const blockers: AccountDeletionEligibility["blockers"] = [];
+  if (activeContracts > 0) blockers.push({
+    code: "ACTIVE_CONTRACTS",
+    count: activeContracts,
+    message: `${activeContracts} contract${activeContracts === 1 ? "" : "s"} must be completed or cancelled.`,
+  });
+  if (unpaidInvoices > 0) blockers.push({
+    code: "UNPAID_INVOICES",
+    count: unpaidInvoices,
+    message: `${unpaidInvoices} invoice${unpaidInvoices === 1 ? "" : "s"} must be paid or otherwise resolved.`,
+  });
+  if (liveApplications.total > 0) blockers.push({
+    code: "LIVE_APPLICATIONS",
+    count: liveApplications.total,
+    message: `${liveApplications.total} live job application${liveApplications.total === 1 ? "" : "s"} must be resolved.`,
+  });
+  return { eligible: blockers.length === 0, blockers };
 }
 
 export function cancelAccountDeletion(userId: string): AccountDeletionRequest | undefined {

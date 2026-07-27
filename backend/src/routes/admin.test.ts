@@ -11,6 +11,7 @@ process.env.JWT_SECRET = "test-secret";
 
 const { createApp } = await import("../app.js");
 const { createUser } = await import("../lib/db.js");
+const { db } = await import("../lib/db.js");
 const { requestAccountDeletion } = await import("../lib/accountDeletion.js");
 const { signToken } = await import("../middleware/auth.js");
 const app = createApp();
@@ -90,5 +91,46 @@ describe("admin deletion request reviews", () => {
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ decision: "rejected", note: "This should not overwrite the prior review." });
     expect(duplicate.status).toBe(409);
+  });
+
+  it("blocks approval while marketplace obligations remain but permits rejection", async () => {
+    const password = await bcrypt.hash("correcthorsebattery", 10);
+    const blockedUser = createUser({
+      email: "blocked-privacy@example.com",
+      password,
+      role: "Engineer",
+      name: "Blocked Privacy User",
+      profile: "{}",
+    });
+    const blockedRequest = requestAccountDeletion(blockedUser.id);
+    const now = new Date().toISOString();
+    db.prepare(`
+      INSERT INTO applications
+        (id, jobId, engineerId, status, reviewed, createdAt, updatedAt)
+      VALUES ('blocking-application', 'job-privacy', ?, 'Applied', 0, ?, ?)
+    `).run(blockedUser.id, now, now);
+
+    const queue = await request(app)
+      .get("/api/admin/deletion-requests")
+      .set("Authorization", `Bearer ${adminToken}`);
+    const queued = queue.body.requests.find((item: { id: string }) => item.id === blockedRequest.id);
+    expect(queued.eligibility).toMatchObject({
+      eligible: false,
+      blockers: [expect.objectContaining({ code: "LIVE_APPLICATIONS", count: 1 })],
+    });
+
+    const approval = await request(app)
+      .patch(`/api/admin/deletion-requests/${blockedRequest.id}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ decision: "approved", note: "Attempt approval while application remains live." });
+    expect(approval.status).toBe(409);
+    expect(approval.body.eligibility.eligible).toBe(false);
+
+    const rejection = await request(app)
+      .patch(`/api/admin/deletion-requests/${blockedRequest.id}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ decision: "rejected", note: "Resolve the live application before resubmitting." });
+    expect(rejection.status).toBe(200);
+    expect(rejection.body.request.status).toBe("rejected");
   });
 });

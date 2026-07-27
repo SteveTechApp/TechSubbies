@@ -85,10 +85,20 @@ export const PrivacyRequestsView = () => {
                                 placeholder="Record identity, retention, contract, or payment checks…"
                                 className="mt-1 w-full rounded-md border border-gray-300 p-2 focus:border-blue-500 focus:ring-blue-500"
                             />
+                            {!request.eligibility.eligible && (
+                                <div className="mt-3 rounded-md bg-amber-50 p-3 text-sm text-amber-900">
+                                    <p className="font-semibold">Approval blocked by unresolved obligations:</p>
+                                    <ul className="mt-1 list-disc pl-5">
+                                        {request.eligibility.blockers.map((blocker) => (
+                                            <li key={blocker.code}>{blocker.message}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
                             <div className="mt-3 flex flex-wrap gap-3">
                                 <button
                                     type="button"
-                                    disabled={workingId === request.id}
+                                    disabled={workingId === request.id || !request.eligibility.eligible}
                                     onClick={() => review(request, 'approved')}
                                     className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
                                 >

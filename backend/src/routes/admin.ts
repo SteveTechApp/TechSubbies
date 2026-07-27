@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   listAccountDeletionRequests,
   reviewAccountDeletionRequest,
+  getAccountDeletionEligibility,
 } from "../lib/accountDeletion.js";
 import { recordAccountAudit } from "../lib/accountAudit.js";
 import { requireAuth, requireRole, type AuthedRequest } from "../middleware/auth.js";
@@ -16,7 +17,11 @@ adminRouter.get("/deletion-requests", (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: "Unsupported deletion request status." });
   }
-  return res.json({ requests: listAccountDeletionRequests(parsed.data) });
+  const requests = listAccountDeletionRequests(parsed.data).map((request) => ({
+    ...request,
+    eligibility: getAccountDeletionEligibility(request.userId),
+  }));
+  return res.json({ requests });
 });
 
 adminRouter.patch("/deletion-requests/:requestId", (req: AuthedRequest, res) => {
@@ -27,6 +32,20 @@ adminRouter.patch("/deletion-requests/:requestId", (req: AuthedRequest, res) => 
   if (!parsed.success) {
     return res.status(400).json({
       error: "Choose approved or rejected and provide a review note of at least 10 characters.",
+    });
+  }
+
+  const queued = listAccountDeletionRequests("pending").find(
+    (request) => request.id === req.params.requestId
+  );
+  if (!queued) {
+    return res.status(409).json({ error: "This request is missing or has already been reviewed." });
+  }
+  const eligibility = getAccountDeletionEligibility(queued.userId);
+  if (parsed.data.decision === "approved" && !eligibility.eligible) {
+    return res.status(409).json({
+      error: "This account still has unresolved marketplace obligations.",
+      eligibility,
     });
   }
 
