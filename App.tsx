@@ -2,10 +2,11 @@ import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import PersistentAppHeader from "./components/PersistentAppHeader";
 import EmailVerificationBanner from "./components/EmailVerificationBanner";
+import RoleAccessGate from "./components/RoleAccessGate";
 import { clearDemoSession, getDemoSession, type DemoSession } from "./data/demoAccounts";
 import { useNavigation } from './context/NavigationContext';
 import { useAuth } from './context/AuthContext';
-import { Page } from './types';
+import { Page, Role } from './types';
 
 // Common Components (small, always needed - kept in the main bundle)
 import { Footer } from './components/Footer';
@@ -206,6 +207,10 @@ const { page, setPage } = useNavigation();
   const pathname = normalisePathname();
   const isPublicPath = isPublicDirectPath(pathname) || TechSubbiesHowItWorksFaqHashRoute();
   const isSignedIn = Boolean(user || demoSession);
+  const currentRole = user?.role || demoSession?.role;
+  const roleGate = (content: React.ReactNode, allowedRoles: Role[]) => (
+    <RoleAccessGate currentRole={currentRole} allowedRoles={allowedRoles}>{content}</RoleAccessGate>
+  );
 
   function handleDemoSignedIn(session: DemoSession) {
     setDemoSessionState(session);
@@ -307,11 +312,11 @@ const { page, setPage } = useNavigation();
 
   return (
     <Routes>
-      <Route path="/opportunity-intake" element={renderPersistentShell(<LiveOpportunityIntakePage />)} />
-      <Route path="/matching/intake" element={renderPersistentShell(<LiveOpportunityIntakePage />)} />
+      <Route path="/opportunity-intake" element={renderPersistentShell(roleGate(<LiveOpportunityIntakePage />, [Role.COMPANY, Role.RESOURCING_COMPANY]))} />
+      <Route path="/matching/intake" element={renderPersistentShell(roleGate(<LiveOpportunityIntakePage />, [Role.COMPANY, Role.RESOURCING_COMPANY]))} />
       <Route path="/matching-demo" element={renderPersistentShell(<OpportunityMatchingDemoPage />)} />
       <Route path="/how-it-works/matching-demo" element={renderPersistentShell(<OpportunityMatchingDemoPage />)} />
-      <Route path="/engineer/product-awareness" element={renderPersistentShell(<ProductAwarenessExperiencePage />)} />
+      <Route path="/engineer/product-awareness" element={renderPersistentShell(roleGate(<ProductAwarenessExperiencePage />, [Role.ENGINEER]))} />
       <Route path="/login" element={renderPersistentShell(<DemoLoginPage onSignedIn={handleDemoSignedIn} />)} />
       <Route path="/signin" element={renderPersistentShell(<DemoLoginPage onSignedIn={handleDemoSignedIn} />)} />
       <Route path="/forgot-password" element={renderPersistentShell(<ForgotPasswordPage />)} />
@@ -322,16 +327,16 @@ const { page, setPage } = useNavigation();
       <Route path="/engineer/signup" element={<EngineerSignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
       <Route path="/resourcing/signup" element={<ResourcingCompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
       <Route path="/how-it-works/faq" element={renderPersistentShell(<HowItWorksFaqPage />, true)} />
-      <Route path="/engineer/profile" element={renderPersistentShell(<EngineerProfileHubPage />)} />
-      <Route path="/engineer/team-company" element={renderPersistentShell(<EngineerTeamCompanyPage />)} />
-      <Route path="/engineer/availability" element={renderPersistentShell(<EngineerAvailabilityPage />)} />
+      <Route path="/engineer/profile" element={renderPersistentShell(roleGate(<EngineerProfileHubPage />, [Role.ENGINEER]))} />
+      <Route path="/engineer/team-company" element={renderPersistentShell(roleGate(<EngineerTeamCompanyPage />, [Role.ENGINEER]))} />
+      <Route path="/engineer/availability" element={renderPersistentShell(roleGate(<EngineerAvailabilityPage />, [Role.ENGINEER]))} />
       <Route path="/watch-demo" element={renderPersistentShell(<WatchDemoPage />, true)} />
-      <Route path="/engineer/profile-setup" element={renderPersistentShell(<EngineerProfileSetupPage />)} />
-      <Route path="/engineer/personal-business-profile" element={renderPersistentShell(<EngineerPersonalBusinessProfilePage />)} />
-      <Route path="/engineer/skills-profile" element={renderPersistentShell(<RoleSkillBuilderPage />)} />
-      <Route path="/role-skills" element={renderPersistentShell(<RoleSkillBuilderPage />)} />
-      <Route path="/company/engineers" element={renderPersistentShell(<CompanyEngineerDashboardPage />)} />
-      <Route path="/resourcing/engineers" element={renderPersistentShell(<CompanyEngineerDashboardPage />)} />
+      <Route path="/engineer/profile-setup" element={renderPersistentShell(roleGate(<EngineerProfileSetupPage />, [Role.ENGINEER]))} />
+      <Route path="/engineer/personal-business-profile" element={renderPersistentShell(roleGate(<EngineerPersonalBusinessProfilePage />, [Role.ENGINEER]))} />
+      <Route path="/engineer/skills-profile" element={renderPersistentShell(roleGate(<RoleSkillBuilderPage />, [Role.ENGINEER]))} />
+      <Route path="/role-skills" element={renderPersistentShell(roleGate(<RoleSkillBuilderPage />, [Role.ENGINEER]))} />
+      <Route path="/company/engineers" element={renderPersistentShell(roleGate(<CompanyEngineerDashboardPage />, [Role.COMPANY, Role.RESOURCING_COMPANY]))} />
+      <Route path="/resourcing/engineers" element={renderPersistentShell(roleGate(<CompanyEngineerDashboardPage />, [Role.RESOURCING_COMPANY]))} />
       <Route path="*" element={renderLegacyPage()} />
     </Routes>
   );
