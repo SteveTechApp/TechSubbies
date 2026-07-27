@@ -141,6 +141,12 @@ export const PrivacyRequestsView = () => {
                                     Requested {new Date(request.requestedAt).toLocaleString()}
                                 </p>
                             </div>
+                            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                                <span>Reference: {request.id}</span>
+                                <span className={new Date(request.responseDueAt) < new Date() && request.status === 'pending' ? 'font-semibold text-red-700' : ''}>
+                                    Response target: {new Date(request.responseDueAt).toLocaleDateString()}
+                                </span>
+                            </div>
 
                             {!request.eligibility.eligible && (
                                 <div className="mt-3 rounded-md bg-amber-50 p-3 text-sm text-amber-900">

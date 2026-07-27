@@ -6,6 +6,7 @@ import {
   getAccountDeletionEligibility,
   processAccountDeletionRequest,
   getAccountDeletionSummary,
+  accountDeletionResponseDueAt,
 } from "../lib/accountDeletion.js";
 import { recordAccountAudit } from "../lib/accountAudit.js";
 import { requireAuth, requireRole, type AuthedRequest } from "../middleware/auth.js";
@@ -27,6 +28,7 @@ adminRouter.get("/deletion-requests", (req, res) => {
   }
   const requests = listAccountDeletionRequests(parsed.data).map((request) => ({
     ...request,
+    responseDueAt: accountDeletionResponseDueAt(request.requestedAt),
     eligibility: getAccountDeletionEligibility(request.userId),
   }));
   return res.json({ requests });

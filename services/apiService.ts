@@ -18,6 +18,7 @@ export type AdminDeletionRequest = {
   userId: string;
   status: 'pending' | 'approved' | 'rejected' | 'cancelled';
   requestedAt: string;
+  responseDueAt: string;
   reviewedAt: string | null;
   reviewerId: string | null;
   resolutionNote: string | null;
@@ -42,8 +43,10 @@ export type AdminPrivacySummary = {
 };
 
 export type AccountDeletionStatus = {
+  reference: string;
   status: string;
   requestedAt: string;
+  responseDueAt: string;
   cancelledAt: string | null;
   reviewedAt: string | null;
   resolutionNote: string | null;

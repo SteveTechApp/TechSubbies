@@ -76,6 +76,7 @@ describe("admin deletion request reviews", () => {
       id: deletionRequestId,
       status: "pending",
       accountEmail: "privacy-engineer@example.com",
+      responseDueAt: expect.any(String),
     });
 
     const reviewed = await request(app)

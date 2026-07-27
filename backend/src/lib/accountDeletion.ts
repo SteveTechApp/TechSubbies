@@ -38,6 +38,10 @@ export type AccountDeletionSummary = {
   oldestPendingAt: string | null;
 };
 
+export function accountDeletionResponseDueAt(requestedAt: string): string {
+  return new Date(new Date(requestedAt).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+}
+
 export function findAccountDeletionRequest(userId: string): AccountDeletionRequest | undefined {
   return db.prepare(
     "SELECT * FROM account_deletion_requests WHERE userId = ?"

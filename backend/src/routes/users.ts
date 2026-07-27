@@ -9,6 +9,7 @@ import {
   cancelAccountDeletion,
   findAccountDeletionRequest,
   requestAccountDeletion,
+  accountDeletionResponseDueAt,
 } from "../lib/accountDeletion.js";
 import { recordAccountAudit } from "../lib/accountAudit.js";
 import { sendPrivacyNotification } from "../lib/privacyNotifications.js";
@@ -31,8 +32,10 @@ function publicDeletionRequest(userId: string) {
   const request = findAccountDeletionRequest(userId);
   if (!request) return null;
   return {
+    reference: request.id,
     status: request.status,
     requestedAt: request.requestedAt,
+    responseDueAt: accountDeletionResponseDueAt(request.requestedAt),
     cancelledAt: request.cancelledAt,
     reviewedAt: request.reviewedAt,
     resolutionNote: request.resolutionNote,

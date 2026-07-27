@@ -151,7 +151,7 @@ describe("account access pages", () => {
   });
 
   it("submits and cancels an account deletion request", async () => {
-    const pending = { status: "pending", requestedAt: "2026-07-27T12:00:00.000Z", cancelledAt: null, reviewedAt: null, resolutionNote: null, processedAt: null };
+    const pending = { reference: "privacy-ref-1", status: "pending", requestedAt: "2026-07-27T12:00:00.000Z", responseDueAt: "2026-08-26T12:00:00.000Z", cancelledAt: null, reviewedAt: null, resolutionNote: null, processedAt: null };
     vi.mocked(apiService.requestAccountDeletion).mockResolvedValue(pending);
     vi.mocked(apiService.cancelAccountDeletion).mockResolvedValue({ ...pending, status: "cancelled", cancelledAt: "2026-07-27T13:00:00.000Z" });
     const user = userEvent.setup();
@@ -161,6 +161,7 @@ describe("account access pages", () => {
     await user.click(screen.getByRole("button", { name: "Request account deletion" }));
     expect(apiService.requestAccountDeletion).toHaveBeenCalledWith("correct-password");
     expect(await screen.findByText(/Deletion requested on/)).toBeVisible();
+    expect(screen.getByText(/Reference: privacy-ref-1/)).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: "Cancel deletion request" }));
     expect(apiService.cancelAccountDeletion).toHaveBeenCalledOnce();
@@ -169,8 +170,10 @@ describe("account access pages", () => {
 
   it("shows approved privacy requests without offering a duplicate request", async () => {
     vi.mocked(apiService.getDeletionRequest).mockResolvedValue({
+      reference: "privacy-approved",
       status: "approved",
       requestedAt: "2026-07-27T12:00:00.000Z",
+      responseDueAt: "2026-08-26T12:00:00.000Z",
       cancelledAt: null,
       reviewedAt: "2026-07-28T12:00:00.000Z",
       resolutionNote: "Checks completed.",
@@ -185,8 +188,10 @@ describe("account access pages", () => {
 
   it("shows the rejection reason and permits resubmission", async () => {
     vi.mocked(apiService.getDeletionRequest).mockResolvedValue({
+      reference: "privacy-rejected",
       status: "rejected",
       requestedAt: "2026-07-27T12:00:00.000Z",
+      responseDueAt: "2026-08-26T12:00:00.000Z",
       cancelledAt: null,
       reviewedAt: "2026-07-28T12:00:00.000Z",
       resolutionNote: "Complete the active contract before trying again.",

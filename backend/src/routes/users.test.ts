@@ -126,8 +126,10 @@ describe("account deletion requests", () => {
       .send({ password: "correcthorsebattery" });
     expect(created.status).toBe(202);
     expect(created.body.request).toMatchObject({
+      reference: expect.any(String),
       status: "pending",
       requestedAt: expect.any(String),
+      responseDueAt: expect.any(String),
       cancelledAt: null,
     });
     expect(created.body.request).not.toHaveProperty("userId");

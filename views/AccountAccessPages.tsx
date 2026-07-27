@@ -81,7 +81,9 @@ export function AccountSecurityPage() {
   const [deletionPassword, setDeletionPassword] = useState("");
   const [deletionRequest, setDeletionRequest] = useState<{
     status: string;
+    reference?: string;
     requestedAt: string;
+    responseDueAt?: string;
     cancelledAt: string | null;
     reviewedAt?: string | null;
     resolutionNote?: string | null;
@@ -167,12 +169,15 @@ export function AccountSecurityPage() {
     <div className="mt-4 rounded-xl border border-amber-300/30 bg-amber-300/10 p-4">
       <p className="font-semibold text-amber-200">Pending privacy review</p>
       <p className="mt-1 text-sm text-slate-300">Deletion requested on {new Date(deletionRequest.requestedAt).toLocaleDateString()}. We will email you when its status changes.</p>
+      {deletionRequest.responseDueAt && <p className="mt-2 text-sm text-slate-300">Response target: <strong>{new Date(deletionRequest.responseDueAt).toLocaleDateString()}</strong></p>}
+      {deletionRequest.reference && <p className="mt-1 break-all text-xs text-slate-400">Reference: {deletionRequest.reference}</p>}
       <button className="mt-4 w-full rounded-xl border border-white/20 px-5 py-3 font-bold" onClick={cancelDeletionRequest}>Cancel deletion request</button>
     </div>
   ) : deletionRequest?.status === "approved" ? (
     <div className="mt-4 rounded-xl border border-emerald-300/30 bg-emerald-300/10 p-4">
       <p className="font-semibold text-emerald-200">Approved for processing</p>
       <p className="mt-1 text-sm text-slate-300">Your account remains active until anonymisation is completed. You will receive a final confirmation email.</p>
+      {deletionRequest.reference && <p className="mt-2 break-all text-xs text-slate-400">Reference: {deletionRequest.reference}</p>}
     </div>
   ) : deletionRequest?.status === "rejected" ? (
     <>
