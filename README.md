@@ -51,6 +51,10 @@ transactional steps during backend startup. Failed migrations roll back without
 recording a version, and readiness remains unavailable unless the database is at
 the application’s latest schema version.
 
+Account registration, login outcomes, email verification and password changes
+are recorded in an immutable security audit table using request IDs. Failed-login
+identifiers are stored only as keyed hashes, not as raw email addresses.
+
 Create an online, integrity-checked backup without stopping the backend:
 
 `cd backend && npm run db:backup`

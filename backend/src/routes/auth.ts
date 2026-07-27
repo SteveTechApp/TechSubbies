@@ -8,6 +8,7 @@ import { clearAuthCookies, setAuthCookies } from "../middleware/security.js";
 import { consumeAccountToken, issueAccountToken } from "../lib/accountTokens.js";
 import { sendEmail } from "../lib/email.js";
 import { frontendOrigin } from "../lib/config.js";
+import { recordAccountAudit } from "../lib/accountAudit.js";
 
 export const authRouter = Router();
 
@@ -58,6 +59,12 @@ authRouter.post("/register", async (req, res) => {
     console.error("Verification email delivery failed after registration.", error);
   }
   setAuthCookies(res, token);
+  recordAccountAudit({
+    eventType: "account.registered",
+    outcome: "success",
+    userId: user.id,
+    requestId: res.locals.requestId,
+  });
   return res.status(201).json({
     ...(process.env.NODE_ENV === "production" ? {} : { token }),
     user: toPublicUser(user),
@@ -79,16 +86,35 @@ authRouter.post("/login", async (req, res) => {
 
   const user = findUserByEmail(email);
   if (!user) {
+    recordAccountAudit({
+      eventType: "login.failed",
+      outcome: "failure",
+      subject: email,
+      requestId: res.locals.requestId,
+    });
     return res.status(401).json({ error: "Invalid credentials." });
   }
 
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) {
+    recordAccountAudit({
+      eventType: "login.failed",
+      outcome: "failure",
+      userId: user.id,
+      subject: email,
+      requestId: res.locals.requestId,
+    });
     return res.status(401).json({ error: "Invalid credentials." });
   }
 
   const token = signToken(user.id);
   setAuthCookies(res, token);
+  recordAccountAudit({
+    eventType: "login.succeeded",
+    outcome: "success",
+    userId: user.id,
+    requestId: res.locals.requestId,
+  });
   return res.json({
     ...(process.env.NODE_ENV === "production" ? {} : { token }),
     user: toPublicUser(user),
@@ -123,6 +149,12 @@ authRouter.post("/verification/confirm", async (req, res) => {
   if (!userId || !markEmailVerified(userId)) {
     return res.status(400).json({ error: "This verification link is invalid or expired." });
   }
+  recordAccountAudit({
+    eventType: "email.verified",
+    outcome: "success",
+    userId,
+    requestId: res.locals.requestId,
+  });
   return res.json({ verified: true });
 });
 
@@ -157,6 +189,12 @@ authRouter.post("/password-reset/confirm", async (req, res) => {
   const userId = consumeAccountToken(parsed.data.token, "reset-password");
   if (!userId) return res.status(400).json({ error: "This reset link is invalid or expired." });
   await bcrypt.hash(parsed.data.newPassword, 12).then((hash) => updateUserPassword(userId, hash));
+  recordAccountAudit({
+    eventType: "password.reset",
+    outcome: "success",
+    userId,
+    requestId: res.locals.requestId,
+  });
   return res.status(204).end();
 });
 
@@ -171,5 +209,11 @@ authRouter.post("/password/change", requireAuth, async (req: AuthedRequest, res)
     return res.status(401).json({ error: "Current password is incorrect." });
   }
   updateUserPassword(user.id, await bcrypt.hash(parsed.data.newPassword, 12));
+  recordAccountAudit({
+    eventType: "password.changed",
+    outcome: "success",
+    userId: user.id,
+    requestId: res.locals.requestId,
+  });
   return res.status(204).end();
 });

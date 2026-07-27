@@ -179,15 +179,35 @@ db.exec(`
   );
 `);
 
-export const LATEST_SCHEMA_VERSION = 1;
-runMigrations(db, [{
-  version: 1,
-  name: "baseline-marketplace-schema",
-  // The existing idempotent CREATE TABLE statements above establish the
-  // baseline for new and pre-migration databases. Future schema changes must
-  // be added as ordered migrations here.
-  up: () => undefined,
-}]);
+export const LATEST_SCHEMA_VERSION = 2;
+runMigrations(db, [
+  {
+    version: 1,
+    name: "baseline-marketplace-schema",
+    // The existing idempotent CREATE TABLE statements above establish the
+    // baseline for new and pre-migration databases.
+    up: () => undefined,
+  },
+  {
+    version: 2,
+    name: "account-security-audit-events",
+    up: (database) => database.exec(`
+      CREATE TABLE account_audit_events (
+        id TEXT PRIMARY KEY,
+        eventType TEXT NOT NULL,
+        outcome TEXT NOT NULL,
+        userId TEXT,
+        subjectHash TEXT,
+        requestId TEXT NOT NULL,
+        createdAt TEXT NOT NULL
+      );
+      CREATE INDEX account_audit_events_user_created
+        ON account_audit_events(userId, createdAt DESC);
+      CREATE INDEX account_audit_events_request
+        ON account_audit_events(requestId);
+    `),
+  },
+]);
 
 export interface UserRow {
   id: string;

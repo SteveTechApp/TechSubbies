@@ -15,6 +15,7 @@ const { developmentEmailOutbox, resetEmailProvider, setEmailProvider } = await i
 const { getDatabaseRuntimeSettings, LATEST_SCHEMA_VERSION } = await import("../lib/db.js");
 const { currentSchemaVersion } = await import("../lib/migrations.js");
 const { db } = await import("../lib/db.js");
+const { findAccountAuditByRequestId } = await import("../lib/accountAudit.js");
 const app = createApp();
 
 function tokenFromLastEmail(): string {
@@ -43,6 +44,12 @@ describe("POST /api/auth/register", () => {
     const cookies = res.headers["set-cookie"] as unknown as string[];
     expect(cookies.some((cookie) => cookie.startsWith("techsubbies_session=") && cookie.includes("HttpOnly"))).toBe(true);
     expect(cookies.some((cookie) => cookie.startsWith("techsubbies_csrf="))).toBe(true);
+    expect(findAccountAuditByRequestId(res.headers["x-request-id"])[0]).toMatchObject({
+      eventType: "account.registered",
+      outcome: "success",
+      userId: res.body.user.id,
+      subjectHash: null,
+    });
   });
 
   it("rejects a password shorter than 8 characters", async () => {
@@ -179,6 +186,10 @@ describe("POST /api/auth/login", () => {
     });
 
     expect(res.status).toBe(401);
+    const event = findAccountAuditByRequestId(res.headers["x-request-id"])[0];
+    expect(event).toMatchObject({ eventType: "login.failed", outcome: "failure" });
+    expect(event.subjectHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(event.subjectHash).not.toContain("bob@example.com");
   });
 
   it("rejects a login for an email that was never registered", async () => {
