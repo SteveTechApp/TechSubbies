@@ -5,6 +5,12 @@ import { useAppContext } from '../../context/InteractionContext';
 import { Job, EngineerProfile, ApplicationStatus, Application } from '../../types';
 import { MapPin, DollarSign, Users, Edit, Trash2, BrainCircuit, Star } from '../../components/Icons';
 import { CreateContractModal } from '../../components/CreateContractModal';
+import {
+    ApplicationPipelineFilter,
+    applicationPipelineFilters,
+    getApplicationPipelineCounts,
+    matchesApplicationPipeline,
+} from '../../utils/applicationPipeline';
 
 interface MyJobsViewProps {
     myJobs: Job[];
@@ -60,7 +66,7 @@ const ApplicantCard = ({ applicant, application, onDeepDive, onHire, onReject }:
         || application.status === ApplicationStatus.COMPLETED;
 
     return (
-        <div className={`flex items-center gap-4 p-3 bg-white rounded-lg border relative ${application.isFeatured ? 'border-amber-400' : 'border-gray-200'}`}>
+        <div className={`flex flex-col gap-4 p-3 bg-white rounded-lg border relative sm:flex-row sm:items-center ${application.isFeatured ? 'border-amber-400' : 'border-gray-200'}`}>
             {application.isFeatured && (
                 <div className="absolute -top-3 -left-3 bg-amber-400 text-black text-xs font-bold px-2 py-0.5 rounded-full flex items-center shadow-lg transform -rotate-12">
                     <Star size={12} className="mr-1"/> FEATURED
@@ -74,7 +80,7 @@ const ApplicantCard = ({ applicant, application, onDeepDive, onHire, onReject }:
                     {application.status}
                 </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
                 <button onClick={onDeepDive} className="px-3 py-1.5 text-sm bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 font-semibold flex items-center gap-2">
                     <BrainCircuit size={14} /> AI Deep Dive
                 </button>
@@ -108,6 +114,8 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [selectedApplicant, setSelectedApplicant] = useState<EngineerProfile | null>(null);
     const [isHireModalOpen, setIsHireModalOpen] = useState(false);
+    const [applicantFilter, setApplicantFilter] = useState<ApplicationPipelineFilter>('all');
+    const [applicantSearch, setApplicantSearch] = useState('');
 
     const applicantsForSelectedJob = useMemo(() => {
         if (!selectedJob) return [];
@@ -126,6 +134,22 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
                 return b.application.date.getTime() - a.application.date.getTime();
             });
     }, [selectedJob, applications, engineers]);
+
+    const pipelineCounts = useMemo(
+        () => getApplicationPipelineCounts(applicantsForSelectedJob.map(item => item.application)),
+        [applicantsForSelectedJob]
+    );
+
+    const visibleApplicants = useMemo(() => {
+        const query = applicantSearch.trim().toLowerCase();
+        return applicantsForSelectedJob.filter(({ application, engineer }) => {
+            if (!matchesApplicationPipeline(application.status, applicantFilter)) return false;
+            if (!query) return true;
+            return [engineer.name, engineer.discipline, engineer.location]
+                .filter(Boolean)
+                .some(value => String(value).toLowerCase().includes(query));
+        });
+    }, [applicantFilter, applicantSearch, applicantsForSelectedJob]);
     
     const handleHire = async (engineer: EngineerProfile) => {
         if (!selectedJob) return;
@@ -171,9 +195,40 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
                 <button onClick={() => setSelectedJob((current) => current === null ? null : null)} className="text-blue-600 hover:underline mb-4">&larr; Back to My Jobs</button>
                 <h2 className="text-2xl font-bold">{selectedJob.title}</h2>
                 <p className="text-gray-500 mb-4">Applicants for this role:</p>
-                {applicantsForSelectedJob.length > 0 ? (
+                {applicantsForSelectedJob.length > 0 && (
+                    <div className="mb-5 space-y-3 rounded-lg border border-gray-200 bg-white p-4">
+                        <label className="block">
+                            <span className="sr-only">Search applicants</span>
+                            <input
+                                type="search"
+                                value={applicantSearch}
+                                onChange={event => setApplicantSearch(event.target.value)}
+                                placeholder="Search by name, discipline or location"
+                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                            />
+                        </label>
+                        <div className="flex flex-wrap gap-2" aria-label="Applicant pipeline filters">
+                            {applicationPipelineFilters.map(filter => (
+                                <button
+                                    key={filter.id}
+                                    type="button"
+                                    onClick={() => setApplicantFilter(filter.id)}
+                                    aria-pressed={applicantFilter === filter.id}
+                                    className={`rounded-full px-3 py-1.5 text-sm font-semibold ${
+                                        applicantFilter === filter.id
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    {filter.label} ({pipelineCounts[filter.id]})
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                {visibleApplicants.length > 0 ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {applicantsForSelectedJob.map(({ engineer, application }) => (
+                        {visibleApplicants.map(({ engineer, application }) => (
                             <ApplicantCard
                                 key={engineer.id}
                                 applicant={engineer}
@@ -185,7 +240,9 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
                         ))}
                     </div>
                 ) : (
-                    <p className="text-center p-8 bg-gray-50 rounded-lg">No applicants yet.</p>
+                    <p className="text-center p-8 bg-gray-50 rounded-lg">
+                        {applicantsForSelectedJob.length > 0 ? 'No applicants match these filters.' : 'No applicants yet.'}
+                    </p>
                 )}
                  {selectedApplicant && selectedJob && (
                     <CreateContractModal
@@ -210,6 +267,8 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
                         job={job}
                         onSelect={() => {
                             setSelectedJob(job);
+                            setApplicantFilter('all');
+                            setApplicantSearch('');
                             markApplicationsViewed(job.id);
                         }}
                         onEdit={() => alert(`Editing job: ${job.title}`)}
