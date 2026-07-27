@@ -41,12 +41,13 @@ export const UserManagementView = () => {
         setError('');
         setMessage('');
         try {
-            const updated = await apiService.setAdminUserSuspension(account.id, suspending, reason);
-            setAccounts((current) => current.map((item) => item.id === account.id ? { ...item, ...updated } : item));
+            const result = await apiService.setAdminUserSuspension(account.id, suspending, reason);
+            setAccounts((current) => current.map((item) => item.id === account.id ? { ...item, ...result.user } : item));
             setReasons((current) => ({ ...current, [account.id]: '' }));
-            setMessage(suspending
+            const delivery = result.notificationSent ? ' A notification email was sent.' : ' The account changed, but email delivery failed.';
+            setMessage((suspending
                 ? `${account.name} was suspended and all sessions were revoked.`
-                : `${account.name} was reactivated. They must sign in again.`);
+                : `${account.name} was reactivated. They must sign in again.`) + delivery);
         } catch (reason) {
             setError(reason instanceof Error ? reason.message : 'Could not update account status.');
         } finally {

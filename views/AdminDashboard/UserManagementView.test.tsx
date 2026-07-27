@@ -36,9 +36,12 @@ describe('UserManagementView', () => {
             offset: 0,
         });
         vi.mocked(apiService.setAdminUserSuspension).mockResolvedValue({
-            ...account,
-            suspendedAt: '2026-07-27T12:00:00.000Z',
-            suspensionReason: 'Repeated marketplace policy violations.',
+            user: {
+                ...account,
+                suspendedAt: '2026-07-27T12:00:00.000Z',
+                suspensionReason: 'Repeated marketplace policy violations.',
+            },
+            notificationSent: true,
         });
     });
 
@@ -61,6 +64,7 @@ describe('UserManagementView', () => {
         ));
         expect(await screen.findByText('Suspended')).toBeVisible();
         expect(screen.getByRole('status')).toHaveTextContent(/sessions were revoked/i);
+        expect(screen.getByRole('status')).toHaveTextContent(/notification email was sent/i);
     });
 
     it('submits server-side account searches', async () => {

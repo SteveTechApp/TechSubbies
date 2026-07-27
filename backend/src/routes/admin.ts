@@ -19,6 +19,7 @@ import {
   setUserSuspension,
 } from "../lib/db.js";
 import { sendPrivacyNotification } from "../lib/privacyNotifications.js";
+import { sendModerationNotification } from "../lib/moderationNotifications.js";
 
 export const adminRouter = Router();
 
@@ -49,7 +50,7 @@ adminRouter.get("/users", (req, res) => {
   });
 });
 
-adminRouter.patch("/users/:userId/suspension", (req: AuthedRequest, res) => {
+adminRouter.patch("/users/:userId/suspension", async (req: AuthedRequest, res) => {
   const parsed = z.discriminatedUnion("suspended", [
     z.object({ suspended: z.literal(true), reason: z.string().trim().min(10).max(500) }),
     z.object({ suspended: z.literal(false), reason: z.string().optional() }),
@@ -75,6 +76,11 @@ adminRouter.patch("/users/:userId/suspension", (req: AuthedRequest, res) => {
     userId: updated.id,
     requestId: res.locals.requestId,
   });
+  const notificationSent = await sendModerationNotification({
+    to: updated.email,
+    suspended: parsed.data.suspended,
+    reason: updated.suspensionReason,
+  });
   return res.json({
     user: {
       id: updated.id,
@@ -85,6 +91,7 @@ adminRouter.patch("/users/:userId/suspension", (req: AuthedRequest, res) => {
       suspensionReason: updated.suspensionReason,
       updatedAt: updated.updatedAt,
     },
+    notificationSent,
   });
 });
 

@@ -347,7 +347,7 @@ const apiService = {
     userId: string,
     suspended: boolean,
     reason?: string
-  ): Promise<AdminUserAccount> => {
+  ): Promise<{ user: AdminUserAccount; notificationSent: boolean }> => {
     const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/suspension`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -355,7 +355,7 @@ const apiService = {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not update account status.');
-    return data.user;
+    return data;
   },
 
   reviewAdminDeletionRequest: async (

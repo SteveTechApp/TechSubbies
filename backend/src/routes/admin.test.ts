@@ -273,6 +273,12 @@ describe("admin account moderation", () => {
       suspendedAt: expect.any(String),
       suspensionReason: "Repeated marketplace policy violations.",
     });
+    expect(suspended.body.notificationSent).toBe(true);
+    expect(developmentEmailOutbox.some((email) =>
+      email.to === "moderated-member@example.com"
+      && email.subject.includes("suspended")
+      && email.text.includes("Repeated marketplace policy violations.")
+    )).toBe(true);
 
     const revokedSession = await request(app)
       .get("/api/users/me")
@@ -291,6 +297,10 @@ describe("admin account moderation", () => {
       .send({ suspended: false });
     expect(reactivated.status).toBe(200);
     expect(reactivated.body.user.suspendedAt).toBeNull();
+    expect(reactivated.body.notificationSent).toBe(true);
+    expect(developmentEmailOutbox.some((email) =>
+      email.to === "moderated-member@example.com" && email.subject.includes("reactivated")
+    )).toBe(true);
 
     const stillRevokedSession = await request(app)
       .get("/api/users/me")
