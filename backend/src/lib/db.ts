@@ -438,6 +438,7 @@ export type AdminPlatformMetrics = {
     contractsActive: number;
   };
   privacyPending: number;
+  membershipPending: number;
 };
 
 export function getAdminPlatformMetrics(): AdminPlatformMetrics {
@@ -474,6 +475,7 @@ export function getAdminPlatformMetrics(): AdminPlatformMetrics {
       contractsActive: contracts.active,
     },
     privacyPending: privacy.total,
+    membershipPending: listPendingMembershipSelections().length,
   };
 }
 

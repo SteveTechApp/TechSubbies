@@ -71,6 +71,7 @@ export type AdminPlatformMetrics = {
     contractsActive: number;
   };
   privacyPending: number;
+  membershipPending: number;
 };
 
 export type AdminJob = {

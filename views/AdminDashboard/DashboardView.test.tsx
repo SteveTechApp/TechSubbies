@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import apiService from '../../services/apiService';
 import { DashboardView } from './DashboardView';
@@ -19,15 +20,22 @@ describe('Admin DashboardView', () => {
                 contractsActive: 5,
             },
             privacyPending: 3,
+            membershipPending: 2,
         });
 
-        render(<DashboardView setActiveView={vi.fn()} />);
+        const setActiveView = vi.fn();
+        render(<DashboardView setActiveView={setActiveView} />);
 
         expect(await screen.findByText('42')).toBeVisible();
         expect(screen.getByText('Registered Accounts')).toBeVisible();
         expect(screen.getByText('Active Jobs')).toBeVisible();
         expect(screen.getByText('Pending privacy requests')).toBeVisible();
+        expect(screen.getByText('Pending membership requests')).toBeVisible();
+        expect(screen.getByText(/2 membership requests need verification/i)).toBeVisible();
         expect(screen.getByText('Live operational data from the TechSubbies backend.')).toBeVisible();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Review membership requests' }));
+        expect(setActiveView).toHaveBeenCalledWith('Membership Requests');
     });
 
     it('shows backend failures instead of mock statistics', async () => {

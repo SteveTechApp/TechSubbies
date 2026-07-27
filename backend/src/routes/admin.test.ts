@@ -310,6 +310,7 @@ describe("admin account moderation", () => {
         contractsTotal: expect.any(Number),
         contractsActive: expect.any(Number),
       },
+      membershipPending: expect.any(Number),
       privacyPending: expect.any(Number),
     });
     expect((await request(app).get("/api/admin/metrics")).status).toBe(401);
