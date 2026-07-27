@@ -52,6 +52,12 @@ usersRouter.post("/me/membership-selection", requireAuth, (req: AuthedRequest, r
   profile.requestedProfileTier = parsed.data.tier;
   profile.membershipRequestedAt = requestedAt;
   const updated = updateUserProfile(req.userId!, JSON.stringify(profile), req.authUser!.name);
+  recordAccountAudit({
+    eventType: "membership.requested",
+    outcome: "success",
+    userId: req.userId!,
+    requestId: res.locals.requestId,
+  });
 
   return res.status(202).json({
     activeTier: profile.profileTier ?? "Bronze",
@@ -59,6 +65,32 @@ usersRouter.post("/me/membership-selection", requireAuth, (req: AuthedRequest, r
     requestedAt,
     user: toPublicUser(updated!),
   });
+});
+
+usersRouter.delete("/me/membership-selection", requireAuth, (req: AuthedRequest, res) => {
+  if (req.authUser!.role !== "Engineer") {
+    return res.status(403).json({ error: "Membership plans are available to engineer accounts." });
+  }
+  let profile: Record<string, unknown> = {};
+  try {
+    profile = JSON.parse(req.authUser!.profile);
+  } catch {
+    profile = {};
+  }
+  if (!profile.requestedProfileTier || !profile.membershipRequestedAt) {
+    return res.status(404).json({ error: "No pending membership selection was found." });
+  }
+  const activeTier = profile.profileTier ?? "Bronze";
+  delete profile.requestedProfileTier;
+  delete profile.membershipRequestedAt;
+  const updated = updateUserProfile(req.userId!, JSON.stringify(profile), req.authUser!.name);
+  recordAccountAudit({
+    eventType: "membership.request_cancelled",
+    outcome: "success",
+    userId: req.userId!,
+    requestId: res.locals.requestId,
+  });
+  return res.json({ activeTier, user: toPublicUser(updated!) });
 });
 
 function publicDeletionRequest(userId: string) {

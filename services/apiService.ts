@@ -733,6 +733,17 @@ const apiService = {
     };
   },
 
+  cancelMembershipChange: async (): Promise<{ activeTier: ProfileTier }> => {
+    const response = await fetch(`${API_BASE_URL}/users/me/membership-selection`, {
+      method: 'DELETE',
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.error || 'Could not cancel your membership selection.');
+    }
+    return data;
+  },
+
   // --- ENGINEER PARTNERSHIPS ("team" pairing) ---
   // Requires the signed-in user to have a real backend account (a token
   // saved from registration/login). Mirrors backend/src/routes/partnerships.ts.

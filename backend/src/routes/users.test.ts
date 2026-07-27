@@ -236,4 +236,20 @@ describe("POST /api/users/me/membership-selection", () => {
 
     expect(res.status).toBe(400);
   });
+
+  it("allows an engineer to cancel a pending selection", async () => {
+    const cancelled = await request(app)
+      .delete("/api/users/me/membership-selection")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(cancelled.status).toBe(200);
+    expect(cancelled.body.activeTier).toBe("Bronze");
+    expect(cancelled.body.user.profile).not.toHaveProperty("requestedProfileTier");
+    expect(cancelled.body.user.profile).not.toHaveProperty("membershipRequestedAt");
+
+    const alreadyCancelled = await request(app)
+      .delete("/api/users/me/membership-selection")
+      .set("Authorization", `Bearer ${token}`);
+    expect(alreadyCancelled.status).toBe(404);
+  });
 });

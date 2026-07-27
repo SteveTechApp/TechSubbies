@@ -4,9 +4,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { Currency, ProfileTier } from '../../types';
 
 const requestMembershipChange = vi.fn().mockResolvedValue(undefined);
+const cancelMembershipChange = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('../../context/InteractionContext', () => ({
-    useAppContext: () => ({ requestMembershipChange }),
+    useAppContext: () => ({ requestMembershipChange, cancelMembershipChange }),
 }));
 
 import { PaymentsView } from './PaymentsView';
@@ -66,5 +67,22 @@ describe('PaymentsView', () => {
             />
         );
         expect(screen.getByText(/Active since/i)).toBeVisible();
+    });
+
+    it('allows a pending selection to be cancelled without changing the active plan', async () => {
+        render(
+            <PaymentsView
+                profile={{
+                    ...profile,
+                    requestedProfileTier: ProfileTier.SKILLS,
+                    membershipRequestedAt: '2026-07-27T12:00:00.000Z',
+                }}
+                setActiveView={vi.fn()}
+            />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Cancel pending selection' }));
+        await waitFor(() => expect(cancelMembershipChange).toHaveBeenCalled());
+        expect(screen.getByRole('status')).toHaveTextContent(/current plan is unchanged/i);
     });
 });

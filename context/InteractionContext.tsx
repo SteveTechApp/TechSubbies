@@ -21,6 +21,7 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     // --- Profile Management ---
     updateEngineerProfile: (profileData: Partial<EngineerProfile>) => Promise<void>;
     requestMembershipChange: (tier: ProfileTier) => Promise<void>;
+    cancelMembershipChange: () => Promise<void>;
     updateCompanyProfile: (profileData: Partial<CompanyProfile>) => Promise<void>;
     boostProfile: () => void;
     addSkillsToProfile: (skills: any[]) => void;
@@ -146,6 +147,28 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
             engineers: previous.engineers.map(engineer =>
                 engineer.id === user.profile.id ? { ...engineer, ...pendingMembership } : engineer
             ),
+        }));
+    };
+
+    const cancelMembershipChange = async () => {
+        if (!user || user.role !== Role.ENGINEER) return;
+        await apiService.cancelMembershipChange();
+        auth.setUser(previous => {
+            if (!previous || previous.role !== Role.ENGINEER) return previous;
+            const profile = { ...previous.profile };
+            delete profile.requestedProfileTier;
+            delete profile.membershipRequestedAt;
+            return { ...previous, profile };
+        });
+        setAppData(previous => ({
+            ...previous,
+            engineers: previous.engineers.map(engineer => {
+                if (engineer.id !== user.profile.id) return engineer;
+                const updated = { ...engineer };
+                delete updated.requestedProfileTier;
+                delete updated.membershipRequestedAt;
+                return updated;
+            }),
         }));
     };
 
@@ -506,6 +529,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         createAndLoginEngineer: auth.createAndLoginEngineer,
         updateEngineerProfile,
         requestMembershipChange,
+        cancelMembershipChange,
         updateCompanyProfile,
         boostProfile,
         addSkillsToProfile,

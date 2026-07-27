@@ -14,7 +14,7 @@ interface PaymentsViewProps {
 }
 
 export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
-    const { requestMembershipChange } = useAppContext();
+    const { requestMembershipChange, cancelMembershipChange } = useAppContext();
     const [isManaging, setIsManaging] = useState(false);
     const [selectedTier, setSelectedTier] = useState<ProfileTier>(profile.profileTier);
     const [isSaving, setIsSaving] = useState(false);
@@ -41,6 +41,19 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
             setIsManaging(false);
         } catch {
             setMessage('The membership could not be updated. Please try again.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const cancelPendingMembership = async () => {
+        setIsSaving(true);
+        setMessage('');
+        try {
+            await cancelMembershipChange();
+            setMessage('Your pending membership selection was cancelled. Your current plan is unchanged.');
+        } catch {
+            setMessage('The pending membership selection could not be cancelled. Please try again.');
         } finally {
             setIsSaving(false);
         }
@@ -85,6 +98,14 @@ export const PaymentsView = ({ profile, setActiveView }: PaymentsViewProps) => {
                                             </time>
                                         )}
                                         <p className="mt-1 text-xs">Your current membership remains active while verification is completed.</p>
+                                        <button
+                                            type="button"
+                                            disabled={isSaving}
+                                            onClick={cancelPendingMembership}
+                                            className="mt-3 rounded-md border border-amber-400 px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100 disabled:opacity-50"
+                                        >
+                                            {isSaving ? 'Cancelling…' : 'Cancel pending selection'}
+                                        </button>
                                     </div>
                                 )}
                                 {!profile.requestedProfileTier && profile.membershipActivatedAt && (
