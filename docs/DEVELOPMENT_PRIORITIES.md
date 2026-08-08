@@ -80,8 +80,10 @@ Word planning documents are retained as historical snapshots.
 - [x] Crosswalk every responsibility expectation to a canonical role ID and
   route downstream role consumers through approved published taxonomy overlays,
   with the source-controlled catalogue retained as the fail-open baseline.
-- [ ] Add assisted/independent/lead delivery context, last-used dates and
-  project scale to skill evidence.
+- [x] Add assisted/independent/lead delivery context, last-used dates and
+  project scale to completed-work skill evidence. Context is stored on the job,
+  carried into evidence trails and explanations, and does not add score merely
+  because an engagement was lead-level or large.
 - [ ] Add accessibility adjustments, languages, remote/on-site preferences and
   alternative evidence routes.
 - [ ] Validate adjacent families before adding them: fibre/telecoms, physical
