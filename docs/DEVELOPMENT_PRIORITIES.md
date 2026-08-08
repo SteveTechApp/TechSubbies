@@ -84,8 +84,11 @@ Word planning documents are retained as historical snapshots.
   project scale to completed-work skill evidence. Context is stored on the job,
   carried into evidence trails and explanations, and does not add score merely
   because an engagement was lead-level or large.
-- [ ] Add accessibility adjustments, languages, remote/on-site preferences and
-  alternative evidence routes.
+- [x] Add accessibility adjustments, languages, remote/on-site preferences and
+  alternative evidence routes. Accessibility details are private by default,
+  never exposed as company search/ranking criteria, and enter directory data
+  only after explicit engineer sharing; work-mode/language preferences are
+  searchable only when the engineer has actually declared them.
 - [ ] Validate adjacent families before adding them: fibre/telecoms, physical
   security, smart buildings/BMS/IoT, broadcast, stage systems and residential
   integration.
