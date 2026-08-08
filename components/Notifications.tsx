@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
 import { useAppContext } from '../context/InteractionContext';
+import { realtimeApi } from '../services/realtimeApi';
 import { Bell, Briefcase, Mail, Star } from './Icons';
-import { Notification, NotificationType } from '../types';
+import { NotificationType } from '../types';
 import { formatTimeAgo } from '../utils/dateFormatter';
 
 const getIconForType = (type: NotificationType) => {
@@ -25,7 +25,7 @@ export const Notifications = () => {
     }, [notifications, user]);
 
     const userNotifications = useMemo(() => {
-         if (!user) return [];
+        if (!user) return [];
         return notifications
             .filter(n => n.userId === user.id)
             .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
@@ -33,20 +33,19 @@ export const Notifications = () => {
     }, [notifications, user]);
 
     const handleToggle = () => {
-        if (!isOpen && user) {
+        if (!isOpen && user && unreadCount > 0) {
             markNotificationsAsRead(user.id);
+            void realtimeApi.markAllNotificationsRead().catch(() => undefined);
         }
         setIsOpen(prev => !prev);
     };
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
+            if (panelRef.current && !panelRef.current.contains(event.target as Node)) setIsOpen(false);
         };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     if (!user) return null;
@@ -61,7 +60,7 @@ export const Notifications = () => {
                 <Bell className="text-gray-600" />
                 {unreadCount > 0 && (
                     <span className="absolute top-0 right-0 block h-4 w-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-bold">
-                        {unreadCount}
+                        {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
             </button>
