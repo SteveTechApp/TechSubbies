@@ -18,6 +18,8 @@ vi.mock('./DashboardSidebar', () => ({
     ),
 }));
 
+vi.mock('./RealtimeBridge', () => ({ RealtimeBridge: () => null }));
+
 import { DashboardShell } from './DashboardShell';
 
 describe('DashboardShell mobile navigation', () => {
