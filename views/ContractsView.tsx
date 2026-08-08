@@ -4,6 +4,7 @@ import { Contract, ContractStatus, UserProfile } from '../types';
 import { FileText, Calendar, DollarSign } from '../components/Icons';
 import { formatDisplayDate } from '../utils/dateFormatter';
 import { ContractDetailsView } from './ContractDetailsView';
+import { ContractSupportPanel } from '../components/ContractSupportPanel';
 
 interface ContractCardProps {
     contract: Contract;
@@ -17,6 +18,7 @@ const getStatusClass = (status: ContractStatus) => {
         case ContractStatus.COMPLETED: return 'border-purple-500';
         case ContractStatus.PENDING_SIGNATURE: return 'border-yellow-500';
         case ContractStatus.SIGNED: return 'border-blue-500';
+        case ContractStatus.CANCELLED: return 'border-red-500';
         default: return 'border-gray-300';
     }
 }
@@ -27,6 +29,7 @@ const ContractCard = ({ contract, otherParty, onSelect }: ContractCardProps) => 
             <div>
                 <p className="text-sm text-gray-500">vs. {otherParty?.name || '...'}</p>
                 <h3 className="font-bold text-gray-800">{contract.jobTitle || 'Contract'}</h3>
+                {contract.status === ContractStatus.CANCELLED && <p className="mt-1 text-xs font-semibold text-red-700">Cancelled</p>}
             </div>
              <span className="text-xs font-bold text-gray-500">{contract.id}</span>
         </div>
@@ -59,6 +62,9 @@ export const ContractsView = ({ setActiveView }: ContractsViewProps) => {
             <div>
                 <button onClick={() => setSelectedContract(null)} className="text-blue-600 hover:underline mb-4">&larr; Back to All Contracts</button>
                 <ContractDetailsView contract={selectedContract} />
+                <div className="mt-4 rounded-lg bg-white p-6 shadow">
+                    <ContractSupportPanel contractId={selectedContract.id} currentUserId={user.profile.id} />
+                </div>
             </div>
         );
     }
