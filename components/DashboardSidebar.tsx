@@ -36,6 +36,7 @@ interface DashboardSidebarProps {
 const ENGINEER_LINKS = [
     { label: 'Dashboard', icon: LayoutDashboard },
     { label: 'Manage Profile', icon: User },
+    { label: 'Work Preferences', icon: Settings },
     { label: 'Certificates', icon: ShieldCheck },
     { label: 'Taxonomy Review', icon: Layers },
     { label: 'Job Search', icon: Search },
