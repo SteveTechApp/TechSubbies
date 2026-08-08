@@ -31,7 +31,8 @@ describe('MarketplaceAnalyticsView', () => {
     expect(screen.getByText('20')).toBeInTheDocument();
     expect(screen.getByText('30%')).toBeInTheDocument();
     expect(screen.getByText('50%')).toBeInTheDocument();
-    expect(screen.getByText('1 repeat pairs')).toBeInTheDocument();
+    expect(screen.getByText('Repeat booking')).toBeInTheDocument();
+    expect(screen.getByText('30-day retention')).toBeInTheDocument();
   });
 
   it('reloads the requested time window', async () => {
