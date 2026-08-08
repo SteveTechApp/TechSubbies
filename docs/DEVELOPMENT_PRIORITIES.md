@@ -77,7 +77,9 @@ Word planning documents are retained as historical snapshots.
 - [x] Implement Admin taxonomy governance with versioned role snapshots,
   practitioner approval/rejection by verified Engineers, immutable review
   history and explicit Admin publishing/superseding of approved versions.
-- [ ] Crosswalk all responsibility expectations to canonical role IDs.
+- [x] Crosswalk every responsibility expectation to a canonical role ID and
+  route downstream role consumers through approved published taxonomy overlays,
+  with the source-controlled catalogue retained as the fail-open baseline.
 - [ ] Add assisted/independent/lead delivery context, last-used dates and
   project scale to skill evidence.
 - [ ] Add accessibility adjustments, languages, remote/on-site preferences and
