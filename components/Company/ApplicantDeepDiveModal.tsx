@@ -2,7 +2,7 @@
 import { Job, EngineerProfile } from '../../types';
 import { X, BrainCircuit, Loader, CheckCircle, AlertTriangle, Lightbulb } from '../Icons';
 import { useAppContext } from '../../context/InteractionContext';
-import { ALTERNATIVE_EVIDENCE_LABELS, readInclusivePreferences } from '../../utils/inclusivePreferences';
+import { ALTERNATIVE_EVIDENCE_LABELS, hasInclusivePreferences, readInclusivePreferences } from '../../utils/inclusivePreferences';
 
 interface ApplicantDeepDiveModalProps {
     isOpen: boolean;
@@ -23,6 +23,7 @@ export const ApplicantDeepDiveModal = ({ isOpen, onClose, job, engineer }: Appli
     const [analysis, setAnalysis] = useState<Analysis | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const hasDeclaredPreferences = hasInclusivePreferences(engineer);
     const preferences = readInclusivePreferences(engineer);
 
     useEffect(() => {
@@ -113,42 +114,48 @@ export const ApplicantDeepDiveModal = ({ isOpen, onClose, job, engineer }: Appli
                 <main className="flex-grow overflow-y-auto custom-scrollbar p-6 space-y-5">
                     <section className="rounded-lg border border-gray-200 bg-white p-4">
                         <h3 className="font-bold text-gray-900">Declared work preferences</h3>
-                        <div className="mt-3 grid gap-3 text-sm md:grid-cols-2">
-                            <div>
-                                <div className="font-semibold text-gray-700">Work modes</div>
-                                <div className="mt-1 text-gray-600">{preferences.workModes.join(', ')}</div>
-                            </div>
-                            <div>
-                                <div className="font-semibold text-gray-700">Languages</div>
-                                <div className="mt-1 text-gray-600">{preferences.languages.join(', ')}</div>
-                            </div>
-                        </div>
-
-                        {preferences.alternativeEvidenceRoutes.length > 0 && (
-                            <div className="mt-4 border-t border-gray-100 pt-3">
-                                <div className="font-semibold text-gray-700">Alternative evidence they can provide</div>
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                    {preferences.alternativeEvidenceRoutes.map(route => (
-                                        <span key={route} className="rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
-                                            {ALTERNATIVE_EVIDENCE_LABELS[route]}
-                                        </span>
-                                    ))}
+                        {!hasDeclaredPreferences ? (
+                            <p className="mt-2 text-sm text-gray-500">This engineer has not declared work-mode, language or alternative-evidence preferences yet.</p>
+                        ) : (
+                            <>
+                                <div className="mt-3 grid gap-3 text-sm md:grid-cols-2">
+                                    <div>
+                                        <div className="font-semibold text-gray-700">Work modes</div>
+                                        <div className="mt-1 text-gray-600">{preferences.workModes.join(', ')}</div>
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-gray-700">Languages</div>
+                                        <div className="mt-1 text-gray-600">{preferences.languages.join(', ')}</div>
+                                    </div>
                                 </div>
-                                <p className="mt-2 text-xs text-gray-500">Declared evidence routes are not verified proof until the underlying evidence is reviewed through TechSubbies' normal trust workflow.</p>
-                            </div>
-                        )}
 
-                        {preferences.accessibility.needsAdjustments && preferences.accessibility.shareWithCompanies && (
-                            <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-                                <div className="font-bold">Engineer-shared site adjustments</div>
-                                {preferences.accessibility.adjustments.length > 0 && (
-                                    <ul className="mt-1 list-disc pl-5">
-                                        {preferences.accessibility.adjustments.map(item => <li key={item}>{item}</li>)}
-                                    </ul>
+                                {preferences.alternativeEvidenceRoutes.length > 0 && (
+                                    <div className="mt-4 border-t border-gray-100 pt-3">
+                                        <div className="font-semibold text-gray-700">Alternative evidence they can provide</div>
+                                        <div className="mt-2 flex flex-wrap gap-2">
+                                            {preferences.alternativeEvidenceRoutes.map(route => (
+                                                <span key={route} className="rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+                                                    {ALTERNATIVE_EVIDENCE_LABELS[route]}
+                                                </span>
+                                            ))}
+                                        </div>
+                                        <p className="mt-2 text-xs text-gray-500">Declared evidence routes are not verified proof until the underlying evidence is reviewed through TechSubbies' normal trust workflow.</p>
+                                    </div>
                                 )}
-                                {preferences.accessibility.note && <p className="mt-2">{preferences.accessibility.note}</p>}
-                                <p className="mt-2 text-xs">These details were explicitly shared by the engineer for practical work/site planning and are not search or ranking criteria.</p>
-                            </div>
+
+                                {preferences.accessibility.needsAdjustments && preferences.accessibility.shareWithCompanies && (
+                                    <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                                        <div className="font-bold">Engineer-shared site adjustments</div>
+                                        {preferences.accessibility.adjustments.length > 0 && (
+                                            <ul className="mt-1 list-disc pl-5">
+                                                {preferences.accessibility.adjustments.map(item => <li key={item}>{item}</li>)}
+                                            </ul>
+                                        )}
+                                        {preferences.accessibility.note && <p className="mt-2">{preferences.accessibility.note}</p>}
+                                        <p className="mt-2 text-xs">These details were explicitly shared by the engineer for practical work/site planning and are not search or ranking criteria.</p>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </section>
                     {renderContent()}
