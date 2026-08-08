@@ -13,6 +13,7 @@ import { SubscriptionBillingView } from './AdminDashboard/SubscriptionBillingVie
 import { CertificateVerificationView } from './AdminDashboard/CertificateVerificationView';
 import { ContractSupportView } from './AdminDashboard/ContractSupportView';
 import { TaxonomyEditorView } from './AdminDashboard/TaxonomyEditorView';
+import { AdjacentFamiliesView } from './AdminDashboard/AdjacentFamiliesView';
 
 export const AdminDashboard = () => {
     const { user } = useAuth();
@@ -30,6 +31,8 @@ export const AdminDashboard = () => {
                 return <UserManagementView />;
             case 'Role Taxonomy':
                 return <TaxonomyEditorView />;
+            case 'Adjacent Families':
+                return <AdjacentFamiliesView />;
             case 'Manage Jobs':
                 return <JobManagementView setActiveView={setActiveView} />;
             case 'Privacy Requests':

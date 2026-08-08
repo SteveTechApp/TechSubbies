@@ -20,10 +20,10 @@ const profile = ({
 
 describe('InclusivePreferencesView', () => {
   it('saves work preferences, alternative evidence routes and private accessibility by default', async () => {
-    const onSave = vi.fn(async () => undefined);
+    const onSave = vi.fn(async (_profileData: Partial<EngineerProfile>) => undefined);
     render(<InclusivePreferencesView profile={profile} onSave={onSave} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Remote/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^Remote\b/i }));
     fireEvent.change(screen.getByLabelText('Languages'), { target: { value: 'English, Polish' } });
     fireEvent.click(screen.getByLabelText('Portfolio / project examples'));
     fireEvent.click(screen.getByLabelText('I may need adjustments'));
@@ -45,7 +45,7 @@ describe('InclusivePreferencesView', () => {
   });
 
   it('requires a separate explicit action before accessibility details are shared', async () => {
-    const onSave = vi.fn(async () => undefined);
+    const onSave = vi.fn(async (_profileData: Partial<EngineerProfile>) => undefined);
     render(<InclusivePreferencesView profile={profile} onSave={onSave} />);
 
     fireEvent.click(screen.getByLabelText('I may need adjustments'));
