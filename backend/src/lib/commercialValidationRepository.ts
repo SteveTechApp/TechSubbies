@@ -113,7 +113,7 @@ export function checkCommercialValidationRepository(): boolean {
   return row?.name === "commercial_validation_decisions";
 }
 
-function count(sql: string, ...params: unknown[]): number {
+function count(sql: string, ...params: any[]): number {
   const row = db.prepare(sql).get(...params) as { total?: number } | undefined;
   return Number(row?.total || 0);
 }
