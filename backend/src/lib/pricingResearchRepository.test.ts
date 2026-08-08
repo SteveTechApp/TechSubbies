@@ -14,16 +14,18 @@ const {
   upsertPricingResearchResponse,
 } = await import('./pricingResearchRepository.js');
 
-const input = (overrides: Partial<Parameters<typeof upsertPricingResearchResponse>[2]> = {}) => ({
+type PricingInput = Parameters<typeof upsertPricingResearchResponse>[2];
+
+const input = (overrides: Partial<PricingInput> = {}): PricingInput => ({
   valueScore: 4,
   likelihoodToPay: 4,
   priceTooCheap: 5,
   priceGoodValue: 15,
   priceExpensive: 35,
   priceTooExpensive: 60,
-  preferredBilling: 'monthly' as const,
-  valueDrivers: ['better-matching', 'verified-talent'] as const,
-  primaryBlocker: 'need-proof-of-value' as const,
+  preferredBilling: 'monthly',
+  valueDrivers: ['better-matching', 'verified-talent'],
+  primaryBlocker: 'need-proof-of-value',
   ...overrides,
 });
 
