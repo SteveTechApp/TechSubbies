@@ -49,7 +49,7 @@ function signedWebhook(event: Record<string, unknown>) {
 }
 
 describe("subscription billing reconciliation", () => {
-  it("grants a paid tier from Stripe, keeps it past-due, then returns to Bronze when cancelled", async () => {
+  it("grants a paid tier, preserves it during retry, restores active after payment, then returns to Bronze when cancelled", async () => {
     const activeEvent = {
       id: "evt_subscription_active",
       type: "customer.subscription.updated",
@@ -107,6 +107,28 @@ describe("subscription billing reconciliation", () => {
       .set("Authorization", `Bearer ${engineerToken}`);
     expect(userPastDue.body.profile.profileTier).toBe("Gold");
 
+    const recoveredInvoice = await signedWebhook({
+      id: "evt_invoice_paid",
+      type: "invoice.paid",
+      data: {
+        object: {
+          id: "in_paid",
+          customer: "cus_123",
+          subscription: "sub_123",
+        },
+      },
+    });
+    expect(recoveredInvoice.status).toBe(200);
+
+    const billingRecovered = await request(app)
+      .get("/api/billing/me")
+      .set("Authorization", `Bearer ${engineerToken}`);
+    expect(billingRecovered.body).toMatchObject({
+      tier: "Gold",
+      status: "active",
+      paymentIssue: false,
+    });
+
     const cancelled = await signedWebhook({
       id: "evt_subscription_cancelled",
       type: "customer.subscription.deleted",
@@ -118,7 +140,6 @@ describe("subscription billing reconciliation", () => {
           status: "canceled",
           current_period_end: Math.floor(Date.now() / 1000),
           cancel_at_period_end: false,
-          items: { data: [{ price: { id: "price_gold" } }] },
         },
       },
     });
