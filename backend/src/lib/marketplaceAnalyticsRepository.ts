@@ -4,9 +4,7 @@ import { db } from "./db.js";
 export type MarketplaceAnalyticsEventType =
   | "search.performed"
   | "profile.viewed"
-  | "invitation.sent"
-  | "application.submitted"
-  | "booking.created";
+  | "invitation.sent";
 
 export type MarketplaceAnalyticsWindow = 30 | 90 | "all";
 
@@ -67,13 +65,41 @@ export function checkMarketplaceAnalyticsRepository(): boolean {
   return row?.name === "marketplace_analytics_events";
 }
 
+function recentDuplicate(input: {
+  eventType: MarketplaceAnalyticsEventType;
+  actorUserId: string;
+  subjectUserId?: string;
+  jobId?: string;
+}): boolean {
+  const dedupeSeconds = input.eventType === "search.performed" ? 5 : input.eventType === "profile.viewed" ? 60 : 300;
+  const threshold = new Date(Date.now() - dedupeSeconds * 1000).toISOString();
+  const row = db.prepare(`
+    SELECT 1 AS ok
+    FROM marketplace_analytics_events
+    WHERE eventType = ?
+      AND actorUserId = ?
+      AND COALESCE(subjectUserId, '') = ?
+      AND COALESCE(jobId, '') = ?
+      AND createdAt >= ?
+    LIMIT 1
+  `).get(
+    input.eventType,
+    input.actorUserId,
+    input.subjectUserId || "",
+    input.jobId || "",
+    threshold
+  ) as { ok?: number } | undefined;
+  return row?.ok === 1;
+}
+
 export function recordMarketplaceAnalyticsEvent(input: {
   eventType: MarketplaceAnalyticsEventType;
   actorUserId: string;
   subjectUserId?: string;
   jobId?: string;
   createdAt?: string;
-}): void {
+}): boolean {
+  if (!input.createdAt && recentDuplicate(input)) return false;
   db.prepare(`
     INSERT INTO marketplace_analytics_events (
       id, eventType, actorUserId, subjectUserId, jobId, createdAt
@@ -86,6 +112,7 @@ export function recordMarketplaceAnalyticsEvent(input: {
     input.jobId || null,
     input.createdAt || new Date().toISOString()
   );
+  return true;
 }
 
 function sinceForWindow(windowDays: MarketplaceAnalyticsWindow): string | null {
@@ -93,7 +120,7 @@ function sinceForWindow(windowDays: MarketplaceAnalyticsWindow): string | null {
   return new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000).toISOString();
 }
 
-function countEvents(eventType: MarketplaceAnalyticsEventType, since: string | null): number {
+function countDiscoveryEvents(eventType: MarketplaceAnalyticsEventType, since: string | null): number {
   const row = since
     ? db.prepare("SELECT COUNT(*) AS total FROM marketplace_analytics_events WHERE eventType = ? AND createdAt >= ?")
         .get(eventType, since)
@@ -102,12 +129,30 @@ function countEvents(eventType: MarketplaceAnalyticsEventType, since: string | n
   return Number((row as { total?: number } | undefined)?.total || 0);
 }
 
-function countDistinctActors(eventType: MarketplaceAnalyticsEventType, since: string | null): number {
+function countDistinctDiscoveryActors(eventType: MarketplaceAnalyticsEventType, since: string | null): number {
   const row = since
     ? db.prepare("SELECT COUNT(DISTINCT actorUserId) AS total FROM marketplace_analytics_events WHERE eventType = ? AND createdAt >= ?")
         .get(eventType, since)
     : db.prepare("SELECT COUNT(DISTINCT actorUserId) AS total FROM marketplace_analytics_events WHERE eventType = ?")
         .get(eventType);
+  return Number((row as { total?: number } | undefined)?.total || 0);
+}
+
+function countDurableRows(table: "applications" | "contracts", since: string | null): number {
+  const row = since
+    ? db.prepare(`SELECT COUNT(*) AS total FROM ${table} WHERE createdAt >= ?`).get(since)
+    : db.prepare(`SELECT COUNT(*) AS total FROM ${table}`).get();
+  return Number((row as { total?: number } | undefined)?.total || 0);
+}
+
+function countDistinctDurableActors(
+  table: "applications" | "contracts",
+  actorColumn: "engineerId" | "companyId",
+  since: string | null
+): number {
+  const row = since
+    ? db.prepare(`SELECT COUNT(DISTINCT ${actorColumn}) AS total FROM ${table} WHERE createdAt >= ?`).get(since)
+    : db.prepare(`SELECT COUNT(DISTINCT ${actorColumn}) AS total FROM ${table}`).get();
   return Number((row as { total?: number } | undefined)?.total || 0);
 }
 
@@ -119,20 +164,16 @@ function ratio(numerator: number, denominator: number): number | null {
 function repeatBookingSummary(since: string | null) {
   const rows = (since
     ? db.prepare(`
-        SELECT actorUserId, subjectUserId, COUNT(*) AS bookings
-        FROM marketplace_analytics_events
-        WHERE eventType = 'booking.created'
-          AND subjectUserId IS NOT NULL
-          AND createdAt >= ?
-        GROUP BY actorUserId, subjectUserId
+        SELECT companyId, engineerId, COUNT(*) AS bookings
+        FROM contracts
+        WHERE createdAt >= ?
+        GROUP BY companyId, engineerId
       `).all(since)
     : db.prepare(`
-        SELECT actorUserId, subjectUserId, COUNT(*) AS bookings
-        FROM marketplace_analytics_events
-        WHERE eventType = 'booking.created'
-          AND subjectUserId IS NOT NULL
-        GROUP BY actorUserId, subjectUserId
-      `).all()) as Array<{ actorUserId: string; subjectUserId: string; bookings: number }>;
+        SELECT companyId, engineerId, COUNT(*) AS bookings
+        FROM contracts
+        GROUP BY companyId, engineerId
+      `).all()) as Array<{ companyId: string; engineerId: string; bookings: number }>;
 
   const bookingPairs = rows.length;
   const repeatBookingPairs = rows.filter((row) => Number(row.bookings) >= 2).length;
@@ -143,28 +184,43 @@ function repeatBookingSummary(since: string | null) {
   };
 }
 
+function marketplaceActivityRows(): Array<{ actorUserId: string; createdAt: string }> {
+  return db.prepare(`
+    SELECT actorUserId, createdAt FROM marketplace_analytics_events
+    UNION ALL
+    SELECT companyId AS actorUserId, postedDate AS createdAt FROM jobs
+    UNION ALL
+    SELECT engineerId AS actorUserId, createdAt FROM applications
+    UNION ALL
+    SELECT companyId AS actorUserId, createdAt FROM contracts
+    UNION ALL
+    SELECT engineerId AS actorUserId, createdAt FROM contracts
+  `).all() as Array<{ actorUserId: string; createdAt: string }>;
+}
+
 function retention30dSummary(now = new Date()) {
-  const firstActivityRows = db.prepare(`
-    SELECT actorUserId, MIN(createdAt) AS firstAt
-    FROM marketplace_analytics_events
-    GROUP BY actorUserId
-  `).all() as Array<{ actorUserId: string; firstAt: string }>;
+  const activity = marketplaceActivityRows();
+  const byUser = new Map<string, string[]>();
+  for (const row of activity) {
+    if (!row.actorUserId || !row.createdAt) continue;
+    const entries = byUser.get(row.actorUserId) || [];
+    entries.push(row.createdAt);
+    byUser.set(row.actorUserId, entries);
+  }
 
   let eligibleUsers = 0;
   let retainedUsers = 0;
-  for (const row of firstActivityRows) {
-    const firstAt = new Date(row.firstAt);
-    if (!Number.isFinite(firstAt.getTime())) continue;
+  for (const timestamps of byUser.values()) {
+    const sorted = timestamps
+      .map((value) => new Date(value))
+      .filter((value) => Number.isFinite(value.getTime()))
+      .sort((a, b) => a.getTime() - b.getTime());
+    if (!sorted.length) continue;
+    const firstAt = sorted[0];
     const threshold = new Date(firstAt.getTime() + 30 * 24 * 60 * 60 * 1000);
     if (threshold > now) continue;
     eligibleUsers += 1;
-    const retained = db.prepare(`
-      SELECT 1 AS ok
-      FROM marketplace_analytics_events
-      WHERE actorUserId = ? AND createdAt >= ?
-      LIMIT 1
-    `).get(row.actorUserId, threshold.toISOString()) as { ok?: number } | undefined;
-    if (retained?.ok === 1) retainedUsers += 1;
+    if (sorted.some((value) => value >= threshold)) retainedUsers += 1;
   }
 
   return {
@@ -178,21 +234,21 @@ export function getMarketplaceAnalyticsSummary(
   windowDays: MarketplaceAnalyticsWindow = 30
 ): MarketplaceAnalyticsSummary {
   const since = sinceForWindow(windowDays);
-  const searches = countEvents("search.performed", since);
-  const profileViews = countEvents("profile.viewed", since);
-  const invitations = countEvents("invitation.sent", since);
-  const applications = countEvents("application.submitted", since);
-  const bookings = countEvents("booking.created", since);
+  const searches = countDiscoveryEvents("search.performed", since);
+  const profileViews = countDiscoveryEvents("profile.viewed", since);
+  const invitations = countDiscoveryEvents("invitation.sent", since);
+  const applications = countDurableRows("applications", since);
+  const bookings = countDurableRows("contracts", since);
 
   return {
     windowDays,
     generatedAt: new Date().toISOString(),
     stages: { searches, profileViews, invitations, applications, bookings },
     actors: {
-      uniqueSearchers: countDistinctActors("search.performed", since),
-      uniqueProfileViewers: countDistinctActors("profile.viewed", since),
-      uniqueApplicants: countDistinctActors("application.submitted", since),
-      uniqueBookers: countDistinctActors("booking.created", since),
+      uniqueSearchers: countDistinctDiscoveryActors("search.performed", since),
+      uniqueProfileViewers: countDistinctDiscoveryActors("profile.viewed", since),
+      uniqueApplicants: countDistinctDurableActors("applications", "engineerId", since),
+      uniqueBookers: countDistinctDurableActors("contracts", "companyId", since),
     },
     conversion: {
       profileViewsPerSearch: ratio(profileViews, searches),
