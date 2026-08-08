@@ -209,8 +209,11 @@ stripeBillingWebhookRouter.post("/", raw({ type: "application/json", limit: "1mb
     const userId = userIdForStripeObject(object);
     const customerId = stripeId(object.customer);
     const subscriptionId = stripeId(object.id);
-    const priceId = stripeId(object.items?.data?.[0]?.price);
-    const tier = priceId ? paidTierForStripePrice(priceId) : null;
+    const existing = subscriptionId
+      ? findBillingBySubscriptionId(subscriptionId)
+      : customerId ? findBillingByCustomerId(customerId) : undefined;
+    const priceId = stripeId(object.items?.data?.[0]?.price) || existing?.priceId || null;
+    const tier = (priceId ? paidTierForStripePrice(priceId) : null) || existing?.tier || null;
     const status = String(object.status || (event.type.endsWith("deleted") ? "canceled" : "incomplete")) as BillingStatus;
     if (userId && customerId && subscriptionId && priceId && tier) {
       const state = reconcileSubscription({
@@ -220,7 +223,7 @@ stripeBillingWebhookRouter.post("/", raw({ type: "application/json", limit: "1mb
         priceId,
         tier: tier as MembershipTier,
         status,
-        currentPeriodEnd: timestampToIso(object.current_period_end),
+        currentPeriodEnd: timestampToIso(object.current_period_end) || existing?.currentPeriodEnd || null,
         cancelAtPeriodEnd: object.cancel_at_period_end === true,
       });
       recordAccountAudit({
@@ -249,7 +252,24 @@ stripeBillingWebhookRouter.post("/", raw({ type: "application/json", limit: "1mb
   if (event.type === "invoice.paid") {
     const userId = userIdForStripeObject(object);
     if (userId && typeof object.id === "string") {
-      recordInvoicePaid({ userId, invoiceId: object.id });
+      const state = recordInvoicePaid({ userId, invoiceId: object.id });
+      if (
+        state.status === "past_due"
+        && state.customerId
+        && state.subscriptionId
+        && state.priceId
+      ) {
+        reconcileSubscription({
+          userId,
+          customerId: state.customerId,
+          subscriptionId: state.subscriptionId,
+          priceId: state.priceId,
+          tier: state.tier,
+          status: "active",
+          currentPeriodEnd: state.currentPeriodEnd,
+          cancelAtPeriodEnd: state.cancelAtPeriodEnd === 1,
+        });
+      }
       recordAccountAudit({
         eventType: "membership.invoice_paid",
         outcome: "success",
