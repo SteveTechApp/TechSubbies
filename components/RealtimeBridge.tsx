@@ -40,7 +40,15 @@ export const RealtimeBridge = () => {
     const onConnected = () => {
       void Promise.all([realtimeApi.listConversations(), realtimeApi.listNotifications()])
         .then(([conversations, notifications]) => {
-          setAppData(previous => ({ ...previous, conversations, notifications }));
+          setAppData(previous => {
+            const durableIds = new Set(notifications.map(notification => notification.id));
+            const localOnlyNotifications = previous.notifications.filter(notification => !durableIds.has(notification.id));
+            return {
+              ...previous,
+              conversations,
+              notifications: [...notifications, ...localOnlyNotifications],
+            };
+          });
         })
         .catch(() => undefined);
     };
