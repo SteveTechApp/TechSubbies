@@ -14,6 +14,7 @@ import { CertificateVerificationView } from './AdminDashboard/CertificateVerific
 import { ContractSupportView } from './AdminDashboard/ContractSupportView';
 import { TaxonomyEditorView } from './AdminDashboard/TaxonomyEditorView';
 import { AdjacentFamiliesView } from './AdminDashboard/AdjacentFamiliesView';
+import { MarketplaceAnalyticsView } from './AdminDashboard/MarketplaceAnalyticsView';
 
 export const AdminDashboard = () => {
     const { user } = useAuth();
@@ -27,6 +28,8 @@ export const AdminDashboard = () => {
         switch (activeView) {
             case 'Dashboard':
                 return <DashboardView setActiveView={setActiveView}/>;
+            case 'Marketplace Analytics':
+                return <MarketplaceAnalyticsView />;
             case 'Manage Users':
                 return <UserManagementView />;
             case 'Role Taxonomy':
