@@ -32,11 +32,11 @@ describe('JobPostStep1 canonical roles', () => {
   it('stores the canonical role id while retaining the approved role title for display', () => {
     render(<Wrapper />);
 
-    const selector = screen.getByLabelText('Specialist Role') as HTMLSelectElement;
+    const selector = screen.getAllByRole('combobox')[0] as HTMLSelectElement;
     fireEvent.change(selector, { target: { value: 'av-installation-engineer' } });
 
     expect(selector.value).toBe('av-installation-engineer');
-    expect(screen.getByLabelText('Contract Title')).toHaveValue('AV Installation Engineer');
+    expect(screen.getByPlaceholderText('e.g., Lead AV Engineer')).toHaveValue('AV Installation Engineer');
     expect(screen.getByRole('button', { name: /Next: Define Skills/i })).toBeEnabled();
   });
 });
