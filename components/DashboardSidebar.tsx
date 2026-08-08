@@ -81,6 +81,7 @@ const ADMIN_LINKS = [
     { label: 'Dashboard', icon: LayoutDashboard },
     { label: 'Manage Users', icon: Users },
     { label: 'Subscription Billing', icon: DollarSign },
+    { label: 'Contract Support', icon: LifeBuoy },
     { label: 'Certificate Verification', icon: ShieldCheck },
     { label: 'Privacy Requests', icon: ShieldCheck },
     { label: 'Manage Jobs', icon: Briefcase },

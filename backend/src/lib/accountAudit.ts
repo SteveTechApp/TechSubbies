@@ -33,6 +33,12 @@ export type AccountAuditEventType =
   | "membership.subscription_paused"
   | "membership.payment_failed"
   | "membership.invoice_paid"
+  | "contract_support.opened"
+  | "contract_support.accepted"
+  | "contract_support.declined"
+  | "contract_support.withdrawn"
+  | "contract_support.resolved"
+  | "contract_support.reopened"
   | "job.closed"
   | "job.reopened";
 

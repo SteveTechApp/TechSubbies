@@ -11,6 +11,7 @@ import { PlatformSettingsView } from './AdminDashboard/PlatformSettingsView';
 import { PrivacyRequestsView } from './AdminDashboard/PrivacyRequestsView';
 import { SubscriptionBillingView } from './AdminDashboard/SubscriptionBillingView';
 import { CertificateVerificationView } from './AdminDashboard/CertificateVerificationView';
+import { ContractSupportView } from './AdminDashboard/ContractSupportView';
 
 export const AdminDashboard = () => {
     const { user } = useAuth();
@@ -32,6 +33,8 @@ export const AdminDashboard = () => {
                 return <PrivacyRequestsView />;
             case 'Subscription Billing':
                 return <SubscriptionBillingView />;
+            case 'Contract Support':
+                return <ContractSupportView />;
             case 'Certificate Verification':
                 return <CertificateVerificationView />;
             case 'Monetization':

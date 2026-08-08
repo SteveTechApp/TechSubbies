@@ -18,6 +18,8 @@ const CONTRACT_STATUS = {
   PENDING_SIGNATURE: "Pending Signature",
   SIGNED: "Signed by Engineer",
   ACTIVE: "Active",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
 } as const;
 
 type DropboxSignature = {
@@ -150,6 +152,10 @@ function signedAt(signature: DropboxSignature) {
 function applySignedState(callback: DropboxCallback, contractId: string) {
   const request = findContractEsignRequest(contractId);
   if (!request) return;
+  const initialContract = findContractById(contractId);
+  if (!initialContract || [CONTRACT_STATUS.CANCELLED, CONTRACT_STATUS.COMPLETED].includes(initialContract.status as any)) {
+    return;
+  }
   const signatures = callback.signature_request?.signatures || [];
 
   // Apply the engineer first regardless of provider array ordering so the
@@ -159,7 +165,7 @@ function applySignedState(callback: DropboxCallback, contractId: string) {
   );
   if (engineerSignature) {
     const contract = findContractById(contractId);
-    if (contract && !contract.engineerSignature) {
+    if (contract && !contract.engineerSignature && ![CONTRACT_STATUS.CANCELLED, CONTRACT_STATUS.COMPLETED].includes(contract.status as any)) {
       const engineer = findUserById(contract.engineerId);
       updateContractSignature(
         contract.id,
@@ -175,7 +181,11 @@ function applySignedState(callback: DropboxCallback, contractId: string) {
   );
   if (companySignature) {
     const contract = findContractById(contractId);
-    if (contract?.engineerSignature && !contract.companySignature) {
+    if (
+      contract?.engineerSignature
+      && !contract.companySignature
+      && ![CONTRACT_STATUS.CANCELLED, CONTRACT_STATUS.COMPLETED].includes(contract.status as any)
+    ) {
       const company = findUserById(contract.companyId);
       updateContractSignature(
         contract.id,
