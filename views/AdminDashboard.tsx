@@ -10,6 +10,7 @@ import { MonetizationView } from './AdminDashboard/MonetizationView';
 import { PlatformSettingsView } from './AdminDashboard/PlatformSettingsView';
 import { PrivacyRequestsView } from './AdminDashboard/PrivacyRequestsView';
 import { MembershipRequestsView } from './AdminDashboard/MembershipRequestsView';
+import { CertificateVerificationView } from './AdminDashboard/CertificateVerificationView';
 
 export const AdminDashboard = () => {
     const { user } = useAuth();
@@ -31,6 +32,8 @@ export const AdminDashboard = () => {
                 return <PrivacyRequestsView />;
             case 'Membership Requests':
                 return <MembershipRequestsView />;
+            case 'Certificate Verification':
+                return <CertificateVerificationView />;
             case 'Monetization':
                 return <MonetizationView />;
             case 'Platform Settings':
