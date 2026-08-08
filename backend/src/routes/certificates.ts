@@ -106,8 +106,11 @@ certificatesRouter.patch("/:certificateId/visibility", requireRole("Engineer"), 
 
 certificatesRouter.get("/engineer/:userId", (req: AuthedRequest, res) => {
   const role = req.authUser?.role;
-  if (!role || !["Company", "Resourcing Company", "Admin"].includes(role)) {
-    return res.status(403).json({ error: "Your account role cannot view marketplace certificate evidence." });
+  if (role === "Admin") {
+    return res.json(listMarketplaceCertificates(req.params.userId).map(publicCertificate));
+  }
+  if (!role || !["Company", "Resourcing Company"].includes(role) || !req.authUser?.emailVerified) {
+    return res.status(403).json({ error: "A verified marketplace account is required to view certificate evidence." });
   }
   return res.json(listMarketplaceCertificates(req.params.userId).map(publicCertificate));
 });
