@@ -34,6 +34,22 @@ export function validateRuntimeConfig(env: NodeJS.ProcessEnv = process.env) {
     problems.push("EMAIL_FROM must contain a valid sender address");
   }
 
+  if (env.EVIDENCE_STORAGE_PROVIDER !== "s3") {
+    problems.push('EVIDENCE_STORAGE_PROVIDER must be "s3" in production');
+  }
+  if (!env.EVIDENCE_S3_BUCKET?.trim()) {
+    problems.push("EVIDENCE_S3_BUCKET is required in production");
+  }
+  if (!env.AWS_REGION?.trim()) {
+    problems.push("AWS_REGION is required for evidence storage in production");
+  }
+  if (!env.AWS_ACCESS_KEY_ID?.trim()) {
+    problems.push("AWS_ACCESS_KEY_ID is required for evidence storage in production");
+  }
+  if (!env.AWS_SECRET_ACCESS_KEY?.trim()) {
+    problems.push("AWS_SECRET_ACCESS_KEY is required for evidence storage in production");
+  }
+
   if (problems.length) {
     throw new Error(`Unsafe production configuration:\n- ${problems.join("\n- ")}`);
   }

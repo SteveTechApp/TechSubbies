@@ -35,7 +35,11 @@ Word planning documents are retained as historical snapshots.
 
 ## P1 - trust and transaction readiness
 
-- [ ] Production object storage with private evidence access and audit logs.
+- [x] Implement the private evidence-storage boundary: authenticated
+  owner/Admin access, append-only access audit records, local private storage
+  for development and an AWS S3 production adapter.
+- [ ] Provision the production private S3 bucket/IAM/encryption/logging controls
+  and run a deployed evidence upload/download smoke test.
 - [ ] Certificate verification queue, expiry reminders and evidence visibility
   controls.
 - [ ] Production e-signature provider.
