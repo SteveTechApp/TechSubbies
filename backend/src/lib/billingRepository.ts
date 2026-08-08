@@ -28,6 +28,20 @@ export type BillingState = {
   updatedAt: string;
 };
 
+export type AdminBillingAccount = BillingState & {
+  name: string;
+  email: string;
+};
+
+export type BillingSummary = {
+  paidAccounts: number;
+  active: number;
+  trialing: number;
+  pastDue: number;
+  endingAtPeriodEnd: number;
+  ended: number;
+};
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS subscription_billing (
     userId TEXT PRIMARY KEY,
@@ -264,4 +278,30 @@ export function stripePriceForPaidTier(tier: MembershipTier, env: NodeJS.Process
   if (tier === "Gold") return env.STRIPE_PRICE_GOLD?.trim() || null;
   if (tier === "Platinum") return env.STRIPE_PRICE_PLATINUM?.trim() || null;
   return null;
+}
+
+export function listAdminBillingAccounts(): AdminBillingAccount[] {
+  return db.prepare(`
+    SELECT billing.*, users.name, users.email
+    FROM subscription_billing billing
+    JOIN users ON users.id = billing.userId
+    WHERE users.deletedAt IS NULL
+    ORDER BY
+      CASE billing.status WHEN 'past_due' THEN 0 WHEN 'unpaid' THEN 1 ELSE 2 END,
+      billing.updatedAt DESC
+  `).all() as unknown as AdminBillingAccount[];
+}
+
+export function getBillingSummary(): BillingSummary {
+  const row = db.prepare(`
+    SELECT
+      COUNT(*) AS paidAccounts,
+      COALESCE(SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END), 0) AS active,
+      COALESCE(SUM(CASE WHEN status = 'trialing' THEN 1 ELSE 0 END), 0) AS trialing,
+      COALESCE(SUM(CASE WHEN status = 'past_due' THEN 1 ELSE 0 END), 0) AS pastDue,
+      COALESCE(SUM(CASE WHEN cancelAtPeriodEnd = 1 THEN 1 ELSE 0 END), 0) AS endingAtPeriodEnd,
+      COALESCE(SUM(CASE WHEN status IN ('canceled', 'unpaid', 'incomplete_expired') THEN 1 ELSE 0 END), 0) AS ended
+    FROM subscription_billing
+  `).get() as BillingSummary;
+  return row;
 }
