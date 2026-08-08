@@ -13,11 +13,11 @@ import { adminRouter } from "./routes/admin.js";
 import { evidenceRouter } from "./routes/evidence.js";
 import { adminCertificatesRouter, certificatesRouter } from "./routes/certificates.js";
 import { dropboxSignWebhookRouter, esignRouter } from "./routes/esign.js";
-import { billingRouter, stripeBillingWebhookRouter } from "./routes/billing.js";
+import { adminBillingRouter, billingRouter, stripeBillingWebhookRouter } from "./routes/billing.js";
 import { requireCsrf, securityHeaders } from "./middleware/security.js";
 import { createRateLimiter } from "./middleware/rateLimit.js";
 import { frontendOrigin, validateRuntimeConfig } from "./lib/config.js";
-import { requireVerifiedEmailForMutation } from "./middleware/auth.js";
+import { requireAuth, requireRole, requireVerifiedEmailForMutation } from "./middleware/auth.js";
 import { checkDatabaseConnection } from "./lib/db.js";
 import { checkEvidenceRepository } from "./lib/evidenceRepository.js";
 import { checkCertificateRepository } from "./lib/certificateRepository.js";
@@ -83,7 +83,7 @@ export function createApp(options: AppOptions = {}) {
   // Paid membership entitlements are provider-owned once Stripe Billing is
   // enabled. These guards prevent the legacy manual selection/Admin-confirm
   // flow from granting a paid tier without a matching subscription webhook.
-  app.post("/api/users/me/membership-selection", (req, res, next) => {
+  app.post("/api/users/me/membership-selection", requireAuth, (req, res, next) => {
     if (process.env.BILLING_PROVIDER === "stripe") {
       return res.status(409).json({
         error: "Paid membership changes must use secure subscription billing.",
@@ -92,17 +92,23 @@ export function createApp(options: AppOptions = {}) {
     }
     next();
   });
-  app.post("/api/admin/membership-selections/:userId/confirm", (req, res, next) => {
-    if (process.env.BILLING_PROVIDER === "stripe") {
-      return res.status(409).json({
-        error: "Paid memberships are activated only from verified Stripe subscription events.",
-        code: "BILLING_PROVIDER_REQUIRED",
-      });
+  app.post(
+    "/api/admin/membership-selections/:userId/confirm",
+    requireAuth,
+    requireRole("Admin"),
+    (req, res, next) => {
+      if (process.env.BILLING_PROVIDER === "stripe") {
+        return res.status(409).json({
+          error: "Paid memberships are activated only from verified Stripe subscription events.",
+          code: "BILLING_PROVIDER_REQUIRED",
+        });
+      }
+      next();
     }
-    next();
-  });
+  );
 
   app.use("/api/users", usersRouter);
+  app.use("/api/admin/billing", adminBillingRouter);
   app.use("/api/admin", adminRouter);
   app.use("/api/admin/certificates", adminCertificatesRouter);
   app.use("/api/ai", aiRateLimit, aiRouter);
