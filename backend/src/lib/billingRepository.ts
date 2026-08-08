@@ -100,18 +100,22 @@ export function checkBillingRepository(): boolean {
 }
 
 export function getBillingState(userId: string): BillingState {
-  return (db.prepare("SELECT * FROM subscription_billing WHERE userId = ?").get(userId)
-    as unknown as BillingState | undefined) || defaultState(userId);
+  const row = db.prepare("SELECT * FROM subscription_billing WHERE userId = ?").get(userId) as unknown as
+    | BillingState
+    | undefined;
+  return row || defaultState(userId);
 }
 
 export function findBillingByCustomerId(customerId: string): BillingState | undefined {
-  return db.prepare("SELECT * FROM subscription_billing WHERE customerId = ?").get(customerId)
-    as unknown as BillingState | undefined;
+  return db.prepare("SELECT * FROM subscription_billing WHERE customerId = ?").get(customerId) as unknown as
+    | BillingState
+    | undefined;
 }
 
 export function findBillingBySubscriptionId(subscriptionId: string): BillingState | undefined {
-  return db.prepare("SELECT * FROM subscription_billing WHERE subscriptionId = ?").get(subscriptionId)
-    as unknown as BillingState | undefined;
+  return db.prepare("SELECT * FROM subscription_billing WHERE subscriptionId = ?").get(subscriptionId) as unknown as
+    | BillingState
+    | undefined;
 }
 
 export function recordBillingWebhookEvent(eventId: string, eventType: string): boolean {
@@ -260,10 +264,13 @@ export function recordInvoicePaid(input: { userId: string; invoiceId: string }) 
   const now = new Date().toISOString();
   db.prepare(`
     UPDATE subscription_billing
-    SET lastInvoiceId = ?, lastPaymentFailedAt = NULL, updatedAt = ?
+    SET status = CASE WHEN status = 'past_due' THEN 'active' ELSE status END,
+        lastInvoiceId = ?, lastPaymentFailedAt = NULL, updatedAt = ?
     WHERE userId = ?
   `).run(input.invoiceId, now, input.userId);
-  return getBillingState(input.userId);
+  const state = getBillingState(input.userId);
+  syncProfileEntitlement(input.userId, state);
+  return state;
 }
 
 export function paidTierForStripePrice(priceId: string, env: NodeJS.ProcessEnv = process.env): MembershipTier | null {
