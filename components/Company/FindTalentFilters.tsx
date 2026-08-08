@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { EngineerProfile, Job, ProfileTier } from '../../types';
 import { Search, Sparkles, SlidersHorizontal } from '../Icons';
 import { useAppContext } from '../../context/InteractionContext';
@@ -9,6 +9,7 @@ import { isEngineerAvailable } from '../../utils/availability';
 import { matchesWorkPreference, type WorkModePreference } from '../../utils/inclusivePreferences';
 import { useData } from '../../context/DataContext';
 import { explainSkillRequirementMatch } from '../../services/skillMatching';
+import { trackMarketplaceEvent } from '../../services/marketplaceAnalyticsService';
 
 interface Filters {
     searchTerm: string;
@@ -55,6 +56,7 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange, onBudgetC
     const [filters, setFilters] = useState<Filters>(initialFilters);
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [matchNotice, setMatchNotice] = useState('');
+    const userChangedFilters = useRef(false);
 
     useEffect(() => {
         if (!filters.jobForMatch) {
@@ -67,10 +69,12 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange, onBudgetC
     }, [filters.maxDayRate]);
 
     const handleFilterChange = (field: keyof Filters, value: any) => {
+        userChangedFilters.current = true;
         setFilters(prev => ({ ...prev, [field]: value }));
     };
     
     const handleLocationChange = (value: string) => {
+         userChangedFilters.current = true;
          setFilters(prev => ({ ...prev, location: value }));
     };
 
@@ -78,6 +82,8 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange, onBudgetC
         const job = myJobs.find(j => j.id === filters.jobForMatch);
         if (!job) return;
 
+        void trackMarketplaceEvent({ eventType: 'search.performed', jobId: job.id });
+        userChangedFilters.current = false;
         setIsAiLoading(true);
         setMatchNotice('');
         const evidenceContext = { jobs, reviews };
@@ -164,9 +170,14 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange, onBudgetC
         }
 
         onFilterChange(filtered.map(e => ({ ...e, matchScore: undefined })));
+        if (userChangedFilters.current) {
+            void trackMarketplaceEvent({ eventType: 'search.performed' });
+            userChangedFilters.current = false;
+        }
     };
 
     const resetFilters = () => {
+        userChangedFilters.current = true;
         setFilters(initialFilters);
         onFilterChange(engineers);
     };

@@ -99,7 +99,11 @@ Word planning documents are retained as historical snapshots.
 ## P3 - scale and monetization
 
 - [ ] Validate buyer, engineer and resourcing-company willingness to pay.
-- [ ] Track search-to-view, shortlist, invitation, repeat booking and retention.
+- [x] Track marketplace discovery and conversion: company/resourcing-company
+  talent searches, engineer profile views and invitations are stored as
+  privacy-minimal deduplicated events; applications and bookings come from the
+  durable marketplace tables; Admin reports search-to-view, invitation,
+  application-to-booking, repeat company/engineer bookings and 30-day retention.
 - [ ] Migrate SQLite to managed PostgreSQL before horizontal scaling.
 - [ ] Add subscription revenue reporting, tax/accounting reconciliation and
   finance operations once commercial pricing is validated.

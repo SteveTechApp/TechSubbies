@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
 import { useAppContext } from '../context/InteractionContext';
-// FIX: Corrected import path for types.
 import { Job, EngineerProfile, ProfileTier } from '../types';
 import { X, Sparkles, Loader, Send, CheckCircle, User } from './Icons';
+import { trackMarketplaceEvent } from '../services/marketplaceAnalyticsService';
 
 interface EngineerInviteCardProps {
     engineer: EngineerProfile;
@@ -51,6 +50,7 @@ export const InstantInviteModal = ({ isOpen, onClose, job }: InstantInviteModalP
         const runAiMatch = async () => {
             if (!job) return;
 
+            void trackMarketplaceEvent({ eventType: 'search.performed', jobId: job.id });
             setIsLoading(true);
             setMatchedEngineers([]);
             setInvitedIds([]);
@@ -70,7 +70,7 @@ export const InstantInviteModal = ({ isOpen, onClose, job }: InstantInviteModalP
             
             if (result && result.matches) {
                 const topMatches = result.matches
-                    .slice(0, 5) // Take top 5
+                    .slice(0, 5)
                     .map(match => {
                         const engineer = engineers.find(e => e.id === match.id);
                         return engineer ? { ...engineer, matchScore: match.match_score } : null;
@@ -92,6 +92,11 @@ export const InstantInviteModal = ({ isOpen, onClose, job }: InstantInviteModalP
     const handleInvite = (engineerId: string) => {
         if (job) {
             inviteEngineerToJob(job.id, engineerId);
+            void trackMarketplaceEvent({
+                eventType: 'invitation.sent',
+                subjectUserId: engineerId,
+                jobId: job.id,
+            });
             setInvitedIds(prev => [...prev, engineerId]);
         }
     };

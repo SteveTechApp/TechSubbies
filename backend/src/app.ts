@@ -18,6 +18,7 @@ import { dropboxSignWebhookRouter, esignRouter } from "./routes/esign.js";
 import { adminBillingRouter, billingRouter, stripeBillingWebhookRouter } from "./routes/billing.js";
 import { adminContractSupportRouter, contractSupportRouter } from "./routes/contractSupport.js";
 import { adminTaxonomyRouter, taxonomyRouter } from "./routes/taxonomy.js";
+import { adminMarketplaceAnalyticsRouter, marketplaceAnalyticsRouter } from "./routes/marketplaceAnalytics.js";
 import { requireCsrf, securityHeaders } from "./middleware/security.js";
 import { createRateLimiter } from "./middleware/rateLimit.js";
 import { frontendOrigin, validateRuntimeConfig } from "./lib/config.js";
@@ -30,6 +31,7 @@ import { checkBillingRepository } from "./lib/billingRepository.js";
 import { checkContractSupportRepository } from "./lib/contractSupportRepository.js";
 import { checkNotificationRepository } from "./lib/notificationRepository.js";
 import { checkTaxonomyRepository } from "./lib/taxonomyRepository.js";
+import { checkMarketplaceAnalyticsRepository } from "./lib/marketplaceAnalyticsRepository.js";
 import { requestContext, requestLogger, safeErrorHandler } from "./middleware/observability.js";
 
 type AppOptions = {
@@ -75,7 +77,8 @@ export function createApp(options: AppOptions = {}) {
       && checkBillingRepository()
       && checkContractSupportRepository()
       && checkNotificationRepository()
-      && checkTaxonomyRepository());
+      && checkTaxonomyRepository()
+      && checkMarketplaceAnalyticsRepository());
   const readinessHandler = (_req: express.Request, res: express.Response) => {
     try {
       if (!readinessCheck()) throw new Error("Readiness check returned false.");
@@ -121,6 +124,7 @@ export function createApp(options: AppOptions = {}) {
   app.use("/api/admin/billing", adminBillingRouter);
   app.use("/api/admin/contract-support", adminContractSupportRouter);
   app.use("/api/admin/taxonomy", adminTaxonomyRouter);
+  app.use("/api/admin/marketplace-analytics", adminMarketplaceAnalyticsRouter);
   app.use("/api/admin", adminRouter);
   app.use("/api/admin/certificates", adminCertificatesRouter);
   app.use("/api/ai", aiRateLimit, aiRouter);
@@ -145,6 +149,7 @@ export function createApp(options: AppOptions = {}) {
       "/api/billing",
       "/api/contract-support",
       "/api/taxonomy",
+      "/api/marketplace-analytics",
     ],
     requireVerifiedEmailForMutation
   );
@@ -176,6 +181,7 @@ export function createApp(options: AppOptions = {}) {
   app.use("/api/billing", billingRouter);
   app.use("/api/contract-support", contractSupportRouter);
   app.use("/api/taxonomy", taxonomyRouter);
+  app.use("/api/marketplace-analytics", marketplaceAnalyticsRouter);
 
   app.use("/api", (_req, res) => {
     res.status(404).json({ error: "Not found." });

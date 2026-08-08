@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-// FIX: Replaced incorrect context hook 'useInteractions' with the correct hook 'useAppContext'.
 import { useAppContext } from '../context/InteractionContext';
 import { DashboardShell } from '../components/DashboardShell';
 import { DashboardHelpCenter } from '../components/DashboardHelpCenter';
@@ -19,6 +18,7 @@ import { ContractsView } from './ContractsView';
 import { ProjectPlannerView } from './CompanyDashboard/ProjectPlannerView';
 import { ProjectTrackingView } from './CompanyDashboard/ProjectTrackingView';
 import { AnalyticsView } from './CompanyDashboard/AnalyticsView';
+import { trackMarketplaceEvent } from '../services/marketplaceAnalyticsService';
 
 export const CompanyDashboard = () => {
     const { user } = useAuth();
@@ -45,13 +45,14 @@ export const CompanyDashboard = () => {
     };
 
     const handleSelectEngineer = (eng: EngineerProfile) => {
+        void trackMarketplaceEvent({ eventType: 'profile.viewed', subjectUserId: eng.id });
         setSelectedEngineer(eng);
-        setActiveView('Find Talent'); // Keep view consistent but overlay profile
+        setActiveView('Find Talent');
     };
 
     const handleDeepDiveClose = () => {
         setApplicantForDeepDive(null);
-    }
+    };
     
     const handleProjectCreated = () => {
         setActiveView('Project Tracking');
@@ -71,7 +72,6 @@ export const CompanyDashboard = () => {
             case 'Dashboard':
                 return <DashboardView user={user} myJobs={myJobs} engineers={engineers} applications={applications} setActiveView={setActiveView} />;
             case 'Post a Job':
-                // This view is now handled by opening the modal
                 return <MyJobsView myJobs={myJobs} setActiveView={setActiveView} />;
             case 'My Jobs':
                 return <MyJobsView myJobs={myJobs} setActiveView={setActiveView} />;
@@ -96,7 +96,6 @@ export const CompanyDashboard = () => {
         }
     };
     
-    // Effect to open modal when 'Post a Job' is clicked
     React.useEffect(() => {
         if (activeView === 'Post a Job') {
             setIsJobModalOpen(true);
