@@ -103,11 +103,8 @@ conversationsRouter.post("/:conversationId/messages", requireAuth, async (req: A
   const refreshedConversation = findConversationById(conversation.id)!;
 
   const recipientConversation = publicConversationForUser(refreshedConversation, recipientId);
-  const senderConversation = publicConversationForUser(refreshedConversation, req.userId!);
   publishRealtime(recipientId, "message.created", { message: publicMessage, conversation: recipientConversation });
-  publishRealtime(req.userId!, "message.created", { message: publicMessage, conversation: senderConversation });
   publishRealtime(recipientId, "conversation.updated", { conversation: recipientConversation });
-  publishRealtime(req.userId!, "conversation.updated", { conversation: senderConversation });
 
   const notification = createNotification({
     userId: recipientId,
