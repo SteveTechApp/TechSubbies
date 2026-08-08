@@ -19,6 +19,7 @@ import { ProjectPlannerView } from './CompanyDashboard/ProjectPlannerView';
 import { ProjectTrackingView } from './CompanyDashboard/ProjectTrackingView';
 import { AnalyticsView } from './CompanyDashboard/AnalyticsView';
 import { trackMarketplaceEvent } from '../services/marketplaceAnalyticsService';
+import { PricingResearchView } from './PricingResearchView';
 
 export const CompanyDashboard = () => {
     const { user } = useAuth();
@@ -87,6 +88,8 @@ export const CompanyDashboard = () => {
                 return <MessagesView />;
             case 'Analytics':
                 return <AnalyticsView />;
+            case 'Pricing Research':
+                return <PricingResearchView />;
             case 'Settings':
                 return <SettingsView profile={companyProfile} onSave={updateCompanyProfile} />;
             case 'Help Center':
