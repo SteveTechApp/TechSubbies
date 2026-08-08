@@ -4,7 +4,7 @@ import { useData } from '../context/DataContext';
 import { useAppContext } from '../context/InteractionContext';
 import { DashboardShell } from '../components/DashboardShell';
 import { DashboardHelpCenter } from '../components/DashboardHelpCenter';
-import { Role, EngineerProfile, Contract, ResourcingCompanyProfile } from '../types';
+import { Role, ResourcingCompanyProfile } from '../types';
 import { DashboardView } from './ResourcingDashboard/DashboardView';
 import { ManageEngineersView } from './ResourcingDashboard/ManageEngineersView';
 import { FindJobsView } from './ResourcingDashboard/FindJobsView';
@@ -13,6 +13,7 @@ import { AddNewEngineerView } from './ResourcingDashboard/AddNewEngineerView';
 import { MessagesView } from '../views/MessagesView';
 import { PlacementsView } from './ResourcingDashboard/PlacementsView';
 import { AnalyticsView } from './ResourcingDashboard/AnalyticsView';
+import { PricingResearchView } from './PricingResearchView';
 
 export const ResourcingDashboard = () => {
     const { user } = useAuth();
@@ -53,6 +54,8 @@ export const ResourcingDashboard = () => {
                 return <MessagesView />;
             case 'Analytics':
                 return <AnalyticsView />;
+            case 'Pricing Research':
+                return <PricingResearchView />;
             case 'Settings':
                 return <SettingsView profile={resourcingProfile} onSave={updateCompanyProfile} />;
             case 'Add New Engineer':
