@@ -81,6 +81,7 @@ const RESOURCING_LINKS = [
 
 const ADMIN_LINKS = [
     { label: 'Dashboard', icon: LayoutDashboard },
+    { label: 'Marketplace Analytics', icon: BarChart2 },
     { label: 'Manage Users', icon: Users },
     { label: 'Role Taxonomy', icon: Layers },
     { label: 'Adjacent Families', icon: Layers },
