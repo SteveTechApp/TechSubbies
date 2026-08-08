@@ -1,5 +1,6 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { DashboardSidebar } from './DashboardSidebar';
+import { RealtimeBridge } from './RealtimeBridge';
 import { Menu } from './Icons';
 
 interface DashboardShellProps {
@@ -22,6 +23,7 @@ export const DashboardShell = ({ activeView, setActiveView, children }: Dashboar
 
     return (
         <div className="flex h-screen min-w-0 bg-gray-100">
+            <RealtimeBridge />
             {isNavigationOpen && (
                 <button
                     type="button"

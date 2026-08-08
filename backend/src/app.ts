@@ -9,6 +9,8 @@ import { companyAttachmentsRouter } from "./routes/companyAttachments.js";
 import { applicationsRouter, jobsRouter } from "./routes/jobs.js";
 import { contractsRouter } from "./routes/contracts.js";
 import { conversationsRouter } from "./routes/conversations.js";
+import { notificationsRouter } from "./routes/notifications.js";
+import { realtimeRouter } from "./routes/realtime.js";
 import { adminRouter } from "./routes/admin.js";
 import { evidenceRouter } from "./routes/evidence.js";
 import { adminCertificatesRouter, certificatesRouter } from "./routes/certificates.js";
@@ -25,6 +27,7 @@ import { checkCertificateRepository } from "./lib/certificateRepository.js";
 import { checkEsignRepository } from "./lib/esignRepository.js";
 import { checkBillingRepository } from "./lib/billingRepository.js";
 import { checkContractSupportRepository } from "./lib/contractSupportRepository.js";
+import { checkNotificationRepository } from "./lib/notificationRepository.js";
 import { requestContext, requestLogger, safeErrorHandler } from "./middleware/observability.js";
 
 type AppOptions = {
@@ -68,7 +71,8 @@ export function createApp(options: AppOptions = {}) {
       && checkCertificateRepository()
       && checkEsignRepository()
       && checkBillingRepository()
-      && checkContractSupportRepository());
+      && checkContractSupportRepository()
+      && checkNotificationRepository());
   const readinessHandler = (_req: express.Request, res: express.Response) => {
     try {
       if (!readinessCheck()) throw new Error("Readiness check returned false.");
@@ -130,6 +134,7 @@ export function createApp(options: AppOptions = {}) {
       "/api/applications",
       "/api/contracts",
       "/api/conversations",
+      "/api/notifications",
       "/api/evidence",
       "/api/certificates",
       "/api/esign",
@@ -158,6 +163,8 @@ export function createApp(options: AppOptions = {}) {
   app.use("/api/applications", applicationsRouter);
   app.use("/api/contracts", contractsRouter);
   app.use("/api/conversations", conversationsRouter);
+  app.use("/api/notifications", notificationsRouter);
+  app.use("/api/realtime", realtimeRouter);
   app.use("/api/evidence", evidenceRouter);
   app.use("/api/certificates", certificatesRouter);
   app.use("/api/esign", esignRouter);
