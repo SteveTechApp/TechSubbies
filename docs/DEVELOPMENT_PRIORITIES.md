@@ -89,9 +89,12 @@ Word planning documents are retained as historical snapshots.
   never exposed as company search/ranking criteria, and enter directory data
   only after explicit engineer sharing; work-mode/language preferences are
   searchable only when the engineer has actually declared them.
-- [ ] Validate adjacent families before adding them: fibre/telecoms, physical
-  security, smart buildings/BMS/IoT, broadcast, stage systems and residential
-  integration.
+- [x] Validate adjacent families before adding them. Fibre/telecoms, smart
+  buildings/BMS/IoT and residential integration can advance to practitioner
+  role drafting; physical security and stage systems require explicit
+  compliance/safety gates; broadcast/IP media remains on hold pending a narrower
+  practitioner job-task analysis. Candidate IDs remain outside the live
+  canonical registry until the existing taxonomy approval/publish gate is used.
 
 ## P3 - scale and monetization
 
