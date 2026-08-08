@@ -60,7 +60,11 @@ Word planning documents are retained as historical snapshots.
 - [ ] Provision live Stripe products/prices, Checkout, Customer Portal and
   webhook endpoint; run new subscription, renewal, failed-payment, plan-change
   and cancellation smoke tests.
-- [ ] Cancellations, substitutions, no-shows, disputes and support workflows.
+- [x] Implement contract-support workflows for cancellations, substitutions,
+  no-shows, disputes and general support. Cases are contract-linked and audited;
+  mutual cancellation is required before a contract is marked Cancelled,
+  declined requests move to Admin review, substitutions require a separately
+  contracted replacement, and TechSubbies does not determine payment liability.
 - [ ] Real-time notification delivery and messaging transport.
 
 ## P2 - taxonomy and inclusion
