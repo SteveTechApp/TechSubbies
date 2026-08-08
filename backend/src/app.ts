@@ -10,6 +10,7 @@ import { applicationsRouter, jobsRouter } from "./routes/jobs.js";
 import { contractsRouter } from "./routes/contracts.js";
 import { conversationsRouter } from "./routes/conversations.js";
 import { adminRouter } from "./routes/admin.js";
+import { evidenceRouter } from "./routes/evidence.js";
 import { requireCsrf, securityHeaders } from "./middleware/security.js";
 import { createRateLimiter } from "./middleware/rateLimit.js";
 import { frontendOrigin, validateRuntimeConfig } from "./lib/config.js";
@@ -73,6 +74,7 @@ export function createApp(options: AppOptions = {}) {
       "/api/applications",
       "/api/contracts",
       "/api/conversations",
+      "/api/evidence",
     ],
     requireVerifiedEmailForMutation
   );
@@ -82,6 +84,7 @@ export function createApp(options: AppOptions = {}) {
   app.use("/api/applications", applicationsRouter);
   app.use("/api/contracts", contractsRouter);
   app.use("/api/conversations", conversationsRouter);
+  app.use("/api/evidence", evidenceRouter);
 
   // Keep this last: catches anything unmatched under /api.
   app.use("/api", (_req, res) => {
