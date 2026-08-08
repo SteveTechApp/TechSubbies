@@ -36,6 +36,8 @@ const jobSchema = z.object({
   jobRole: z.string().min(1),
   canonicalRoleId: z.string().min(1).optional(),
   skillRequirements: z.array(z.record(z.any())).optional().default([]),
+  deliveryContext: z.enum(["assisted", "independent", "lead"]).optional(),
+  projectScale: z.enum(["small", "medium", "large", "programme"]).optional(),
   supervisionArrangement: z.string().optional(),
   supervisionDisclaimerAccepted: z.boolean().optional(),
 });
