@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { StatCard } from '../../components/StatCard';
 import { Users, Briefcase, UserCheck, ShieldCheck, DollarSign } from '../../components/Icons';
+import {
+    formatPilotConversionMetric,
+    formatPilotConversionTarget,
+    getPilotConversionMetrics,
+} from '../../data/pilotConversionTargets';
 import apiService, { type AdminPlatformMetrics } from '../../services/apiService';
 
 export const DashboardView = ({ setActiveView }: { setActiveView: (view: string) => void }) => {
@@ -19,6 +24,14 @@ export const DashboardView = ({ setActiveView }: { setActiveView: (view: string)
     if (!metrics) {
         return <p className="text-gray-600">Loading live platform metrics…</p>;
     }
+
+    const pilotFunnel = metrics.pilotFunnel ?? {
+        profilesUpdated: 0,
+        jobsPosted: 0,
+        applicationsSubmitted: 0,
+        contractsCreated: 0,
+    };
+    const conversionMetrics = getPilotConversionMetrics(pilotFunnel);
 
     return (
         <div>
@@ -97,16 +110,52 @@ export const DashboardView = ({ setActiveView }: { setActiveView: (view: string)
                 <p className="mt-1 text-sm text-gray-500">Server-recorded marketplace actions used to measure pilot conversion.</p>
                 <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
                     {[
-                        ['Profiles updated', metrics.pilotFunnel?.profilesUpdated ?? 0],
-                        ['Jobs posted', metrics.pilotFunnel?.jobsPosted ?? 0],
-                        ['Applications', metrics.pilotFunnel?.applicationsSubmitted ?? 0],
-                        ['Contracts created', metrics.pilotFunnel?.contractsCreated ?? 0],
+                        ['Profiles updated', pilotFunnel.profilesUpdated],
+                        ['Jobs posted', pilotFunnel.jobsPosted],
+                        ['Applications', pilotFunnel.applicationsSubmitted],
+                        ['Contracts created', pilotFunnel.contractsCreated],
                     ].map(([label, value]) => (
                         <div key={String(label)} className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                             <div className="text-2xl font-bold text-gray-900">{value}</div>
                             <div className="mt-1 text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</div>
                         </div>
                     ))}
+                </div>
+
+                <div className="mt-5 border-t border-gray-200 pt-4">
+                    <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-end">
+                        <div>
+                            <h3 className="text-sm font-bold text-gray-900">Pilot conversion targets</h3>
+                            <p className="mt-1 text-xs text-gray-500">
+                                Initial controlled-pilot thresholds. Recalibrate after the first cohort produces a reliable baseline.
+                            </p>
+                        </div>
+                        <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Actual / target</span>
+                    </div>
+                    <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+                        {conversionMetrics.map((metric) => (
+                            <div key={metric.id} className="rounded-lg border border-gray-200 p-4">
+                                <div className="flex items-start justify-between gap-3">
+                                    <span className="text-sm font-semibold text-gray-800">{metric.label}</span>
+                                    <span
+                                        className={`rounded-md px-2 py-1 text-xs font-semibold ${
+                                            metric.met
+                                                ? 'bg-green-50 text-green-700'
+                                                : 'bg-amber-50 text-amber-700'
+                                        }`}
+                                    >
+                                        {metric.met ? 'On target' : 'Below target'}
+                                    </span>
+                                </div>
+                                <div className="mt-3 text-2xl font-bold text-gray-900">
+                                    {formatPilotConversionMetric(metric)}
+                                    <span className="ml-2 text-sm font-medium text-gray-500">
+                                        / {formatPilotConversionTarget(metric)}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>
