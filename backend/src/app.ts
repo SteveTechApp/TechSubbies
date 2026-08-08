@@ -79,6 +79,29 @@ export function createApp(options: AppOptions = {}) {
   app.get("/api/health", readinessHandler);
 
   app.use("/api/auth", authRateLimit, authRouter);
+
+  // Paid membership entitlements are provider-owned once Stripe Billing is
+  // enabled. These guards prevent the legacy manual selection/Admin-confirm
+  // flow from granting a paid tier without a matching subscription webhook.
+  app.post("/api/users/me/membership-selection", (req, res, next) => {
+    if (process.env.BILLING_PROVIDER === "stripe") {
+      return res.status(409).json({
+        error: "Paid membership changes must use secure subscription billing.",
+        code: "BILLING_PROVIDER_REQUIRED",
+      });
+    }
+    next();
+  });
+  app.post("/api/admin/membership-selections/:userId/confirm", (req, res, next) => {
+    if (process.env.BILLING_PROVIDER === "stripe") {
+      return res.status(409).json({
+        error: "Paid memberships are activated only from verified Stripe subscription events.",
+        code: "BILLING_PROVIDER_REQUIRED",
+      });
+    }
+    next();
+  });
+
   app.use("/api/users", usersRouter);
   app.use("/api/admin", adminRouter);
   app.use("/api/admin/certificates", adminCertificatesRouter);
