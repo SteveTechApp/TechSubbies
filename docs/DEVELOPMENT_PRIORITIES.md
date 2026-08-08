@@ -40,8 +40,10 @@ Word planning documents are retained as historical snapshots.
   for development and an AWS S3 production adapter.
 - [ ] Provision the production private S3 bucket/IAM/encryption/logging controls
   and run a deployed evidence upload/download smoke test.
-- [ ] Certificate verification queue, expiry reminders and evidence visibility
-  controls.
+- [x] Implement certificate verification workflow: engineer submission,
+  Admin verification/rejection queue, automated 30-day/7-day/expired reminders,
+  and Private/Marketplace evidence visibility gated by verification, expiry and
+  a verified marketplace account.
 - [ ] Production e-signature provider.
 - [ ] Decide and document direct-party payments versus platform payment rails.
 - [ ] Cancellations, substitutions, no-shows, disputes and support workflows.
