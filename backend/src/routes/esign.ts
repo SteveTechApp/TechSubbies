@@ -112,6 +112,7 @@ esignRouter.post("/contracts/:contractId/session", requireAuth, async (req: Auth
       signUrl: session.signUrl,
       expiresAt: session.expiresAt,
       signer: signerKind,
+      signerName: req.authUser?.name || (signerKind === "engineer" ? "Engineer" : "Client"),
     });
   } catch (error) {
     console.error("Could not create e-signing session", error);
