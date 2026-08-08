@@ -16,6 +16,11 @@ const validProductionConfig = {
   AWS_REGION: "eu-west-2",
   AWS_ACCESS_KEY_ID: "AKIATESTKEY",
   AWS_SECRET_ACCESS_KEY: "test-secret-access-key",
+  ESIGN_PROVIDER: "dropbox_sign",
+  DROPBOX_SIGN_API_KEY: "dropbox-sign-production-key",
+  DROPBOX_SIGN_CLIENT_ID: "dropbox-sign-app-client-id",
+  DROPBOX_SIGN_CONTRACT_TEMPLATE_ID: "dropbox-sign-contract-template",
+  DROPBOX_SIGN_TEST_MODE: "false",
 };
 
 describe("production configuration", () => {
@@ -29,7 +34,7 @@ describe("production configuration", () => {
     ).toThrow(/Unsafe production configuration/);
   });
 
-  it("accepts strong security, email and private evidence storage settings", () => {
+  it("accepts strong security, email, evidence storage and e-sign settings", () => {
     expect(() => validateRuntimeConfig(validProductionConfig)).not.toThrow();
   });
 
@@ -55,6 +60,17 @@ describe("production configuration", () => {
         AWS_SECRET_ACCESS_KEY: undefined,
       })
     ).toThrow(/EVIDENCE_STORAGE_PROVIDER|EVIDENCE_S3_BUCKET|AWS_REGION|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY/);
+  });
+
+  it("rejects production startup without a live Dropbox Sign configuration", () => {
+    expect(() => validateRuntimeConfig({
+      ...validProductionConfig,
+      ESIGN_PROVIDER: "local",
+      DROPBOX_SIGN_API_KEY: undefined,
+      DROPBOX_SIGN_CLIENT_ID: undefined,
+      DROPBOX_SIGN_CONTRACT_TEMPLATE_ID: undefined,
+      DROPBOX_SIGN_TEST_MODE: "true",
+    })).toThrow(/ESIGN_PROVIDER|DROPBOX_SIGN_API_KEY|DROPBOX_SIGN_CLIENT_ID|DROPBOX_SIGN_CONTRACT_TEMPLATE_ID|DROPBOX_SIGN_TEST_MODE/);
   });
 });
 

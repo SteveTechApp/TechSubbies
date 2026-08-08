@@ -12,6 +12,7 @@ import { conversationsRouter } from "./routes/conversations.js";
 import { adminRouter } from "./routes/admin.js";
 import { evidenceRouter } from "./routes/evidence.js";
 import { adminCertificatesRouter, certificatesRouter } from "./routes/certificates.js";
+import { dropboxSignWebhookRouter, esignRouter } from "./routes/esign.js";
 import { requireCsrf, securityHeaders } from "./middleware/security.js";
 import { createRateLimiter } from "./middleware/rateLimit.js";
 import { frontendOrigin, validateRuntimeConfig } from "./lib/config.js";
@@ -19,6 +20,7 @@ import { requireVerifiedEmailForMutation } from "./middleware/auth.js";
 import { checkDatabaseConnection } from "./lib/db.js";
 import { checkEvidenceRepository } from "./lib/evidenceRepository.js";
 import { checkCertificateRepository } from "./lib/certificateRepository.js";
+import { checkEsignRepository } from "./lib/esignRepository.js";
 import { requestContext, requestLogger, safeErrorHandler } from "./middleware/observability.js";
 
 type AppOptions = {
@@ -52,7 +54,10 @@ export function createApp(options: AppOptions = {}) {
   });
 
   const readinessCheck = options.readinessCheck
-    || (() => checkDatabaseConnection() && checkEvidenceRepository() && checkCertificateRepository());
+    || (() => checkDatabaseConnection()
+      && checkEvidenceRepository()
+      && checkCertificateRepository()
+      && checkEsignRepository());
   const readinessHandler = (_req: express.Request, res: express.Response) => {
     try {
       if (!readinessCheck()) throw new Error("Readiness check returned false.");
@@ -70,6 +75,12 @@ export function createApp(options: AppOptions = {}) {
   app.use("/api/admin", adminRouter);
   app.use("/api/admin/certificates", adminCertificatesRouter);
   app.use("/api/ai", aiRateLimit, aiRouter);
+
+  // Dropbox Sign sends an unauthenticated multipart callback. Authenticity is
+  // verified inside the route using the provider event hash before any state
+  // is changed. Keep this mounted before the verified-user mutation gate.
+  app.use("/api/esign/dropbox-sign/webhook", dropboxSignWebhookRouter);
+
   app.use(
     [
       "/api/partnerships",
@@ -80,9 +91,24 @@ export function createApp(options: AppOptions = {}) {
       "/api/conversations",
       "/api/evidence",
       "/api/certificates",
+      "/api/esign",
     ],
     requireVerifiedEmailForMutation
   );
+
+  // The legacy typed-name endpoint is retained for local/demo mode only.
+  // Once a real provider is selected, contract state may change only from a
+  // verified provider callback, preventing a browser from bypassing e-sign.
+  app.patch("/api/contracts/:contractId/sign", (req, res, next) => {
+    if (process.env.ESIGN_PROVIDER === "dropbox_sign") {
+      return res.status(409).json({
+        error: "This contract must be signed through the secure e-signature workflow.",
+        code: "ESIGN_PROVIDER_REQUIRED",
+      });
+    }
+    next();
+  });
+
   app.use("/api/partnerships", partnershipsRouter);
   app.use("/api/company-attachments", companyAttachmentsRouter);
   app.use("/api/jobs", jobsRouter);
@@ -91,6 +117,7 @@ export function createApp(options: AppOptions = {}) {
   app.use("/api/conversations", conversationsRouter);
   app.use("/api/evidence", evidenceRouter);
   app.use("/api/certificates", certificatesRouter);
+  app.use("/api/esign", esignRouter);
 
   app.use("/api", (_req, res) => {
     res.status(404).json({ error: "Not found." });

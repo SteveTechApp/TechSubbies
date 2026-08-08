@@ -44,7 +44,11 @@ Word planning documents are retained as historical snapshots.
   Admin verification/rejection queue, automated 30-day/7-day/expired reminders,
   and Private/Marketplace evidence visibility gated by verification, expiry and
   a verified marketplace account.
-- [ ] Production e-signature provider.
+- [x] Implement production e-signature integration boundary using Dropbox Sign:
+  template-backed embedded requests, signer-specific sessions, verified and
+  idempotent callback processing, and provider-driven contract status updates.
+- [ ] Provision the live Dropbox Sign API app/template/callback configuration,
+  confirm the contract wording and run engineer/client signing smoke tests.
 - [ ] Decide and document direct-party payments versus platform payment rails.
 - [ ] Cancellations, substitutions, no-shows, disputes and support workflows.
 - [ ] Real-time notification delivery and messaging transport.
