@@ -95,6 +95,20 @@ export function createApp(options: AppOptions = {}) {
     ],
     requireVerifiedEmailForMutation
   );
+
+  // The legacy typed-name endpoint is retained for local/demo mode only.
+  // Once a real provider is selected, contract state may change only from a
+  // verified provider callback, preventing a browser from bypassing e-sign.
+  app.patch("/api/contracts/:contractId/sign", (req, res, next) => {
+    if (process.env.ESIGN_PROVIDER === "dropbox_sign") {
+      return res.status(409).json({
+        error: "This contract must be signed through the secure e-signature workflow.",
+        code: "ESIGN_PROVIDER_REQUIRED",
+      });
+    }
+    next();
+  });
+
   app.use("/api/partnerships", partnershipsRouter);
   app.use("/api/company-attachments", companyAttachmentsRouter);
   app.use("/api/jobs", jobsRouter);
