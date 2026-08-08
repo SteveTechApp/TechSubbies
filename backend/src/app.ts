@@ -20,6 +20,7 @@ import { adminContractSupportRouter, contractSupportRouter } from "./routes/cont
 import { adminTaxonomyRouter, taxonomyRouter } from "./routes/taxonomy.js";
 import { adminMarketplaceAnalyticsRouter, marketplaceAnalyticsRouter } from "./routes/marketplaceAnalytics.js";
 import { adminPricingResearchRouter, pricingResearchRouter } from "./routes/pricingResearch.js";
+import { adminCommercialValidationRouter } from "./routes/commercialValidation.js";
 import { requireCsrf, securityHeaders } from "./middleware/security.js";
 import { createRateLimiter } from "./middleware/rateLimit.js";
 import { frontendOrigin, validateRuntimeConfig } from "./lib/config.js";
@@ -34,6 +35,7 @@ import { checkNotificationRepository } from "./lib/notificationRepository.js";
 import { checkTaxonomyRepository } from "./lib/taxonomyRepository.js";
 import { checkMarketplaceAnalyticsRepository } from "./lib/marketplaceAnalyticsRepository.js";
 import { checkPricingResearchRepository } from "./lib/pricingResearchRepository.js";
+import { checkCommercialValidationRepository } from "./lib/commercialValidationRepository.js";
 import { requestContext, requestLogger, safeErrorHandler } from "./middleware/observability.js";
 
 type AppOptions = {
@@ -79,7 +81,8 @@ export function createApp(options: AppOptions = {}) {
       && checkNotificationRepository()
       && checkTaxonomyRepository()
       && checkMarketplaceAnalyticsRepository()
-      && checkPricingResearchRepository());
+      && checkPricingResearchRepository()
+      && checkCommercialValidationRepository());
   const readinessHandler = (_req: express.Request, res: express.Response) => {
     try {
       if (!readinessCheck()) throw new Error("Readiness check returned false.");
@@ -124,6 +127,7 @@ export function createApp(options: AppOptions = {}) {
   app.use("/api/admin/taxonomy", adminTaxonomyRouter);
   app.use("/api/admin/marketplace-analytics", adminMarketplaceAnalyticsRouter);
   app.use("/api/admin/pricing-research", adminPricingResearchRouter);
+  app.use("/api/admin/commercial-validation", adminCommercialValidationRouter);
   app.use("/api/admin", adminRouter);
   app.use("/api/admin/certificates", adminCertificatesRouter);
   app.use("/api/ai", aiRateLimit, aiRouter);
