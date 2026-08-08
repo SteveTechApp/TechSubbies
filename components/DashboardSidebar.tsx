@@ -36,6 +36,7 @@ interface DashboardSidebarProps {
 const ENGINEER_LINKS = [
     { label: 'Dashboard', icon: LayoutDashboard },
     { label: 'Manage Profile', icon: User },
+    { label: 'Certificates', icon: ShieldCheck },
     { label: 'Job Search', icon: Search },
     { label: 'Applications', icon: ClipboardList },
     { label: 'My Network', icon: Users },
@@ -80,6 +81,7 @@ const ADMIN_LINKS = [
     { label: 'Dashboard', icon: LayoutDashboard },
     { label: 'Manage Users', icon: Users },
     { label: 'Membership Requests', icon: DollarSign },
+    { label: 'Certificate Verification', icon: ShieldCheck },
     { label: 'Privacy Requests', icon: ShieldCheck },
     { label: 'Manage Jobs', icon: Briefcase },
     { label: 'Monetization', icon: DollarSign },
@@ -88,7 +90,7 @@ const ADMIN_LINKS = [
 
 export const DashboardSidebar = ({ activeView, setActiveView, onNavigate, onClose }: DashboardSidebarProps) => {
     const { user, logout } = useAuth();
-    
+
     if (!user) return null;
 
     let links;
@@ -116,10 +118,6 @@ export const DashboardSidebar = ({ activeView, setActiveView, onNavigate, onClos
         setActiveView(view);
         onNavigate?.();
     };
-
-    if(user.role !== Role.ENGINEER) {
-        // links = [...links, ...commonLinks.filter(l => l.label !== 'Messages')];
-    }
 
     return (
         <aside className="flex h-full w-64 flex-shrink-0 flex-col border-r bg-white shadow-lg">
