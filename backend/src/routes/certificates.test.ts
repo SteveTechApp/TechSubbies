@@ -34,7 +34,12 @@ beforeAll(async () => {
   adminToken = signToken(admin.id);
 });
 
-async function register(role: "Engineer" | "Company" | "Resourcing Company", email: string, name: string) {
+async function register(
+  role: "Engineer" | "Company" | "Resourcing Company",
+  email: string,
+  name: string,
+  verify = true
+) {
   const response = await request(app).post("/api/auth/register").send({
     email,
     password: "correcthorsebattery",
@@ -42,7 +47,7 @@ async function register(role: "Engineer" | "Company" | "Resourcing Company", ema
     name,
     profileData: {},
   });
-  markEmailVerified(response.body.user.id);
+  if (verify) markEmailVerified(response.body.user.id);
   return { id: response.body.user.id as string, token: response.body.token as string };
 }
 
@@ -137,6 +142,27 @@ describe("certificate verification", () => {
       .send({ visibility: "private" });
     expect(madePrivate.status).toBe(200);
 
+    expect((await request(app)
+      .get(`/api/evidence/${evidenceId}/content`)
+      .set("Authorization", `Bearer ${company.token}`)).status).toBe(403);
+  });
+
+  it("requires email verification before a marketplace account can view verified evidence", async () => {
+    const engineer = await register("Engineer", "viewer-check-engineer@example.com", "Viewer Check Engineer");
+    const company = await register("Company", "unverified-viewer@example.com", "Unverified Viewer", false);
+    const evidenceId = await uploadCertificateEvidence(engineer.token, Buffer.from("viewer-check-evidence"));
+    const submitted = await request(app)
+      .post("/api/certificates")
+      .set("Authorization", `Bearer ${engineer.token}`)
+      .send({ evidenceId, name: "CTS-D", issuer: "AVIXA", expiresAt: "2027-12-31", visibility: "marketplace" });
+    await request(app)
+      .patch(`/api/admin/certificates/${submitted.body.id}/review`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ status: "verified", note: "Certification confirmed." });
+
+    expect((await request(app)
+      .get(`/api/certificates/engineer/${engineer.id}`)
+      .set("Authorization", `Bearer ${company.token}`)).status).toBe(403);
     expect((await request(app)
       .get(`/api/evidence/${evidenceId}/content`)
       .set("Authorization", `Bearer ${company.token}`)).status).toBe(403);
