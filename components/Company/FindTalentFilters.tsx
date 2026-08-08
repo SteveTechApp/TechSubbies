@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { EngineerProfile, Job, ProfileTier, Discipline } from '../../types';
+import { EngineerProfile, Job, ProfileTier } from '../../types';
 import { Search, Sparkles, SlidersHorizontal } from '../Icons';
-// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
 import { useAppContext } from '../../context/InteractionContext';
 import { getDistance, findLocationsInRegion } from '../../utils/locationUtils';
 import { LocationAutocomplete } from '../LocationAutocomplete';
 import { getSkillBand } from '../../utils/skillBands';
 import { isEngineerAvailable } from '../../utils/availability';
+import { matchesWorkPreference, type WorkModePreference } from '../../utils/inclusivePreferences';
 import { useData } from '../../context/DataContext';
 import { explainSkillRequirementMatch } from '../../services/skillMatching';
 
@@ -22,6 +22,8 @@ interface Filters {
     minSkillLevel: number;
     neededFrom: string;
     neededTo: string;
+    workMode: WorkModePreference | 'any';
+    language: string;
 }
 
 const initialFilters: Filters = {
@@ -36,6 +38,8 @@ const initialFilters: Filters = {
     minSkillLevel: 0,
     neededFrom: '',
     neededTo: '',
+    workMode: 'any',
+    language: '',
 };
 
 interface FindTalentFiltersProps {
@@ -53,7 +57,6 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange, onBudgetC
     const [matchNotice, setMatchNotice] = useState('');
 
     useEffect(() => {
-        // This effect will run whenever filters change, except for AI-based filters
         if (!filters.jobForMatch) {
             applyFilters();
         }
@@ -69,7 +72,7 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange, onBudgetC
     
     const handleLocationChange = (value: string) => {
          setFilters(prev => ({ ...prev, location: value }));
-    }
+    };
 
     const runAiMatch = async () => {
         const job = myJobs.find(j => j.id === filters.jobForMatch);
@@ -78,7 +81,11 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange, onBudgetC
         setIsAiLoading(true);
         setMatchNotice('');
         const evidenceContext = { jobs, reviews };
-        const rankEngineers = (matches: Array<{ id: string; match_score: number }>) => engineers.map(eng => {
+        const eligibleEngineers = engineers.filter(engineer => matchesWorkPreference(engineer, {
+            workMode: filters.workMode,
+            language: filters.language,
+        }));
+        const rankEngineers = (matches: Array<{ id: string; match_score: number }>) => eligibleEngineers.map(eng => {
             const explanation = explainSkillRequirementMatch(eng, job, evidenceContext);
             const match = matches.find(candidate => candidate.id === eng.id);
             return {
@@ -88,7 +95,7 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange, onBudgetC
             };
         }).sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
         try {
-            const result = await geminiService.findBestMatchesForJob(job, engineers, evidenceContext);
+            const result = await geminiService.findBestMatchesForJob(job, eligibleEngineers, evidenceContext);
             const matches = Array.isArray(result?.matches) ? result.matches : [];
             onFilterChange(rankEngineers(matches));
             if (matches.length === 0) setMatchNotice('Showing deterministic evidence-adjusted results.');
@@ -103,15 +110,8 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange, onBudgetC
     const applyFilters = () => {
         let filtered = [...engineers];
 
-        // AI Match
-        if (filters.jobForMatch) {
-            // This is handled by a separate function
-            return;
-        }
+        if (filters.jobForMatch) return;
 
-        // Search Term - when a minimum skill level is also set, only engineers
-        // whose matching skill meets that level count as a match on the
-        // skill itself (name/discipline matches are unaffected by the level).
         if (filters.searchTerm) {
             const term = filters.searchTerm.toLowerCase();
             filtered = filtered.filter(e => {
@@ -131,40 +131,38 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange, onBudgetC
             });
         }
         
-        // Experience
         filtered = filtered.filter(e => e.experience >= filters.minExperience);
-        
-        // Day Rate
         filtered = filtered.filter(e => e.minDayRate <= filters.maxDayRate);
 
-        // Location & Radius
         if (filters.radius > 0 && filters.radius < 500) {
              filtered = filtered.filter(e => {
                 const distance = getDistance(filters.location, e.location);
                 return distance !== null && distance <= filters.radius;
             });
-        } else if (filters.radius >= 500) { // Special case for "UK Wide" or larger regions
+        } else if (filters.radius >= 500) {
             const locationsInScope = findLocationsInRegion(filters.location);
              filtered = filtered.filter(e => locationsInScope.some(l => e.location.includes(l)));
         }
         
-        // Skills Profile
         if (filters.hasSkillsProfile) {
             filtered = filtered.filter(e => e.profileTier !== ProfileTier.BASIC);
         }
         
-        // Discipline
         if (filters.discipline !== 'all') {
             filtered = filtered.filter(e => e.discipline === filters.discipline);
         }
 
-        // Availability - only applied when a date (or range) is actually
-        // requested, so this filter has no effect until a company sets it.
+        if (filters.workMode !== 'any' || filters.language.trim()) {
+            filtered = filtered.filter(e => matchesWorkPreference(e, {
+                workMode: filters.workMode,
+                language: filters.language,
+            }));
+        }
+
         if (filters.neededFrom) {
             filtered = filtered.filter(e => isEngineerAvailable(e, filters.neededFrom, filters.neededTo || filters.neededFrom));
         }
 
-        // Remove match score when not using AI match
         onFilterChange(filtered.map(e => ({ ...e, matchScore: undefined })));
     };
 
@@ -181,7 +179,6 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange, onBudgetC
             </h2>
             
             <div className="space-y-4">
-                {/* AI Smart Match */}
                 <div className="p-3 bg-purple-50 border-2 border-dashed border-purple-200 rounded-lg">
                     <h3 className="font-bold text-purple-800 flex items-center mb-2">
                         <Sparkles size={16} className="mr-1.5"/> AI Smart Match
@@ -200,7 +197,6 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange, onBudgetC
                     {matchNotice && <p className="mt-2 text-xs text-purple-700" role="status">{matchNotice}</p>}
                 </div>
                 
-                {/* Manual Filters */}
                 <div>
                     <label className="block text-sm font-medium">Keywords</label>
                     <div className="relative">
@@ -231,6 +227,32 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange, onBudgetC
                             />
                         </div>
                     )}
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium">Work mode</label>
+                    <p className="mb-1 text-xs text-gray-500">Engineer-declared preference. Accessibility needs are not searchable.</p>
+                    <select
+                        value={filters.workMode}
+                        onChange={e => handleFilterChange('workMode', e.target.value as Filters['workMode'])}
+                        className="w-full border p-2 rounded bg-white"
+                    >
+                        <option value="any">Any work mode</option>
+                        <option value="on-site">On-site</option>
+                        <option value="remote">Remote</option>
+                        <option value="hybrid">Hybrid</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium">Language</label>
+                    <input
+                        type="text"
+                        value={filters.language}
+                        onChange={e => handleFilterChange('language', e.target.value)}
+                        placeholder="e.g. English, Polish"
+                        className="w-full border p-2 rounded"
+                    />
                 </div>
 
                 <div>
