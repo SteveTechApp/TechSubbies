@@ -17,6 +17,10 @@ export type PortalSession = {
   url: string;
 };
 
+type StripeApiResponse = Record<string, unknown> & {
+  error?: { message?: string };
+};
+
 export class StripeBillingProvider {
   readonly name = "stripe" as const;
 
@@ -35,11 +39,11 @@ export class StripeBillingProvider {
       body,
       signal: AbortSignal.timeout(10_000),
     });
-    const data = await response.json();
+    const data = await response.json() as StripeApiResponse;
     if (!response.ok) {
-      throw new Error(data?.error?.message || `Stripe request failed with status ${response.status}.`);
+      throw new Error(data.error?.message || `Stripe request failed with status ${response.status}.`);
     }
-    return data as Record<string, unknown>;
+    return data;
   }
 
   async createCheckoutSession(input: {
