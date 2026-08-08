@@ -20,6 +20,13 @@ const CONTRACT_STATUS = {
   ACTIVE: "Active",
 } as const;
 
+type DropboxSignature = {
+  signature_id?: string;
+  signer_name?: string;
+  status_code?: string;
+  signed_at?: number | null;
+};
+
 type DropboxCallback = {
   event?: {
     event_type?: string;
@@ -29,12 +36,7 @@ type DropboxCallback = {
   };
   signature_request?: {
     signature_request_id?: string;
-    signatures?: Array<{
-      signature_id?: string;
-      signer_name?: string;
-      status_code?: string;
-      signed_at?: number | null;
-    }>;
+    signatures?: DropboxSignature[];
   };
 };
 
@@ -129,7 +131,7 @@ function extractCallback(body: Buffer, contentType: string): DropboxCallback | n
     if (!/name="json"/i.test(part)) continue;
     const separator = part.indexOf("\r\n\r\n");
     if (separator < 0) continue;
-    const json = part.slice(separator + 4).replace(/\r\n--?\s*$/, "").trim();
+    const json = part.slice(separator + 4).trim();
     try {
       return JSON.parse(json) as DropboxCallback;
     } catch {
@@ -139,38 +141,46 @@ function extractCallback(body: Buffer, contentType: string): DropboxCallback | n
   return null;
 }
 
+function signedAt(signature: DropboxSignature) {
+  return signature.signed_at
+    ? new Date(signature.signed_at * 1000).toISOString()
+    : new Date().toISOString();
+}
+
 function applySignedState(callback: DropboxCallback, contractId: string) {
   const request = findContractEsignRequest(contractId);
   if (!request) return;
-  for (const signature of callback.signature_request?.signatures || []) {
-    if (signature.status_code !== "signed" || !signature.signature_id) continue;
-    let contract = findContractById(contractId);
-    if (!contract) return;
-    const signedAt = signature.signed_at
-      ? new Date(signature.signed_at * 1000).toISOString()
-      : new Date().toISOString();
+  const signatures = callback.signature_request?.signatures || [];
 
-    if (signature.signature_id === request.engineerSignatureId && !contract.engineerSignature) {
+  // Apply the engineer first regardless of provider array ordering so the
+  // client countersignature can safely activate the contract in the same event.
+  const engineerSignature = signatures.find((signature) =>
+    signature.signature_id === request.engineerSignatureId && signature.status_code === "signed"
+  );
+  if (engineerSignature) {
+    const contract = findContractById(contractId);
+    if (contract && !contract.engineerSignature) {
       const engineer = findUserById(contract.engineerId);
       updateContractSignature(
         contract.id,
         "engineerSignature",
-        { name: signature.signer_name || engineer?.name || "Engineer", date: signedAt },
+        { name: engineerSignature.signer_name || engineer?.name || "Engineer", date: signedAt(engineerSignature) },
         CONTRACT_STATUS.SIGNED
       );
-      contract = findContractById(contractId)!;
     }
+  }
 
-    if (
-      signature.signature_id === request.companySignatureId
-      && contract.engineerSignature
-      && !contract.companySignature
-    ) {
+  const companySignature = signatures.find((signature) =>
+    signature.signature_id === request.companySignatureId && signature.status_code === "signed"
+  );
+  if (companySignature) {
+    const contract = findContractById(contractId);
+    if (contract?.engineerSignature && !contract.companySignature) {
       const company = findUserById(contract.companyId);
       updateContractSignature(
         contract.id,
         "companySignature",
-        { name: signature.signer_name || company?.name || "Client", date: signedAt },
+        { name: companySignature.signer_name || company?.name || "Client", date: signedAt(companySignature) },
         CONTRACT_STATUS.ACTIVE
       );
     }
@@ -186,8 +196,7 @@ dropboxSignWebhookRouter.post(
       ? extractCallback(req.body, String(req.headers["content-type"] || ""))
       : null;
     const event = callback?.event;
-    const providerRequestId = callback?.signature_request?.signature_request_id;
-    if (!event?.event_type || !event.event_time || !event.event_hash || !providerRequestId) {
+    if (!event?.event_type || !event.event_time || !event.event_hash) {
       return res.status(400).send("Invalid Dropbox Sign callback");
     }
     if (!verifyDropboxSignEvent({
@@ -199,13 +208,21 @@ dropboxSignWebhookRouter.post(
       return res.status(401).send("Invalid Dropbox Sign callback signature");
     }
 
+    const providerRequestId = callback?.signature_request?.signature_request_id;
+    // Dropbox Sign sends callback test/account events that have no signature
+    // request. A valid provider event must still receive the documented ACK.
+    if (!providerRequestId) {
+      return res.status(200).type("text/plain").send("Hello API Event Received");
+    }
+
     const request = findEsignRequestByProviderId(providerRequestId);
     if (request) {
+      const relatedSignatureId = event.event_metadata?.related_signature_id || "";
       const isNew = recordContractEsignEvent({
-        eventKey: event.event_hash,
+        eventKey: `${providerRequestId}:${event.event_hash}:${relatedSignatureId}`,
         providerRequestId,
         eventType: event.event_type,
-        signatureId: event.event_metadata?.related_signature_id,
+        signatureId: relatedSignatureId || null,
       });
       if (isNew) {
         if (event.event_type === "signature_request_signed" || event.event_type === "signature_request_all_signed") {
