@@ -8,7 +8,9 @@ import {
   findBillingByCustomerId,
   findBillingBySubscriptionId,
   getBillingState,
+  getBillingSummary,
   linkCheckoutToUser,
+  listAdminBillingAccounts,
   paidTierForStripePrice,
   recordBillingWebhookEvent,
   recordInvoicePaid,
@@ -86,6 +88,27 @@ billingRouter.post("/portal", async (req: AuthedRequest, res) => {
     console.error("Could not create Stripe Billing Portal session", error);
     return res.status(502).json({ error: "Billing management is temporarily unavailable." });
   }
+});
+
+export const adminBillingRouter = Router();
+adminBillingRouter.use(requireAuth, requireRole("Admin"));
+adminBillingRouter.get("/summary", (_req, res) => {
+  return res.json({ summary: getBillingSummary() });
+});
+adminBillingRouter.get("/accounts", (_req, res) => {
+  const accounts = listAdminBillingAccounts().map((account) => ({
+    userId: account.userId,
+    name: account.name,
+    email: account.email,
+    tier: account.tier,
+    status: account.status,
+    currentPeriodEnd: account.currentPeriodEnd,
+    cancelAtPeriodEnd: account.cancelAtPeriodEnd === 1,
+    paymentIssue: Boolean(account.lastPaymentFailedAt),
+    lastPaymentFailedAt: account.lastPaymentFailedAt,
+    updatedAt: account.updatedAt,
+  }));
+  return res.json({ accounts });
 });
 
 type StripeEvent = {
