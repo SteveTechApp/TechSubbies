@@ -11,6 +11,7 @@ import { MessagesView } from './MessagesView';
 import { AIToolsView } from './EngineerDashboard/AIToolsView';
 import { MyNetworkView } from './EngineerDashboard/MyNetworkView';
 import { SettingsView } from './EngineerDashboard/SettingsView';
+import { InclusivePreferencesView } from './EngineerDashboard/InclusivePreferencesView';
 import { AICoachView } from './EngineerDashboard/AICoachView';
 import { StoryboardCreatorView } from './EngineerDashboard/StoryboardCreatorView';
 import { AnalyticsView } from './EngineerDashboard/AnalyticsView';
@@ -41,6 +42,8 @@ export const EngineerDashboard = () => {
                 return <DashboardView engineerProfile={engineerProfile} onUpgradeTier={() => setActiveView('Billing')} setActiveView={setActiveView} boostProfile={boostProfile} />;
             case 'Manage Profile':
                 return <ProfileManagementView profile={engineerProfile} onSave={updateEngineerProfile} setActiveView={setActiveView} />;
+            case 'Work Preferences':
+                return <InclusivePreferencesView profile={engineerProfile} onSave={updateEngineerProfile} />;
             case 'Certificates':
                 return <CertificatesView />;
             case 'Taxonomy Review':
