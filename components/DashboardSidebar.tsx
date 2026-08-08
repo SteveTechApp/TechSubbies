@@ -50,6 +50,7 @@ const ENGINEER_LINKS = [
     { label: 'AI Coach', icon: ShieldCheck },
     { label: 'Storyboard Creator', icon: Clapperboard },
     { label: 'Analytics', icon: BarChart2 },
+    { label: 'Pricing Research', icon: DollarSign },
     { label: 'Forum', icon: MessageCircle },
     { label: 'Billing', icon: DollarSign },
     { label: 'Loyalty Program', icon: Gift },
@@ -66,6 +67,7 @@ const COMPANY_LINKS = [
     { label: 'Contracts', icon: Briefcase },
     { label: 'Messages', icon: MessageCircle },
     { label: 'Analytics', icon: BarChart2 },
+    { label: 'Pricing Research', icon: DollarSign },
     { label: 'Settings', icon: Settings },
 ];
 
@@ -76,6 +78,7 @@ const RESOURCING_LINKS = [
     { label: 'Contracts', icon: Briefcase },
     { label: 'Messages', icon: MessageCircle },
     { label: 'Analytics', icon: BarChart2 },
+    { label: 'Pricing Research', icon: DollarSign },
     { label: 'Settings', icon: Settings },
 ];
 
