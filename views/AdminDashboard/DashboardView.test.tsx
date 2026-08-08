@@ -35,6 +35,13 @@ describe('Admin DashboardView', () => {
         expect(screen.getByText(/2 membership requests need verification/i)).toBeVisible();
         expect(screen.getByText('Live operational data from the TechSubbies backend.')).toBeVisible();
         expect(screen.getByText('Commercial pilot funnel')).toBeVisible();
+        expect(screen.getByText('Pilot conversion targets')).toBeVisible();
+        expect(screen.getByText('Applications per job')).toBeVisible();
+        expect(screen.getByText('0.8')).toBeVisible();
+        expect(screen.getByText('33.3%')).toBeVisible();
+        expect(screen.getByText('/ 15%')).toBeVisible();
+        expect(screen.getByText('On target')).toBeVisible();
+        expect(screen.getAllByText('Below target')).toHaveLength(2);
 
         await userEvent.click(screen.getByRole('button', { name: 'Review membership requests' }));
         expect(setActiveView).toHaveBeenCalledWith('Membership Requests');

@@ -1,6 +1,6 @@
 # TechSubbies Development Priorities
 
-Updated 6 August 2026. This is the current implementation backlog; the older
+Updated 8 August 2026. This is the current implementation backlog; the older
 Word planning documents are retained as historical snapshots.
 
 ## Completed foundations
@@ -27,8 +27,11 @@ Word planning documents are retained as historical snapshots.
   retaining an explicit legacy crosswalk for older pilot clients.
 - [x] Connect the evidence-adjusted shortlist to the company Find Talent flow;
   show score explanations, evidence freshness and gaps.
-- [ ] Recruit a small AV/UC and IT field-services pilot cohort and define
-  conversion targets for the new funnel metrics.
+- [x] Define initial controlled-pilot conversion thresholds and show live
+  actual-versus-target progress in Admin: 2.0 applications per job, 30% job to
+  contract and 15% application to contract.
+- [ ] Recruit a small AV/UC and IT field-services pilot cohort and validate the
+  initial conversion thresholds against the first reliable cohort baseline.
 
 ## P1 - trust and transaction readiness
 
