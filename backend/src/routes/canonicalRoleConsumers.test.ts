@@ -12,13 +12,15 @@ process.env.NODE_ENV = 'test';
 const { createApp } = await import('../app.js');
 const { markEmailVerified } = await import('../lib/db.js');
 const app = createApp();
+let accountNumber = 0;
 
 async function registerCompany() {
+  accountNumber += 1;
   const response = await request(app).post('/api/auth/register').send({
-    email: 'canonical-company@example.com',
+    email: `canonical-company-${accountNumber}@example.com`,
     password: 'correcthorsebattery',
     role: 'Company',
-    name: 'Canonical Company',
+    name: `Canonical Company ${accountNumber}`,
     profileData: {},
   });
   markEmailVerified(response.body.user.id);
