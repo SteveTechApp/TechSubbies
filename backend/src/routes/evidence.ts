@@ -12,6 +12,7 @@ import {
   type EvidenceObjectRow,
 } from "../lib/evidenceRepository.js";
 import { getEvidenceObject, putEvidenceObject } from "../lib/evidenceStorage.js";
+import { canMarketplaceReadEvidence } from "../lib/certificateRepository.js";
 
 const MAX_EVIDENCE_BYTES = 10 * 1024 * 1024;
 const uploadBody = raw({ type: "*/*", limit: `${MAX_EVIDENCE_BYTES}b` });
@@ -37,7 +38,9 @@ function requestId(req: AuthedRequest) {
 }
 
 function canReadEvidence(req: AuthedRequest, evidence: EvidenceObjectRow) {
-  return req.userId === evidence.ownerUserId || req.authUser?.role === "Admin";
+  if (req.userId === evidence.ownerUserId || req.authUser?.role === "Admin") return true;
+  if (!["Company", "Resourcing Company"].includes(req.authUser?.role || "")) return false;
+  return canMarketplaceReadEvidence(evidence.id);
 }
 
 export const evidenceRouter = Router();
