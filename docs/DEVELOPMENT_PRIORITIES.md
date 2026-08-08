@@ -74,7 +74,9 @@ Word planning documents are retained as historical snapshots.
 
 ## P2 - taxonomy and inclusion
 
-- [ ] Admin taxonomy editor with versioning and practitioner approval.
+- [x] Implement Admin taxonomy governance with versioned role snapshots,
+  practitioner approval/rejection by verified Engineers, immutable review
+  history and explicit Admin publishing/superseding of approved versions.
 - [ ] Crosswalk all responsibility expectations to canonical role IDs.
 - [ ] Add assisted/independent/lead delivery context, last-used dates and
   project scale to skill evidence.
