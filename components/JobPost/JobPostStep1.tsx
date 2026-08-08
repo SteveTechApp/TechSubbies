@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ExperienceLevel } from '../../types';
-import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles';
+import { canonicalRoleRegistry } from '../../data/canonicalRoleRegistry';
 import { ArrowRight, Sparkles } from '../Icons';
 import { AIJobHelper } from '../AIJobHelper';
 import { requiresLeadSupervision, hasLeadSupervisionConfirmed } from '../../utils/leadSupervision';
@@ -22,8 +22,15 @@ export const JobPostStep1 = ({ jobDetails, setJobDetails, onNext }: JobPostStep1
     };
 
     const handleRoleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const roleName = e.target.value;
-        setJobDetails((prev: any) => ({ ...prev, jobRole: roleName, title: roleName }));
+        const roleId = e.target.value;
+        const role = canonicalRoleRegistry.find((item) => item.id === roleId);
+        if (!role) return;
+        setJobDetails((prev: any) => ({
+            ...prev,
+            canonicalRoleId: role.id,
+            jobRole: role.title,
+            title: prev.title && prev.canonicalRoleId ? prev.title : role.title,
+        }));
     };
 
     const handleLeadAccepted = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,7 +38,7 @@ export const JobPostStep1 = ({ jobDetails, setJobDetails, onNext }: JobPostStep1
     };
 
     const handleNext = () => {
-        if (!jobDetails.jobRole) {
+        if (!jobDetails.canonicalRoleId) {
             alert('Please select a Specialist Role to continue.');
             return;
         }
@@ -51,9 +58,11 @@ export const JobPostStep1 = ({ jobDetails, setJobDetails, onNext }: JobPostStep1
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Specialist Role</label>
-                        <select name="jobRole" value={jobDetails.jobRole} onChange={handleRoleSelect} className="w-full border p-2 rounded bg-white h-[42px]">
+                        <select name="canonicalRoleId" value={jobDetails.canonicalRoleId || ''} onChange={handleRoleSelect} className="w-full border p-2 rounded bg-white h-[42px]">
                             <option value="" disabled>-- Select a role to define skills --</option>
-                            {JOB_ROLE_DEFINITIONS.map(def => <option key={def.name} value={def.name}>{def.name}</option>)}
+                            {canonicalRoleRegistry.map(role => (
+                                <option key={role.id} value={role.id}>{role.title}</option>
+                            ))}
                         </select>
                     </div>
                     <div>
@@ -120,7 +129,7 @@ export const JobPostStep1 = ({ jobDetails, setJobDetails, onNext }: JobPostStep1
                 )}
             </div>
             <div className="flex justify-end mt-6">
-                <button onClick={handleNext} disabled={!jobDetails.jobRole || (needsLead && !leadConfirmed)} className="flex items-center px-6 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 disabled:bg-blue-300">
+                <button onClick={handleNext} disabled={!jobDetails.canonicalRoleId || (needsLead && !leadConfirmed)} className="flex items-center px-6 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 disabled:bg-blue-300">
                     Next: Define Skills <ArrowRight size={18} className="ml-2" />
                 </button>
             </div>
