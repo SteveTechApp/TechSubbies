@@ -40,6 +40,7 @@ const summary = {
 
 describe('CommercialValidationView', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     mocks.getCommercialValidationSummary.mockResolvedValue(summary);
     mocks.listCommercialDecisions.mockResolvedValue([]);
     mocks.createCommercialDecision.mockResolvedValue({
@@ -62,7 +63,7 @@ describe('CommercialValidationView', () => {
     render(<CommercialValidationView />);
 
     expect(await screen.findByText('Commercial Validation')).toBeInTheDocument();
-    expect(screen.getByText('Engineer')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Engineer' })).toBeInTheDocument();
     expect(screen.getAllByText('Company').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Unavailable').length).toBeGreaterThan(0);
     expect(screen.getByText(/never changes live Stripe prices/i)).toBeInTheDocument();
