@@ -54,12 +54,9 @@ export function createApp(options: AppOptions = {}) {
   const readinessHandler = (_req: express.Request, res: express.Response) => {
     try {
       if (!readinessCheck()) throw new Error("Readiness check returned false.");
-      return res.json({ status: "ready", checks: { database: "ok", evidenceRepository: "ok" } });
+      return res.json({ status: "ready", checks: { database: "ok" } });
     } catch {
-      return res.status(503).json({
-        status: "unavailable",
-        checks: { database: "unavailable", evidenceRepository: "unavailable" },
-      });
+      return res.status(503).json({ status: "unavailable", checks: { database: "unavailable" } });
     }
   };
 
