@@ -63,15 +63,23 @@ db.exec(`
     action TEXT NOT NULL,
     outcome TEXT NOT NULL,
     requestId TEXT NOT NULL,
-    createdAt TEXT NOT NULL,
-    FOREIGN KEY(evidenceId) REFERENCES evidence_objects(id) ON DELETE CASCADE,
-    FOREIGN KEY(actorUserId) REFERENCES users(id) ON DELETE CASCADE
+    createdAt TEXT NOT NULL
   );
   CREATE INDEX IF NOT EXISTS evidence_access_events_evidence_created
     ON evidence_access_events(evidenceId, createdAt DESC);
   CREATE INDEX IF NOT EXISTS evidence_access_events_actor_created
     ON evidence_access_events(actorUserId, createdAt DESC);
 `);
+
+export function checkEvidenceRepository(): boolean {
+  const objectTable = db.prepare(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'evidence_objects'"
+  ).get() as { name?: string } | undefined;
+  const auditTable = db.prepare(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'evidence_access_events'"
+  ).get() as { name?: string } | undefined;
+  return objectTable?.name === "evidence_objects" && auditTable?.name === "evidence_access_events";
+}
 
 export function createEvidenceObject(input: {
   ownerUserId: string;
