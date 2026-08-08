@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-// FIX: Replaced incorrect context hook 'useInteractions' with the correct hook 'useAppContext'.
 import { useAppContext } from '../context/InteractionContext';
 import { DashboardShell } from '../components/DashboardShell';
 import { EngineerProfile } from '../types';
@@ -21,6 +20,7 @@ import { ForumView } from './ForumView';
 import { PaymentsView } from './EngineerDashboard/PaymentsView';
 import { LoyaltyView } from './EngineerDashboard/LoyaltyView';
 import { ApplicationsView } from './EngineerDashboard/ApplicationsView';
+import { CertificatesView } from './EngineerDashboard/CertificatesView';
 import { DashboardHelpCenter } from '../components/DashboardHelpCenter';
 
 export const EngineerDashboard = () => {
@@ -40,6 +40,8 @@ export const EngineerDashboard = () => {
                 return <DashboardView engineerProfile={engineerProfile} onUpgradeTier={() => setActiveView('Billing')} setActiveView={setActiveView} boostProfile={boostProfile} />;
             case 'Manage Profile':
                 return <ProfileManagementView profile={engineerProfile} onSave={updateEngineerProfile} setActiveView={setActiveView} />;
+            case 'Certificates':
+                return <CertificatesView />;
             case 'Job Search':
                  return <JobSearchView setActiveView={setActiveView} />;
             case 'Applications':
