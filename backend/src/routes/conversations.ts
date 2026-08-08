@@ -8,6 +8,7 @@ import {
   findUserById,
   listConversationsForUser,
   listMessagesForConversation,
+  type ConversationRow,
 } from "../lib/db.js";
 import { countUnreadMessagesForConversation, markConversationMessagesRead } from "../lib/messagingRepository.js";
 import { createNotification, toPublicNotification } from "../lib/notificationRepository.js";
@@ -25,10 +26,7 @@ function otherParticipantId(conversation: { participantAId: string; participantB
   return conversation.participantAId === userId ? conversation.participantBId : conversation.participantAId;
 }
 
-function publicConversationForUser(
-  conversation: ReturnType<typeof findConversationById> extends infer T ? NonNullable<T> : never,
-  userId: string
-) {
+function publicConversationForUser(conversation: ConversationRow, userId: string) {
   return {
     ...toPublicConversation(conversation),
     unreadCount: countUnreadMessagesForConversation(conversation.id, userId),
@@ -106,14 +104,8 @@ conversationsRouter.post("/:conversationId/messages", requireAuth, async (req: A
 
   const recipientConversation = publicConversationForUser(refreshedConversation, recipientId);
   const senderConversation = publicConversationForUser(refreshedConversation, req.userId!);
-  publishRealtime(recipientId, "message.created", {
-    message: publicMessage,
-    conversation: recipientConversation,
-  });
-  publishRealtime(req.userId!, "message.created", {
-    message: publicMessage,
-    conversation: senderConversation,
-  });
+  publishRealtime(recipientId, "message.created", { message: publicMessage, conversation: recipientConversation });
+  publishRealtime(req.userId!, "message.created", { message: publicMessage, conversation: senderConversation });
   publishRealtime(recipientId, "conversation.updated", { conversation: recipientConversation });
   publishRealtime(req.userId!, "conversation.updated", { conversation: senderConversation });
 
@@ -123,9 +115,7 @@ conversationsRouter.post("/:conversationId/messages", requireAuth, async (req: A
     text: `${sender?.name || "Someone"} sent you a message`,
     link: "Messages",
   });
-  publishRealtime(recipientId, "notification.created", {
-    notification: toPublicNotification(notification),
-  });
+  publishRealtime(recipientId, "notification.created", { notification: toPublicNotification(notification) });
 
   return res.status(201).json(publicMessage);
 });
