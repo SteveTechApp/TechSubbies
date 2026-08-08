@@ -40,6 +40,7 @@ function requestId(req: AuthedRequest) {
 function canReadEvidence(req: AuthedRequest, evidence: EvidenceObjectRow) {
   if (req.userId === evidence.ownerUserId || req.authUser?.role === "Admin") return true;
   if (!["Company", "Resourcing Company"].includes(req.authUser?.role || "")) return false;
+  if (!req.authUser?.emailVerified) return false;
   return canMarketplaceReadEvidence(evidence.id);
 }
 
