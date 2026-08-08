@@ -24,6 +24,7 @@ import { ApplicationsView } from './EngineerDashboard/ApplicationsView';
 import { CertificatesView } from './EngineerDashboard/CertificatesView';
 import { TaxonomyReviewView } from './EngineerDashboard/TaxonomyReviewView';
 import { DashboardHelpCenter } from '../components/DashboardHelpCenter';
+import { PricingResearchView } from './PricingResearchView';
 
 export const EngineerDashboard = () => {
     const { user } = useAuth();
@@ -70,6 +71,8 @@ export const EngineerDashboard = () => {
                 return <StoryboardCreatorView profile={engineerProfile} setActiveView={setActiveView} />;
             case 'Analytics':
                 return <AnalyticsView />;
+            case 'Pricing Research':
+                return <PricingResearchView />;
             case 'Forum':
                 return <ForumView setActiveView={setActiveView} />;
             case 'Billing':
