@@ -12,12 +12,26 @@ export type RoleCatalogueHydration = {
   roles: RoleSkillDefinition[];
 };
 
+const CATALOGUE_BOOTSTRAP_TIMEOUT_MS = 2500;
 let hydrationPromise: Promise<RoleCatalogueHydration> | null = null;
+
+async function loadPublishedWithTimeout() {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timeoutId = setTimeout(() => reject(new Error('Role catalogue bootstrap timed out.')), CATALOGUE_BOOTSTRAP_TIMEOUT_MS);
+  });
+
+  try {
+    return await Promise.race([taxonomyService.listPublished(), timeout]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
 
 export async function hydrateEffectiveRoleCatalogue(): Promise<RoleCatalogueHydration> {
   if (hydrationPromise) return hydrationPromise;
 
-  hydrationPromise = taxonomyService.listPublished()
+  hydrationPromise = loadPublishedWithTimeout()
     .then((versions) => {
       const overlays = versions.map(version => version.snapshot);
       applyPublishedRoleOverlays(overlays);
