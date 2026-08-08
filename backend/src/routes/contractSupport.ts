@@ -43,8 +43,16 @@ async function sendSupportEmail(input: { userId: string; subject: string; text: 
 function publicCase(caseId: string) {
   const supportCase = findContractSupportCaseById(caseId);
   if (!supportCase) return null;
+  const openedBy = findUserById(supportCase.openedById);
+  const counterparty = findUserById(supportCase.counterpartyId);
+  const proposedEngineer = supportCase.proposedEngineerId
+    ? findUserById(supportCase.proposedEngineerId)
+    : undefined;
   return {
     ...supportCase,
+    openedByName: openedBy?.name || "Unknown account",
+    counterpartyName: counterparty?.name || "Unknown account",
+    proposedEngineerName: proposedEngineer?.name || null,
     events: listContractSupportEvents(caseId),
   };
 }
@@ -87,10 +95,7 @@ contractSupportRouter.post("/", async (req: AuthedRequest, res) => {
   }
 
   let proposedEngineerId: string | null = null;
-  if (parsed.data.caseType === "substitution") {
-    if (!parsed.data.proposedEngineerId) {
-      return res.status(400).json({ error: "A substitution request must identify the proposed replacement engineer." });
-    }
+  if (parsed.data.caseType === "substitution" && parsed.data.proposedEngineerId) {
     const replacement = findUserById(parsed.data.proposedEngineerId);
     if (!replacement || replacement.role !== "Engineer" || replacement.deletedAt || replacement.suspendedAt) {
       return res.status(400).json({ error: "The proposed replacement engineer is not available." });
