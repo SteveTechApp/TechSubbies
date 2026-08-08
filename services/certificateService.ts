@@ -117,14 +117,14 @@ export async function reviewCertificate(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status, note }),
   });
-  return responseJson(response, 'Could not review certificate.');
+  return responseJson<{ certificate: CertificateRecord; notificationSent: boolean }>(response, 'Could not review certificate.');
 }
 
 export async function runExpiryReminderSweep(): Promise<{ due: number; sent: number }> {
   const response = await secureFetch(`${API_BASE_URL}/admin/certificates/expiry-reminders/run`, {
     method: 'POST',
   });
-  return responseJson(response, 'Could not run certificate expiry reminders.');
+  return responseJson<{ due: number; sent: number }>(response, 'Could not run certificate expiry reminders.');
 }
 
 export async function downloadEvidence(evidenceId: string, fileName = 'evidence') {
