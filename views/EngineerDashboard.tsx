@@ -21,6 +21,7 @@ import { PaymentsView } from './EngineerDashboard/PaymentsView';
 import { LoyaltyView } from './EngineerDashboard/LoyaltyView';
 import { ApplicationsView } from './EngineerDashboard/ApplicationsView';
 import { CertificatesView } from './EngineerDashboard/CertificatesView';
+import { TaxonomyReviewView } from './EngineerDashboard/TaxonomyReviewView';
 import { DashboardHelpCenter } from '../components/DashboardHelpCenter';
 
 export const EngineerDashboard = () => {
@@ -42,6 +43,8 @@ export const EngineerDashboard = () => {
                 return <ProfileManagementView profile={engineerProfile} onSave={updateEngineerProfile} setActiveView={setActiveView} />;
             case 'Certificates':
                 return <CertificatesView />;
+            case 'Taxonomy Review':
+                return <TaxonomyReviewView />;
             case 'Job Search':
                  return <JobSearchView setActiveView={setActiveView} />;
             case 'Applications':

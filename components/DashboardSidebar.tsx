@@ -37,6 +37,7 @@ const ENGINEER_LINKS = [
     { label: 'Dashboard', icon: LayoutDashboard },
     { label: 'Manage Profile', icon: User },
     { label: 'Certificates', icon: ShieldCheck },
+    { label: 'Taxonomy Review', icon: Layers },
     { label: 'Job Search', icon: Search },
     { label: 'Applications', icon: ClipboardList },
     { label: 'My Network', icon: Users },
@@ -80,6 +81,7 @@ const RESOURCING_LINKS = [
 const ADMIN_LINKS = [
     { label: 'Dashboard', icon: LayoutDashboard },
     { label: 'Manage Users', icon: Users },
+    { label: 'Role Taxonomy', icon: Layers },
     { label: 'Subscription Billing', icon: DollarSign },
     { label: 'Contract Support', icon: LifeBuoy },
     { label: 'Certificate Verification', icon: ShieldCheck },
