@@ -16,6 +16,7 @@ import { createRateLimiter } from "./middleware/rateLimit.js";
 import { frontendOrigin, validateRuntimeConfig } from "./lib/config.js";
 import { requireVerifiedEmailForMutation } from "./middleware/auth.js";
 import { checkDatabaseConnection } from "./lib/db.js";
+import { checkEvidenceRepository } from "./lib/evidenceRepository.js";
 import { requestContext, requestLogger, safeErrorHandler } from "./middleware/observability.js";
 
 type AppOptions = {
@@ -48,13 +49,17 @@ export function createApp(options: AppOptions = {}) {
     res.json({ status: "ok" });
   });
 
-  const readinessCheck = options.readinessCheck || checkDatabaseConnection;
+  const readinessCheck = options.readinessCheck
+    || (() => checkDatabaseConnection() && checkEvidenceRepository());
   const readinessHandler = (_req: express.Request, res: express.Response) => {
     try {
       if (!readinessCheck()) throw new Error("Readiness check returned false.");
-      return res.json({ status: "ready", checks: { database: "ok" } });
+      return res.json({ status: "ready", checks: { database: "ok", evidenceRepository: "ok" } });
     } catch {
-      return res.status(503).json({ status: "unavailable", checks: { database: "unavailable" } });
+      return res.status(503).json({
+        status: "unavailable",
+        checks: { database: "unavailable", evidenceRepository: "unavailable" },
+      });
     }
   };
 
