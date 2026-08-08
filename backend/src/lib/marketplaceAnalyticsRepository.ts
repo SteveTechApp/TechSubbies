@@ -218,9 +218,9 @@ function retention30dSummary(now = new Date()) {
     if (!sorted.length) continue;
     const firstAt = sorted[0];
     const threshold = new Date(firstAt.getTime() + 30 * 24 * 60 * 60 * 1000);
-    if (threshold > now) continue;
+    if (threshold.getTime() > now.getTime()) continue;
     eligibleUsers += 1;
-    if (sorted.some((value) => value >= threshold)) retainedUsers += 1;
+    if (sorted.some((value) => value.getTime() >= threshold.getTime())) retainedUsers += 1;
   }
 
   return {
