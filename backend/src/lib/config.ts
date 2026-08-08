@@ -66,6 +66,28 @@ export function validateRuntimeConfig(env: NodeJS.ProcessEnv = process.env) {
     problems.push("DROPBOX_SIGN_TEST_MODE must not be enabled in production");
   }
 
+  if (env.BILLING_PROVIDER !== "stripe") {
+    problems.push('BILLING_PROVIDER must be "stripe" in production');
+  }
+  if (!env.STRIPE_SECRET_KEY?.trim()) {
+    problems.push("STRIPE_SECRET_KEY is required in production");
+  }
+  if (env.STRIPE_SECRET_KEY?.startsWith("sk_test_")) {
+    problems.push("STRIPE_SECRET_KEY must not use a test key in production");
+  }
+  if (!env.STRIPE_WEBHOOK_SECRET?.trim()) {
+    problems.push("STRIPE_WEBHOOK_SECRET is required in production");
+  }
+  if (!env.STRIPE_PRICE_SILVER?.trim()) {
+    problems.push("STRIPE_PRICE_SILVER is required in production");
+  }
+  if (!env.STRIPE_PRICE_GOLD?.trim()) {
+    problems.push("STRIPE_PRICE_GOLD is required in production");
+  }
+  if (!env.STRIPE_PRICE_PLATINUM?.trim()) {
+    problems.push("STRIPE_PRICE_PLATINUM is required in production");
+  }
+
   if (problems.length) {
     throw new Error(`Unsafe production configuration:\n- ${problems.join("\n- ")}`);
   }
