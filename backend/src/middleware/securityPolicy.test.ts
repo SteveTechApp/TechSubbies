@@ -4,6 +4,20 @@ import { describe, expect, it } from "vitest";
 import { validateRuntimeConfig } from "../lib/config.js";
 import { createRateLimiter } from "./rateLimit.js";
 
+const validProductionConfig = {
+  NODE_ENV: "production",
+  JWT_SECRET: "a-secure-production-secret-that-is-long-enough",
+  FRONTEND_ORIGIN: "https://app.techsubbies.com",
+  EMAIL_PROVIDER: "resend",
+  RESEND_API_KEY: "re_production_key",
+  EMAIL_FROM: "TechSubbies <accounts@techsubbies.com>",
+  EVIDENCE_STORAGE_PROVIDER: "s3",
+  EVIDENCE_S3_BUCKET: "techsubbies-private-evidence",
+  AWS_REGION: "eu-west-2",
+  AWS_ACCESS_KEY_ID: "AKIATESTKEY",
+  AWS_SECRET_ACCESS_KEY: "test-secret-access-key",
+};
+
 describe("production configuration", () => {
   it("rejects placeholder secrets and non-HTTPS origins", () => {
     expect(() =>
@@ -15,27 +29,32 @@ describe("production configuration", () => {
     ).toThrow(/Unsafe production configuration/);
   });
 
-  it("accepts a strong secret and exact HTTPS origin", () => {
-    expect(() =>
-      validateRuntimeConfig({
-        NODE_ENV: "production",
-        JWT_SECRET: "a-secure-production-secret-that-is-long-enough",
-        FRONTEND_ORIGIN: "https://app.techsubbies.com",
-        EMAIL_PROVIDER: "resend",
-        RESEND_API_KEY: "re_production_key",
-        EMAIL_FROM: "TechSubbies <accounts@techsubbies.com>",
-      })
-    ).not.toThrow();
+  it("accepts strong security, email and private evidence storage settings", () => {
+    expect(() => validateRuntimeConfig(validProductionConfig)).not.toThrow();
   });
 
   it("rejects production startup without transactional email delivery", () => {
     expect(() =>
       validateRuntimeConfig({
-        NODE_ENV: "production",
-        JWT_SECRET: "a-secure-production-secret-that-is-long-enough",
-        FRONTEND_ORIGIN: "https://app.techsubbies.com",
+        ...validProductionConfig,
+        EMAIL_PROVIDER: undefined,
+        RESEND_API_KEY: undefined,
+        EMAIL_FROM: undefined,
       })
     ).toThrow(/EMAIL_PROVIDER|RESEND_API_KEY|EMAIL_FROM/);
+  });
+
+  it("rejects production startup without private S3 evidence storage", () => {
+    expect(() =>
+      validateRuntimeConfig({
+        ...validProductionConfig,
+        EVIDENCE_STORAGE_PROVIDER: "local",
+        EVIDENCE_S3_BUCKET: undefined,
+        AWS_REGION: undefined,
+        AWS_ACCESS_KEY_ID: undefined,
+        AWS_SECRET_ACCESS_KEY: undefined,
+      })
+    ).toThrow(/EVIDENCE_STORAGE_PROVIDER|EVIDENCE_S3_BUCKET|AWS_REGION|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY/);
   });
 });
 
