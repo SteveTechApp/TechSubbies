@@ -91,6 +91,24 @@ export const DashboardView = ({ setActiveView }: { setActiveView: (view: string)
                     </ul>
                 </div>
             </div>
+
+            <div className="mt-4 rounded-lg bg-white p-4 shadow">
+                <h2 className="text-base font-bold">Commercial pilot funnel</h2>
+                <p className="mt-1 text-sm text-gray-500">Server-recorded marketplace actions used to measure pilot conversion.</p>
+                <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+                    {[
+                        ['Profiles updated', metrics.pilotFunnel?.profilesUpdated ?? 0],
+                        ['Jobs posted', metrics.pilotFunnel?.jobsPosted ?? 0],
+                        ['Applications', metrics.pilotFunnel?.applicationsSubmitted ?? 0],
+                        ['Contracts created', metrics.pilotFunnel?.contractsCreated ?? 0],
+                    ].map(([label, value]) => (
+                        <div key={String(label)} className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                            <div className="text-2xl font-bold text-gray-900">{value}</div>
+                            <div className="mt-1 text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</div>
+                        </div>
+                    ))}
+                </div>
+            </div>
         </div>
     );
 };

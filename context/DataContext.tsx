@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { EngineerProfile, CompanyProfile, Job, Application, Review, User, Conversation, Message, Contract, Transaction, Project, ForumPost, ForumComment, Notification, CollaborationPost, ResourcingCompanyProfile } from '../types';
 import apiService from '../services/apiService';
+import { useAuth } from './AuthContext';
 
 const initialAppState = {
     engineers: [], companies: [], jobs: [], applications: [], reviews: [], allUsers: [],
@@ -33,18 +34,21 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
+    const { user, isAuthLoading } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
     const [appData, setAppData] = useState(initialAppState);
 
     useEffect(() => {
+        if (isAuthLoading) return;
+
         const loadData = async () => {
             setIsLoading(true);
-            const data = await apiService.getInitialData();
+            const data = await apiService.getInitialData(user?.role);
             setAppData(data as any); // Cast as any to handle potential missing keys in mock setup
             setIsLoading(false);
         };
         loadData();
-    }, []);
+    }, [isAuthLoading, user?.role]);
     
     const findUserById = (userId: string) => appData.allUsers.find(u => u.id === userId);
     const findUserByProfileId = (profileId: string) => appData.allUsers.find(u => u.profile.id === profileId);

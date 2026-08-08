@@ -147,7 +147,7 @@ export function findCompletedJobEvidenceForSkill(
         .map(({ review, job }) => ({
             jobTitle: job!.title,
             peerRatingOutOf5: review.peerRating,
-            date: review.date,
+            date: new Date(review.date),
         }));
 }
 

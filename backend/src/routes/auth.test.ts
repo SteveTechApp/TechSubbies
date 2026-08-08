@@ -69,6 +69,42 @@ describe("POST /api/auth/register", () => {
     });
   });
 
+  it("persists normalized role profiles and skill evidence", async () => {
+    const registration = await request(app).post("/api/auth/register").send({
+      email: "role-evidence@example.com",
+      password: "correcthorsebattery",
+      role: "Engineer",
+      name: "Role Evidence",
+      profileData: {
+        roleProfiles: [{
+          expectationId: "av-installation-engineer",
+          roleId: "av-installation-engineer",
+          enabled: true,
+          maximumResponsibility: "competent",
+          targetDayRate: 375,
+          willingToWorkAsSupport: true,
+          willingToLead: false,
+          specialistOnly: false,
+          profileNote: "Commercial installs",
+          skills: [{ skill: "Cable termination", minimumLevel: 3, importance: 5, selfLevel: 4, evidenceNote: "Recent rack build" }],
+        }],
+      },
+    });
+
+    const response = await request(app)
+      .get("/api/users/me/role-profiles")
+      .set("Authorization", `Bearer ${registration.body.token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(1);
+    expect(response.body[0]).toMatchObject({
+      roleId: "av-installation-engineer",
+      targetDayRate: 375,
+      willingToWorkAsSupport: true,
+      skills: [{ skill: "Cable termination", selfLevel: 4, evidenceNote: "Recent rack build" }],
+    });
+  });
+
   it("rejects a password shorter than 8 characters", async () => {
     const res = await request(app).post("/api/auth/register").send({
       email: "short@example.com",

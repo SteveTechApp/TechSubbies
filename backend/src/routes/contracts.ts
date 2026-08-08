@@ -11,6 +11,7 @@ import {
   updateContractMilestones,
   updateContractSignature,
   updateContractTimesheets,
+  recordPilotFunnelEvent,
 } from "../lib/db.js";
 import { sendApplicationStatusNotification } from "../lib/applicationNotifications.js";
 import { toPublicContract } from "../lib/publicContract.js";
@@ -118,6 +119,7 @@ contractsRouter.post(
     { ...data, jobTitle },
     milestonesWithStatus
   );
+  recordPilotFunnelEvent({ eventType: "contract.created", userId: req.userId, jobId });
   const notificationSent = await sendApplicationStatusNotification({
     to: engineer.email,
     jobTitle,

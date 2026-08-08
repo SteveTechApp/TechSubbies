@@ -146,6 +146,27 @@ export interface Certification {
     documents?: Document[];
 }
 
+export interface SkillMatchExplanation {
+    skillName: string;
+    requiredLevel: number;
+    selfRating: number | null;
+    effectiveRating: number | null;
+    status: 'meets' | 'gap' | 'missing';
+    gap: number;
+    evidenceCount: number;
+    evidenceFreshness: 'recent' | 'ageing' | 'stale' | 'undated' | 'none';
+    latestEvidenceDate?: string;
+    evidenceLabels: string[];
+}
+
+export interface MatchExplanation {
+    requirementScore: number;
+    evidenceBackedSkills: number;
+    skillGaps: number;
+    missingSkills: number;
+    skills: SkillMatchExplanation[];
+}
+
 export interface UserProfile {
     id: string;
     name: string;
@@ -200,6 +221,7 @@ export interface EngineerProfile extends UserProfile {
         isSearchable: boolean;
     };
     certifications?: Certification[];
+    matchExplanation?: MatchExplanation;
     compliance: Partial<Compliance>;
     identity: Partial<IdentityVerification>;
     profileViews: number;
@@ -294,6 +316,7 @@ export interface Job {
     jobType: JobType;
     experienceLevel: ExperienceLevel;
     jobRole: string;
+    canonicalRoleId?: string;
     skillRequirements: JobSkillRequirement[];
     status: 'active' | 'closed' | 'filled';
     moderatedAt?: string | null;

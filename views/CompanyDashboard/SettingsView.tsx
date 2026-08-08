@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { CompanyProfile } from '../../types';
 import { Save, ShieldCheck } from '../../components/Icons';
 

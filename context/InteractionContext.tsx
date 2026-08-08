@@ -155,7 +155,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         await apiService.cancelMembershipChange();
         auth.setUser(previous => {
             if (!previous || previous.role !== Role.ENGINEER) return previous;
-            const profile = { ...previous.profile };
+            const profile = { ...(previous.profile as EngineerProfile) };
             delete profile.requestedProfileTier;
             delete profile.membershipRequestedAt;
             return { ...previous, profile };

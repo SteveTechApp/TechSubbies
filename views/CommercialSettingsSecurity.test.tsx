@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { SettingsView as CompanySettingsView } from './CompanyDashboard/SettingsView';
 import { SettingsView as ResourcingSettingsView } from './ResourcingDashboard/SettingsView';

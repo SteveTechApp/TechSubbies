@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { Navigate, Routes, Route } from 'react-router-dom';
+import { Navigate, Routes, Route } from 'react-router';
 import PersistentAppHeader from "./components/PersistentAppHeader";
 import EmailVerificationBanner from "./components/EmailVerificationBanner";
 import RoleAccessGate from "./components/RoleAccessGate";

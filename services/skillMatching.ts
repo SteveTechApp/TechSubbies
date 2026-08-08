@@ -1,4 +1,4 @@
-import { EngineerProfile, Job, JobSkillRequirement, Review } from '../types';
+import { EngineerProfile, Job, JobSkillRequirement, MatchExplanation, Review, SkillMatchExplanation } from '../types';
 import { meetsRequiredLevel } from '../utils/skillBands';
 import { computeSkillEvidence, findCompletedJobEvidenceForSkill, findVerifiedCertificateEvidenceForSkill } from '../utils/skillEvidence';
 
@@ -83,6 +83,58 @@ export function computeSkillRequirementScore(engineer: EngineerProfile, job: Job
     }
 
     return Math.round(total / requirements.length);
+}
+
+function evidenceFreshness(dates: Date[], hasUndatedEvidence: boolean): SkillMatchExplanation['evidenceFreshness'] {
+    if (dates.length === 0) return hasUndatedEvidence ? 'undated' : 'none';
+    const latest = Math.max(...dates.map(date => date.getTime()));
+    const ageDays = (Date.now() - latest) / 86_400_000;
+    if (ageDays <= 365) return 'recent';
+    if (ageDays <= 730) return 'ageing';
+    return 'stale';
+}
+
+export function explainSkillRequirementMatch(
+    engineer: EngineerProfile,
+    job: Job,
+    evidenceContext: EvidenceContext
+): MatchExplanation {
+    const skills = (job.skillRequirements || []).map((requirement): SkillMatchExplanation => {
+        const requiredLevel = getRequiredLevel(requirement);
+        const selfRating = findEngineerSkillRating(engineer, requirement.name);
+        if (selfRating === null) {
+            return {
+                skillName: requirement.name, requiredLevel, selfRating: null, effectiveRating: null,
+                status: 'missing', gap: requiredLevel, evidenceCount: 0, evidenceFreshness: 'none', evidenceLabels: [],
+            };
+        }
+
+        const completedJobs = findCompletedJobEvidenceForSkill(requirement.name, evidenceContext.jobs, evidenceContext.reviews, engineer.id);
+        const verifiedCertificates = findVerifiedCertificateEvidenceForSkill(requirement.name, engineer.certifications || []);
+        const evidence = computeSkillEvidence({ skillName: requirement.name, selfRating, completedJobs, verifiedCertificates });
+        const datedEvidence = evidence.trail.flatMap(entry => entry.date ? [entry.date] : []);
+        const latestEvidence = datedEvidence.length ? new Date(Math.max(...datedEvidence.map(date => date.getTime()))) : undefined;
+        return {
+            skillName: requirement.name,
+            requiredLevel,
+            selfRating,
+            effectiveRating: evidence.effectiveRating,
+            status: evidence.effectiveRating >= requiredLevel ? 'meets' : 'gap',
+            gap: Math.max(0, requiredLevel - evidence.effectiveRating),
+            evidenceCount: evidence.trail.filter(entry => entry.source !== 'self-declared').length,
+            evidenceFreshness: evidenceFreshness(datedEvidence, verifiedCertificates.length > 0),
+            latestEvidenceDate: latestEvidence?.toISOString(),
+            evidenceLabels: evidence.trail.filter(entry => entry.source !== 'self-declared').map(entry => entry.label),
+        };
+    });
+
+    return {
+        requirementScore: computeSkillRequirementScore(engineer, job, evidenceContext),
+        evidenceBackedSkills: skills.filter(skill => skill.evidenceCount > 0).length,
+        skillGaps: skills.filter(skill => skill.status === 'gap').length,
+        missingSkills: skills.filter(skill => skill.status === 'missing').length,
+        skills,
+    };
 }
 
 // Ranks engineers by their deterministic requirement score and returns the

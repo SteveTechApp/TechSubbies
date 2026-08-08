@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { createUser, findUserByEmail, findUserById, markEmailVerified, revokeUserSessions, updateUserPassword } from "../lib/db.js";
+import { createUser, findUserByEmail, findUserById, markEmailVerified, revokeUserSessions, syncEngineerRoleProfiles, updateUserPassword } from "../lib/db.js";
 import { requireAuth, signToken, type AuthedRequest } from "../middleware/auth.js";
 import { toPublicUser } from "../lib/publicUser.js";
 import { clearAuthCookies, setAuthCookies } from "../middleware/security.js";
@@ -51,6 +51,9 @@ authRouter.post("/register", async (req, res) => {
     name,
     profile: JSON.stringify({ ...safeProfileData, name, contact: { email, ...(safeProfileData.contact || {}) } }),
   });
+  if (role === "Engineer") {
+    syncEngineerRoleProfiles(user.id, safeProfileData.roleProfiles);
+  }
 
   const token = signToken(user.id);
   const verificationToken = issueAccountToken(user.id, "verify-email", 24 * 60 * 60 * 1000);
@@ -126,6 +129,42 @@ authRouter.post("/login", async (req, res) => {
     ...(process.env.NODE_ENV === "production" ? {} : { token }),
     user: toPublicUser(user),
   });
+});
+
+// Development-only demo access still uses a genuine signed backend session,
+// so protected admin screens exercise the same authorization path as real
+// accounts. The route is deliberately absent in production.
+authRouter.post("/demo", async (req, res) => {
+  if (process.env.NODE_ENV === "production") return res.status(404).json({ error: "Not found." });
+
+  const parsed = z.object({
+    email: z.literal("admin@techsubbies.demo"),
+    password: z.literal("password"),
+  }).safeParse(req.body);
+  if (!parsed.success) return res.status(401).json({ error: "Invalid demo credentials." });
+
+  let user = findUserByEmail(parsed.data.email);
+  if (!user) {
+    user = createUser({
+      email: parsed.data.email,
+      password: await bcrypt.hash(parsed.data.password, 10),
+      role: "Admin",
+      name: "Platform Admin",
+      profile: JSON.stringify({
+        name: "Platform Admin",
+        role: "Admin",
+        location: "Platform HQ",
+        permissions: ["all"],
+        contact: { email: parsed.data.email },
+      }),
+    });
+    markEmailVerified(user.id);
+    user = findUserByEmail(parsed.data.email)!;
+  }
+
+  const token = signToken(user.id);
+  setAuthCookies(res, token);
+  return res.json({ user: toPublicUser(user) });
 });
 
 authRouter.post("/logout", (_req, res) => {

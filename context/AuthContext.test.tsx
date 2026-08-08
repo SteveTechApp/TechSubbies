@@ -1,11 +1,20 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { Role } from '../types';
 
 describe('AuthContext', () => {
   it('throws when useAuth is called outside an AuthProvider', () => {
-    expect(() => renderHook(() => useAuth())).toThrow('useAuth must be used within an AuthProvider');
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const preventExpectedError = (event: ErrorEvent) => event.preventDefault();
+    window.addEventListener('error', preventExpectedError);
+
+    try {
+      expect(() => renderHook(() => useAuth())).toThrow('useAuth must be used within an AuthProvider');
+    } finally {
+      window.removeEventListener('error', preventExpectedError);
+      consoleError.mockRestore();
+    }
   });
 
   it('starts with no logged-in user', () => {

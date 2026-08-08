@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeSkillRequirementScore, findEngineerSkillRating, getEffectiveSkillRating, getRequiredLevel, shortlistByRequirementScore } from './skillMatching';
+import { computeSkillRequirementScore, explainSkillRequirementMatch, findEngineerSkillRating, getEffectiveSkillRating, getRequiredLevel, shortlistByRequirementScore } from './skillMatching';
 import { Currency, EngineerProfile, ExperienceLevel, Job, JobType, Review, SkillImportance } from '../types';
 
 function makeEngineer(skills: { name: string; rating: number }[]): EngineerProfile {
@@ -154,5 +154,28 @@ describe('shortlistByRequirementScore', () => {
         expect(shortlist).toHaveLength(1);
         expect(shortlist[0].id).toBe('strong');
         expect(shortlist[0].requirementScore).toBe(100);
+    });
+});
+
+describe('explainSkillRequirementMatch', () => {
+    it('reports evidence freshness, below-level gaps and missing skills', () => {
+        const engineer = makeEngineer([{ name: 'Skill A', rating: 40 }]);
+        const selectedJob = makeJob([
+            { name: 'Skill A', importance: SkillImportance.ESSENTIAL, requiredLevel: 80 },
+            { name: 'Skill B', importance: SkillImportance.ESSENTIAL, requiredLevel: 60 },
+        ]);
+        const evidenceJob = { ...makeJob([{ name: 'Skill A', importance: SkillImportance.ESSENTIAL }]), id: 'evidence-job', title: 'Recent install' };
+        const review = {
+            id: 'review-evidence', jobId: 'evidence-job', companyId: 'company-1', engineerId: 'eng-1',
+            peerRating: 5, customerRating: 5, comment: 'Strong work', date: new Date(),
+        } as Review;
+
+        const explanation = explainSkillRequirementMatch(engineer, selectedJob, { jobs: [evidenceJob], reviews: [review] });
+
+        expect(explanation.evidenceBackedSkills).toBe(1);
+        expect(explanation.skillGaps).toBe(1);
+        expect(explanation.missingSkills).toBe(1);
+        expect(explanation.skills[0]).toMatchObject({ status: 'gap', evidenceCount: 1, evidenceFreshness: 'recent' });
+        expect(explanation.skills[1]).toMatchObject({ status: 'missing', gap: 60, evidenceFreshness: 'none' });
     });
 });

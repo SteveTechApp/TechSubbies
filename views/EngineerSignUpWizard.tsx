@@ -14,6 +14,7 @@ import {
   membershipPlanForSpecialistRoles,
 } from "../data/membershipPlans";
 import { ProfileTier } from "../types";
+import { canonicalRoleIdForLegacy, getCanonicalRole } from "../data/canonicalRoleRegistry";
 
 type EngineerSignUpWizardProps = {
   onCancel?: () => void;
@@ -436,6 +437,28 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
           : 0,
         minDayRate: activeProfiles[0]?.targetDayRate,
         maxDayRate: activeProfiles[0]?.targetDayRate,
+        workingRadiusMiles: account.travelRadiusMiles,
+        roleProfiles: activeProfiles.map((profile) => ({
+          ...profile,
+          roleId: canonicalRoleIdForLegacy(profile.expectationId),
+        })),
+        selectedJobRoles: activeProfiles.map((profile) => {
+          const roleId = canonicalRoleIdForLegacy(profile.expectationId);
+          return {
+            roleId,
+            roleName: getCanonicalRole(roleId)?.title || getRoleExpectation(profile.expectationId).roleTitle,
+            skills: profile.skills.map(skill => ({
+              name: skill.skill,
+              rating: skill.selfLevel * 20,
+              evidenceNote: skill.evidenceNote,
+            })),
+            overallScore: profile.skills.length
+              ? Math.round(profile.skills.reduce((sum, skill) => sum + skill.selfLevel * 20, 0) / profile.skills.length)
+              : 0,
+          };
+        }),
+        readiness,
+        documentNotes,
       });
       setPublished(true);
     } catch (error: any) {

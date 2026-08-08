@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { findUserById, listUsers, updateUserProfile } from "../lib/db.js";
+import { findUserById, listEngineerRoleProfiles, listUsers, updateUserProfile, recordPilotFunnelEvent, syncEngineerRoleProfiles } from "../lib/db.js";
 import { toDirectoryUser, toPublicUser } from "../lib/publicUser.js";
 import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
 import { buildAccountDataExport } from "../lib/accountExport.js";
@@ -20,6 +20,13 @@ export const usersRouter = Router();
 // /:profileId so "me" is not interpreted as a profile id.
 usersRouter.get("/me", requireAuth, async (req: AuthedRequest, res) => {
   return res.json(toPublicUser(req.authUser!));
+});
+
+usersRouter.get("/me/role-profiles", requireAuth, (req: AuthedRequest, res) => {
+  if (req.authUser!.role !== "Engineer") {
+    return res.status(403).json({ error: "Role profiles are available to engineer accounts." });
+  }
+  return res.json(listEngineerRoleProfiles(req.userId!));
 });
 
 usersRouter.get("/me/export", requireAuth, (req: AuthedRequest, res) => {
@@ -211,6 +218,14 @@ usersRouter.patch("/me", requireAuth, async (req: AuthedRequest, res) => {
     JSON.stringify(mergedProfile),
     typeof updates.name === "string" ? updates.name : existing.name
   );
+  if (existing.role === "Engineer" && Array.isArray(updates.roleProfiles)) {
+    syncEngineerRoleProfiles(existing.id, updates.roleProfiles);
+  }
+  recordPilotFunnelEvent({
+    eventType: "profile.updated",
+    userId: req.userId,
+    roleId: typeof updates.primaryRoleId === "string" ? updates.primaryRoleId : undefined,
+  });
 
   return res.json(toPublicUser(updated!));
 });

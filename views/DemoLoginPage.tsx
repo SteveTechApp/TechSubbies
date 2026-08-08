@@ -8,6 +8,8 @@ import {
 import apiService from "../services/apiService";
 import { useAuth } from "../context/AuthContext";
 import { dashboardPathForRole } from "../utils/accountRoutes";
+import { MOCK_USERS } from "../data/mockData";
+import { Role } from "../types";
 
 type DemoLoginPageProps = {
   onSignedIn?: (session: DemoSession) => void;
@@ -30,6 +32,16 @@ export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
     setIsSubmitting(true);
 
     try {
+      const demoAccount = isDemoAccessEnabled ? validateDemoLogin(email, password) : null;
+      if (demoAccount) {
+        await apiService.loginWithDemoCredentials(email, password);
+        const session = setDemoSession(demoAccount);
+        setUser(MOCK_USERS[demoAccount.role as Role]);
+        if (onSignedIn) onSignedIn(session);
+        else window.location.href = dashboardPathForRole(demoAccount.role);
+        return;
+      }
+
       const realUser = await apiService.loginWithPassword(email, password);
       setUser(realUser);
       window.location.href = dashboardPathForRole(realUser.role);
@@ -38,13 +50,6 @@ export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
       // Only use the development fallback when the entered credentials
       // actually belong to a demo account. This preserves useful backend
       // errors for developers signing in with real accounts.
-      const account = isDemoAccessEnabled ? validateDemoLogin(email, password) : null;
-      if (account) {
-        const session = setDemoSession(account);
-        if (onSignedIn) onSignedIn(session);
-        else window.location.href = "/opportunity-intake";
-        return;
-      }
       setError(reason instanceof Error ? reason.message : "Login failed. Check your email and password.");
     } finally {
       setIsSubmitting(false);

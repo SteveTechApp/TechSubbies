@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Role } from '../types';
 import { MOCK_USERS, MOCK_USER_FREE_ENGINEER } from '../data/mockData';
+import { getDemoSession } from '../data/demoAccounts';
 import apiService from '../services/apiService';
 
 interface AuthContextType {
@@ -18,7 +19,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<User | null>(() => {
+        const demoSession = getDemoSession();
+        return demoSession ? MOCK_USERS[demoSession.role as Role] || null : null;
+    });
     const [isAuthLoading, setIsAuthLoading] = useState(true);
 
     // Restore a real (backend-backed) session after a page reload, if a
@@ -27,7 +31,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // not a real account.
     useEffect(() => {
         let cancelled = false;
-        apiService.getCurrentUserFromToken().then((restoredUser) => {
+        const demoSession = getDemoSession();
+        const restoreSession = demoSession
+            ? apiService.loginWithDemoCredentials(demoSession.email, 'password')
+            : apiService.getCurrentUserFromToken();
+        restoreSession.then((restoredUser) => {
             if (!cancelled && restoredUser) {
                 setUser(restoredUser);
             }

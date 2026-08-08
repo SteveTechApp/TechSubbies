@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { currentSchemaVersion, runMigrations } from "./migrations.js";
+import { canonicalizeRoleId, migrateRoleFields } from "./canonicalRoles.js";
 
 // Uses Node's built-in SQLite module (stable since Node 22.5, no native
 // binary download required) rather than a database engine that needs to
@@ -163,7 +164,7 @@ db.exec(`
   );
 `);
 
-export const LATEST_SCHEMA_VERSION = 8;
+export const LATEST_SCHEMA_VERSION = 11;
 runMigrations(db, [
   {
     version: 1,
@@ -249,6 +250,98 @@ runMigrations(db, [
       ALTER TABLE jobs ADD COLUMN moderationReason TEXT;
     `),
   },
+  {
+    version: 9,
+    name: "commercial-pilot-funnel-events",
+    up: (database) => database.exec(`
+      CREATE TABLE pilot_funnel_events (
+        id TEXT PRIMARY KEY,
+        eventType TEXT NOT NULL,
+        userId TEXT,
+        roleId TEXT,
+        jobId TEXT,
+        createdAt TEXT NOT NULL
+      );
+      CREATE INDEX pilot_funnel_events_type_created
+        ON pilot_funnel_events(eventType, createdAt DESC);
+      CREATE INDEX pilot_funnel_events_user_created
+        ON pilot_funnel_events(userId, createdAt DESC);
+    `),
+  },
+  {
+    version: 10,
+    name: "normalized-engineer-role-profiles",
+    up: (database) => database.exec(`
+      CREATE TABLE engineer_role_profiles (
+        id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
+        roleId TEXT NOT NULL,
+        legacyRoleId TEXT,
+        maximumResponsibility TEXT NOT NULL,
+        targetDayRate REAL NOT NULL,
+        willingToWorkAsSupport INTEGER NOT NULL DEFAULT 0,
+        willingToLead INTEGER NOT NULL DEFAULT 0,
+        specialistOnly INTEGER NOT NULL DEFAULT 0,
+        profileNote TEXT NOT NULL DEFAULT '',
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL,
+        UNIQUE(userId, roleId),
+        FOREIGN KEY(userId) REFERENCES users(id) ON DELETE CASCADE
+      );
+      CREATE INDEX engineer_role_profiles_user
+        ON engineer_role_profiles(userId);
+
+      CREATE TABLE engineer_skill_evidence (
+        id TEXT PRIMARY KEY,
+        roleProfileId TEXT NOT NULL,
+        skillName TEXT NOT NULL,
+        minimumLevel INTEGER NOT NULL,
+        importance INTEGER NOT NULL,
+        selfLevel INTEGER NOT NULL,
+        evidenceNote TEXT NOT NULL DEFAULT '',
+        updatedAt TEXT NOT NULL,
+        UNIQUE(roleProfileId, skillName),
+        FOREIGN KEY(roleProfileId) REFERENCES engineer_role_profiles(id) ON DELETE CASCADE
+      );
+      CREATE INDEX engineer_skill_evidence_profile
+        ON engineer_skill_evidence(roleProfileId);
+    `),
+  },
+  {
+    version: 11,
+    name: "canonicalize-historic-role-identifiers",
+    up: (database) => {
+      const updateJob = database.prepare("UPDATE jobs SET data = ?, updatedAt = ? WHERE id = ?");
+      const jobs = database.prepare("SELECT id, data FROM jobs").all() as Array<{ id: string; data: string }>;
+      const now = new Date().toISOString();
+      for (const job of jobs) {
+        try {
+          const data = JSON.parse(job.data) as unknown;
+          if (migrateRoleFields(data)) updateJob.run(JSON.stringify(data), now, job.id);
+        } catch {
+          // Preserve malformed legacy blobs; public shaping already handles them.
+        }
+      }
+
+      const updateUser = database.prepare("UPDATE users SET profile = ?, updatedAt = ? WHERE id = ?");
+      const users = database.prepare("SELECT id, profile FROM users WHERE role = 'Engineer'").all() as Array<{ id: string; profile: string }>;
+      for (const user of users) {
+        try {
+          const profile = JSON.parse(user.profile) as unknown;
+          if (migrateRoleFields(profile)) updateUser.run(JSON.stringify(profile), now, user.id);
+        } catch {
+          // Preserve malformed legacy blobs for support review.
+        }
+      }
+
+      const funnelEvents = database.prepare("SELECT id, roleId FROM pilot_funnel_events WHERE roleId IS NOT NULL").all() as Array<{ id: string; roleId: string }>;
+      const updateEvent = database.prepare("UPDATE pilot_funnel_events SET roleId = ? WHERE id = ?");
+      for (const event of funnelEvents) {
+        const canonical = canonicalizeRoleId(event.roleId);
+        if (canonical && canonical !== event.roleId) updateEvent.run(canonical, event.id);
+      }
+    },
+  },
 ]);
 
 export interface UserRow {
@@ -295,6 +388,109 @@ export function updateUserProfile(id: string, profile: string, name: string): Us
   const now = new Date().toISOString();
   db.prepare("UPDATE users SET profile = ?, name = ?, updatedAt = ? WHERE id = ?").run(profile, name, now, id);
   return findUserById(id);
+}
+
+export type EngineerRoleProfileInput = {
+  roleId?: unknown;
+  expectationId?: unknown;
+  enabled?: unknown;
+  maximumResponsibility?: unknown;
+  targetDayRate?: unknown;
+  willingToWorkAsSupport?: unknown;
+  willingToLead?: unknown;
+  specialistOnly?: unknown;
+  profileNote?: unknown;
+  skills?: unknown;
+};
+
+export function syncEngineerRoleProfiles(userId: string, inputs: unknown): void {
+  if (!Array.isArray(inputs)) return;
+  const enabledProfiles = inputs.filter((value): value is EngineerRoleProfileInput =>
+    Boolean(value) && typeof value === "object" && (value as EngineerRoleProfileInput).enabled !== false
+  );
+  // Several legacy responsibility bands can resolve to the same canonical
+  // role. Keep one normalized record per canonical role; the latest profile
+  // in the submitted draft is the user's current selection.
+  const profiles = [...new Map(enabledProfiles
+    .filter((profile) => typeof profile.roleId === "string" && profile.roleId.trim())
+    .map((profile) => [(profile.roleId as string).trim(), profile])).values()];
+  const now = new Date().toISOString();
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    db.prepare("DELETE FROM engineer_role_profiles WHERE userId = ?").run(userId);
+    const insertProfile = db.prepare(`
+      INSERT INTO engineer_role_profiles (
+        id, userId, roleId, legacyRoleId, maximumResponsibility, targetDayRate,
+        willingToWorkAsSupport, willingToLead, specialistOnly, profileNote, createdAt, updatedAt
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    const insertSkill = db.prepare(`
+      INSERT INTO engineer_skill_evidence (
+        id, roleProfileId, skillName, minimumLevel, importance, selfLevel, evidenceNote, updatedAt
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const profile of profiles) {
+      if (typeof profile.roleId !== "string" || !profile.roleId.trim()) continue;
+      const profileId = randomUUID();
+      insertProfile.run(
+        profileId,
+        userId,
+        profile.roleId.trim(),
+        typeof profile.expectationId === "string" ? profile.expectationId : null,
+        typeof profile.maximumResponsibility === "string" ? profile.maximumResponsibility : "competent",
+        typeof profile.targetDayRate === "number" && Number.isFinite(profile.targetDayRate) ? profile.targetDayRate : 0,
+        profile.willingToWorkAsSupport === true ? 1 : 0,
+        profile.willingToLead === true ? 1 : 0,
+        profile.specialistOnly === true ? 1 : 0,
+        typeof profile.profileNote === "string" ? profile.profileNote : "",
+        now,
+        now
+      );
+      const skills = Array.isArray(profile.skills) ? profile.skills : [];
+      for (const rawSkill of skills) {
+        if (!rawSkill || typeof rawSkill !== "object") continue;
+        const skill = rawSkill as Record<string, unknown>;
+        if (typeof skill.skill !== "string" || !skill.skill.trim()) continue;
+        insertSkill.run(
+          randomUUID(),
+          profileId,
+          skill.skill.trim(),
+          Number.isInteger(skill.minimumLevel) ? skill.minimumLevel as number : 0,
+          Number.isInteger(skill.importance) ? skill.importance as number : 1,
+          Number.isInteger(skill.selfLevel) ? skill.selfLevel as number : 0,
+          typeof skill.evidenceNote === "string" ? skill.evidenceNote : "",
+          now
+        );
+      }
+    }
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
+export function listEngineerRoleProfiles(userId: string) {
+  const profiles = db.prepare(`
+    SELECT id, roleId, legacyRoleId AS expectationId, maximumResponsibility,
+           targetDayRate, willingToWorkAsSupport, willingToLead, specialistOnly,
+           profileNote, createdAt, updatedAt
+    FROM engineer_role_profiles
+    WHERE userId = ?
+    ORDER BY createdAt, roleId
+  `).all(userId) as Array<Record<string, unknown>>;
+  const skillsStatement = db.prepare(`
+    SELECT skillName AS skill, minimumLevel, importance, selfLevel, evidenceNote
+    FROM engineer_skill_evidence WHERE roleProfileId = ? ORDER BY skillName
+  `);
+  return profiles.map((profile) => ({
+    ...profile,
+    willingToWorkAsSupport: profile.willingToWorkAsSupport === 1,
+    willingToLead: profile.willingToLead === 1,
+    specialistOnly: profile.specialistOnly === 1,
+    enabled: true,
+    skills: skillsStatement.all(profile.id as string),
+  }));
 }
 
 export function markEmailVerified(id: string): UserRow | undefined {
@@ -456,7 +652,45 @@ export type AdminPlatformMetrics = {
   };
   privacyPending: number;
   membershipPending: number;
+  pilotFunnel: {
+    profilesUpdated: number;
+    jobsPosted: number;
+    applicationsSubmitted: number;
+    contractsCreated: number;
+  };
 };
+
+export type PilotFunnelEventType =
+  | "profile.updated"
+  | "job.posted"
+  | "application.submitted"
+  | "contract.created";
+
+export function recordPilotFunnelEvent(input: {
+  eventType: PilotFunnelEventType;
+  userId?: string;
+  roleId?: string;
+  jobId?: string;
+}) {
+  db.prepare(`
+    INSERT INTO pilot_funnel_events (id, eventType, userId, roleId, jobId, createdAt)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(
+    randomUUID(),
+    input.eventType,
+    input.userId || null,
+    input.roleId || null,
+    input.jobId || null,
+    new Date().toISOString()
+  );
+}
+
+function countPilotEvent(eventType: PilotFunnelEventType): number {
+  const row = db.prepare(
+    "SELECT COUNT(*) AS total FROM pilot_funnel_events WHERE eventType = ?"
+  ).get(eventType) as { total: number };
+  return row.total;
+}
 
 export function getAdminPlatformMetrics(): AdminPlatformMetrics {
   const users = db.prepare(`
@@ -493,6 +727,12 @@ export function getAdminPlatformMetrics(): AdminPlatformMetrics {
     },
     privacyPending: privacy.total,
     membershipPending: listPendingMembershipSelections().length,
+    pilotFunnel: {
+      profilesUpdated: countPilotEvent("profile.updated"),
+      jobsPosted: countPilotEvent("job.posted"),
+      applicationsSubmitted: countPilotEvent("application.submitted"),
+      contractsCreated: countPilotEvent("contract.created"),
+    },
   };
 }
 

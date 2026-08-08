@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { getSkillBand, DEFAULT_SKILL_RATING } from "../utils/skillBands";
+import { canonicalRoleRegistry } from "../data/canonicalRoleRegistry";
 
 type RoleMarket = "AV" | "IT" | "Hybrid";
 
@@ -21,7 +22,7 @@ type Role = {
   skills: Skill[];
 };
 
-const roles: Role[] = [
+const legacyRoles: Role[] = [
   {
     id: "av-installer",
     title: "AV Installation Engineer",
@@ -99,7 +100,23 @@ const roles: Role[] = [
   }
 ];
 
-const commonTags = ["WyreStorm", "Crestron", "Extron", "Q-SYS", "Biamp", "Shure", "Logitech", "Yealink", "Microsoft Teams Rooms", "Zoom Rooms", "Cisco", "Meraki", "Ubiquiti", "Aruba", "Fortinet", "Dante", "NDI", "HDBaseT", "AVoIP", "Novastar", "Brompton"];
+const roles: Role[] = canonicalRoleRegistry.map(role => ({
+  id: role.id,
+  title: role.title,
+  market: role.market === "av" ? "AV" : role.market === "it" ? "IT" : "Hybrid",
+  family: role.family.split("-").map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(" "),
+  summary: role.summary,
+  tags: role.recommendedTags,
+  skills: role.skillGroups.flatMap(group => group.skills.map(skill => ({
+    id: skill.id,
+    label: skill.label,
+    group: group.title,
+    required: skill.requiredForGoodMatch,
+    tags: skill.suggestedTags,
+  }))),
+}));
+
+const commonTags = Array.from(new Set(canonicalRoleRegistry.flatMap(role => role.recommendedTags))).sort();
 
 const styles: Record<string, React.CSSProperties> = {
   page: {

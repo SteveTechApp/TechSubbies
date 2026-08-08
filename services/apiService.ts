@@ -1,8 +1,9 @@
 import { MOCK_ENGINEERS, MOCK_COMPANIES, MOCK_JOBS, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_CONTRACTS, MOCK_TRANSACTIONS, MOCK_PROJECTS, ALL_MOCK_USERS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_NOTIFICATIONS, MOCK_COLLABORATION_POSTS } from '../data/mockData';
 import { MOCK_RESOURCING_COMPANY_1, MOCK_ADMIN_PROFILE, MOCK_FREE_ENGINEER, MOCK_ENGINEER_STEVE } from '../data/modules/mockStaticProfiles';
-import { ApplicationStatus, EngineerProfile, ProfileTier, Role, User, Contract, ContractStatus, MilestoneStatus, Timesheet, TimesheetStatus, Conversation, Message, ForumPost, Notification, CollaborationPost, CompanyProfile, ResourcingCompanyProfile, Job, Discipline, Currency, Country, ExperienceLevel } from '../types';
+import { Application, ApplicationStatus, EngineerProfile, ProfileTier, Role, User, Contract, ContractStatus, MilestoneStatus, Timesheet, TimesheetStatus, Conversation, Message, ForumPost, Notification, CollaborationPost, CompanyProfile, ResourcingCompanyProfile, Job, Discipline, Currency, Country, ExperienceLevel } from '../types';
 import { secureFetch } from './httpClient';
 import { API_BASE_URL } from './apiConfig';
+import { canonicalRoleIdForLegacy } from '../data/canonicalRoleIds';
 
 // --- API Service ---
 // Account creation, login and profile updates now call the real backend
@@ -12,11 +13,12 @@ import { API_BASE_URL } from './apiConfig';
 // next phase of work, not this one.
 
 const simulateDelay = (ms: number = 500) => new Promise(res => setTimeout(res, ms));
+export const DEMO_DATA_ENABLED = import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_DATA !== 'false';
 
 export type AdminDeletionRequest = {
   id: string;
   userId: string;
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'processed';
   requestedAt: string;
   responseDueAt: string;
   reviewedAt: string | null;
@@ -72,6 +74,12 @@ export type AdminPlatformMetrics = {
   };
   privacyPending: number;
   membershipPending: number;
+  pilotFunnel: {
+    profilesUpdated: number;
+    jobsPosted: number;
+    applicationsSubmitted: number;
+    contractsCreated: number;
+  };
 };
 
 export type AdminJob = {
@@ -112,17 +120,24 @@ export type AccountDeletionStatus = {
 };
 
 const TOKEN_KEY = 'techsubbies_auth_token';
+const SESSION_HINT_KEY = 'techsubbies_has_session';
 const fetch = secureFetch;
 let cookieSessionAvailable = false;
 
 export function getAuthToken(): string | null {
-  return cookieSessionAvailable ? "cookie-session" : null;
+  if (cookieSessionAvailable) return "cookie-session";
+  try {
+    return window.localStorage.getItem(SESSION_HINT_KEY) === 'true' ? "cookie-session" : null;
+  } catch {
+    return null;
+  }
 }
 
 function saveAuthToken(_token?: string) {
   cookieSessionAvailable = true;
   try {
     window.localStorage.removeItem(TOKEN_KEY);
+    window.localStorage.setItem(SESSION_HINT_KEY, 'true');
   } catch {
     // no-op
   }
@@ -132,6 +147,7 @@ export function clearAuthToken() {
   cookieSessionAvailable = false;
   try {
     window.localStorage.removeItem(TOKEN_KEY);
+    window.localStorage.removeItem(SESSION_HINT_KEY);
   } catch {
     // no-op
   }
@@ -174,7 +190,7 @@ async function backendLogin(email: string, password: string) {
 
 const apiService = {
   // --- DATA FETCHING ---
-  getInitialData: async () => {
+  getInitialData: async (userRole?: Role) => {
     await simulateDelay();
     // In a real app, this would be multiple API calls (e.g., /users, /jobs, etc.)
     // Jobs actually posted to the real backend (see postJob above) are
@@ -182,22 +198,32 @@ const apiService = {
     // job sees it here too. Falls back to just the mock list if the
     // backend isn't reachable.
     const backendJobs = await apiService.getBackendJobs();
-    const backendOwnedJobs = await apiService.getBackendOwnedJobs();
+    const backendOwnedJobs = userRole === Role.COMPANY
+      ? await apiService.getBackendOwnedJobs()
+      : [];
     const realJobs = [
       ...backendOwnedJobs,
       ...backendJobs.filter(job => !backendOwnedJobs.some(owned => owned.id === job.id)),
     ];
-    const mergedJobs = [...realJobs, ...MOCK_JOBS.filter(j => !realJobs.some(b => b.id === j.id))];
+    const mergedJobs = DEMO_DATA_ENABLED
+      ? [...realJobs, ...MOCK_JOBS.filter(j => !realJobs.some(b => b.id === j.id))]
+      : realJobs;
     const backendUsers = await apiService.getBackendDirectoryUsers();
-    const mergedUsers = [...backendUsers, ...ALL_MOCK_USERS.filter(user => !backendUsers.some(real => real.id === user.id))];
+    const mergedUsers = DEMO_DATA_ENABLED
+      ? [...backendUsers, ...ALL_MOCK_USERS.filter(user => !backendUsers.some(real => real.id === user.id))]
+      : backendUsers;
     const backendEngineers = backendUsers
       .filter(user => user.role === Role.ENGINEER)
       .map(user => user.profile as EngineerProfile);
     const backendCompanies = backendUsers
       .filter(user => user.role === Role.COMPANY || user.role === Role.RESOURCING_COMPANY)
       .map(user => user.profile as CompanyProfile);
-    const backendCompanyApplications = await apiService.getBackendCompanyApplications();
-    const backendEngineerApplications = await apiService.getBackendEngineerApplications();
+    const backendCompanyApplications = userRole === Role.COMPANY
+      ? await apiService.getBackendCompanyApplications()
+      : [];
+    const backendEngineerApplications = userRole === Role.ENGINEER
+      ? await apiService.getBackendEngineerApplications()
+      : [];
     const backendApplications = [
       ...backendCompanyApplications,
       ...backendEngineerApplications.filter(application =>
@@ -208,45 +234,51 @@ const apiService = {
         )
       ),
     ];
-    const mergedApplications = [
+    const mergedApplications = DEMO_DATA_ENABLED ? [
       ...backendApplications,
       ...MOCK_APPLICATIONS.filter(application => !backendApplications.some(real =>
         real.jobId === application.jobId && real.engineerId === application.engineerId
       )),
-    ];
+    ] : backendApplications;
     // Contracts are only fetched if there's a saved backend session.
     // alongside the demo data the same way jobs are, so a real, signed-in
     // account sees its actual contracts on top of the mock ones.
     const backendContracts = await apiService.getBackendContracts();
-    const mergedContracts = [...backendContracts, ...MOCK_CONTRACTS.filter(c => !backendContracts.some(b => b.id === c.id))];
+    const mergedContracts = DEMO_DATA_ENABLED
+      ? [...backendContracts, ...MOCK_CONTRACTS.filter(c => !backendContracts.some(b => b.id === c.id))]
+      : backendContracts;
     // Conversations/messages follow the same "only if there's a saved
     // session" shape - and since a conversation's full history is small,
     // it's pulled in alongside the conversation list itself rather than
     // needing a separate lazy-load step (see getBackendConversations/
     // getBackendMessagesForConversation below).
     const backendConversations = await apiService.getBackendConversations();
-    const mergedConversations = [...backendConversations, ...MOCK_CONVERSATIONS.filter(c => !backendConversations.some(b => b.id === c.id))];
+    const mergedConversations = DEMO_DATA_ENABLED
+      ? [...backendConversations, ...MOCK_CONVERSATIONS.filter(c => !backendConversations.some(b => b.id === c.id))]
+      : backendConversations;
     const backendMessageLists = await Promise.all(
       backendConversations.map(c => apiService.getBackendMessagesForConversation(c.id))
     );
     const backendMessages = backendMessageLists.flatMap(list => list ?? []);
-    const mergedMessages = [...backendMessages, ...MOCK_MESSAGES.filter(m => !backendMessages.some(b => b.id === m.id))];
+    const mergedMessages = DEMO_DATA_ENABLED
+      ? [...backendMessages, ...MOCK_MESSAGES.filter(m => !backendMessages.some(b => b.id === m.id))]
+      : backendMessages;
     return {
-      engineers: [...backendEngineers, ...[...MOCK_ENGINEERS, MOCK_ENGINEER_STEVE, MOCK_FREE_ENGINEER].filter(engineer => !backendEngineers.some(real => real.id === engineer.id))],
-      companies: [...backendCompanies, ...MOCK_COMPANIES.filter(company => !backendCompanies.some(real => real.id === company.id)), MOCK_RESOURCING_COMPANY_1],
+      engineers: DEMO_DATA_ENABLED ? [...backendEngineers, ...[...MOCK_ENGINEERS, MOCK_ENGINEER_STEVE, MOCK_FREE_ENGINEER].filter(engineer => !backendEngineers.some(real => real.id === engineer.id))] : backendEngineers,
+      companies: DEMO_DATA_ENABLED ? [...backendCompanies, ...MOCK_COMPANIES.filter(company => !backendCompanies.some(real => real.id === company.id)), MOCK_RESOURCING_COMPANY_1] : backendCompanies,
       jobs: mergedJobs,
       applications: mergedApplications,
-      reviews: MOCK_REVIEWS,
+      reviews: DEMO_DATA_ENABLED ? MOCK_REVIEWS : [],
       allUsers: mergedUsers,
       conversations: mergedConversations,
       messages: mergedMessages,
       contracts: mergedContracts,
-      transactions: MOCK_TRANSACTIONS,
-      projects: MOCK_PROJECTS,
-      forumPosts: MOCK_FORUM_POSTS,
-      forumComments: MOCK_FORUM_COMMENTS,
-      notifications: MOCK_NOTIFICATIONS,
-      collaborationPosts: MOCK_COLLABORATION_POSTS,
+      transactions: DEMO_DATA_ENABLED ? MOCK_TRANSACTIONS : [],
+      projects: DEMO_DATA_ENABLED ? MOCK_PROJECTS : [],
+      forumPosts: DEMO_DATA_ENABLED ? MOCK_FORUM_POSTS : [],
+      forumComments: DEMO_DATA_ENABLED ? MOCK_FORUM_COMMENTS : [],
+      notifications: DEMO_DATA_ENABLED ? MOCK_NOTIFICATIONS : [],
+      collaborationPosts: DEMO_DATA_ENABLED ? MOCK_COLLABORATION_POSTS : [],
     };
   },
 
@@ -269,9 +301,25 @@ const apiService = {
     return backendLogin(email, password);
   },
 
+  loginWithDemoCredentials: async (email: string, password: string): Promise<User> => {
+    const response = await fetch(`${API_BASE_URL}/auth/demo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Demo login failed.');
+    saveAuthToken();
+    return data.user as User;
+  },
+
   logoutSession: async (): Promise<void> => {
     try {
       await fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST' });
+    } catch (error) {
+      // Logging out must still complete locally when the development backend
+      // is stopped or temporarily unavailable.
+      if (!isNetworkError(error)) throw error;
     } finally {
       clearAuthToken();
     }
@@ -550,6 +598,10 @@ const apiService = {
 
   // Restore identity only after the backend validates the signed token.
   getCurrentUserFromToken: async (): Promise<User | null> => {
+    // The authentication cookie is HttpOnly, so the browser cannot inspect
+    // it directly. This non-sensitive hint prevents anonymous/demo sessions
+    // from probing a protected endpoint and generating a routine 401.
+    if (!getAuthToken()) return null;
     try {
       const response = await fetch(`${API_BASE_URL}/users/me`);
       if (!response.ok) {
@@ -591,10 +643,15 @@ const apiService = {
           identity: data.identity || {},
           badges: [],
           loyaltyPoints: 0,
+          workingRadiusMiles: data.workingRadiusMiles,
+          roleProfiles: data.roleProfiles || [],
+          selectedJobRoles: data.selectedJobRoles || [],
+          readiness: data.readiness || {},
+          documentNotes: data.documentNotes || '',
         },
       });
     } catch (error: any) {
-      if (!isNetworkError(error)) throw error;
+      if (!DEMO_DATA_ENABLED || !isNetworkError(error)) throw error;
 
       await simulateDelay();
       const newEngineer: EngineerProfile = {
@@ -643,7 +700,7 @@ const apiService = {
         },
       });
     } catch (error: any) {
-      if (!isNetworkError(error)) throw error;
+      if (!DEMO_DATA_ENABLED || !isNetworkError(error)) throw error;
 
       await simulateDelay();
       const newCompany: CompanyProfile = {
@@ -679,7 +736,7 @@ const apiService = {
         },
       });
     } catch (error: any) {
-      if (!isNetworkError(error)) throw error;
+      if (!DEMO_DATA_ENABLED || !isNetworkError(error)) throw error;
 
       await simulateDelay();
       const newResourcingCompany: ResourcingCompanyProfile = {
@@ -909,13 +966,15 @@ const apiService = {
   // session, or the backend simply can't be reached - same pattern as
   // createEngineer/createCompany above.
   postJob: async (jobData: any): Promise<Job> => {
+    const canonicalRoleId = canonicalRoleIdForLegacy(jobData.canonicalRoleId || jobData.jobRole);
+    const normalizedJobData = { ...jobData, canonicalRoleId };
     const token = getAuthToken();
     if (token) {
       try {
         const response = await fetch(`${API_BASE_URL}/jobs`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify(jobData),
+          body: JSON.stringify(normalizedJobData),
         });
         const data = await response.json();
         if (!response.ok) {
@@ -923,14 +982,15 @@ const apiService = {
         }
         return data as Job;
       } catch (error: any) {
-        if (!isNetworkError(error)) throw error;
+        if (!DEMO_DATA_ENABLED || !isNetworkError(error)) throw error;
         // Backend unreachable - fall through to the mock below.
       }
     }
 
+    if (!DEMO_DATA_ENABLED) throw new Error('Sign in to post a job.');
     await simulateDelay();
     const newJob: Job = {
-      ...jobData,
+      ...normalizedJobData,
       id: `job-${Date.now()}`,
       postedDate: new Date(),
       status: 'active',
@@ -1014,6 +1074,7 @@ const apiService = {
   },
 
   getBackendOwnedJobs: async (): Promise<Job[]> => {
+    if (!getAuthToken()) return [];
     try {
       const response = await fetch(`${API_BASE_URL}/jobs/mine`);
       if (!response.ok) return [];
@@ -1034,6 +1095,7 @@ const apiService = {
   },
 
   getBackendCompanyApplications: async (): Promise<Application[]> => {
+    if (!getAuthToken()) return [];
     try {
       const response = await fetch(`${API_BASE_URL}/applications/company`);
       if (!response.ok) return [];
@@ -1048,6 +1110,7 @@ const apiService = {
   },
 
   getBackendEngineerApplications: async (): Promise<Application[]> => {
+    if (!getAuthToken()) return [];
     try {
       const response = await fetch(`${API_BASE_URL}/applications/me`);
       if (!response.ok) return [];

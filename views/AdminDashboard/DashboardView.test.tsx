@@ -21,6 +21,7 @@ describe('Admin DashboardView', () => {
             },
             privacyPending: 3,
             membershipPending: 2,
+            pilotFunnel: { profilesUpdated: 8, jobsPosted: 4, applicationsSubmitted: 3, contractsCreated: 1 },
         });
 
         const setActiveView = vi.fn();
@@ -33,6 +34,7 @@ describe('Admin DashboardView', () => {
         expect(screen.getByText('Pending membership requests')).toBeVisible();
         expect(screen.getByText(/2 membership requests need verification/i)).toBeVisible();
         expect(screen.getByText('Live operational data from the TechSubbies backend.')).toBeVisible();
+        expect(screen.getByText('Commercial pilot funnel')).toBeVisible();
 
         await userEvent.click(screen.getByRole('button', { name: 'Review membership requests' }));
         expect(setActiveView).toHaveBeenCalledWith('Membership Requests');

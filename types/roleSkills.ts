@@ -9,7 +9,20 @@ export type RoleFamily =
   | "audio"
   | "uc"
   | "security"
-  | "infrastructure";
+  | "infrastructure"
+  | "live-events"
+  | "design"
+  | "management"
+  | "service"
+  | "product-awareness"
+  | "specialist"
+  | "field-service"
+  | "wireless"
+  | "systems"
+  | "cloud"
+  | "data"
+  | "devops"
+  | "consultancy";
 
 export type SkillRating = 0 | 1 | 2 | 3 | 4 | 5;
 

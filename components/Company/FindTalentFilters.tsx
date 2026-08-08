@@ -7,6 +7,8 @@ import { getDistance, findLocationsInRegion } from '../../utils/locationUtils';
 import { LocationAutocomplete } from '../LocationAutocomplete';
 import { getSkillBand } from '../../utils/skillBands';
 import { isEngineerAvailable } from '../../utils/availability';
+import { useData } from '../../context/DataContext';
+import { explainSkillRequirementMatch } from '../../services/skillMatching';
 
 interface Filters {
     searchTerm: string;
@@ -45,8 +47,10 @@ interface FindTalentFiltersProps {
 
 export const FindTalentFilters = ({ engineers, myJobs, onFilterChange, onBudgetChange }: FindTalentFiltersProps) => {
     const { geminiService } = useAppContext();
+    const { jobs, reviews } = useData();
     const [filters, setFilters] = useState<Filters>(initialFilters);
     const [isAiLoading, setIsAiLoading] = useState(false);
+    const [matchNotice, setMatchNotice] = useState('');
 
     useEffect(() => {
         // This effect will run whenever filters change, except for AI-based filters
@@ -72,19 +76,28 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange, onBudgetC
         if (!job) return;
 
         setIsAiLoading(true);
-        const result = await geminiService.findBestMatchesForJob(job, engineers);
-        
-        if (result.matches) {
-            const engineersWithScores = engineers.map(eng => {
-                const match = result.matches.find(m => m.id === eng.id);
-                return match ? { ...eng, matchScore: match.match_score } : { ...eng, matchScore: 0 };
-            }).sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
-            onFilterChange(engineersWithScores);
-        } else {
-            alert(result.error || "Failed to get AI matches.");
+        setMatchNotice('');
+        const evidenceContext = { jobs, reviews };
+        const rankEngineers = (matches: Array<{ id: string; match_score: number }>) => engineers.map(eng => {
+            const explanation = explainSkillRequirementMatch(eng, job, evidenceContext);
+            const match = matches.find(candidate => candidate.id === eng.id);
+            return {
+                ...eng,
+                matchScore: match ? match.match_score : explanation.requirementScore,
+                matchExplanation: explanation,
+            };
+        }).sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+        try {
+            const result = await geminiService.findBestMatchesForJob(job, engineers, evidenceContext);
+            const matches = Array.isArray(result?.matches) ? result.matches : [];
+            onFilterChange(rankEngineers(matches));
+            if (matches.length === 0) setMatchNotice('Showing deterministic evidence-adjusted results.');
+        } catch (error) {
+            onFilterChange(rankEngineers([]));
+            setMatchNotice('AI refinement is unavailable; showing deterministic evidence-adjusted results.');
+        } finally {
+            setIsAiLoading(false);
         }
-        
-        setIsAiLoading(false);
     };
 
     const applyFilters = () => {
@@ -184,6 +197,7 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange, onBudgetC
                     <button onClick={runAiMatch} disabled={!filters.jobForMatch || isAiLoading} className="w-full mt-2 px-4 py-2 bg-purple-600 text-white font-semibold rounded-md text-sm hover:bg-purple-700 disabled:bg-purple-300">
                         {isAiLoading ? 'Analyzing...' : 'Find Best Matches'}
                     </button>
+                    {matchNotice && <p className="mt-2 text-xs text-purple-700" role="status">{matchNotice}</p>}
                 </div>
                 
                 {/* Manual Filters */}

@@ -14,10 +14,12 @@ import {
   listJobsForCompany,
   updateApplicationStatus,
   updateJob,
+  recordPilotFunnelEvent,
 } from "../lib/db.js";
 import { sendApplicationStatusNotification } from "../lib/applicationNotifications.js";
 import { toPublicApplication, toPublicJob } from "../lib/publicJob.js";
 import { requireAuth, requireRole, type AuthedRequest } from "../middleware/auth.js";
+import { canonicalizeRoleId } from "../lib/canonicalRoles.js";
 
 export const jobsRouter = Router();
 
@@ -32,6 +34,7 @@ const jobSchema = z.object({
   jobType: z.string().min(1),
   experienceLevel: z.string().min(1),
   jobRole: z.string().min(1),
+  canonicalRoleId: z.string().min(1).optional(),
   skillRequirements: z.array(z.record(z.any())).optional().default([]),
   // Self-declared supervision arrangement for junior/labour-type roles (see
   // utils/leadSupervision.ts on the frontend) - optional so older/simpler
@@ -74,7 +77,13 @@ jobsRouter.post("/", requireAuth, requireRole("Company", "Resourcing Company"), 
     return res.status(400).json({ error: parsed.error.issues.map((i) => i.message).join(", ") });
   }
 
-  const job = createJob(req.userId!, parsed.data);
+  const canonicalRoleId = canonicalizeRoleId(parsed.data.canonicalRoleId || parsed.data.jobRole);
+  if (parsed.data.canonicalRoleId && !canonicalRoleId) {
+    return res.status(400).json({ error: "Select a recognized canonical role." });
+  }
+  const jobData = canonicalRoleId ? { ...parsed.data, canonicalRoleId } : parsed.data;
+  const job = createJob(req.userId!, jobData);
+  recordPilotFunnelEvent({ eventType: "job.posted", userId: req.userId, roleId: canonicalRoleId || parsed.data.jobRole, jobId: job.id });
   return res.status(201).json(toPublicJob(job));
 });
 
@@ -122,6 +131,7 @@ jobsRouter.post("/:jobId/apply", requireAuth, requireRole("Engineer"), async (re
   }
 
   const application = createApplication(job.id, req.userId!, "Applied");
+  recordPilotFunnelEvent({ eventType: "application.submitted", userId: req.userId, jobId: job.id });
   return res.status(201).json(toPublicApplication(application));
 });
 

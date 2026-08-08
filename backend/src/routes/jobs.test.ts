@@ -92,10 +92,22 @@ describe("jobs", () => {
     expect(postRes.status).toBe(201);
     expect(postRes.body.companyId).toBe(company.id);
     expect(postRes.body.status).toBe("active");
+    expect(postRes.body.canonicalRoleId).toBe("av-lead-engineer-site-manager");
 
     const listRes = await request(app).get("/api/jobs");
     expect(listRes.status).toBe(200);
     expect(listRes.body.some((j: any) => j.id === postRes.body.id)).toBe(true);
+  });
+
+  it("rejects an invalid canonical role supplied by a client", async () => {
+    const company = await registerCompany("jobs-co-invalid-role@example.com", "Invalid Role Co");
+    const response = await request(app)
+      .post("/api/jobs")
+      .set("Authorization", `Bearer ${company.token}`)
+      .send({ ...sampleJob, canonicalRoleId: "made-up-role" });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/recognized canonical role/i);
   });
 
   it("persists the supervision self-declaration fields for junior/support roles", async () => {

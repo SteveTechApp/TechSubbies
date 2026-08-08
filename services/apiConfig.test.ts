@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { resolveApiBaseUrl } from "./apiConfig";
 
 describe("resolveApiBaseUrl", () => {
-  it("uses localhost only during development", () => {
-    expect(resolveApiBaseUrl(undefined, false)).toBe("http://localhost:4000/api");
+  it("uses the same-origin proxy path during development", () => {
+    expect(resolveApiBaseUrl(undefined, false)).toBe("/api");
   });
 
   it("normalizes configured absolute and same-origin URLs", () => {

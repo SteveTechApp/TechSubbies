@@ -21,7 +21,7 @@ vi.mock("../context/AuthContext", () => ({
 }));
 
 vi.mock("../services/apiService", () => ({
-  default: { loginWithPassword: vi.fn() },
+  default: { loginWithPassword: vi.fn(), loginWithDemoCredentials: vi.fn() },
 }));
 
 vi.mock("../data/demoAccounts", () => ({
@@ -64,7 +64,7 @@ describe("sign-in page", () => {
   });
 
   it("uses the isolated demo fallback only for matching demo credentials", async () => {
-    vi.mocked(apiService.loginWithPassword).mockRejectedValue(new TypeError("Backend unavailable"));
+    vi.mocked(apiService.loginWithDemoCredentials).mockResolvedValue({ role: "Admin" } as any);
     const onSignedIn = vi.fn();
     const user = userEvent.setup();
     render(<DemoLoginPage onSignedIn={onSignedIn} />);
@@ -73,6 +73,7 @@ describe("sign-in page", () => {
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
     expect(onSignedIn).toHaveBeenCalledWith(demo.session);
-    expect(auth.setUser).not.toHaveBeenCalled();
+    expect(auth.setUser).toHaveBeenCalledWith(expect.objectContaining({ role: "Admin" }));
+    expect(apiService.loginWithPassword).not.toHaveBeenCalled();
   });
 });
