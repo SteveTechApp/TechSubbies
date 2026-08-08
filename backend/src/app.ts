@@ -11,12 +11,14 @@ import { contractsRouter } from "./routes/contracts.js";
 import { conversationsRouter } from "./routes/conversations.js";
 import { adminRouter } from "./routes/admin.js";
 import { evidenceRouter } from "./routes/evidence.js";
+import { adminCertificatesRouter, certificatesRouter } from "./routes/certificates.js";
 import { requireCsrf, securityHeaders } from "./middleware/security.js";
 import { createRateLimiter } from "./middleware/rateLimit.js";
 import { frontendOrigin, validateRuntimeConfig } from "./lib/config.js";
 import { requireVerifiedEmailForMutation } from "./middleware/auth.js";
 import { checkDatabaseConnection } from "./lib/db.js";
 import { checkEvidenceRepository } from "./lib/evidenceRepository.js";
+import { checkCertificateRepository } from "./lib/certificateRepository.js";
 import { requestContext, requestLogger, safeErrorHandler } from "./middleware/observability.js";
 
 type AppOptions = {
@@ -50,7 +52,7 @@ export function createApp(options: AppOptions = {}) {
   });
 
   const readinessCheck = options.readinessCheck
-    || (() => checkDatabaseConnection() && checkEvidenceRepository());
+    || (() => checkDatabaseConnection() && checkEvidenceRepository() && checkCertificateRepository());
   const readinessHandler = (_req: express.Request, res: express.Response) => {
     try {
       if (!readinessCheck()) throw new Error("Readiness check returned false.");
@@ -61,12 +63,12 @@ export function createApp(options: AppOptions = {}) {
   };
 
   app.get("/api/health/ready", readinessHandler);
-  // Backwards-compatible alias for existing deployment checks.
   app.get("/api/health", readinessHandler);
 
   app.use("/api/auth", authRateLimit, authRouter);
   app.use("/api/users", usersRouter);
   app.use("/api/admin", adminRouter);
+  app.use("/api/admin/certificates", adminCertificatesRouter);
   app.use("/api/ai", aiRateLimit, aiRouter);
   app.use(
     [
@@ -77,6 +79,7 @@ export function createApp(options: AppOptions = {}) {
       "/api/contracts",
       "/api/conversations",
       "/api/evidence",
+      "/api/certificates",
     ],
     requireVerifiedEmailForMutation
   );
@@ -87,8 +90,8 @@ export function createApp(options: AppOptions = {}) {
   app.use("/api/contracts", contractsRouter);
   app.use("/api/conversations", conversationsRouter);
   app.use("/api/evidence", evidenceRouter);
+  app.use("/api/certificates", certificatesRouter);
 
-  // Keep this last: catches anything unmatched under /api.
   app.use("/api", (_req, res) => {
     res.status(404).json({ error: "Not found." });
   });
