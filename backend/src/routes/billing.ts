@@ -242,7 +242,7 @@ stripeBillingWebhookRouter.post("/", raw({ type: "application/json", limit: "1mb
       await notifyPaymentFailure(userId);
       recordAccountAudit({
         eventType: "membership.payment_failed",
-        outcome: "failed",
+        outcome: "failure",
         userId,
         requestId: res.locals.requestId,
       });
