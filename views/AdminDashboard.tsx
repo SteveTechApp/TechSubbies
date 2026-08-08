@@ -9,7 +9,7 @@ import { JobManagementView } from './AdminDashboard/JobManagementView';
 import { MonetizationView } from './AdminDashboard/MonetizationView';
 import { PlatformSettingsView } from './AdminDashboard/PlatformSettingsView';
 import { PrivacyRequestsView } from './AdminDashboard/PrivacyRequestsView';
-import { MembershipRequestsView } from './AdminDashboard/MembershipRequestsView';
+import { SubscriptionBillingView } from './AdminDashboard/SubscriptionBillingView';
 import { CertificateVerificationView } from './AdminDashboard/CertificateVerificationView';
 
 export const AdminDashboard = () => {
@@ -30,8 +30,8 @@ export const AdminDashboard = () => {
                 return <JobManagementView setActiveView={setActiveView} />;
             case 'Privacy Requests':
                 return <PrivacyRequestsView />;
-            case 'Membership Requests':
-                return <MembershipRequestsView />;
+            case 'Subscription Billing':
+                return <SubscriptionBillingView />;
             case 'Certificate Verification':
                 return <CertificateVerificationView />;
             case 'Monetization':
