@@ -21,6 +21,12 @@ const validProductionConfig = {
   DROPBOX_SIGN_CLIENT_ID: "dropbox-sign-app-client-id",
   DROPBOX_SIGN_CONTRACT_TEMPLATE_ID: "dropbox-sign-contract-template",
   DROPBOX_SIGN_TEST_MODE: "false",
+  BILLING_PROVIDER: "stripe",
+  STRIPE_SECRET_KEY: "sk_live_production_key",
+  STRIPE_WEBHOOK_SECRET: "whsec_production_secret",
+  STRIPE_PRICE_SILVER: "price_silver",
+  STRIPE_PRICE_GOLD: "price_gold",
+  STRIPE_PRICE_PLATINUM: "price_platinum",
 };
 
 describe("production configuration", () => {
@@ -34,7 +40,7 @@ describe("production configuration", () => {
     ).toThrow(/Unsafe production configuration/);
   });
 
-  it("accepts strong security, email, evidence storage and e-sign settings", () => {
+  it("accepts strong security, email, evidence, e-sign and subscription billing settings", () => {
     expect(() => validateRuntimeConfig(validProductionConfig)).not.toThrow();
   });
 
@@ -71,6 +77,18 @@ describe("production configuration", () => {
       DROPBOX_SIGN_CONTRACT_TEMPLATE_ID: undefined,
       DROPBOX_SIGN_TEST_MODE: "true",
     })).toThrow(/ESIGN_PROVIDER|DROPBOX_SIGN_API_KEY|DROPBOX_SIGN_CLIENT_ID|DROPBOX_SIGN_CONTRACT_TEMPLATE_ID|DROPBOX_SIGN_TEST_MODE/);
+  });
+
+  it("rejects production startup without live Stripe subscription billing", () => {
+    expect(() => validateRuntimeConfig({
+      ...validProductionConfig,
+      BILLING_PROVIDER: "manual",
+      STRIPE_SECRET_KEY: "sk_test_not-production",
+      STRIPE_WEBHOOK_SECRET: undefined,
+      STRIPE_PRICE_SILVER: undefined,
+      STRIPE_PRICE_GOLD: undefined,
+      STRIPE_PRICE_PLATINUM: undefined,
+    })).toThrow(/BILLING_PROVIDER|STRIPE_SECRET_KEY|STRIPE_WEBHOOK_SECRET|STRIPE_PRICE_SILVER|STRIPE_PRICE_GOLD|STRIPE_PRICE_PLATINUM/);
   });
 });
 
