@@ -23,6 +23,43 @@ export function toPublicUser(user: UserRow) {
   };
 }
 
+function safeStrings(value: unknown, max = 20): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is string => typeof item === "string" && Boolean(item.trim()))
+    .map((item) => item.trim().slice(0, 120))
+    .slice(0, max);
+}
+
+// Accessibility requirements can be useful for booking/site planning but are
+// private by default. Directory consumers receive only the professional
+// preferences plus accessibility details the engineer explicitly opted to
+// share with companies.
+function marketplaceInclusivePreferences(value: unknown) {
+  if (!value || typeof value !== "object") return undefined;
+  const input = value as Record<string, unknown>;
+  const accessibility = input.accessibility && typeof input.accessibility === "object"
+    ? input.accessibility as Record<string, unknown>
+    : {};
+
+  const output: Record<string, unknown> = {
+    languages: safeStrings(input.languages, 12),
+    workModes: safeStrings(input.workModes, 3),
+    alternativeEvidenceRoutes: safeStrings(input.alternativeEvidenceRoutes, 7),
+  };
+
+  if (accessibility.shareWithCompanies === true && accessibility.needsAdjustments === true) {
+    output.accessibility = {
+      needsAdjustments: true,
+      shareWithCompanies: true,
+      adjustments: safeStrings(accessibility.adjustments, 20),
+      note: typeof accessibility.note === "string" ? accessibility.note.slice(0, 1000) : "",
+    };
+  }
+
+  return output;
+}
+
 // Directory/search responses must never expose account contact, identity or
 // payment details. Matching-safe professional fields remain available.
 export function toDirectoryUser(user: UserRow) {
@@ -40,6 +77,17 @@ export function toDirectoryUser(user: UserRow) {
     "notificationSettings",
     "documents",
   ].forEach((key) => delete profile[key]);
+
+  if ("inclusivePreferences" in profile) {
+    const safe = marketplaceInclusivePreferences(profile.inclusivePreferences);
+    if (safe) profile.inclusivePreferences = safe;
+    else delete profile.inclusivePreferences;
+  }
+
+  // Defensive removal of any earlier experimental top-level accessibility
+  // fields so they cannot bypass the explicit sharing gate above.
+  delete profile.accessibilityAdjustments;
+  delete profile.accessibilityNote;
 
   return { ...publicUser, profile };
 }
