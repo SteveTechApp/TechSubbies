@@ -65,7 +65,12 @@ Word planning documents are retained as historical snapshots.
   mutual cancellation is required before a contract is marked Cancelled,
   declined requests move to Admin review, substitutions require a separately
   contracted replacement, and TechSubbies does not determine payment liability.
-- [ ] Real-time notification delivery and messaging transport.
+- [x] Implement authenticated real-time notification and messaging transport:
+  Server-Sent Events deliver live messages, conversation changes, read receipts
+  and persistent in-app notifications; REST/SQLite remain the durable source of
+  truth with reconnect hydration and unread counts.
+- [ ] Confirm production proxy/load-balancer SSE buffering and timeout settings;
+  introduce shared pub/sub before running more than one backend process.
 
 ## P2 - taxonomy and inclusion
 
