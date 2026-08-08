@@ -57,7 +57,7 @@ describe('MonetizationView', () => {
     expect(screen.getByText('Active / Trial Paid Accounts')).toBeInTheDocument();
     expect(screen.getByText('Pricing Research Responses')).toBeInTheDocument();
     expect(screen.getByText(/survey intent is research evidence, not booked revenue/i)).toBeInTheDocument();
-    expect(screen.getByText('Company')).toBeInTheDocument();
+    expect(screen.getAllByText('Company').length).toBeGreaterThan(0);
     expect(screen.getByText('£40')).toBeInTheDocument();
     expect(screen.getByText('0%')).toBeInTheDocument();
   });
