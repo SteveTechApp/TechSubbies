@@ -11,7 +11,10 @@ beforeEach(() => {
 
 describe("StripeBillingProvider", () => {
   it("creates a subscription Checkout session for the selected TechSubbies tier", async () => {
-    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+    const fetchMock = vi.fn(async (
+      _input: Parameters<typeof fetch>[0],
+      init?: Parameters<typeof fetch>[1]
+    ) => {
       expect(init?.headers).toEqual(expect.objectContaining({
         Authorization: "Bearer sk_test_key",
         "Content-Type": "application/x-www-form-urlencoded",
@@ -42,7 +45,10 @@ describe("StripeBillingProvider", () => {
   });
 
   it("creates a Customer Portal session for an existing Stripe customer", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const fetchMock = vi.fn(async (
+      input: Parameters<typeof fetch>[0],
+      init?: Parameters<typeof fetch>[1]
+    ) => {
       expect(String(input)).toContain("/billing_portal/sessions");
       const body = new URLSearchParams(String(init?.body));
       expect(body.get("customer")).toBe("cus_123");
