@@ -124,7 +124,7 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
                 </div>
                 
                 <div className="p-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md text-sm mb-4">
-                    <strong>Direct agreement:</strong> This agreement is solely between the client and contractor. TechSubbies only introduced the parties and does not employ either party, set or collect fees, issue invoices, process payments, or participate in disputes. The parties manage invoicing, payment, tax and insurance directly.
+                    <strong>Direct agreement:</strong> This agreement is solely between the client and contractor. TechSubbies introduces the parties and can record or coordinate contract-support cases, but does not employ either party, set or collect project fees, issue project invoices, hold project funds, or decide payment liability. The parties remain responsible for invoicing, payment, tax, insurance and any financial settlement.
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
