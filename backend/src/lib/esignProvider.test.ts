@@ -26,7 +26,7 @@ function provider(fetchImplementation: typeof fetch) {
 
 describe("DropboxSignProvider", () => {
   it("creates a template-backed request and maps both signer ids", async () => {
-    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+    const fetchMock = vi.fn(async (_input: any, init?: any) => {
       expect(init?.headers).toEqual(expect.objectContaining({
         Authorization: expect.stringMatching(/^Basic /),
         "Content-Type": "application/json",
@@ -56,7 +56,7 @@ describe("DropboxSignProvider", () => {
   });
 
   it("requests a short-lived embedded URL only when the signer is ready", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    const fetchMock = vi.fn(async (input: any) => {
       expect(String(input)).toContain("/embedded/sign_url/sig-engineer");
       return new Response(JSON.stringify({ embedded: { sign_url: "https://sign.example/session", expires_at: 123456 } }), {
         status: 200,
