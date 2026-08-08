@@ -1,9 +1,7 @@
 
 
 import React, { useState, useEffect } from 'react';
-// FIX: Corrected import path for types.
 import { Currency, JobType, ExperienceLevel, JobSkillRequirement, Job } from '../types';
-// FIX: Corrected import path for icons.
 import { X } from './Icons';
 import { JobPostStep1 } from './JobPost/JobPostStep1';
 import { JobPostStep2 } from './JobPost/JobPostStep2';
@@ -25,6 +23,11 @@ const initialJobDetails = {
     jobType: JobType.CONTRACT,
     experienceLevel: ExperienceLevel.MID_LEVEL,
     jobRole: '',
+    canonicalRoleId: '',
+    // These fields become contextual evidence once the job is completed and
+    // reviewed. They do not alter the skill score by themselves.
+    deliveryContext: 'independent',
+    projectScale: 'medium',
     supervisionArrangement: '',
     supervisionDisclaimerAccepted: false,
 };
@@ -40,7 +43,7 @@ export const JobPostModal = ({ isOpen, onClose, onPostJob }: JobPostModalProps) 
                 setStep(1);
                 setJobDetails(initialJobDetails);
                 setSkillRequirements([]);
-            }, 300); // Delay reset for closing animation
+            }, 300);
             return () => clearTimeout(timer);
         }
     }, [isOpen]);

@@ -6,34 +6,32 @@
 // pull the "effective" rating toward what's actually been proven - while
 // the self-rating stays visible and still counts, especially for engineers
 // who haven't completed a job or earned a certificate yet.
-//
-// This module is pure and framework-agnostic, following the same pattern as
-// utils/availability.ts, utils/leadSupervision.ts and utils/teamComposition.ts:
-// it takes plain data in and returns plain data out, so it can be called from
-// the matching engine, the engineer's own skill editor, or a future company-
-// facing profile view without duplicating the blending logic.
 
 import { Certification, Job, Review } from '../types';
 
 export type SkillEvidenceSource = 'self-declared' | 'completed-job' | 'verified-certificate';
+export type DeliveryContext = 'assisted' | 'independent' | 'lead';
+export type ProjectScale = 'small' | 'medium' | 'large' | 'programme';
 
 export interface SkillEvidenceEntry {
     source: SkillEvidenceSource;
     label: string;
     date?: Date;
+    deliveryContext?: DeliveryContext;
+    projectScale?: ProjectScale;
 }
 
 export interface CompletedJobEvidence {
     jobTitle: string;
-    // "Technical Skill & Professionalism" star rating left by the hiring
-    // company on a completed job (see components/ReviewModal.tsx) - 1 to 5.
     peerRatingOutOf5: number;
     date: Date;
+    deliveryContext?: DeliveryContext;
+    projectScale?: ProjectScale;
 }
 
 export interface SkillEvidenceInput {
     skillName: string;
-    selfRating: number; // 0-100, always present - see utils/skillBands.ts
+    selfRating: number;
     completedJobs: CompletedJobEvidence[];
     verifiedCertificates: string[];
 }
@@ -41,32 +39,34 @@ export interface SkillEvidenceInput {
 export interface SkillEvidenceResult {
     skillName: string;
     selfRating: number;
-    // What matching/display should actually use. Equal to selfRating when
-    // there's no evidence yet, otherwise a blend pulled toward proven
-    // performance.
     effectiveRating: number;
     trail: SkillEvidenceEntry[];
     hasEvidence: boolean;
+    // Most recent completed-job evidence for this skill. Certificates are
+    // deliberately not used as a proxy for "last used" because verification
+    // date and practical-use date are different facts.
+    lastUsedDate?: Date;
+    deliveryContexts: DeliveryContext[];
+    projectScales: ProjectScale[];
 }
 
-// Self-rating always keeps this much say in the final number, even once
-// evidence exists, so one bad day on one job (or one early self-rating)
-// can't swing the score wildly in either direction.
 const SELF_RATING_WEIGHT = 40;
-// Each completed job contributes this much weight, up to the cap below -
-// a handful of completed jobs should matter a lot, but shouldn't make the
-// self-rating irrelevant on its own.
 const JOB_EVIDENCE_WEIGHT = 15;
 const MAX_JOB_EVIDENCE_WEIGHT = 45;
-// Certificates don't come with a numeric score, so they're treated as solid
-// (but not perfect) proof of competence and given a smaller, capped weight.
 const CERTIFICATE_WEIGHT = 8;
 const MAX_CERTIFICATE_WEIGHT = 20;
 const CERTIFICATE_IMPLIED_RATING = 90;
 
 function starsToRating(stars: number): number {
-    // 1 star -> 0, 5 stars -> 100.
     return Math.max(0, Math.min(100, ((stars - 1) / 4) * 100));
+}
+
+function deliveryLabel(value: DeliveryContext): string {
+    return value === 'lead' ? 'lead delivery' : value === 'assisted' ? 'assisted delivery' : 'independent delivery';
+}
+
+function scaleLabel(value: ProjectScale): string {
+    return value === 'programme' ? 'programme / multi-site' : `${value} project`;
 }
 
 export function computeSkillEvidence(input: SkillEvidenceInput): SkillEvidenceResult {
@@ -76,8 +76,21 @@ export function computeSkillEvidence(input: SkillEvidenceInput): SkillEvidenceRe
         { source: 'self-declared', label: `Self-rated ${selfRating}/100` },
     ];
 
+    const datedJobs = completedJobs.slice().sort((a, b) => b.date.getTime() - a.date.getTime());
+    const lastUsedDate = datedJobs[0]?.date;
+    const deliveryContexts = Array.from(new Set(datedJobs.flatMap(job => job.deliveryContext ? [job.deliveryContext] : [])));
+    const projectScales = Array.from(new Set(datedJobs.flatMap(job => job.projectScale ? [job.projectScale] : [])));
+
     if (completedJobs.length === 0 && verifiedCertificates.length === 0) {
-        return { skillName, selfRating, effectiveRating: selfRating, trail, hasEvidence: false };
+        return {
+            skillName,
+            selfRating,
+            effectiveRating: selfRating,
+            trail,
+            hasEvidence: false,
+            deliveryContexts,
+            projectScales,
+        };
     }
 
     let weightedSum = selfRating * SELF_RATING_WEIGHT;
@@ -90,16 +103,19 @@ export function computeSkillEvidence(input: SkillEvidenceInput): SkillEvidenceRe
         weightedSum += avgJobRating * jobWeight;
         totalWeight += jobWeight;
 
-        completedJobs
-            .slice()
-            .sort((a, b) => b.date.getTime() - a.date.getTime())
-            .forEach((j) => {
-                trail.push({
-                    source: 'completed-job',
-                    label: `Rated ${j.peerRatingOutOf5}/5 on "${j.jobTitle}"`,
-                    date: j.date,
-                });
+        datedJobs.forEach((j) => {
+            const context = [
+                j.deliveryContext ? deliveryLabel(j.deliveryContext) : '',
+                j.projectScale ? scaleLabel(j.projectScale) : '',
+            ].filter(Boolean).join(' · ');
+            trail.push({
+                source: 'completed-job',
+                label: `Rated ${j.peerRatingOutOf5}/5 on "${j.jobTitle}"${context ? ` · ${context}` : ''}`,
+                date: j.date,
+                deliveryContext: j.deliveryContext,
+                projectScale: j.projectScale,
             });
+        });
     }
 
     if (verifiedCertificates.length > 0) {
@@ -114,17 +130,38 @@ export function computeSkillEvidence(input: SkillEvidenceInput): SkillEvidenceRe
 
     const effectiveRating = Math.max(0, Math.min(100, Math.round(weightedSum / totalWeight)));
 
-    return { skillName, selfRating, effectiveRating, trail, hasEvidence: true };
+    return {
+        skillName,
+        selfRating,
+        effectiveRating,
+        trail,
+        hasEvidence: true,
+        lastUsedDate,
+        deliveryContexts,
+        projectScales,
+    };
 }
 
 function normalize(value: string): string {
     return value.trim().toLowerCase();
 }
 
-// A completed job "counts" as evidence for a skill if the hiring company
-// left a review for it and the job actually listed that skill as a
-// requirement - so evidence is always tied to real, relevant work rather
-// than just any finished contract.
+function normalizeDeliveryContext(value: unknown): DeliveryContext | undefined {
+    if (value === 'assisted' || value === 'independent' || value === 'lead') return value;
+    return undefined;
+}
+
+function normalizeProjectScale(value: unknown): ProjectScale | undefined {
+    if (value === 'small' || value === 'medium' || value === 'large' || value === 'programme') return value;
+    return undefined;
+}
+
+function legacyDeliveryContext(job: Job): DeliveryContext | undefined {
+    const arrangement = String(job.supervisionArrangement || '').toLowerCase();
+    if (['supervised', 'lead_engineer_present', 'qualified_engineer_present'].includes(arrangement)) return 'assisted';
+    return undefined;
+}
+
 export function findCompletedJobEvidenceForSkill(
     skillName: string,
     jobs: Job[],
@@ -144,18 +181,18 @@ export function findCompletedJobEvidenceForSkill(
                 job !== undefined &&
                 (job.skillRequirements || []).some((req) => normalize(req.name) === normalizedSkill)
         )
-        .map(({ review, job }) => ({
-            jobTitle: job!.title,
-            peerRatingOutOf5: review.peerRating,
-            date: new Date(review.date),
-        }));
+        .map(({ review, job }) => {
+            const contextualJob = job as Job & { deliveryContext?: unknown; projectScale?: unknown };
+            return {
+                jobTitle: job!.title,
+                peerRatingOutOf5: review.peerRating,
+                date: new Date(review.date),
+                deliveryContext: normalizeDeliveryContext(contextualJob.deliveryContext) || legacyDeliveryContext(job!),
+                projectScale: normalizeProjectScale(contextualJob.projectScale),
+            };
+        });
 }
 
-// A certificate counts as evidence for a skill if it's verified and its
-// name is a reasonably close match to the skill (e.g. a "Cisco CCNA"
-// certificate backing a "Networking" or "Cisco" skill). There's no formal
-// certificate-to-skill mapping table in the app yet, so this uses a simple,
-// conservative substring match in either direction rather than guessing.
 export function findVerifiedCertificateEvidenceForSkill(
     skillName: string,
     certifications: Certification[]

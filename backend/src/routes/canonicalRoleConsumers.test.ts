@@ -40,6 +40,8 @@ function jobPayload(jobRole: string) {
     experienceLevel: 'Senior',
     jobRole,
     skillRequirements: [],
+    deliveryContext: 'independent',
+    projectScale: 'medium',
   };
 }
 
@@ -62,14 +64,18 @@ describe('canonical role persistence', () => {
 
     expect(created.status).toBe(201);
     expect(created.body.canonicalRoleId).toBe('av-installation-engineer');
+    expect(created.body.deliveryContext).toBe('independent');
+    expect(created.body.projectScale).toBe('medium');
 
     const updated = await request(app)
       .patch(`/api/jobs/${created.body.id}`)
       .set('Authorization', `Bearer ${company.token}`)
-      .send({ jobRole: 'senior-av-installer' });
+      .send({ jobRole: 'senior-av-installer', deliveryContext: 'lead', projectScale: 'large' });
 
     expect(updated.status).toBe(200);
     expect(updated.body.canonicalRoleId).toBe('av-lead-engineer-site-manager');
+    expect(updated.body.deliveryContext).toBe('lead');
+    expect(updated.body.projectScale).toBe('large');
   });
 
   it('rejects an unrecognized role when a listing role is changed', async () => {
@@ -86,5 +92,15 @@ describe('canonical role persistence', () => {
 
     expect(updated.status).toBe(400);
     expect(updated.body.error).toMatch(/recognized canonical role/i);
+  });
+
+  it('rejects invalid evidence context values instead of persisting free text', async () => {
+    const company = await registerCompany();
+    const response = await request(app)
+      .post('/api/jobs')
+      .set('Authorization', `Bearer ${company.token}`)
+      .send({ ...jobPayload('av-installation-engineer'), deliveryContext: 'hero', projectScale: 'massive' });
+
+    expect(response.status).toBe(400);
   });
 });
