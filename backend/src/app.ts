@@ -13,6 +13,7 @@ import { adminRouter } from "./routes/admin.js";
 import { evidenceRouter } from "./routes/evidence.js";
 import { adminCertificatesRouter, certificatesRouter } from "./routes/certificates.js";
 import { dropboxSignWebhookRouter, esignRouter } from "./routes/esign.js";
+import { billingRouter, stripeBillingWebhookRouter } from "./routes/billing.js";
 import { requireCsrf, securityHeaders } from "./middleware/security.js";
 import { createRateLimiter } from "./middleware/rateLimit.js";
 import { frontendOrigin, validateRuntimeConfig } from "./lib/config.js";
@@ -21,6 +22,7 @@ import { checkDatabaseConnection } from "./lib/db.js";
 import { checkEvidenceRepository } from "./lib/evidenceRepository.js";
 import { checkCertificateRepository } from "./lib/certificateRepository.js";
 import { checkEsignRepository } from "./lib/esignRepository.js";
+import { checkBillingRepository } from "./lib/billingRepository.js";
 import { requestContext, requestLogger, safeErrorHandler } from "./middleware/observability.js";
 
 type AppOptions = {
@@ -46,6 +48,11 @@ export function createApp(options: AppOptions = {}) {
   app.use(requestLogger);
   app.use(securityHeaders);
   app.use(cors({ origin: frontendOrigin(), credentials: true }));
+
+  // Stripe requires the exact raw JSON payload for webhook signature
+  // verification. Mount this before express.json() and the browser CSRF gate.
+  app.use("/api/billing/stripe/webhook", stripeBillingWebhookRouter);
+
   app.use(express.json({ limit: "2mb" }));
   app.use(requireCsrf);
 
@@ -57,7 +64,8 @@ export function createApp(options: AppOptions = {}) {
     || (() => checkDatabaseConnection()
       && checkEvidenceRepository()
       && checkCertificateRepository()
-      && checkEsignRepository());
+      && checkEsignRepository()
+      && checkBillingRepository());
   const readinessHandler = (_req: express.Request, res: express.Response) => {
     try {
       if (!readinessCheck()) throw new Error("Readiness check returned false.");
@@ -92,6 +100,7 @@ export function createApp(options: AppOptions = {}) {
       "/api/evidence",
       "/api/certificates",
       "/api/esign",
+      "/api/billing",
     ],
     requireVerifiedEmailForMutation
   );
@@ -118,6 +127,7 @@ export function createApp(options: AppOptions = {}) {
   app.use("/api/evidence", evidenceRouter);
   app.use("/api/certificates", certificatesRouter);
   app.use("/api/esign", esignRouter);
+  app.use("/api/billing", billingRouter);
 
   app.use("/api", (_req, res) => {
     res.status(404).json({ error: "Not found." });
