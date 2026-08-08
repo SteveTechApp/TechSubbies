@@ -48,13 +48,13 @@ marketplaceAnalyticsRouter.post(
       }
     }
 
-    recordMarketplaceAnalyticsEvent({
+    const recorded = recordMarketplaceAnalyticsEvent({
       eventType,
       actorUserId: req.userId!,
       subjectUserId,
       jobId,
     });
-    return res.status(202).json({ recorded: true });
+    return res.status(202).json({ recorded, deduplicated: !recorded });
   }
 );
 
