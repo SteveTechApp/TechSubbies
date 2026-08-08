@@ -49,7 +49,17 @@ Word planning documents are retained as historical snapshots.
   idempotent callback processing, and provider-driven contract status updates.
 - [ ] Provision the live Dropbox Sign API app/template/callback configuration,
   confirm the contract wording and run engineer/client signing smoke tests.
-- [ ] Decide and document direct-party payments versus platform payment rails.
+- [x] Lock the TechSubbies payment boundary: TechSubbies charges membership
+  subscriptions only. Project invoices and payments remain directly between
+  companies/resourcing companies and engineers; no project funds, escrow,
+  placement commission or success fee passes through TechSubbies.
+- [x] Implement Stripe subscription billing and entitlement reconciliation:
+  hosted Checkout for new paid memberships, Customer Portal for plan/payment
+  management, signed idempotent webhooks, renewal/failure/cancellation state,
+  automatic paid-tier reconciliation and read-only Admin billing operations.
+- [ ] Provision live Stripe products/prices, Checkout, Customer Portal and
+  webhook endpoint; run new subscription, renewal, failed-payment, plan-change
+  and cancellation smoke tests.
 - [ ] Cancellations, substitutions, no-shows, disputes and support workflows.
 - [ ] Real-time notification delivery and messaging transport.
 
@@ -70,4 +80,5 @@ Word planning documents are retained as historical snapshots.
 - [ ] Validate buyer, engineer and resourcing-company willingness to pay.
 - [ ] Track search-to-view, shortlist, invitation, repeat booking and retention.
 - [ ] Migrate SQLite to managed PostgreSQL before horizontal scaling.
-- [ ] Add production billing, entitlement reconciliation and revenue reporting.
+- [ ] Add subscription revenue reporting, tax/accounting reconciliation and
+  finance operations once commercial pricing is validated.

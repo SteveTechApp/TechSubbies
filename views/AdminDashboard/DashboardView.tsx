@@ -7,21 +7,32 @@ import {
     getPilotConversionMetrics,
 } from '../../data/pilotConversionTargets';
 import apiService, { type AdminPlatformMetrics } from '../../services/apiService';
+import {
+    getAdminSubscriptionBillingSummary,
+    type AdminSubscriptionBillingSummary,
+} from '../../services/billingService';
 
 export const DashboardView = ({ setActiveView }: { setActiveView: (view: string) => void }) => {
     const [metrics, setMetrics] = useState<AdminPlatformMetrics | null>(null);
+    const [billingSummary, setBillingSummary] = useState<AdminSubscriptionBillingSummary | null>(null);
     const [error, setError] = useState('');
 
     useEffect(() => {
-        apiService.getAdminPlatformMetrics()
-            .then(setMetrics)
+        Promise.all([
+            apiService.getAdminPlatformMetrics(),
+            getAdminSubscriptionBillingSummary(),
+        ])
+            .then(([platformMetrics, subscriptionSummary]) => {
+                setMetrics(platformMetrics);
+                setBillingSummary(subscriptionSummary);
+            })
             .catch((reason) => setError(reason instanceof Error ? reason.message : 'Could not load platform metrics.'));
     }, []);
 
     if (error) {
         return <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-5 text-red-800">{error}</div>;
     }
-    if (!metrics) {
+    if (!metrics || !billingSummary) {
         return <p className="text-gray-600">Loading live platform metrics…</p>;
     }
 
@@ -32,6 +43,7 @@ export const DashboardView = ({ setActiveView }: { setActiveView: (view: string)
         contractsCreated: 0,
     };
     const conversionMetrics = getPilotConversionMetrics(pilotFunnel);
+    const activePaidMemberships = billingSummary.active + billingSummary.trialing;
 
     return (
         <div>
@@ -46,23 +58,23 @@ export const DashboardView = ({ setActiveView }: { setActiveView: (view: string)
                 <StatCard icon={UserCheck} value={metrics.users.engineers.toString()} label="Engineers" colorClass="bg-green-500" />
                 <StatCard icon={Briefcase} value={metrics.marketplace.jobsActive.toString()} label="Active Jobs" colorClass="bg-indigo-500" />
                 <StatCard icon={ShieldCheck} value={metrics.marketplace.contractsActive.toString()} label="Active Contracts" colorClass="bg-cyan-600" />
-                <StatCard icon={DollarSign} value={metrics.membershipPending.toString()} label="Membership Requests" colorClass="bg-amber-500" />
+                <StatCard icon={DollarSign} value={activePaidMemberships.toString()} label="Paid Memberships" colorClass="bg-amber-500" />
             </div>
 
-            {metrics.membershipPending > 0 && (
+            {billingSummary.pastDue > 0 && (
                 <div className="mt-4 flex flex-col justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center">
                     <div>
                         <p className="font-semibold text-amber-950">
-                            {metrics.membershipPending} membership {metrics.membershipPending === 1 ? 'request needs' : 'requests need'} verification
+                            {billingSummary.pastDue} membership {billingSummary.pastDue === 1 ? 'payment needs' : 'payments need'} attention
                         </p>
-                        <p className="text-sm text-amber-800">Verify external membership billing before activating access.</p>
+                        <p className="text-sm text-amber-800">Stripe is retrying payment; paid access remains active during the retry state.</p>
                     </div>
                     <button
                         type="button"
-                        onClick={() => setActiveView('Membership Requests')}
+                        onClick={() => setActiveView('Subscription Billing')}
                         className="rounded-md bg-amber-700 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-800"
                     >
-                        Review membership requests
+                        Review subscription billing
                     </button>
                 </div>
             )}
@@ -83,9 +95,9 @@ export const DashboardView = ({ setActiveView }: { setActiveView: (view: string)
                             <ShieldCheck className="mx-auto mb-2 h-8 w-8 text-gray-600" />
                             <span className="text-sm font-semibold">Privacy Requests</span>
                         </button>
-                        <button onClick={() => setActiveView('Membership Requests')} className="rounded-lg bg-gray-50 p-4 text-center hover:bg-gray-100">
+                        <button onClick={() => setActiveView('Subscription Billing')} className="rounded-lg bg-gray-50 p-4 text-center hover:bg-gray-100">
                             <DollarSign className="mx-auto mb-2 h-8 w-8 text-gray-600" />
-                            <span className="text-sm font-semibold">Membership Requests</span>
+                            <span className="text-sm font-semibold">Subscription Billing</span>
                         </button>
                     </div>
                 </div>
@@ -100,7 +112,8 @@ export const DashboardView = ({ setActiveView }: { setActiveView: (view: string)
                         <li className="flex justify-between"><span>Applications</span><strong>{metrics.marketplace.applications}</strong></li>
                         <li className="flex justify-between"><span>Contracts</span><strong>{metrics.marketplace.contractsTotal}</strong></li>
                         <li className="flex justify-between"><span>Pending privacy requests</span><strong>{metrics.privacyPending}</strong></li>
-                        <li className="flex justify-between"><span>Pending membership requests</span><strong>{metrics.membershipPending}</strong></li>
+                        <li className="flex justify-between"><span>Paid memberships</span><strong>{activePaidMemberships}</strong></li>
+                        <li className="flex justify-between"><span>Past-due memberships</span><strong>{billingSummary.pastDue}</strong></li>
                     </ul>
                 </div>
             </div>
