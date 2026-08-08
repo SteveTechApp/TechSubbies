@@ -1,7 +1,7 @@
 // Lightweight compatibility mapping for code paths that only need to attach
 // canonical IDs. Keep this separate from canonicalRoleRegistry so common
 // services do not download the complete AV and IT skill catalogues.
-const legacyExpectationRoleIds: Record<string, string> = {
+export const responsibilityExpectationCanonicalRoleIds: Record<string, string> = {
   'av-labour-support': 'free-basic-av-installation-engineer',
   'junior-av-installer': 'av-installation-engineer',
   'competent-av-installer': 'av-installation-engineer',
@@ -29,5 +29,9 @@ const legacyExpectationRoleIds: Record<string, string> = {
 };
 
 export function canonicalRoleIdForLegacy(roleId: string): string {
-  return legacyExpectationRoleIds[roleId] || roleId;
+  return responsibilityExpectationCanonicalRoleIds[roleId] || roleId;
+}
+
+export function unmappedResponsibilityExpectationIds(expectationIds: string[]): string[] {
+  return expectationIds.filter(id => !responsibilityExpectationCanonicalRoleIds[id]);
 }

@@ -49,16 +49,46 @@ function convertProfile(profile: any, market: RoleMarket): RoleSkillDefinition {
 }
 
 /**
- * The single role catalogue used by profile creation, job intake and matching.
- * Source profile files remain editorially convenient, while this registry gives
- * every consumer one stable contract and identifier set.
+ * Source-controlled baseline used whenever no approved taxonomy overlay exists.
+ * IDs in this baseline are permanent marketplace identifiers; published taxonomy
+ * versions may change role content but may not introduce a different identifier.
  */
-export const canonicalRoleRegistry: RoleSkillDefinition[] = [
+export const baselineCanonicalRoleRegistry: RoleSkillDefinition[] = [
   ...avSkillProfiles.map(profile => convertProfile(profile, 'av')),
   ...itSkillProfiles.map(profile => convertProfile(profile, 'it')),
 ];
 
-export const canonicalRoleById = new Map(canonicalRoleRegistry.map(role => [role.id, role]));
+/**
+ * Effective catalogue consumed by the application. Keep the array identity
+ * stable so existing imports continue to observe newly hydrated published
+ * taxonomy content without each consumer needing its own data source.
+ */
+export const canonicalRoleRegistry: RoleSkillDefinition[] = [...baselineCanonicalRoleRegistry];
+
+let canonicalRoleById = new Map(canonicalRoleRegistry.map(role => [role.id, role]));
+
+function rebuildRoleIndex() {
+  canonicalRoleById = new Map(canonicalRoleRegistry.map(role => [role.id, role]));
+}
+
+export function applyPublishedRoleOverlays(overlays: RoleSkillDefinition[]): RoleSkillDefinition[] {
+  const overlayById = new Map(
+    overlays
+      .filter(role => baselineCanonicalRoleRegistry.some(baseline => baseline.id === role.id))
+      .map(role => [role.id, role])
+  );
+
+  const next = baselineCanonicalRoleRegistry.map(role => overlayById.get(role.id) || role);
+  canonicalRoleRegistry.splice(0, canonicalRoleRegistry.length, ...next);
+  rebuildRoleIndex();
+  return canonicalRoleRegistry;
+}
+
+export function resetCanonicalRoleRegistry(): RoleSkillDefinition[] {
+  canonicalRoleRegistry.splice(0, canonicalRoleRegistry.length, ...baselineCanonicalRoleRegistry);
+  rebuildRoleIndex();
+  return canonicalRoleRegistry;
+}
 
 export function getCanonicalRole(roleId: string): RoleSkillDefinition | undefined {
   return canonicalRoleById.get(roleId);

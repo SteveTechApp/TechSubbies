@@ -123,11 +123,14 @@ adminTaxonomyRouter.post("/versions/:versionId/publish", (req: AuthedRequest, re
   return res.json({ version: toPublicTaxonomyVersion(published) });
 });
 
-taxonomyRouter.use(requireAuth);
-
+// Published role definitions are product catalogue data, not account data.
+// Expose them before the authentication gate so signup/job-intake consumers
+// can hydrate the approved taxonomy before a user has signed in.
 taxonomyRouter.get("/published", (_req, res) => {
   return res.json({ versions: listPublishedTaxonomyVersions().map(toPublicTaxonomyVersion) });
 });
+
+taxonomyRouter.use(requireAuth);
 
 taxonomyRouter.get("/reviews/pending", requireRole("Engineer"), (_req, res) => {
   return res.json({ versions: listPendingTaxonomyReviews().map(toPublicTaxonomyVersion) });
