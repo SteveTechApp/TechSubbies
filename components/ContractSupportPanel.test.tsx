@@ -2,10 +2,17 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const listContractSupportCases = vi.fn();
-const createContractSupportCase = vi.fn();
-const respondToContractSupportCase = vi.fn();
-const withdrawContractSupportCase = vi.fn();
+const {
+    listContractSupportCases,
+    createContractSupportCase,
+    respondToContractSupportCase,
+    withdrawContractSupportCase,
+} = vi.hoisted(() => ({
+    listContractSupportCases: vi.fn(),
+    createContractSupportCase: vi.fn(),
+    respondToContractSupportCase: vi.fn(),
+    withdrawContractSupportCase: vi.fn(),
+}));
 
 vi.mock('../services/contractSupportService', () => ({
     listContractSupportCases,
