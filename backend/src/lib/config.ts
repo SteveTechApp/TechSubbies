@@ -50,6 +50,22 @@ export function validateRuntimeConfig(env: NodeJS.ProcessEnv = process.env) {
     problems.push("AWS_SECRET_ACCESS_KEY is required for evidence storage in production");
   }
 
+  if (env.ESIGN_PROVIDER !== "dropbox_sign") {
+    problems.push('ESIGN_PROVIDER must be "dropbox_sign" in production');
+  }
+  if (!env.DROPBOX_SIGN_API_KEY?.trim()) {
+    problems.push("DROPBOX_SIGN_API_KEY is required in production");
+  }
+  if (!env.DROPBOX_SIGN_CLIENT_ID?.trim()) {
+    problems.push("DROPBOX_SIGN_CLIENT_ID is required in production");
+  }
+  if (!env.DROPBOX_SIGN_CONTRACT_TEMPLATE_ID?.trim()) {
+    problems.push("DROPBOX_SIGN_CONTRACT_TEMPLATE_ID is required in production");
+  }
+  if (env.DROPBOX_SIGN_TEST_MODE === "true") {
+    problems.push("DROPBOX_SIGN_TEST_MODE must not be enabled in production");
+  }
+
   if (problems.length) {
     throw new Error(`Unsafe production configuration:\n- ${problems.join("\n- ")}`);
   }
