@@ -16,8 +16,30 @@ function notConfigured(res: import("express").Response) {
 // Body: { prompt: string, schema: object }
 const generateSchema = z.object({
   prompt: z.string().min(1),
-  schema: z.record(z.any()),
+  schema: z.record(z.unknown()),
 });
+
+function providerErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
+function parseJsonRecord(value: string, fallback: string): Record<string, unknown> {
+  const parsed: unknown = JSON.parse(value);
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) throw new Error(fallback);
+  return parsed as Record<string, unknown>;
+}
+
+export function parseTranslationResponse(value: string): { detectedSourceLanguage: string; translatedText: string } {
+  const parsed = parseJsonRecord(value, "Invalid translation response from AI model.");
+  if (typeof parsed.detectedSourceLanguage !== "string" || typeof parsed.translatedText !== "string") throw new Error("Invalid translation response from AI model.");
+  return { detectedSourceLanguage: parsed.detectedSourceLanguage, translatedText: parsed.translatedText };
+}
+
+export function parseTutorialScript(value: string): { title: string; script: string } {
+  const parsed = parseJsonRecord(value, "Invalid tutorial response from AI model.");
+  if (typeof parsed.title !== "string" || typeof parsed.script !== "string" || !parsed.script.trim()) throw new Error("Invalid tutorial response from AI model.");
+  return { title: parsed.title, script: parsed.script };
+}
 
 aiRouter.post("/generate", async (req, res) => {
   if (!genAI) return notConfigured(res);
@@ -39,9 +61,9 @@ aiRouter.post("/generate", async (req, res) => {
 
     const jsonStr = (response.text || "").trim();
     if (!jsonStr) throw new Error("Empty response from AI model.");
-    return res.json({ result: JSON.parse(jsonStr) });
-  } catch (error: any) {
-    return res.status(502).json({ error: error.message || "Failed to get a valid response from the AI model." });
+    return res.json({ result: parseJsonRecord(jsonStr, "Invalid response from AI model.") });
+  } catch (error: unknown) {
+    return res.status(502).json({ error: providerErrorMessage(error, "Failed to get a valid response from the AI model.") });
   }
 });
 
@@ -72,8 +94,8 @@ aiRouter.post("/chat", async (req, res) => {
     });
     const result = await chat.sendMessage({ message: parsed.data.message });
     return res.json({ text: (result.text || "").trim() });
-  } catch (error: any) {
-    return res.status(502).json({ error: error.message || "Failed to get a valid response from the AI model." });
+  } catch (error: unknown) {
+    return res.status(502).json({ error: providerErrorMessage(error, "Failed to get a valid response from the AI model.") });
   }
 });
 
@@ -105,8 +127,8 @@ USER QUERY: "${parsed.data.query}"`;
     const answer = (response.text || "").trim();
     if (!answer) throw new Error("Empty response from AI model.");
     return res.json({ answer });
-  } catch (error: any) {
-    return res.status(502).json({ error: error.message || "Failed to get a valid response from the AI model." });
+  } catch (error: unknown) {
+    return res.status(502).json({ error: providerErrorMessage(error, "Failed to get a valid response from the AI model.") });
   }
 });
 
@@ -154,10 +176,10 @@ ${parsed.data.text}
 
     const jsonStr = (response.text || "").trim();
     if (!jsonStr) throw new Error("Empty response from AI model.");
-    const { detectedSourceLanguage, translatedText } = JSON.parse(jsonStr);
+    const { detectedSourceLanguage, translatedText } = parseTranslationResponse(jsonStr);
     return res.json({ detectedSourceLanguage, translatedText });
-  } catch (error: any) {
-    return res.status(502).json({ error: error.message || "Failed to translate the message." });
+  } catch (error: unknown) {
+    return res.status(502).json({ error: providerErrorMessage(error, "Failed to translate the message.") });
   }
 });
 
@@ -184,7 +206,7 @@ aiRouter.post("/tutorial-video", async (req, res) => {
         responseSchema: { type: "OBJECT", properties: { title: { type: "STRING" }, script: { type: "STRING" } } },
       },
     });
-    const { title, script } = JSON.parse((scriptResponse.text || "").trim());
+    const { title, script } = parseTutorialScript((scriptResponse.text || "").trim());
 
     const videoPrompt = `An engaging, clean, corporate-style tutorial video for a software platform, with on-screen text callouts, based on the following script: ${script}`;
     let operation = await genAI.models.generateVideos({
@@ -203,7 +225,7 @@ aiRouter.post("/tutorial-video", async (req, res) => {
 
     const videoUrl = `${downloadLink}&key=${process.env.GEMINI_API_KEY}`;
     return res.json({ title, script, videoUrl });
-  } catch (error: any) {
-    return res.json({ title: "", script: "", videoUrl: "", error: error.message || "Failed to generate video." });
+  } catch (error: unknown) {
+    return res.json({ title: "", script: "", videoUrl: "", error: providerErrorMessage(error, "Failed to generate video.") });
   }
 });

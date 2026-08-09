@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router';
 import { ResourcingCompanyProfile } from '../../types';
 import { Save, ShieldCheck } from '../../components/Icons';
+import { errorMessage } from '../../utils/errorMessage';
 
 interface SettingsViewProps {
     profile: ResourcingCompanyProfile;
@@ -28,8 +29,8 @@ export const SettingsView = ({ profile, onSave }: SettingsViewProps) => {
         try {
             await onSave(formData);
             setSaveMessage({ type: 'success', text: 'Settings saved successfully.' });
-        } catch (error: any) {
-            setSaveMessage({ type: 'error', text: error?.message || 'Could not save settings.' });
+        } catch (error: unknown) {
+            setSaveMessage({ type: 'error', text: errorMessage(error, 'Could not save settings.') });
         } finally {
             setIsSaving(false);
         }

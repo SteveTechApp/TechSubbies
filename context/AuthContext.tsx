@@ -3,15 +3,16 @@ import { User, Role } from '../types';
 import { MOCK_USERS, MOCK_USER_FREE_ENGINEER } from '../data/mockData';
 import { getDemoSession } from '../data/demoAccounts';
 import apiService from '../services/apiService';
+import type { CompanyRegistrationInput, EngineerRegistrationInput } from '../types/marketplaceApi';
 
 interface AuthContextType {
     user: User | null;
     isAuthLoading: boolean;
     login: (role: Role) => void;
     logout: () => void;
-    createAndLoginEngineer: (data: any) => Promise<void>;
-    createAndLoginCompany: (data: any) => Promise<void>;
-    createAndLoginResourcingCompany: (data: any) => Promise<void>;
+    createAndLoginEngineer: (data: EngineerRegistrationInput) => Promise<void>;
+    createAndLoginCompany: (data: CompanyRegistrationInput) => Promise<void>;
+    createAndLoginResourcingCompany: (data: CompanyRegistrationInput) => Promise<void>;
     // FIX: Added setUser to allow InteractionContext to update user profile data globally
     setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
@@ -63,19 +64,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
     
     // FIX: Implemented createAndLoginEngineer to fix missing property error.
-    const createAndLoginEngineer = async (data: any) => {
+    const createAndLoginEngineer = async (data: EngineerRegistrationInput) => {
         const newUser = await apiService.createEngineer(data);
         setUser(newUser);
     };
 
     // FIX: Implemented createAndLoginCompany to fix missing property error.
-    const createAndLoginCompany = async (data: any) => {
+    const createAndLoginCompany = async (data: CompanyRegistrationInput) => {
         const newUser = await apiService.createCompany(data);
         setUser(newUser);
     };
 
     // FIX: Implemented createAndLoginResourcingCompany to fix missing property error.
-    const createAndLoginResourcingCompany = async (data: any) => {
+    const createAndLoginResourcingCompany = async (data: CompanyRegistrationInput) => {
         const newUser = await apiService.createResourcingCompany(data);
         setUser(newUser);
     };

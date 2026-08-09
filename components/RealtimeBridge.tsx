@@ -1,18 +1,10 @@
 import { useEffect } from 'react';
 import { useAppContext } from '../context/InteractionContext';
 import { realtimeService } from '../services/realtimeService';
-import { realtimeApi } from '../services/realtimeApi';
+import { realtimeApi, toConversation, toMessage, toNotification } from '../services/realtimeApi';
 
-function toConversation(value: any) {
-  return { ...value, lastMessageTimestamp: new Date(value.lastMessageTimestamp), unreadCount: Number(value.unreadCount || 0) };
-}
-
-function toMessage(value: any) {
-  return { ...value, timestamp: new Date(value.timestamp) };
-}
-
-function toNotification(value: any) {
-  return { ...value, timestamp: new Date(value.timestamp) };
+function payloadRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === 'object' && value !== null ? value as Record<string, unknown> : null;
 }
 
 export const RealtimeBridge = () => {
@@ -24,8 +16,9 @@ export const RealtimeBridge = () => {
       return;
     }
 
-    const mergeConversation = (conversation: any) => {
-      const normalized = toConversation(conversation);
+    const mergeConversation = (conversation: unknown) => {
+      let normalized;
+      try { normalized = toConversation(conversation); } catch { return; }
       setAppData(previous => {
         const exists = previous.conversations.some(item => item.id === normalized.id);
         return {
@@ -53,38 +46,45 @@ export const RealtimeBridge = () => {
         .catch(() => undefined);
     };
 
-    const onMessageCreated = (payload: any) => {
-      if (!payload?.message) return;
-      const message = toMessage(payload.message);
+    const onMessageCreated = (payload: unknown) => {
+      const data = payloadRecord(payload);
+      if (!data?.message) return;
+      let message;
+      try { message = toMessage(data.message); } catch { return; }
       setAppData(previous => ({
         ...previous,
         messages: previous.messages.some(item => item.id === message.id)
           ? previous.messages.map(item => item.id === message.id ? message : item)
           : [...previous.messages, message],
       }));
-      if (payload.conversation) mergeConversation(payload.conversation);
+      if (data.conversation) mergeConversation(data.conversation);
     };
 
-    const onConversationUpdated = (payload: any) => {
-      if (payload?.conversation) mergeConversation(payload.conversation);
+    const onConversationUpdated = (payload: unknown) => {
+      const data = payloadRecord(payload);
+      if (data?.conversation) mergeConversation(data.conversation);
     };
 
-    const onConversationRead = (payload: any) => {
-      const ids = new Set<string>(Array.isArray(payload?.messageIds) ? payload.messageIds : []);
+    const onConversationRead = (payload: unknown) => {
+      const data = payloadRecord(payload);
+      if (!data) return;
+      const ids = new Set<string>(Array.isArray(data.messageIds) ? data.messageIds.filter((id): id is string => typeof id === 'string') : []);
       setAppData(previous => ({
         ...previous,
         messages: previous.messages.map(message => ids.has(message.id) ? { ...message, isRead: true } : message),
         conversations: previous.conversations.map(conversation =>
-          conversation.id === payload?.conversationId && payload?.readerId === user.id
+          conversation.id === data.conversationId && data.readerId === user.id
             ? { ...conversation, unreadCount: 0 }
             : conversation
         ),
       }));
     };
 
-    const onNotificationCreated = (payload: any) => {
-      if (!payload?.notification) return;
-      const notification = toNotification(payload.notification);
+    const onNotificationCreated = (payload: unknown) => {
+      const data = payloadRecord(payload);
+      if (!data?.notification) return;
+      let notification;
+      try { notification = toNotification(data.notification); } catch { return; }
       setAppData(previous => ({
         ...previous,
         notifications: previous.notifications.some(item => item.id === notification.id)
@@ -93,12 +93,15 @@ export const RealtimeBridge = () => {
       }));
     };
 
-    const onNotificationRead = (payload: any) => {
+    const onNotificationRead = (payload: unknown) => {
+      const data = payloadRecord(payload);
+      if (!data) return;
+      const notification = payloadRecord(data.notification);
       setAppData(previous => ({
         ...previous,
-        notifications: payload?.all
+        notifications: data.all === true
           ? previous.notifications.map(item => item.userId === user.id ? { ...item, isRead: true } : item)
-          : previous.notifications.map(item => item.id === payload?.notification?.id ? { ...item, isRead: true } : item),
+          : previous.notifications.map(item => item.id === notification?.id ? { ...item, isRead: true } : item),
       }));
     };
 

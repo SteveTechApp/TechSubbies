@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Role, User } from "../types";
 import apiService from "../services/apiService";
+import type { CompanyAttachmentRequestDTO, PartnershipRequestDTO } from "../types/marketplaceApi";
+import { errorMessage } from "../utils/errorMessage";
 
 const cardStyle: React.CSSProperties = {
   border: "1px solid rgba(103,232,249,0.18)",
@@ -59,25 +61,16 @@ const rowStyle: React.CSSProperties = {
   borderBottom: "1px solid rgba(255,255,255,0.08)",
 };
 
-interface RequestSummary {
-  id: string;
-  requesterId?: string;
-  partnerId?: string;
-  engineerId?: string;
-  resourcingCompanyId?: string;
-  status: string;
-}
-
 export function EngineerTeamCompanyPage() {
   const { user } = useAuth();
 
   const [partnerStatus, setPartnerStatus] = useState<{
-    incoming: RequestSummary[];
-    outgoing: RequestSummary[];
+    incoming: PartnershipRequestDTO[];
+    outgoing: PartnershipRequestDTO[];
     partner: User | null;
   }>({ incoming: [], outgoing: [], partner: null });
 
-  const [companyRequests, setCompanyRequests] = useState<RequestSummary[]>([]);
+  const [companyRequests, setCompanyRequests] = useState<CompanyAttachmentRequestDTO[]>([]);
   const [resourcingCompanies, setResourcingCompanies] = useState<User[]>([]);
   const [attachedCompany, setAttachedCompany] = useState<User | null>(null);
 
@@ -101,7 +94,7 @@ export function EngineerTeamCompanyPage() {
     setCompanyRequests(myCompanyRequests);
     setResourcingCompanies(companies);
 
-    const accepted = myCompanyRequests.find((r: RequestSummary) => r.status === "accepted");
+    const accepted = myCompanyRequests.find(r => r.status === "accepted");
     if (accepted?.resourcingCompanyId) {
       const company = await apiService.getUserById(accepted.resourcingCompanyId);
       setAttachedCompany(company);
@@ -113,7 +106,10 @@ export function EngineerTeamCompanyPage() {
 
   useEffect(() => {
     if (user && user.role === Role.ENGINEER) {
-      loadAll();
+      void loadAll().catch((error: unknown) => {
+        setPartnerMessage(errorMessage(error, "Team and company settings could not be loaded."));
+        setLoading(false);
+      });
     } else {
       setLoading(false);
     }
@@ -144,8 +140,8 @@ export function EngineerTeamCompanyPage() {
       setPartnerMessage(result.status === "accepted" ? "You're now teamed up!" : "Partner request sent.");
       setPartnerEmailInput("");
       await loadAll();
-    } catch (err: any) {
-      setPartnerMessage(err.message || "Could not send that request.");
+    } catch (err: unknown) {
+      setPartnerMessage(errorMessage(err, "Could not send that request."));
     } finally {
       setPartnerBusy(false);
     }
@@ -158,8 +154,8 @@ export function EngineerTeamCompanyPage() {
       await apiService.respondToPartnershipRequest(requestId, accept);
       setPartnerMessage(accept ? "Partner request accepted." : "Partner request declined.");
       await loadAll();
-    } catch (err: any) {
-      setPartnerMessage(err.message || "Could not respond to that request.");
+    } catch (err: unknown) {
+      setPartnerMessage(errorMessage(err, "Could not respond to that request."));
     } finally {
       setPartnerBusy(false);
     }
@@ -172,8 +168,8 @@ export function EngineerTeamCompanyPage() {
       await apiService.removePartnership();
       setPartnerMessage("Partner removed.");
       await loadAll();
-    } catch (err: any) {
-      setPartnerMessage(err.message || "Could not remove your partner.");
+    } catch (err: unknown) {
+      setPartnerMessage(errorMessage(err, "Could not remove your partner."));
     } finally {
       setPartnerBusy(false);
     }
@@ -187,8 +183,8 @@ export function EngineerTeamCompanyPage() {
       await apiService.requestCompanyAttachment(selectedCompanyId);
       setCompanyMessage("Request sent - waiting for the company to approve.");
       await loadAll();
-    } catch (err: any) {
-      setCompanyMessage(err.message || "Could not send that request.");
+    } catch (err: unknown) {
+      setCompanyMessage(errorMessage(err, "Could not send that request."));
     } finally {
       setCompanyBusy(false);
     }

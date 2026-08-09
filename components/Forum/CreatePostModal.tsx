@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 // FIX: Corrected import path for useAppContext to resolve 'not a module' error.
 import { useAppContext } from '../../context/InteractionContext';
 import { X, Send, Loader } from '../Icons';
+import { errorMessage } from '../../utils/errorMessage';
 
 interface CreatePostModalProps {
     isOpen: boolean;
@@ -36,8 +37,8 @@ export const CreatePostModal = ({ isOpen, onClose }: CreatePostModalProps) => {
             setTitle('');
             setContent('');
             setTags('');
-        } catch (e: any) {
-            setError(e.message || 'An unexpected error occurred.');
+        } catch (error: unknown) {
+            setError(errorMessage(error, 'An unexpected error occurred.'));
         } finally {
             setIsLoading(false);
         }

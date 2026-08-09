@@ -21,7 +21,14 @@ const registerSchema = z.object({
   name: z.string().min(1),
   // Full role-specific profile object the frontend already builds
   // (EngineerProfile / CompanyProfile / ResourcingCompanyProfile shape).
-  profileData: z.record(z.any()).optional().default({}),
+  profileData: z.record(z.unknown()).superRefine((profile, context) => {
+    if (profile.contact !== undefined && (typeof profile.contact !== "object" || profile.contact === null || Array.isArray(profile.contact))) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["contact"], message: "Profile contact must be an object." });
+    }
+    if (profile.roleProfiles !== undefined && !Array.isArray(profile.roleProfiles)) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["roleProfiles"], message: "Role profiles must be an array." });
+    }
+  }).optional().default({}),
 });
 
 authRouter.post("/register", async (req, res) => {
@@ -41,6 +48,11 @@ authRouter.post("/register", async (req, res) => {
   delete safeProfileData.profileTier;
   delete safeProfileData.requestedProfileTier;
   delete safeProfileData.membershipRequestedAt;
+  delete safeProfileData.membershipActivatedAt;
+  delete safeProfileData.membershipActivatedBy;
+  delete safeProfileData.id;
+  delete safeProfileData.role;
+  delete safeProfileData.status;
   if (role === "Engineer") {
     safeProfileData.profileTier = "Bronze";
   }
@@ -49,7 +61,7 @@ authRouter.post("/register", async (req, res) => {
     password: passwordHash,
     role,
     name,
-    profile: JSON.stringify({ ...safeProfileData, name, contact: { email, ...(safeProfileData.contact || {}) } }),
+    profile: JSON.stringify({ ...safeProfileData, name, contact: { ...(safeProfileData.contact as Record<string, unknown> || {}), email } }),
   });
   // The isolated browser suite cannot consume the in-memory development
   // email outbox. Keep the bypass explicit and unavailable by default.

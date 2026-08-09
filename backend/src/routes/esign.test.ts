@@ -12,6 +12,7 @@ process.env.NODE_ENV = "test";
 process.env.DROPBOX_SIGN_API_KEY = "callback-secret";
 
 const { createApp } = await import("../app.js");
+const { isTerminalContractStatus } = await import("./esign.js");
 const app = createApp();
 
 function callback(eventType: string, eventTime: string, valid = true) {
@@ -29,6 +30,12 @@ function callback(eventType: string, eventTime: string, valid = true) {
 }
 
 describe("Dropbox Sign webhook", () => {
+  it("recognises only contract terminal states", () => {
+    expect(isTerminalContractStatus("Completed")).toBe(true);
+    expect(isTerminalContractStatus("Cancelled")).toBe(true);
+    expect(isTerminalContractStatus("Active")).toBe(false);
+    expect(isTerminalContractStatus("provider-completed")).toBe(false);
+  });
   it("accepts a verified provider callback test event", async () => {
     const response = await request(app)
       .post("/api/esign/dropbox-sign/webhook")
@@ -44,5 +51,10 @@ describe("Dropbox Sign webhook", () => {
       .field("json", JSON.stringify(callback("signature_request_signed", "1669926464", false)));
 
     expect(response.status).toBe(401);
+  });
+
+  it("rejects a verified envelope whose JSON field is not a callback object", async () => {
+    const response = await request(app).post("/api/esign/dropbox-sign/webhook").field("json", "null");
+    expect(response.status).toBe(400);
   });
 });

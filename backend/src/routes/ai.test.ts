@@ -19,6 +19,7 @@ process.env.DB_FILE = TEST_DB;
 process.env.JWT_SECRET = "test-secret";
 const { createApp } = await import("../app.js");
 const app = createApp();
+const { parseTranslationResponse, parseTutorialScript } = await import("./ai.js");
 
 describe("POST /api/ai/translate", () => {
   it("reports 503 (not configured) when there is no GEMINI_API_KEY", async () => {
@@ -35,5 +36,18 @@ describe("POST /api/ai/translate", () => {
     // Validation runs before the "not configured" check for a well-formed
     // request, but an empty text still fails schema validation first.
     expect([400, 503]).toContain(res.status);
+  });
+});
+
+describe("AI structured response parsing", () => {
+  it("accepts complete translation and tutorial responses", () => {
+    expect(parseTranslationResponse('{"detectedSourceLanguage":"French","translatedText":"Hello"}')).toEqual({ detectedSourceLanguage: "French", translatedText: "Hello" });
+    expect(parseTutorialScript('{"title":"Routing","script":"Step one"}')).toEqual({ title: "Routing", script: "Step one" });
+  });
+
+  it("rejects primitive, partial, and incorrectly typed provider JSON", () => {
+    expect(() => parseTranslationResponse('null')).toThrow("Invalid translation response from AI model.");
+    expect(() => parseTranslationResponse('{"translatedText":42}')).toThrow("Invalid translation response from AI model.");
+    expect(() => parseTutorialScript('{"title":"Routing","script":""}')).toThrow("Invalid tutorial response from AI model.");
   });
 });

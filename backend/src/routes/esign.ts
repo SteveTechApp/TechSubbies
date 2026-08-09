@@ -50,6 +50,46 @@ function parseContractData(data: string) {
   }
 }
 
+export function isTerminalContractStatus(status: string): boolean {
+  return status === CONTRACT_STATUS.CANCELLED || status === CONTRACT_STATUS.COMPLETED;
+}
+
+const callbackRecord = (value: unknown): Record<string, unknown> | null => typeof value === "object" && value !== null && !Array.isArray(value)
+  ? value as Record<string, unknown>
+  : null;
+
+function parseDropboxCallback(value: unknown): DropboxCallback | null {
+  const root = callbackRecord(value);
+  if (!root) return null;
+  const rawEvent = callbackRecord(root.event);
+  const rawRequest = callbackRecord(root.signature_request);
+  const rawMetadata = callbackRecord(rawEvent?.event_metadata);
+  const string = (value: unknown): string | undefined => typeof value === "string" ? value : undefined;
+  const eventTime = typeof rawEvent?.event_time === "string" || typeof rawEvent?.event_time === "number" ? rawEvent.event_time : undefined;
+  const signatures = Array.isArray(rawRequest?.signatures) ? rawRequest.signatures.flatMap((value) => {
+    const signature = callbackRecord(value);
+    if (!signature) return [];
+    return [{
+      signature_id: string(signature.signature_id),
+      signer_name: string(signature.signer_name),
+      status_code: string(signature.status_code),
+      signed_at: typeof signature.signed_at === "number" ? signature.signed_at : null,
+    }];
+  }) : undefined;
+  return {
+    event: rawEvent ? {
+      event_type: string(rawEvent.event_type),
+      event_time: eventTime,
+      event_hash: string(rawEvent.event_hash),
+      event_metadata: rawMetadata ? { related_signature_id: string(rawMetadata.related_signature_id) || null } : undefined,
+    } : undefined,
+    signature_request: rawRequest ? {
+      signature_request_id: string(rawRequest.signature_request_id),
+      signatures,
+    } : undefined,
+  };
+}
+
 async function ensureRequest(contractId: string) {
   const existing = findContractEsignRequest(contractId);
   if (existing) return existing;
@@ -135,7 +175,7 @@ function extractCallback(body: Buffer, contentType: string): DropboxCallback | n
     if (separator < 0) continue;
     const json = part.slice(separator + 4).trim();
     try {
-      return JSON.parse(json) as DropboxCallback;
+      return parseDropboxCallback(JSON.parse(json));
     } catch {
       return null;
     }
@@ -153,7 +193,7 @@ function applySignedState(callback: DropboxCallback, contractId: string) {
   const request = findContractEsignRequest(contractId);
   if (!request) return;
   const initialContract = findContractById(contractId);
-  if (!initialContract || [CONTRACT_STATUS.CANCELLED, CONTRACT_STATUS.COMPLETED].includes(initialContract.status as any)) {
+  if (!initialContract || isTerminalContractStatus(initialContract.status)) {
     return;
   }
   const signatures = callback.signature_request?.signatures || [];
@@ -165,7 +205,7 @@ function applySignedState(callback: DropboxCallback, contractId: string) {
   );
   if (engineerSignature) {
     const contract = findContractById(contractId);
-    if (contract && !contract.engineerSignature && ![CONTRACT_STATUS.CANCELLED, CONTRACT_STATUS.COMPLETED].includes(contract.status as any)) {
+    if (contract && !contract.engineerSignature && !isTerminalContractStatus(contract.status)) {
       const engineer = findUserById(contract.engineerId);
       updateContractSignature(
         contract.id,
@@ -184,7 +224,7 @@ function applySignedState(callback: DropboxCallback, contractId: string) {
     if (
       contract?.engineerSignature
       && !contract.companySignature
-      && ![CONTRACT_STATUS.CANCELLED, CONTRACT_STATUS.COMPLETED].includes(contract.status as any)
+      && !isTerminalContractStatus(contract.status)
     ) {
       const company = findUserById(contract.companyId);
       updateContractSignature(

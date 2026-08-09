@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, CheckCircle, Clock } from './Icons';
 import apiService from '../services/apiService';
+import { errorMessage } from '../utils/errorMessage';
 
 interface FileUploadInputProps {
     label: string;
@@ -18,7 +19,17 @@ export const FileUploadInput = ({ label, fileUrl, isVerified, onFileChange, docu
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            setError('');setUploading(true);try{const saved=await apiService.uploadDocument(file,documentType);setFileName(saved.originalName);onFileChange(saved.fileUrl);}catch(value:any){setError(value.message||'Document upload failed.');}finally{setUploading(false);}
+            setError('');
+            setUploading(true);
+            try {
+                const saved = await apiService.uploadDocument(file, documentType);
+                setFileName(saved.originalName);
+                onFileChange(saved.fileUrl);
+            } catch (error: unknown) {
+                setError(errorMessage(error, 'Document upload failed.'));
+            } finally {
+                setUploading(false);
+            }
         }
     };
 

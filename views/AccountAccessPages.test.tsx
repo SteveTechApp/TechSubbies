@@ -56,6 +56,17 @@ describe("account access pages", () => {
     expect(await screen.findByText("If that account exists, reset instructions have been sent.")).toBeVisible();
   });
 
+  it("shows a safe fallback when password reset rejects with a non-Error value", async () => {
+    vi.mocked(apiService.requestPasswordReset).mockRejectedValue("offline");
+    const user = userEvent.setup();
+    render(<ForgotPasswordPage />);
+
+    await user.type(screen.getByLabelText("Email"), "engineer@example.com");
+    await user.click(screen.getByRole("button", { name: "Send reset instructions" }));
+
+    expect(await screen.findByText("The account request could not be completed.")).toBeVisible();
+  });
+
   it("does not submit reset passwords that do not match", async () => {
     window.history.replaceState({}, "", "/reset-password?token=reset-token");
     const user = userEvent.setup();

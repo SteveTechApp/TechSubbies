@@ -4,6 +4,7 @@ import { Logo } from '../components/Logo';
 import { ArrowLeft } from '../components/Icons';
 import { Country } from '../types';
 import { LocationAutocomplete } from '../components/LocationAutocomplete';
+import { errorMessage } from '../utils/errorMessage';
 
 interface CompanySignUpWizardProps {
     onCancel: () => void;
@@ -63,8 +64,8 @@ export const CompanySignUpWizard = ({ onCancel }: CompanySignUpWizardProps) => {
         setIsLoading(true);
         try {
             await createAndLoginCompany(formData);
-        } catch (err: any) {
-            setError(err.message || 'Could not create the account. Please try again.');
+        } catch (err: unknown) {
+            setError(errorMessage(err, 'Could not create the account. Please try again.'));
             setIsLoading(false);
         }
     };

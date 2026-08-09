@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useData } from '../../context/DataContext';
 // FIX: Replaced incorrect context hook 'useInteractions' with the correct hook 'useAppContext'.
 import { useAppContext } from '../../context/InteractionContext';
-import { Job, EngineerProfile, ApplicationStatus, Application } from '../../types';
+import { Job, EngineerProfile, ApplicationStatus, Application, Contract } from '../../types';
 import { MapPin, DollarSign, Users, Edit, Trash2, BrainCircuit, Star } from '../../components/Icons';
 import { CreateContractModal } from '../../components/CreateContractModal';
 import {
@@ -11,6 +11,7 @@ import {
     getApplicationPipelineCounts,
     matchesApplicationPipeline,
 } from '../../utils/applicationPipeline';
+import { errorMessage } from '../../utils/errorMessage';
 
 interface MyJobsViewProps {
     myJobs: Job[];
@@ -157,19 +158,19 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
             await sendOffer(selectedJob.id, engineer.id);
             setSelectedApplicant(engineer);
             setIsHireModalOpen(true);
-        } catch (error: any) {
-            alert(error?.message || 'Could not send the offer.');
+        } catch (error: unknown) {
+            alert(errorMessage(error, 'Could not send the offer.'));
         }
     };
-    
-    const handleContractSent = async (contract: any) => {
+
+    const handleContractSent = async (contract: Contract) => {
         try {
             await createContract(contract);
             alert(`Contract sent to ${selectedApplicant?.name} for signature!`);
             setIsHireModalOpen(false);
             setSelectedApplicant(null);
-        } catch (error: any) {
-            alert(error?.message || 'Could not send the contract.');
+        } catch (error: unknown) {
+            alert(errorMessage(error, 'Could not send the contract.'));
         }
     };
 
@@ -180,8 +181,8 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
         }
         try {
             await rejectApplication(selectedJob.id, engineer.id);
-        } catch (error: any) {
-            alert(error?.message || 'Could not reject the application.');
+        } catch (error: unknown) {
+            alert(errorMessage(error, 'Could not reject the application.'));
         }
     };
     

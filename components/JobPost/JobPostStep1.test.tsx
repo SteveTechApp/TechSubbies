@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { JobPostStep1 } from './JobPostStep1';
+import { Currency, ExperienceLevel, JobPostDraft, JobType } from '../../types';
 
 function Wrapper() {
-  const [jobDetails, setJobDetails] = useState({
+  const [jobDetails, setJobDetails] = useState<JobPostDraft>({
     canonicalRoleId: '',
     jobRole: '',
     title: '',
@@ -12,9 +13,10 @@ function Wrapper() {
     location: 'London',
     dayRate: '450',
     duration: '3 days',
-    currency: '£',
+    currency: Currency.GBP,
     startDate: '2026-09-01',
-    experienceLevel: 'Senior',
+    jobType: JobType.CONTRACT,
+    experienceLevel: ExperienceLevel.SENIOR,
     supervisionArrangement: '',
     supervisionDisclaimerAccepted: false,
   });

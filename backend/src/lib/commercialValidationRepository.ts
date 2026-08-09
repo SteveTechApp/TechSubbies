@@ -113,7 +113,9 @@ export function checkCommercialValidationRepository(): boolean {
   return row?.name === "commercial_validation_decisions";
 }
 
-function count(sql: string, ...params: any[]): number {
+type SqlParameter = string | number | bigint | null | Uint8Array;
+
+function count(sql: string, ...params: SqlParameter[]): number {
   const row = db.prepare(sql).get(...params) as { total?: number } | undefined;
   return Number(row?.total || 0);
 }
@@ -247,12 +249,60 @@ export function getCommercialValidationSummary(): CommercialValidationSummary {
   };
 }
 
-function rowToDecision(row: any): CommercialDecision {
+const decisionRoles: PricingResearchRole[] = ["Engineer", "Company", "Resourcing Company"];
+const decisionStatuses: CommercialDecisionStatus[] = ["draft", "approved-for-cohort", "rejected", "completed"];
+const pricingValueDrivers: PricingValueDriver[] = ["verified-talent", "better-matching", "faster-hiring", "profile-visibility", "evidence-verification", "contract-workflow", "messaging", "analytics", "resourcing-roster", "priority-support"];
+
+function decisionRecord(value: unknown): Record<string, unknown> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) throw new Error("Stored commercial validation decision is invalid.");
+  return value as Record<string, unknown>;
+}
+
+function parseStoredJson(value: string, label: string): unknown {
+  try { return JSON.parse(value); } catch { throw new Error(`Stored commercial validation ${label} is corrupt.`); }
+}
+
+function rowToDecision(value: unknown): CommercialDecision {
+  const row = decisionRecord(value);
+  const requiredString = (field: string): string => {
+    const value = row[field];
+    if (typeof value !== "string" || !value) throw new Error("Stored commercial validation decision is invalid.");
+    return value;
+  };
+  const accountRole = requiredString("accountRole") as PricingResearchRole;
+  const status = requiredString("status") as CommercialDecisionStatus;
+  if (!decisionRoles.includes(accountRole) || !decisionStatuses.includes(status)) throw new Error("Stored commercial validation decision is invalid.");
+  const rawDrivers = parseStoredJson(requiredString("valueDrivers"), "value drivers");
+  if (!Array.isArray(rawDrivers) || !rawDrivers.every((driver): driver is PricingValueDriver => typeof driver === "string" && pricingValueDrivers.includes(driver as PricingValueDriver))) {
+    throw new Error("Stored commercial validation value drivers are invalid.");
+  }
+  let evidenceSnapshot: CommercialRoleValidation | null = null;
+  if (typeof row.evidenceSnapshot === "string" && row.evidenceSnapshot) {
+    const snapshot = parseStoredJson(row.evidenceSnapshot, "evidence snapshot");
+    evidenceSnapshot = decisionRecord(snapshot) as CommercialRoleValidation;
+  } else if (row.evidenceSnapshot !== null && row.evidenceSnapshot !== undefined) {
+    throw new Error("Stored commercial validation evidence snapshot is invalid.");
+  }
+  const monthly = Number(row.candidateMonthlyPrice);
+  const annual = row.candidateAnnualPrice === null ? null : Number(row.candidateAnnualPrice);
+  if (!Number.isFinite(monthly) || (annual !== null && !Number.isFinite(annual))) throw new Error("Stored commercial validation decision is invalid.");
+  const optionalString = (field: string): string | null => row[field] === null || row[field] === undefined ? null : requiredString(field);
   return {
-    ...row,
-    valueDrivers: JSON.parse(row.valueDrivers || "[]"),
-    evidenceSnapshot: row.evidenceSnapshot ? JSON.parse(row.evidenceSnapshot) : null,
-  } as CommercialDecision;
+    id: requiredString("id"),
+    accountRole,
+    packageName: requiredString("packageName"),
+    candidateMonthlyPrice: monthly,
+    candidateAnnualPrice: annual,
+    valueDrivers: rawDrivers,
+    status,
+    evidenceSnapshot,
+    decisionNote: optionalString("decisionNote"),
+    createdBy: requiredString("createdBy"),
+    decidedBy: optionalString("decidedBy"),
+    createdAt: requiredString("createdAt"),
+    updatedAt: requiredString("updatedAt"),
+    decidedAt: optionalString("decidedAt"),
+  };
 }
 
 export function listCommercialDecisions(): CommercialDecision[] {

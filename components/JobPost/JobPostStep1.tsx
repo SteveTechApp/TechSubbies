@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { ExperienceLevel } from '../../types';
+import { ExperienceLevel, JobPostDraft } from '../../types';
 import { canonicalRoleRegistry } from '../../data/canonicalRoleRegistry';
 import { ArrowRight, Sparkles } from '../Icons';
 import { AIJobHelper } from '../AIJobHelper';
 import { requiresLeadSupervision, hasLeadSupervisionConfirmed } from '../../utils/leadSupervision';
 
 interface JobPostStep1Props {
-    jobDetails: any;
-    setJobDetails: (details: any) => void;
+    jobDetails: JobPostDraft;
+    setJobDetails: React.Dispatch<React.SetStateAction<JobPostDraft>>;
     onNext: () => void;
 }
 
@@ -18,14 +18,14 @@ export const JobPostStep1 = ({ jobDetails, setJobDetails, onNext }: JobPostStep1
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setJobDetails((prev: any) => ({ ...prev, [name]: value }));
+        setJobDetails(prev => ({ ...prev, [name]: value }));
     };
 
     const handleRoleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const roleId = e.target.value;
         const role = canonicalRoleRegistry.find((item) => item.id === roleId);
         if (!role) return;
-        setJobDetails((prev: any) => ({
+        setJobDetails(prev => ({
             ...prev,
             canonicalRoleId: role.id,
             jobRole: role.title,
@@ -39,7 +39,7 @@ export const JobPostStep1 = ({ jobDetails, setJobDetails, onNext }: JobPostStep1
     };
 
     const handleLeadAccepted = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setJobDetails((prev: any) => ({ ...prev, supervisionDisclaimerAccepted: e.target.checked }));
+        setJobDetails(prev => ({ ...prev, supervisionDisclaimerAccepted: e.target.checked }));
     };
 
     const handleNext = () => {

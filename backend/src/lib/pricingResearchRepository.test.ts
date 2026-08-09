@@ -75,4 +75,22 @@ describe('pricingResearchRepository', () => {
     expect(companies.medianPriceGoodValue).toBe(50);
     expect(companies.topValueDrivers[0]).toEqual({ driver: 'faster-hiring', responses: 1 });
   });
+
+  it.each([
+    ['invalid value-driver JSON', 'not-json', 'Engineer'],
+    ['unknown value driver', '["unknown-driver"]', 'Engineer'],
+    ['unknown account role', '[]', 'Administrator'],
+  ])('rejects persisted rows with %s', (_label, valueDrivers, accountRole) => {
+    const engineer = user('Engineer', `corrupt-${accountRole}@example.com`);
+    const saved = upsertPricingResearchResponse(engineer.id, 'Engineer', input());
+    db.prepare(`
+      UPDATE pricing_research_responses
+      SET valueDrivers = ?, accountRole = ?
+      WHERE id = ?
+    `).run(valueDrivers, accountRole, saved.id);
+
+    expect(() => findPricingResearchResponse(engineer.id)).toThrow(
+      expect.objectContaining({ code: 'PERSISTED_DATA_CORRUPT', statusCode: 500 }),
+    );
+  });
 });

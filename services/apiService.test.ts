@@ -1,6 +1,6 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import apiService, { clearAuthToken } from './apiService';
-import { ApplicationStatus, Contract, ContractStatus, ContractType, Currency, Role } from '../types';
+import { ApplicationStatus, Contract, ContractStatus, ContractType, Currency, ExperienceLevel, JobType, Role } from '../types';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -26,11 +26,22 @@ describe('apiService.createEngineer', () => {
     // Keep this unit test independent of whether the local backend is running.
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Network unavailable in unit test')));
 
-    const newUser: any = await apiService.createEngineer({ name: 'Test Engineer', email: 'test@example.com' });
+    const newUser = await apiService.createEngineer({ name: 'Test Engineer', email: 'test@example.com', password: 'correcthorsebattery' });
 
     expect(newUser.role).toBe(Role.ENGINEER);
     expect(newUser.profile.name).toBe('Test Engineer');
     expect(newUser.profile.contact.email).toBe('test@example.com');
+  });
+});
+
+describe('apiService user response validation', () => {
+  it('rejects malformed public user payloads instead of casting them', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: 42, role: Role.ENGINEER, profile: null }),
+    }));
+
+    await expect(apiService.getUserById('broken-user')).rejects.toThrow('Invalid user response.');
   });
 });
 
@@ -40,7 +51,20 @@ describe('apiService.createEngineer', () => {
 describe('apiService.postJob', () => {
   it('falls back to the in-memory mock when there is no backend session', async () => {
     clearAuthToken();
-    const job: any = await apiService.postJob({ title: 'Test Job', jobRole: 'senior-av-installer' });
+    const job = await apiService.postJob({
+      companyId: 'company-1',
+      title: 'Test Job',
+      description: 'A typed marketplace test job.',
+      location: 'London',
+      dayRate: '500',
+      duration: '2 weeks',
+      currency: Currency.GBP,
+      startDate: null,
+      jobType: JobType.CONTRACT,
+      experienceLevel: ExperienceLevel.SENIOR,
+      jobRole: 'senior-av-installer',
+      skillRequirements: [],
+    });
 
     expect(job.id).toBeDefined();
     expect(job.status).toBe('active');

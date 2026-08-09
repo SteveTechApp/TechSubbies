@@ -10,7 +10,8 @@ import {
 } from "../data/roleExpectations";
 import { checkOpportunityReadiness } from "../services/trustEngine";
 import { useAppContext } from "../context/InteractionContext";
-import { toCanonicalRoleRequirement } from "../services/canonicalCapability";
+import { Currency, ExperienceLevel, JobType, SkillImportance } from "../types";
+import { errorMessage } from "../utils/errorMessage";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -255,21 +256,27 @@ export default function LiveOpportunityIntakePage() {
     try {
       await postJob({
         title: project.projectName,
-        roleId: needs[0].expectationId,
-        roleIds: needs.map((need) => need.expectationId),
-        description: project.notes,
+        description: project.notes || `${project.projectType} opportunity for ${project.clientName}.`,
         location: project.siteLocation,
-        status: "active",
-        projectDetails: project,
-        engineerNeeds: needs,
-        skillRequirements: needs.flatMap((need) => need.skills.map((skill) => ({ ...skill, roleId: need.expectationId }))),
-        prerequisites: needs.flatMap((need) => need.prerequisites),
-        jobSchemaVersion: 2,
-        roleRequirements: needs.map(toCanonicalRoleRequirement),
+        dayRate: String(Math.max(...needs.map((need) => need.dayRate))),
+        duration: `${Math.max(...needs.map((need) => need.durationDays))} days`,
+        currency: Currency.GBP,
+        startDate: needs[0].startDate ? new Date(needs[0].startDate) : null,
+        jobType: JobType.CONTRACT,
+        experienceLevel: ExperienceLevel.MID_LEVEL,
+        jobRole: getRoleExpectation(needs[0].expectationId).roleTitle,
+        canonicalRoleId: needs[0].expectationId,
+        skillRequirements: needs.flatMap((need) => need.skills.map((skill) => ({
+          name: skill.skill,
+          importance: skill.importance >= 4 ? SkillImportance.ESSENTIAL : SkillImportance.DESIRABLE,
+          requiredLevel: skill.minimumLevel * 20,
+        }))),
+        deliveryContext: needs.some((need) => need.workingArrangement === 'lead') ? 'lead' :
+          needs.some((need) => need.workingArrangement === 'independent') ? 'independent' : 'assisted',
       });
       setPublishState("published");
-    } catch (error: any) {
-      setPublishError(error.message || "Could not publish this opportunity.");
+    } catch (error: unknown) {
+      setPublishError(errorMessage(error, "Could not publish this opportunity."));
       setPublishState("idle");
     }
   }

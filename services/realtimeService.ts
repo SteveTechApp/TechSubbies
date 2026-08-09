@@ -1,6 +1,8 @@
 import { API_BASE_URL } from './apiConfig';
 
-type Callback = (data: any) => void;
+import type { Message } from '../types';
+
+type Callback = (data: unknown) => void;
 
 const SERVER_EVENTS = [
   'realtime.connected',
@@ -46,16 +48,16 @@ class RealtimeService {
     this.source = null;
   }
 
-  private emit(event: string, data: any) {
+  private emit(event: string, data: unknown) {
     for (const callback of this.listeners[event] || []) callback(data);
   }
 
   // Retained for local/demo-only paths that do not have a backend session.
-  mockPush(event: string, data: any) {
+  mockPush(event: string, data: unknown) {
     this.emit(event, data);
   }
 
-  simulateNewMessage(conversationId: string, message: any) {
+  simulateNewMessage(conversationId: string, message: Message) {
     this.emit(`new-message:${conversationId}`, message);
     this.emit('new-message', message);
   }
