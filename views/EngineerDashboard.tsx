@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-// FIX: Replaced incorrect context hook 'useInteractions' with the correct hook 'useAppContext'.
 import { useAppContext } from '../context/InteractionContext';
-import { DashboardSidebar } from '../components/DashboardSidebar';
+import { DashboardShell } from '../components/DashboardShell';
 import { EngineerProfile } from '../types';
 import { DashboardView } from './EngineerDashboard/DashboardView';
 import { ProfileManagementView } from './EngineerDashboard/ProfileManagementView';
@@ -12,21 +11,25 @@ import { MessagesView } from './MessagesView';
 import { AIToolsView } from './EngineerDashboard/AIToolsView';
 import { MyNetworkView } from './EngineerDashboard/MyNetworkView';
 import { SettingsView } from './EngineerDashboard/SettingsView';
+import { InclusivePreferencesView } from './EngineerDashboard/InclusivePreferencesView';
 import { AICoachView } from './EngineerDashboard/AICoachView';
 import { StoryboardCreatorView } from './EngineerDashboard/StoryboardCreatorView';
 import { AnalyticsView } from './EngineerDashboard/AnalyticsView';
 import { ContractsView } from './ContractsView';
 import { FindPartnerView } from './EngineerDashboard/FindPartnerView';
-import { InvoicesView } from './InvoicesView';
 import { ForumView } from './ForumView';
 import { PaymentsView } from './EngineerDashboard/PaymentsView';
 import { LoyaltyView } from './EngineerDashboard/LoyaltyView';
+import { ApplicationsView } from './EngineerDashboard/ApplicationsView';
+import { CertificatesView } from './EngineerDashboard/CertificatesView';
+import { TaxonomyReviewView } from './EngineerDashboard/TaxonomyReviewView';
+import { DashboardHelpCenter } from '../components/DashboardHelpCenter';
+import { PricingResearchView } from './PricingResearchView';
 
 export const EngineerDashboard = () => {
     const { user } = useAuth();
     const { updateEngineerProfile, boostProfile, addSkillsToProfile } = useAppContext();
     const [activeView, setActiveView] = useState('Dashboard');
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     if (!user || user.role !== 'Engineer') {
         return <div>Error: Not an engineer user.</div>;
@@ -40,19 +43,24 @@ export const EngineerDashboard = () => {
                 return <DashboardView engineerProfile={engineerProfile} onUpgradeTier={() => setActiveView('Billing')} setActiveView={setActiveView} boostProfile={boostProfile} />;
             case 'Manage Profile':
                 return <ProfileManagementView profile={engineerProfile} onSave={updateEngineerProfile} setActiveView={setActiveView} />;
+            case 'Work Preferences':
+                return <InclusivePreferencesView profile={engineerProfile} onSave={updateEngineerProfile} />;
+            case 'Certificates':
+                return <CertificatesView />;
+            case 'Taxonomy Review':
+                return <TaxonomyReviewView />;
             case 'Job Search':
                  return <JobSearchView setActiveView={setActiveView} />;
+            case 'Applications':
+                return <ApplicationsView engineerProfile={engineerProfile} setActiveView={setActiveView} />;
             case 'Find a Partner':
                 return <FindPartnerView setActiveView={setActiveView} />;
             case 'My Network':
                  return <MyNetworkView setActiveView={setActiveView} />;
             case 'Availability':
-                return <AvailabilityView profile={engineerProfile} onUpdateAvailability={(date) => updateEngineerProfile({ id: engineerProfile.id, availability: date })} setActiveView={setActiveView} />;
+                return <AvailabilityView profile={engineerProfile} onUpdateProfile={updateEngineerProfile} setActiveView={setActiveView} />;
             case 'Contracts':
                 return <ContractsView setActiveView={setActiveView} />;
-            case 'Invoices':
-            case 'Membership Invoices':
-                return <InvoicesView />;
             case 'Messages':
                 return <MessagesView />;
             case 'AI Tools':
@@ -63,6 +71,8 @@ export const EngineerDashboard = () => {
                 return <StoryboardCreatorView profile={engineerProfile} setActiveView={setActiveView} />;
             case 'Analytics':
                 return <AnalyticsView />;
+            case 'Pricing Research':
+                return <PricingResearchView />;
             case 'Forum':
                 return <ForumView setActiveView={setActiveView} />;
             case 'Billing':
@@ -71,17 +81,16 @@ export const EngineerDashboard = () => {
                 return <LoyaltyView profile={engineerProfile} setActiveView={setActiveView} />;
             case 'Settings':
                 return <SettingsView profile={engineerProfile} onSave={updateEngineerProfile} setActiveView={setActiveView} />;
+            case 'Help Center':
+                return <DashboardHelpCenter role={user.role} setActiveView={setActiveView} />;
             default:
                 return <div>View not found</div>;
         }
     };
 
     return (
-        <div className="flex h-screen bg-gray-100">
-            <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-1 p-6 overflow-y-auto">
-                {renderView()}
-            </main>
-        </div>
+        <DashboardShell activeView={activeView} setActiveView={setActiveView}>
+            {renderView()}
+        </DashboardShell>
     );
 };

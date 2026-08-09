@@ -22,28 +22,35 @@ import {
     Clapperboard,
     LifeBuoy,
     Gift,
-    Handshake
+    Handshake,
+    X
 } from './Icons';
 
 interface DashboardSidebarProps {
     activeView: string;
     setActiveView: (view: string) => void;
+    onNavigate?: () => void;
+    onClose?: () => void;
 }
 
 const ENGINEER_LINKS = [
     { label: 'Dashboard', icon: LayoutDashboard },
     { label: 'Manage Profile', icon: User },
+    { label: 'Work Preferences', icon: Settings },
+    { label: 'Certificates', icon: ShieldCheck },
+    { label: 'Taxonomy Review', icon: Layers },
     { label: 'Job Search', icon: Search },
+    { label: 'Applications', icon: ClipboardList },
     { label: 'My Network', icon: Users },
     { label: 'Find a Partner', icon: Handshake },
     { label: 'Availability', icon: CalendarDays },
     { label: 'Contracts', icon: Briefcase },
-    { label: 'Membership Invoices', icon: DollarSign },
     { label: 'Messages', icon: MessageCircle },
     { label: 'AI Tools', icon: Lightbulb },
     { label: 'AI Coach', icon: ShieldCheck },
     { label: 'Storyboard Creator', icon: Clapperboard },
     { label: 'Analytics', icon: BarChart2 },
+    { label: 'Pricing Research', icon: DollarSign },
     { label: 'Forum', icon: MessageCircle },
     { label: 'Billing', icon: DollarSign },
     { label: 'Loyalty Program', icon: Gift },
@@ -58,9 +65,9 @@ const COMPANY_LINKS = [
     { label: 'Project Planner', icon: KanbanSquare },
     { label: 'Project Tracking', icon: ClipboardList },
     { label: 'Contracts', icon: Briefcase },
-    { label: 'Membership Invoices', icon: DollarSign },
     { label: 'Messages', icon: MessageCircle },
     { label: 'Analytics', icon: BarChart2 },
+    { label: 'Pricing Research', icon: DollarSign },
     { label: 'Settings', icon: Settings },
 ];
 
@@ -69,23 +76,31 @@ const RESOURCING_LINKS = [
     { label: 'Manage Engineers', icon: Users },
     { label: 'Find Jobs', icon: Search },
     { label: 'Contracts', icon: Briefcase },
-    { label: 'Membership Invoices', icon: DollarSign },
     { label: 'Messages', icon: MessageCircle },
     { label: 'Analytics', icon: BarChart2 },
+    { label: 'Pricing Research', icon: DollarSign },
     { label: 'Settings', icon: Settings },
 ];
 
 const ADMIN_LINKS = [
     { label: 'Dashboard', icon: LayoutDashboard },
+    { label: 'Marketplace Analytics', icon: BarChart2 },
+    { label: 'Commercial Validation', icon: DollarSign },
     { label: 'Manage Users', icon: Users },
+    { label: 'Role Taxonomy', icon: Layers },
+    { label: 'Adjacent Families', icon: Layers },
+    { label: 'Subscription Billing', icon: DollarSign },
+    { label: 'Contract Support', icon: LifeBuoy },
+    { label: 'Certificate Verification', icon: ShieldCheck },
+    { label: 'Privacy Requests', icon: ShieldCheck },
     { label: 'Manage Jobs', icon: Briefcase },
     { label: 'Monetization', icon: DollarSign },
     { label: 'Platform Settings', icon: Settings },
 ];
 
-export const DashboardSidebar = ({ activeView, setActiveView }: DashboardSidebarProps) => {
+export const DashboardSidebar = ({ activeView, setActiveView, onNavigate, onClose }: DashboardSidebarProps) => {
     const { user, logout } = useAuth();
-    
+
     if (!user) return null;
 
     let links;
@@ -109,26 +124,36 @@ export const DashboardSidebar = ({ activeView, setActiveView }: DashboardSidebar
     const commonLinks = [
         { label: 'Help Center', icon: LifeBuoy }
     ];
-
-    if(user.role !== Role.ENGINEER) {
-        // links = [...links, ...commonLinks.filter(l => l.label !== 'Messages')];
-    }
+    const navigate = (view: string) => {
+        setActiveView(view);
+        onNavigate?.();
+    };
 
     return (
-        <aside className="w-64 bg-white flex-shrink-0 flex flex-col border-r shadow-lg">
-            <div className="p-4 border-b">
+        <aside className="flex h-full w-64 flex-shrink-0 flex-col border-r bg-white shadow-lg">
+            <div className="flex items-center justify-between border-b p-4">
                 <Logo className="h-10" />
+                {onClose && (
+                    <button
+                        type="button"
+                        aria-label="Close dashboard navigation"
+                        onClick={onClose}
+                        className="rounded-md p-2 text-gray-600 hover:bg-gray-100 md:hidden"
+                    >
+                        <X size={20} />
+                    </button>
+                )}
             </div>
             <nav className="flex-grow p-2 overflow-y-auto custom-scrollbar">
                 <ul>
                     {links.map(link => (
-                        <NavLink key={link.label} {...link} activeView={activeView} setActiveView={setActiveView} />
+                        <NavLink key={link.label} {...link} activeView={activeView} setActiveView={navigate} />
                     ))}
                 </ul>
                  <div className="mt-4 pt-4 border-t">
                     <ul>
                          {commonLinks.map(link => (
-                            <NavLink key={link.label} {...link} activeView={activeView} setActiveView={setActiveView} />
+                            <NavLink key={link.label} {...link} activeView={activeView} setActiveView={navigate} />
                         ))}
                     </ul>
                 </div>

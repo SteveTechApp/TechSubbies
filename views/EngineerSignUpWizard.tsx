@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from "react";
-import { normaliseRoleIdentity } from "../services/roleIdentity";
 import {
   cloneSkillRequirements,
   getRoleExpectation,
@@ -10,8 +9,12 @@ import {
   type SkillRequirement,
 } from "../data/roleExpectations";
 import { useAppContext } from "../context/InteractionContext";
-import { generalSectorProfiles } from "../data/generalSectorProfiles";
-import { toCanonicalCapabilityProfile } from "../services/canonicalCapability";
+import {
+  formatMonthlyMembershipPrice,
+  membershipPlanForSpecialistRoles,
+} from "../data/membershipPlans";
+import { ProfileTier } from "../types";
+import { canonicalRoleIdForLegacy, getCanonicalRole } from "../data/canonicalRoleRegistry";
 
 type EngineerSignUpWizardProps = {
   onCancel?: () => void;
@@ -63,7 +66,6 @@ type EngineerRoleProfile = {
   specialistOnly: boolean;
   skills: EngineerSkill[];
   profileNote: string;
-  customKeywords: string[];
 };
 
 const defaultAccount: AccountDetails = {
@@ -116,7 +118,6 @@ function makeRoleProfile(expectationId: string): EngineerRoleProfile {
       evidenceNote: "",
     })),
     profileNote: "",
-    customKeywords: [],
   };
 }
 
@@ -326,9 +327,6 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
   const [account, setAccount] = useState<AccountDetails>(defaultAccount);
   const [readiness, setReadiness] = useState<ReadinessDetails>(defaultReadiness);
   const [roleProfiles, setRoleProfiles] = useState<EngineerRoleProfile[]>([]);
-  const [freeSector, setFreeSector] = useState<"AV" | "IT">("AV");
-  const [acceptLowResponsibilityWork, setAcceptLowResponsibilityWork] = useState(true);
-  const [freeSectorRatings, setFreeSectorRatings] = useState<Record<string, number>>({});
   const [selectedProfileId, setSelectedProfileId] = useState<string>("");
   const [documentNotes, setDocumentNotes] = useState("");
   const [published, setPublished] = useState(false);
@@ -406,12 +404,10 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
   }
 
   async function publishProfile() {
-    const canonicalProfiles = activeProfiles.map(toCanonicalCapabilityProfile);
     const draft = {
       account,
       readiness,
-      roleProfiles: canonicalProfiles,
-      sectorProfiles: [{ sector: freeSector, includedInGeneralSearch: true, acceptLowResponsibilityWork, scope: "general-support-only", ratings: freeSectorRatings }],
+      roleProfiles: activeProfiles,
       documentNotes,
       publishedAt: new Date().toISOString(),
     };
@@ -441,8 +437,28 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
           : 0,
         minDayRate: activeProfiles[0]?.targetDayRate,
         maxDayRate: activeProfiles[0]?.targetDayRate,
-        roleSkillProfiles: canonicalProfiles,
-        sectorProfiles: [{ sector: freeSector, includedInGeneralSearch: true, acceptLowResponsibilityWork, scope: "general-support-only", ratings: freeSectorRatings }],
+        workingRadiusMiles: account.travelRadiusMiles,
+        roleProfiles: activeProfiles.map((profile) => ({
+          ...profile,
+          roleId: canonicalRoleIdForLegacy(profile.expectationId),
+        })),
+        selectedJobRoles: activeProfiles.map((profile) => {
+          const roleId = canonicalRoleIdForLegacy(profile.expectationId);
+          return {
+            roleId,
+            roleName: getCanonicalRole(roleId)?.title || getRoleExpectation(profile.expectationId).roleTitle,
+            skills: profile.skills.map(skill => ({
+              name: skill.skill,
+              rating: skill.selfLevel * 20,
+              evidenceNote: skill.evidenceNote,
+            })),
+            overallScore: profile.skills.length
+              ? Math.round(profile.skills.reduce((sum, skill) => sum + skill.selfLevel * 20, 0) / profile.skills.length)
+              : 0,
+          };
+        }),
+        readiness,
+        documentNotes,
       });
       setPublished(true);
     } catch (error: any) {
@@ -613,28 +629,6 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
               Select the roles you genuinely want to be matched for. You can accept basic support work separately without overstating specialist ability.
             </p>
-
-            <section className="mt-6 rounded-2xl border border-emerald-300/30 bg-emerald-300/10 p-5">
-              <h3 className="font-bold text-emerald-200">Included free sector profile</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-300">Choose General AV or General IT. This gives visibility only for broadly scoped support work; it does not claim any named role, specialist skill, software competence or manufacturer knowledge.</p>
-              <div className="mt-4 grid gap-3 md:grid-cols-3">
-                <ToggleCard active={freeSector === "AV"} title="General AV" detail="Basic AV support visibility with limited expectations." onClick={() => setFreeSector("AV")} />
-                <ToggleCard active={freeSector === "IT"} title="General IT" detail="Basic IT support visibility with limited expectations." onClick={() => setFreeSector("IT")} />
-                <ToggleCard active={acceptLowResponsibilityWork} title="Offer me for basic work" detail="Turn off to exclude your free profile from low-responsibility opportunities." onClick={() => setAcceptLowResponsibilityWork((value) => !value)} />
-              </div>
-              <div className="mt-5 grid gap-3 md:grid-cols-2">
-                {generalSectorProfiles[freeSector].skills.map((skill) => (
-                  <label key={skill.id} className="rounded-xl border border-white/10 bg-slate-950 p-3">
-                    <span className="text-sm font-bold text-white">{skill.label}</span>
-                    <span className="mt-1 block text-xs leading-5 text-slate-500">{skill.expectation}</span>
-                    <select className={`${selectClass()} mt-3`} value={freeSectorRatings[skill.id] || 0} onChange={(event) => setFreeSectorRatings((current) => ({ ...current, [skill.id]: Number(event.target.value) }))}>
-                      <option value={0}>0 - Not claimed</option><option value={1}>1 - Aware</option><option value={2}>2 - Assisted</option><option value={3}>3 - Competent under normal scope</option>
-                    </select>
-                  </label>
-                ))}
-              </div>
-              <p className="mt-4 text-xs leading-5 text-amber-100">Not included: {generalSectorProfiles[freeSector].exclusions.join(" · ")}</p>
-            </section>
 
             <div className="mt-6 grid gap-5 lg:grid-cols-3">
               {(["AV", "IT", "Hybrid"] as const).map((family) => (
@@ -890,17 +884,6 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
                           </div>
                         </article>
                       ))}
-                    </div>
-
-                    <div className="mt-5">
-                      <Field label="Software, manufacturer and hardware keywords" hint="Comma-separated, role-specific experience such as Crestron SIMPL, Cisco Catalyst, Q-SYS Designer or ServiceNow. A customer may mark one of these as a prerequisite.">
-                        <input
-                          className={inputClass()}
-                          value={selectedProfile.customKeywords.join(", ")}
-                          onChange={(event) => updateProfile(selectedProfile.id, { customKeywords: event.target.value.split(",").map((value) => value.trim()).filter(Boolean) })}
-                          placeholder="e.g. Crestron SIMPL, NVX, Cisco Catalyst"
-                        />
-                      </Field>
                     </div>
 
                     <div className="mt-5">

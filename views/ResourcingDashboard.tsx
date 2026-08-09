@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import { DashboardSidebar } from '../components/DashboardSidebar';
-import { Role, EngineerProfile, Contract, ResourcingCompanyProfile } from '../types';
+import { useAppContext } from '../context/InteractionContext';
+import { DashboardShell } from '../components/DashboardShell';
+import { DashboardHelpCenter } from '../components/DashboardHelpCenter';
+import { Role, ResourcingCompanyProfile } from '../types';
 import { DashboardView } from './ResourcingDashboard/DashboardView';
 import { ManageEngineersView } from './ResourcingDashboard/ManageEngineersView';
 import { FindJobsView } from './ResourcingDashboard/FindJobsView';
@@ -11,11 +13,12 @@ import { AddNewEngineerView } from './ResourcingDashboard/AddNewEngineerView';
 import { MessagesView } from '../views/MessagesView';
 import { PlacementsView } from './ResourcingDashboard/PlacementsView';
 import { AnalyticsView } from './ResourcingDashboard/AnalyticsView';
-import { InvoicesView } from './InvoicesView';
+import { PricingResearchView } from './PricingResearchView';
 
 export const ResourcingDashboard = () => {
     const { user } = useAuth();
     const { engineers, applications, contracts } = useData();
+    const { updateCompanyProfile } = useAppContext();
     const [activeView, setActiveView] = useState('Dashboard');
     
     if (!user || user.role !== Role.RESOURCING_COMPANY) {
@@ -51,23 +54,22 @@ export const ResourcingDashboard = () => {
                 return <MessagesView />;
             case 'Analytics':
                 return <AnalyticsView />;
-            case 'Membership Invoices':
-                return <InvoicesView />;
+            case 'Pricing Research':
+                return <PricingResearchView />;
             case 'Settings':
-                return <SettingsView profile={resourcingProfile} onSave={() => {}} />;
+                return <SettingsView profile={resourcingProfile} onSave={updateCompanyProfile} />;
             case 'Add New Engineer':
                 return <AddNewEngineerView resourcingCompanyId={user.profile.id} onEngineerAdded={handleEngineerAdded} />;
+            case 'Help Center':
+                return <DashboardHelpCenter role={user.role} setActiveView={setActiveView} />;
             default:
                 return <div>View not found</div>;
         }
     };
 
     return (
-        <div className="flex h-screen bg-gray-100">
-            <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-1 p-6 overflow-y-auto">
-                {renderView()}
-            </main>
-        </div>
+        <DashboardShell activeView={activeView} setActiveView={setActiveView}>
+            {renderView()}
+        </DashboardShell>
     );
 };

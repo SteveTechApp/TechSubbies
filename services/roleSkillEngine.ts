@@ -1,4 +1,4 @@
-import { canonicalRoleRegistry } from "../data/canonicalRoleRegistry";
+import { defaultRoleSkillRoleId, roleSkillTaxonomy } from "../data/roleSkillTaxonomy";
 import type {
   EngineerRoleSkillProfile,
   EngineerSkillRating,
@@ -15,27 +15,27 @@ function normalise(value: string): string {
 }
 
 export function getRoleSkillDefinitions(): RoleSkillDefinition[] {
-  return canonicalRoleRegistry;
+  return roleSkillTaxonomy;
 }
 
 export function getDefaultRoleSkillDefinition(): RoleSkillDefinition {
-  return canonicalRoleRegistry[0];
+  return getRoleSkillDefinition(defaultRoleSkillRoleId);
 }
 
 export function getRoleSkillDefinition(roleId: string): RoleSkillDefinition {
-  const found = canonicalRoleRegistry.find((role) => role.id === roleId);
+  const found = roleSkillTaxonomy.find((role) => role.id === roleId);
 
   if (found) {
     return found;
   }
 
-  return canonicalRoleRegistry[0];
+  return roleSkillTaxonomy[0];
 }
 
 export function filterRoleSkillDefinitions(filter: RoleSkillFilter): RoleSkillDefinition[] {
   const search = normalise(filter.searchText);
 
-  return canonicalRoleRegistry.filter((role) => {
+  return roleSkillTaxonomy.filter((role) => {
     if (filter.market !== "all" && role.market !== filter.market) {
       return false;
     }
@@ -289,3 +289,4 @@ export function getMissingRequiredSkillLabels(
     })
     .map((skill) => skill.label);
 }
+

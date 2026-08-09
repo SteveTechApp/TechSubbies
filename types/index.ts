@@ -96,22 +96,6 @@ export enum MilestoneStatus {
 export enum TimesheetStatus {
     SUBMITTED = 'submitted',
     APPROVED = 'approved',
-    REJECTED = 'rejected',
-    /** @deprecated legacy demo data only; TechSubbies does not settle job payments. */
-    PAID = 'paid',
-}
-
-export enum InvoiceStatus {
-    DRAFT = 'Draft',
-    SENT = 'Sent',
-    PAID = 'Paid',
-    OVERDUE = 'Overdue',
-}
-
-export enum PaymentTerms {
-    NET14 = 'Net 14 Days',
-    NET30 = 'Net 30 Days',
-    NET60 = 'Net 60 Days',
 }
 
 export enum NotificationType {
@@ -200,6 +184,12 @@ export interface UserProfile {
     };
 }
 
+export interface UnavailableDateRange {
+    start: Date;
+    end: Date;
+    reason?: string;
+}
+
 export interface EngineerProfile extends UserProfile {
     discipline: Discipline;
     country: Country;
@@ -214,14 +204,17 @@ export interface EngineerProfile extends UserProfile {
     maxDayRate: number;
     currency: Currency;
     availability: Date;
+    // Specific dates the engineer has already marked as booked/unavailable
+    // (holiday, another job, etc) - on top of the single `availability`
+    // ("available from") date above. See utils/availability.ts for the
+    // logic that reads these alongside `availability`.
+    unavailableDates?: UnavailableDateRange[];
+    // How many days' notice the engineer needs before a booking can start.
+    noticePeriodDays?: number;
+    // How far the engineer is willing to travel from `location`, in miles.
+    // Distinct from a search radius - this is the engineer's own stated limit.
+    workingRadiusMiles?: number;
     selectedJobRoles?: SelectedJobRole[]; // Detailed skills profiles
-    sectorProfiles?: Array<{
-        sector: 'AV' | 'IT';
-        includedInGeneralSearch: boolean;
-        acceptLowResponsibilityWork: boolean;
-        scope: 'general-support-only';
-        ratings?: Record<string, number>;
-    }>;
     cv?: {
         fileName: string;
         fileUrl: string;
@@ -250,6 +243,7 @@ export interface EngineerProfile extends UserProfile {
     partnerStatus?: 'pending' | 'accepted';
     caseStudies?: CaseStudy[];
     matchScore?: number;
+    sectorProfiles?: unknown[];
 }
 
 export interface CompanyProfile extends UserProfile {
@@ -431,14 +425,6 @@ export interface Contract {
 
 export enum TransactionType {
     SUBSCRIPTION = 'subscription',
-    PLATFORM_CREDIT_PURCHASE = 'platform_credit_purchase',
-    AI_DEEP_DIVE_PURCHASE = 'ai_deep_dive_purchase',
-    /** @deprecated legacy demo values; never created by the marketplace API. */
-    ESCROW_FUNDING = 'escrow_funding',
-    /** @deprecated legacy demo values; never created by the marketplace API. */
-    PAYOUT = 'payout',
-    /** @deprecated legacy demo values; never created by the marketplace API. */
-    PLATFORM_FEE = 'platform_fee',
 }
 
 export interface Transaction {
@@ -450,27 +436,6 @@ export interface Transaction {
     amount: number; // Negative for debits, positive for credits
     date: Date;
 }
-
-export interface InvoiceItem {
-    description: string;
-    amount: number;
-}
-
-export interface Invoice {
-    id: string;
-    userId?: string;
-    plan?: string;
-    /** @deprecated legacy job-invoice demo fields. */
-    contractId?: string;
-    companyId?: string;
-    engineerId?: string;
-    items: InvoiceItem[];
-    total: number;
-    issueDate: Date;
-    dueDate: Date;
-    status: InvoiceStatus;
-}
-
 
 // --- Other ---
 export interface ProjectRole {

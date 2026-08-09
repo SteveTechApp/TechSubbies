@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { roleSkillTaxonomy, commonProductAndBrandTags } from "../data/roleSkillTaxonomy";
-import { useAuth } from "../context/AuthContext";
-import apiService from "../services/apiService";
+import { getSkillBand, DEFAULT_SKILL_RATING } from "../utils/skillBands";
+import { canonicalRoleRegistry } from "../data/canonicalRoleRegistry";
 
 type RoleMarket = "AV" | "IT" | "Hybrid";
 
@@ -21,11 +20,6 @@ type Role = {
   summary: string;
   tags: string[];
   skills: Skill[];
-  aliases?: string[];
-  responsibilities?: string[];
-  knowledgeRequirements?: Array<{ topic: string; expectation: string; suggestedTags: string[]; prerequisiteEligible: boolean }>;
-  boundaries?: string[];
-  distinguishedFrom?: Array<{ roleId: string; distinction: string }>;
 };
 
 const legacyRoles: Role[] = [
@@ -106,30 +100,23 @@ const legacyRoles: Role[] = [
   }
 ];
 
-const commonTags = commonProductAndBrandTags;
-
-// Keep the UI driven by the canonical taxonomy. The original local seed above is
-// retained only for backward-compatible ids in saved browser drafts.
-const availableRoles: Role[] = roleSkillTaxonomy.map((role) => ({
+const roles: Role[] = canonicalRoleRegistry.map(role => ({
   id: role.id,
   title: role.title,
   market: role.market === "av" ? "AV" : role.market === "it" ? "IT" : "Hybrid",
-  family: role.family,
+  family: role.family.split("-").map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(" "),
   summary: role.summary,
   tags: role.recommendedTags,
-  skills: role.skillGroups.flatMap((group) => group.skills.map((skill) => ({
+  skills: role.skillGroups.flatMap(group => group.skills.map(skill => ({
     id: skill.id,
     label: skill.label,
     group: group.title,
     required: skill.requiredForGoodMatch,
     tags: skill.suggestedTags,
   }))),
-  aliases: role.aliases || [],
-  responsibilities: role.coreResponsibilities || [],
-  knowledgeRequirements: role.knowledgeRequirements || [],
-  boundaries: role.roleBoundaries || [],
-  distinguishedFrom: role.distinguishedFrom || [],
 }));
+
+const commonTags = Array.from(new Set(canonicalRoleRegistry.flatMap(role => role.recommendedTags))).sort();
 
 const styles: Record<string, React.CSSProperties> = {
   page: {
@@ -274,63 +261,35 @@ const styles: Record<string, React.CSSProperties> = {
 };
 
 function RoleSkillBuilderPage() {
-  const { user, setUser } = useAuth();
   const [search, setSearch] = useState("");
   const [market, setMarket] = useState("All");
-  const [selectedRole, setSelectedRole] = useState<Role>(availableRoles[0]);
-  const [overallCapability, setOverallCapability] = useState<"assist" | "deliver" | "diagnose" | "lead">("deliver");
-  const [capabilityClaims, setCapabilityClaims] = useState<Record<string, "independent" | "support" | "not-offered">>({});
+  const [selectedRole, setSelectedRole] = useState<Role>(roles[0]);
+  const [ratings, setRatings] = useState<Record<string, number>>({});
   const [tags, setTags] = useState<string[]>([]);
-  const [productExperience, setProductExperience] = useState<Record<string, "aware" | "installed" | "configured" | "commissioned" | "programmed" | "certified">>({});
-  const [evidenceNote, setEvidenceNote] = useState("");
-  const [customKeyword, setCustomKeyword] = useState("");
-  const [saveStatus, setSaveStatus] = useState("");
 
   const filteredRoles = useMemo(() => {
     const searchText = search.trim().toLowerCase();
 
-    return availableRoles.filter((role) => {
+    return roles.filter((role) => {
       if (market !== "All" && role.market !== market) return false;
       if (!searchText) return true;
 
-      const haystack = [role.title, role.market, role.family, role.summary, role.tags.join(" "), (role.aliases || []).join(" "), (role.responsibilities || []).join(" "), (role.knowledgeRequirements || []).map((item) => `${item.topic} ${item.expectation} ${item.suggestedTags.join(" ")}`).join(" "), role.skills.map((skill) => skill.label).join(" ")].join(" ").toLowerCase();
+      const haystack = [role.title, role.market, role.family, role.summary, role.tags.join(" "), role.skills.map((skill) => skill.label).join(" ")].join(" ").toLowerCase();
       return haystack.includes(searchText);
     });
   }, [search, market]);
 
-  const getClaim = (skillId: string) => capabilityClaims[skillId] || "not-offered";
-  const independentCount = selectedRole.skills.filter((skill) => getClaim(skill.id) === "independent").length;
-  const supportedCount = selectedRole.skills.filter((skill) => getClaim(skill.id) === "support").length;
-  const missingRequired = selectedRole.skills.filter((skill) => skill.required && getClaim(skill.id) !== "independent");
+  const getRating = (skillId: string) => ratings[skillId] ?? DEFAULT_SKILL_RATING;
+
+  const averageRating = selectedRole.skills.length > 0
+    ? Math.round(selectedRole.skills.reduce((sum, skill) => sum + getRating(skill.id), 0) / selectedRole.skills.length)
+    : 0;
+  const averageBand = getSkillBand(averageRating);
+  const goodCount = selectedRole.skills.filter((skill) => getRating(skill.id) >= 35).length;
+  const missingRequired = selectedRole.skills.filter((skill) => skill.required && getRating(skill.id) < 35);
 
   function addTag(tag: string) {
-    const clean = tag.trim();
-    if (!clean) return;
-    setTags((current) => current.includes(clean) ? current : [...current, clean]);
-    setProductExperience((current) => ({ ...current, [clean]: current[clean] || "installed" }));
-  }
-
-  async function saveRoleProfile() {
-    if (!user) { setSaveStatus("Sign in with an engineer account to save this profile."); return; }
-    setSaveStatus("Saving…");
-    const profile = {
-      roleId: selectedRole.id,
-      roleTitle: selectedRole.title,
-      overallCapability,
-      capabilities: selectedRole.skills.map((skill) => ({ skillId: skill.id, claim: getClaim(skill.id) })),
-      ratings: selectedRole.skills.map((skill) => ({ skillId: skill.id, rating: getClaim(skill.id) === "independent" ? 3 : getClaim(skill.id) === "support" ? 2 : 0, willingToDo: getClaim(skill.id) !== "not-offered", needsSupervision: getClaim(skill.id) === "support", canLead: overallCapability === "lead", tags: skill.tags })),
-      productTags: tags,
-      productExperience,
-      evidence: evidenceNote ? [{ type: "project-or-credential", note: evidenceNote }] : [],
-      updatedAt: new Date().toISOString(),
-    };
-    const existing = ((user.profile as any).roleSkillProfiles || []).filter((item: any) => item.roleId !== selectedRole.id);
-    try {
-      const updated = await apiService.updateMyProfile({ roleSkillProfiles: [...existing, profile] });
-      if (!updated) throw new Error("A backend-backed account is required.");
-      setUser(updated);
-      setSaveStatus("Saved to your profile.");
-    } catch (error: any) { setSaveStatus(error.message || "Could not save profile."); }
+    setTags((current) => current.includes(tag) ? current : [...current, tag]);
   }
 
   return (
@@ -339,8 +298,8 @@ function RoleSkillBuilderPage() {
         <header style={styles.header}>
           <section>
             <p style={styles.eyebrow}>TechSubbies role skill builder</p>
-            <h1 style={styles.title}>Show what you can deliver without completing an examination.</h1>
-            <p style={styles.copy}>Choose the role, confirm a few distinguishing capabilities, and record practical product experience plus one supporting example.</p>
+            <h1 style={styles.title}>Build a granular skills profile around the actual job role.</h1>
+            <p style={styles.copy}>Select an AV, IT or hybrid role, rate each relevant skill, and add product, brand and evidence tags.</p>
           </section>
           <a href="/engineer/profile-setup" style={styles.link}>Back to profile setup</a>
         </header>
@@ -362,7 +321,7 @@ function RoleSkillBuilderPage() {
           <aside style={styles.card}>
             <p style={styles.cardTitle}>Role results</p>
             {filteredRoles.map((role) => (
-              <button key={role.id} type="button" style={role.id === selectedRole.id ? styles.roleButtonActive : styles.roleButton} onClick={() => { setSelectedRole(role); setCapabilityClaims({}); setTags([]); setProductExperience({}); setEvidenceNote(""); }}>
+              <button key={role.id} type="button" style={role.id === selectedRole.id ? styles.roleButtonActive : styles.roleButton} onClick={() => { setSelectedRole(role); setRatings({}); }}>
                 <strong>{role.title}</strong>
                 <br />
                 <span style={{ color: "rgba(255,255,255,0.62)", fontSize: 12 }}>{role.market} · {role.family}</span>
@@ -376,37 +335,30 @@ function RoleSkillBuilderPage() {
             <p style={styles.eyebrow}>Selected role</p>
             <h2 style={{ fontSize: 28, margin: "0 0 10px" }}>{selectedRole.title}</h2>
             <p style={styles.copy}>{selectedRole.summary}</p>
-            {(selectedRole.responsibilities || []).length > 0 && <div style={{ marginTop: 10 }}>{selectedRole.responsibilities!.map((item) => <span key={item} style={styles.pill}>{item}</span>)}</div>}
-            {(selectedRole.boundaries || []).length > 0 && <div style={{ marginTop: 12, border: "1px solid rgba(251,191,36,.3)", borderRadius: 12, padding: 12 }}><p style={{ ...styles.cardTitle, color: "#fcd34d" }}>Role boundary</p>{selectedRole.boundaries!.map((item) => <p key={item} style={styles.copy}>• {item}</p>)}</div>}
-            {(selectedRole.knowledgeRequirements || []).length > 0 && <div style={{ marginTop: 14 }}><p style={styles.cardTitle}>Specific knowledge expected</p>{selectedRole.knowledgeRequirements!.map((item) => <article key={item.topic} style={styles.skillRow}><h3 style={{ margin: "0 0 4px", fontSize: 15 }}>{item.topic}</h3><p style={styles.copy}>{item.expectation}{item.prerequisiteEligible ? " · May be set as a client prerequisite" : ""}</p><div>{item.suggestedTags.map((tag) => <button key={tag} type="button" style={styles.tagButton} onClick={() => addTag(tag)}>+ {tag}</button>)}</div></article>)}</div>}
             <div style={{ marginTop: 8 }}>
               <span style={styles.pill}>{selectedRole.market}</span>
               <span style={styles.pill}>{selectedRole.family}</span>
             </div>
 
-            <div style={{ marginTop: 14 }}>
-              <p style={styles.cardTitle}>At what level can you perform this role?</p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6 }}>
-                {([['assist','Assist','Under instruction'],['deliver','Deliver','Independent normal work'],['diagnose','Diagnose','Complex faults'],['lead','Lead','Own delivery']] as const).map(([value,label,detail]) => (
-                  <button key={value} type="button" style={overallCapability === value ? styles.roleButtonActive : styles.roleButton} onClick={() => setOverallCapability(value)}><strong>{label}</strong><br/><span style={{ fontSize: 11, opacity: .7 }}>{detail}</span></button>
-                ))}
-              </div>
-            </div>
-
             {selectedRole.skills.map((skill) => {
-              const claim = getClaim(skill.id);
+              const rating = getRating(skill.id);
+              const band = getSkillBand(rating);
               return (
                 <article key={skill.id} style={styles.skillRow}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <h3 style={{ margin: "0 0 4px", fontSize: 15 }}>{skill.label}</h3>
-                    <span style={{ ...styles.pill, margin: 0 }}>{claim === "independent" ? "Yes, independently" : claim === "support" ? "With support" : "Not offered"}</span>
+                    <span style={{ ...styles.pill, margin: 0 }}>{rating} · {band.label}</span>
                   </div>
                   <p style={styles.copy}>{skill.group}{skill.required ? " · Required for a good match" : ""}</p>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 6, marginTop: 10 }}>
-                    {([['independent','Yes, independently'],['support','With support'],['not-offered','Not offered']] as const).map(([value,label]) => (
-                      <button key={value} type="button" style={claim === value ? styles.roleButtonActive : styles.roleButton} onClick={() => setCapabilityClaims((current) => ({ ...current, [skill.id]: value }))}>{label}</button>
-                    ))}
-                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={rating}
+                    onChange={(event) => setRatings({ ...ratings, [skill.id]: Number(event.target.value) })}
+                    style={{ width: "100%", marginTop: 10 }}
+                  />
                   <div>
                     {skill.tags.map((tag) => <button key={tag} type="button" style={styles.tagButton} onClick={() => addTag(tag)}>+ {tag}</button>)}
                   </div>
@@ -419,16 +371,16 @@ function RoleSkillBuilderPage() {
             <p style={styles.cardTitle}>Profile strength</p>
             <div style={styles.metricGrid}>
               <div style={styles.metric}>
-                <p style={{ ...styles.metricValue, textTransform: "capitalize" }}>{overallCapability}</p>
-                <p style={styles.metricLabel}>Overall role level</p>
+                <p style={styles.metricValue}>{averageRating}</p>
+                <p style={styles.metricLabel}>Average level ({averageBand.label})</p>
               </div>
               <div style={styles.metric}>
-                <p style={styles.metricValue}>{independentCount}</p>
-                <p style={styles.metricLabel}>Independent</p>
+                <p style={styles.metricValue}>{goodCount}</p>
+                <p style={styles.metricLabel}>Good or above</p>
               </div>
               <div style={styles.metric}>
-                <p style={styles.metricValue}>{supportedCount}</p>
-                <p style={styles.metricLabel}>With support</p>
+                <p style={styles.metricValue}>{missingRequired.length}</p>
+                <p style={styles.metricLabel}>Required gaps</p>
               </div>
               <div style={styles.metric}>
                 <p style={styles.metricValue}>{tags.length}</p>
@@ -446,22 +398,12 @@ function RoleSkillBuilderPage() {
             <div style={{ marginTop: 14 }}>
               <p style={styles.cardTitle}>Selected tags</p>
               {tags.length === 0 ? <p style={styles.copy}>No tags added yet.</p> : tags.map((tag) => <span key={tag} style={styles.pill}>{tag}</span>)}
-              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                <input style={styles.input} value={customKeyword} onChange={(event) => setCustomKeyword(event.target.value)} placeholder="Software or manufacturer keyword" />
-                <button type="button" style={{ ...styles.link, cursor: "pointer" }} onClick={() => { addTag(customKeyword); setCustomKeyword(""); }}>Add</button>
-              </div>
             </div>
-
-            {tags.length > 0 && <div style={{ marginTop: 14 }}><p style={styles.cardTitle}>Practical product experience</p>{tags.map((tag) => <label key={tag} style={{ display: "grid", gridTemplateColumns: "1fr 150px", gap: 8, alignItems: "center", marginTop: 8 }}><span style={styles.copy}>{tag}</span><select style={styles.input} value={productExperience[tag] || "installed"} onChange={(event) => setProductExperience((current) => ({ ...current, [tag]: event.target.value as any }))}><option value="aware">Aware</option><option value="installed">Installed</option><option value="configured">Configured</option><option value="commissioned">Commissioned / troubleshot</option><option value="programmed">Programmed / administered</option><option value="certified">Certified</option></select></label>)}</div>}
-
-            <div style={{ marginTop: 14 }}><p style={styles.cardTitle}>One supporting example</p><textarea style={{ ...styles.input, minHeight: 80 }} value={evidenceNote} onChange={(event) => setEvidenceNote(event.target.value)} placeholder="Project, certification, commissioning sheet, code/configuration example or client reference" /></div>
 
             <div style={{ marginTop: 14 }}>
               <p style={styles.cardTitle}>Missing required skills</p>
               {missingRequired.length === 0 ? <p style={styles.copy}>No required gaps for a good match.</p> : missingRequired.map((skill) => <span key={skill.id} style={styles.pill}>{skill.label}</span>)}
             </div>
-            <button type="button" style={{ ...styles.link, width: "100%", justifyContent: "center", marginTop: 16, cursor: "pointer" }} onClick={saveRoleProfile}>Save role profile</button>
-            {saveStatus && <p style={{ ...styles.copy, marginTop: 8 }}>{saveStatus}</p>}
           </aside>
         </section>
       </div>

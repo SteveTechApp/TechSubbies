@@ -1,22 +1,19 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { findUserById } from "../lib/db.js";
+import { findUserById, type UserRow } from "../lib/db.js";
+import { parseCookies, SESSION_COOKIE } from "./security.js";
 
 export interface AuthedRequest extends Request {
   userId?: string;
   authUser?: UserRow;
 }
 
-function jwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret && process.env.NODE_ENV === "production") {
-    throw new Error("JWT_SECRET must be configured in production.");
-  }
-  return secret || "insecure-dev-secret-change-me";
-}
+const JWT_SECRET = process.env.JWT_SECRET || "insecure-dev-secret-change-me";
 
-export function signToken(userId: string,sessionVersion=0): string {
-  return jwt.sign({ sub: userId,sv:sessionVersion }, jwtSecret(), { expiresIn: (process.env.JWT_EXPIRES_IN || "7d") as any, issuer: "techsubbies-api", audience: "techsubbies-app" });
+export function signToken(userId: string): string {
+  const user = findUserById(userId);
+  if (!user) throw new Error("Cannot create a session for a missing account.");
+  return jwt.sign({ sub: userId, sv: user.sessionVersion }, JWT_SECRET, { expiresIn: "7d" });
 }
 
 // Browser sessions use an HttpOnly cookie. Bearer tokens remain supported
@@ -28,9 +25,22 @@ export function requireAuth(req: AuthedRequest, res: Response, next: NextFunctio
   const token = cookieToken || bearerToken;
   if (!token) return res.status(401).json({ error: "Authentication is required." });
   try {
-    const payload = jwt.verify(token, jwtSecret(), { issuer: "techsubbies-api", audience: "techsubbies-app" }) as { sub: string;sv?:number };
-    const user=findUserById(payload.sub);if(!user||user.sessionVersion!==(payload.sv||0))return res.status(401).json({error:"Session has been revoked."});
-    req.userId = payload.sub;
+    const payload = jwt.verify(token, JWT_SECRET) as { sub: string; sv?: number };
+    const user = findUserById(payload.sub);
+    if (!user) {
+      return res.status(401).json({ error: "The account for this session no longer exists." });
+    }
+    if (user.deletedAt) {
+      return res.status(401).json({ error: "This account has been deactivated." });
+    }
+    if (user.suspendedAt) {
+      return res.status(403).json({ error: "This account is suspended. Contact TechSubbies support." });
+    }
+    if (payload.sv !== user.sessionVersion) {
+      return res.status(401).json({ error: "This session has been revoked." });
+    }
+    req.userId = user.id;
+    req.authUser = user;
     next();
   } catch {
     return res.status(401).json({ error: "Invalid or expired token." });

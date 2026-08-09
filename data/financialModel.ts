@@ -49,15 +49,10 @@ export const calculateFinancials = (subscriberNumbers: { [key in ProfileTier]?: 
         (subs[ProfileTier.SKILLS] * TIER_PRICES[ProfileTier.SKILLS] * 12) +
         (subs[ProfileTier.BUSINESS] * TIER_PRICES[ProfileTier.BUSINESS] * 12)
     );
-    // TechSubbies charges for membership only; there are no feature purchases or job-payment fees.
-    const annualMicrotransactionRevenue = 0;
-    const annualAdRevenue = annualSubscriptionRevenue * 0.10;
-    const totalAnnualRevenue = annualSubscriptionRevenue + annualMicrotransactionRevenue + annualAdRevenue;
+    const totalAnnualRevenue = annualSubscriptionRevenue;
 
     const revenue = {
         subscriptions: annualSubscriptionRevenue,
-        microtransactions: annualMicrotransactionRevenue,
-        advertising: annualAdRevenue,
         total: totalAnnualRevenue,
     };
 

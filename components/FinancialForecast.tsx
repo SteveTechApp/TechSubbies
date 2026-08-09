@@ -44,8 +44,6 @@ export const FinancialForecast = ({ revenue, users, costs, profit }: FinancialFo
                 <div>
                     <h4 className="text-xl font-semibold text-green-700 mb-2">Annual Revenue</h4>
                     <ForecastRow label="Subscription ARR" value={formatCurrency(revenue.subscriptions)} />
-                    <ForecastRow label="Feature purchases" value={formatCurrency(revenue.microtransactions)} isSubItem tooltipText="Intentionally zero: TechSubbies charges for membership only." />
-                    <ForecastRow label="Advertising" value={formatCurrency(revenue.advertising)} isSubItem />
                     <ForecastRow label="Total Revenue" value={formatCurrency(revenue.total)} isTotal />
                 </div>
 
@@ -53,7 +51,7 @@ export const FinancialForecast = ({ revenue, users, costs, profit }: FinancialFo
                  <div>
                     <h4 className="text-xl font-semibold text-red-700 mb-2">Operating Costs (Annual)</h4>
                     <ForecastRow label="Fixed Costs" value={formatCurrency(costs.fixed)} tooltipText="Includes base salaries, office rent, insurance, and software."/>
-                    <ForecastRow label="Variable Costs" value={formatCurrency(costs.variable)} tooltipText="Hosting and service costs that scale with users."/>
+                    <ForecastRow label="Variable Costs" value={formatCurrency(costs.variable)} tooltipText="Includes hosting costs that scale with total platform users."/>
                     <ForecastRow label="Staffing Growth" value={formatCurrency(costs.staffing)} tooltipText={`Hiring ${costs.headcount.support} support agent(s) and ${costs.headcount.developers - 2} additional developer(s) based on user growth and revenue.`} />
                     <ForecastRow label="Employer's NI" value={formatCurrency(costs.payrollTax)} tooltipText="UK Employer's National Insurance contributions on salaries."/>
                     <ForecastRow label="Total Operating Costs" value={formatCurrency(costs.total)} isTotal />

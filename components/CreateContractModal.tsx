@@ -2,23 +2,24 @@ import React, { useState, useEffect } from 'react';
 // FIX: Corrected import path for useAppContext to resolve 'not a module' error.
 import { useAppContext } from '../context/InteractionContext';
 // FIX: Corrected import path for types.
-import { Job, EngineerProfile, ContractType } from '../types';
-import { X, FileText } from './Icons';
+import { Job, EngineerProfile, Contract, ContractType, ContractStatus, Currency, Milestone, MilestoneStatus } from '../types';
+import { X, FileText, Plus, Trash2 } from './Icons';
+import { requiresLeadSupervision, hasLeadSupervisionConfirmed } from '../utils/leadSupervision';
 
 interface CreateContractModalProps {
     isOpen: boolean;
     onClose: () => void;
     job: Job;
     engineer: EngineerProfile;
-    onSendForSignature: (contract: { jobId:string; engineerId:string; type:ContractType; description:string }) => Promise<void>;
+    onSendForSignature: (contract: Contract) => void;
 }
 
 const getBoilerplate = (type: ContractType, companyName: string, engineerName: string) => {
     const common = `This Agreement is made between ${companyName} ("the Client") and ${engineerName} ("the Contractor"). The Contractor agrees to provide services as described herein. This platform, TechSubbies.com, is a facilitator and is not a party to this agreement. Any disputes must be resolved directly between the Client and the Contractor.`;
     if (type === ContractType.SOW) {
-        return `${common}\n\nStatement of Work (SOW): The Contractor will deliver the agreed scope and completion evidence. Rates, invoicing and payment are agreed and handled directly between the Client and Contractor, outside TechSubbies.`;
+        return `${common}\n\nStatement of Work (SOW): The Contractor will complete the milestones as defined in this contract. The parties will agree and manage all invoicing, payment and tax obligations directly, outside TechSubbies.`;
     }
-    return `${common}\n\nDay Rate Agreement: The Contractor will provide the agreed services and submit timesheets for approval. Rates, invoicing and payment are agreed and handled directly between the Client and Contractor, outside TechSubbies.`;
+    return `${common}\n\nDay Rate Agreement: The Contractor will provide services on a day-rate basis. The Contractor will submit timesheets for approval, and payment will be made based on the agreed day rate.`;
 };
 
 export const CreateContractModal = ({ isOpen, onClose, job, engineer, onSendForSignature }: CreateContractModalProps) => {
@@ -28,36 +29,82 @@ export const CreateContractModal = ({ isOpen, onClose, job, engineer, onSendForS
 
     const [type, setType] = useState<ContractType>(ContractType.SOW);
     const [description, setDescription] = useState(getBoilerplate(type, companyName, engineer.name));
-    const [isSending, setIsSending] = useState(false);
-    const [error, setError] = useState('');
-    
+    const [amount, setAmount] = useState(job.dayRate);
+    const [milestones, setMilestones] = useState<Omit<Milestone, 'status'>[]>([{ id: `ms-${generateUniqueId()}`, description: 'Initial Milestone', amount: Number(job.dayRate) }]);
+    const [overrideReason, setOverrideReason] = useState('');
+
+    // Real check, at the point a contract actually gets created - not just
+    // the self-declared checkbox at job-posting time (JobPostStep1). If the
+    // job needed a lead/supervisor confirmed and that was never done, this
+    // blocks sending the contract unless the company explicitly records why
+    // (e.g. "client's own supervisor on site") rather than letting it
+    // through silently. See utils/leadSupervision.ts.
+    const needsLead = requiresLeadSupervision(job);
+    const leadConfirmed = hasLeadSupervisionConfirmed(job);
+    const needsOverride = needsLead && !leadConfirmed;
+
     useEffect(() => {
         if(isOpen) {
             const initialType = ContractType.SOW;
             setType(initialType);
             setDescription(getBoilerplate(initialType, companyName, engineer.name));
-            setError('');
+            setAmount(job.dayRate);
+            setMilestones([{ id: `ms-${generateUniqueId()}`, description: 'Initial Milestone', amount: Number(job.dayRate) }]);
         }
     }, [isOpen, job, companyName, engineer.name]);
 
     if (!isOpen) return null;
     
+    function generateUniqueId() { return Math.random().toString(36).substring(2, 9); }
+
     const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newType = e.target.value as ContractType;
         setType(newType);
         setDescription(getBoilerplate(newType, companyName, engineer.name));
     };
 
-    const handleSend = async () => {
-        if(description.trim().length<40){setError('Add enough scope and terms for the engineer to understand the engagement.');return;}
-        setIsSending(true);setError('');
-        try{await onSendForSignature({jobId:job.id,engineerId:engineer.id,type,description:description.trim()});onClose();}
-        catch(error:any){setError(error.message||'The agreement could not be sent.');}
-        finally{setIsSending(false);}
+    // Milestone handlers
+    const addMilestone = () => {
+        setMilestones([...milestones, { id: `ms-${generateUniqueId()}`, description: '', amount: 0 }]);
+    };
+    const removeMilestone = (id: string) => {
+        setMilestones(milestones.filter(m => m.id !== id));
+    };
+    const handleMilestoneChange = (id: string, field: 'description' | 'amount', value: string | number) => {
+        setMilestones(milestones.map(m => m.id === id ? { ...m, [field]: value } : m));
+    };
+    
+    const totalMilestoneAmount = milestones.reduce((sum, m) => sum + Number(m.amount), 0);
+
+    const handleSend = () => {
+        if (needsOverride && !overrideReason.trim()) {
+            alert('This role needs a lead engineer or supervisor confirmed before a contract can be sent. Either go back and update the job posting, or explain below why none is needed.');
+            return;
+        }
+
+        const finalAmount = type === ContractType.SOW ? totalMilestoneAmount : amount;
+        const finalMilestones = type === ContractType.SOW ? milestones.map(m => ({ ...m, status: MilestoneStatus.NOT_STARTED })) : [];
+
+        const newContract: Contract = {
+            id: `contract-${generateUniqueId()}`,
+            jobId: job.id, companyId: job.companyId, engineerId: engineer.id,
+            type, description, amount: finalAmount, currency: job.currency,
+            // Ready for the engineer to sign right away, rather than
+            // sitting in an unreachable "Draft" state forever (a contract
+            // created here has already been reviewed by the company - it's
+            // the same moment as clicking "Send for Signature").
+            status: ContractStatus.PENDING_SIGNATURE,
+            engineerSignature: null, companySignature: null,
+            milestones: finalMilestones,
+            jobTitle: job.title,
+            ...(needsOverride ? { supervisionOverrideReason: overrideReason.trim() } : {}),
+        };
+        onSendForSignature(newContract);
+        onClose();
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-[300] p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={onClose}>
             <div className="bg-white rounded-lg p-6 m-4 max-w-3xl w-full relative transform transition-all duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar" onClick={e => e.stopPropagation()}>
                 <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
                     <X size={24} />
@@ -75,7 +122,29 @@ export const CreateContractModal = ({ isOpen, onClose, job, engineer, onSendForS
                         </select>
                     </div>
 
-                    <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900"><strong>TechSubbies records the agreement and signatures only.</strong> Job rates, invoices and payments are arranged directly between the parties. The platform only bills for TechSubbies membership.</div>
+                    {type === ContractType.DAY_RATE && (
+                        <div>
+                            <label className="block font-medium mb-1">Day Rate ({job.currency})</label>
+                            <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="w-full border p-2 rounded" />
+                        </div>
+                    )}
+
+                    {type === ContractType.SOW && (
+                        <div>
+                            <h3 className="font-medium mb-2">Project Milestones</h3>
+                            <div className="space-y-2 p-3 bg-gray-50 border rounded-md">
+                                {milestones.map((m, index) => (
+                                    <div key={m.id} className="flex items-center gap-2">
+                                        <input type="text" placeholder={`Milestone ${index + 1} Description`} value={m.description} onChange={e => handleMilestoneChange(m.id, 'description', e.target.value)} className="flex-grow border p-2 rounded" />
+                                        <input type="number" placeholder="Amount" value={m.amount} onChange={e => handleMilestoneChange(m.id, 'amount', Number(e.target.value))} className="w-32 border p-2 rounded" />
+                                        <button onClick={() => removeMilestone(m.id)} className="text-red-500 hover:text-red-700 p-2"><Trash2 size={18}/></button>
+                                    </div>
+                                ))}
+                                <button onClick={addMilestone} className="text-sm flex items-center text-blue-600 font-semibold hover:underline"><Plus size={16} className="mr-1"/> Add Milestone</button>
+                            </div>
+                            <div className="text-right font-bold mt-2">Total Project Value: {job.currency}{totalMilestoneAmount}</div>
+                        </div>
+                    )}
                      <div>
                         <label className="block font-medium mb-1">Agreement Terms & Description</label>
                         <textarea
@@ -86,16 +155,32 @@ export const CreateContractModal = ({ isOpen, onClose, job, engineer, onSendForS
                             className="w-full border p-2 rounded text-sm bg-gray-50"
                         />
                     </div>
+                    {needsOverride && (
+                        <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+                            <p className="font-bold">This role needs a lead engineer or supervisor</p>
+                            <p className="mt-1">
+                                "{job.title}" wasn't confirmed as supervised when it was posted. Go back and update the job posting if a lead should be arranged, or explain below why this contract can proceed without one (e.g. "client's own supervisor on site"). This is kept on the contract for the record.
+                            </p>
+                            <label className="block font-semibold mt-3 mb-1">Reason for proceeding without a confirmed lead</label>
+                            <input
+                                type="text"
+                                value={overrideReason}
+                                onChange={e => setOverrideReason(e.target.value)}
+                                placeholder="e.g. Client's own supervisor will be on site"
+                                className="w-full border p-2 rounded"
+                            />
+                        </div>
+                    )}
                 </div>
-                {error&&<p className="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
                 <div className="flex justify-end space-x-4 mt-6 pt-4 border-t">
                     <button onClick={onClose} className="px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
                     <button
-                        onClick={handleSend} disabled={isSending}
-                        className="px-6 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700"
+                        onClick={handleSend}
+                        disabled={needsOverride && !overrideReason.trim()}
+                        className="px-6 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 disabled:bg-blue-300"
                     >
-                        {isSending?'Sending…':'Send for Signature'}
+                        Send for Signature
                     </button>
                 </div>
             </div>

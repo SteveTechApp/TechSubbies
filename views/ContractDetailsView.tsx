@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
-import { Contract, User, Role, ContractStatus, UserProfile, CompanyProfile, EngineerProfile, Milestone, MilestoneStatus, ContractType, Timesheet } from '../types';
+import { Contract, Role, ContractStatus, CompanyProfile, EngineerProfile, Milestone, MilestoneStatus, ContractType, Timesheet } from '../types';
 import { useAppContext } from '../context/InteractionContext';
-import { CompletionValidationPanel } from '../components/CompletionValidationPanel';
-import { TechnicalWorkPackPanel } from '../components/TechnicalWorkPackPanel';
-import { ContractContactPanel } from '../components/ContractContactPanel';
-import { FileText, User as UserIcon, Building, Calendar, CheckCircle, Clock, DollarSign, Loader, BrainCircuit } from '../components/Icons';
+import { FileText, User as UserIcon, Building, CheckCircle, Loader, BrainCircuit } from '../components/Icons';
 import { SignContractModal } from '../components/SignContractModal';
 import { formatDisplayDate } from '../utils/dateFormatter';
 import { TimesheetRow } from '../components/TimesheetRow';
@@ -27,18 +24,17 @@ const StatusBadge = ({ status, className }: { status: string, className?: string
         [ContractStatus.ACTIVE]: { text: 'Active & In Progress', color: 'bg-green-100 text-green-800' },
         [ContractStatus.COMPLETED]: { text: 'Completed', color: 'bg-purple-100 text-purple-800' },
         [ContractStatus.CANCELLED]: { text: 'Cancelled', color: 'bg-red-100 text-red-800' },
-        [MilestoneStatus.AWAITING_FUNDING]: { text: 'Agreed - Not Started', color: 'bg-gray-200 text-gray-700' },
-        [MilestoneStatus.FUNDED_IN_PROGRESS]: { text: 'Delivery In Progress', color: 'bg-blue-100 text-blue-700' },
-        [MilestoneStatus.SUBMITTED_FOR_APPROVAL]: { text: 'Submitted', color: 'bg-yellow-100 text-yellow-700' },
-        [MilestoneStatus.APPROVED_PENDING_INVOICE]: { text: 'Delivery Approved', color: 'bg-teal-100 text-teal-800' },
-        [MilestoneStatus.COMPLETED_PAID]: { text: 'Completed', color: 'bg-green-100 text-green-700' },
+        [MilestoneStatus.NOT_STARTED]: { text: 'Not Started', color: 'bg-gray-200 text-gray-700' },
+        [MilestoneStatus.IN_PROGRESS]: { text: 'In Progress', color: 'bg-blue-100 text-blue-700' },
+        [MilestoneStatus.SUBMITTED]: { text: 'Submitted', color: 'bg-yellow-100 text-yellow-700' },
+        [MilestoneStatus.APPROVED]: { text: 'Approved', color: 'bg-green-100 text-green-700' },
     };
     const info = STATUS_INFO[status] || { text: status, color: 'bg-gray-200 text-gray-800' };
     return <span className={`px-3 py-1 text-xs font-bold rounded-full ${info.color} ${className}`}>{info.text}</span>;
 };
 
 
-const MilestoneRow = ({ milestone, contract, onFund, userRole }: { milestone: Milestone, contract: Contract, onFund: () => void, userRole: Role }) => {
+const MilestoneRow = ({ milestone, contract, onStart, userRole }: { milestone: Milestone, contract: Contract, onStart: () => void, userRole: Role }) => {
     const { submitMilestoneForApproval, approveMilestone } = useAppContext();
     const [isLoading, setIsLoading] = useState(false);
 
@@ -53,14 +49,14 @@ const MilestoneRow = ({ milestone, contract, onFund, userRole }: { milestone: Mi
         if (isLoading) return <Loader className="animate-spin w-5 h-5 text-gray-500"/>;
 
         if (userRole === Role.COMPANY || userRole === Role.ADMIN) {
-            if (milestone.status === MilestoneStatus.AWAITING_FUNDING) {
-                return <button onClick={onFund} className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Start Delivery</button>;
+            if (milestone.status === MilestoneStatus.NOT_STARTED) {
+                return <button onClick={onStart} className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Start Milestone</button>;
             }
-            if (milestone.status === MilestoneStatus.SUBMITTED_FOR_APPROVAL) {
+            if (milestone.status === MilestoneStatus.SUBMITTED) {
                 return <button onClick={() => handleAction(approveMilestone)} className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700">Approve Milestone</button>;
             }
         }
-        if (userRole === Role.ENGINEER && milestone.status === MilestoneStatus.FUNDED_IN_PROGRESS) {
+        if (userRole === Role.ENGINEER && milestone.status === MilestoneStatus.IN_PROGRESS) {
             return <button onClick={() => handleAction(submitMilestoneForApproval)} className="px-3 py-1 text-sm bg-yellow-500 text-yellow-900 rounded hover:bg-yellow-600">Submit for Approval</button>;
         }
         return null;
@@ -81,7 +77,7 @@ const MilestoneRow = ({ milestone, contract, onFund, userRole }: { milestone: Mi
 };
 
 export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
-    const { user, findUserByProfileId, signContract, completeContract, fundMilestone, submitTimesheet } = useAppContext();
+    const { user, findUserByProfileId, signContract, startMilestone, submitTimesheet } = useAppContext();
     const [isSignModalOpen, setIsSignModalOpen] = useState(false);
     const [isTimesheetModalOpen, setIsTimesheetModalOpen] = useState(false);
 
@@ -96,13 +92,10 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
     if (!engineer || !company || !user) return <div>Loading contract parties...</div>;
     
     const canEngineerSign = user.profile.id === engineer.id && contract.status === ContractStatus.PENDING_SIGNATURE && !contract.engineerSignature;
-    const canCompanySign = (user.profile.id === company.id || user.role === Role.ADMIN) && contract.status === ContractStatus.PENDING_SIGNATURE && !contract.companySignature;
+    const canCompanySign = (user.profile.id === company.id || user.role === Role.ADMIN) && contract.status === ContractStatus.SIGNED && !contract.companySignature;
 
-    const canValidateCompletion = user.role === Role.COMPANY && user.profile.id === company.id && contract.status === ContractStatus.COMPLETED;
-    const canCompleteContract = user.role === Role.COMPANY && user.profile.id === company.id && contract.status === ContractStatus.ACTIVE;
-
-    const handleSign = async (signatureName: string) => {
-        await signContract(contract.id, signatureName);
+    const handleSign = (signatureName: string) => {
+        signContract(contract.id, signatureName);
         setIsSignModalOpen(false);
     };
 
@@ -131,7 +124,7 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
                 </div>
                 
                 <div className="p-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md text-sm mb-4">
-                    <strong>Disclaimer:</strong> This is a legally binding agreement directly between the Client and the Contractor. TechSubbies.com is a facilitator and is not a party to this agreement.
+                    <strong>Direct agreement:</strong> This agreement is solely between the client and contractor. TechSubbies introduces the parties and can record or coordinate contract-support cases, but does not employ either party, set or collect project fees, issue project invoices, hold project funds, or decide payment liability. The parties remain responsible for invoicing, payment, tax, insurance and any financial settlement.
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
@@ -156,7 +149,7 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
                                     key={m.id} 
                                     milestone={m} 
                                     contract={contract}
-                                    onFund={() => fundMilestone(contract.id, m.id)}
+                                    onStart={() => startMilestone(contract.id, m.id)}
                                     userRole={user.role} 
                                 />
                             )}
@@ -227,22 +220,7 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
                             Countersign & Activate
                         </button>
                     )}
-                    {canCompleteContract && (
-                        <button onClick={() => completeContract(contract.id)} className="px-6 py-2 bg-purple-600 text-white font-bold rounded-md hover:bg-purple-700">
-                            Mark Assignment Complete
-                        </button>
-                    )}
                 </div>
-
-                <TechnicalWorkPackPanel contractId={contract.id} roleId={(contract as any).roleId} canEdit={user.role === Role.COMPANY && user.profile.id === company.id && contract.status !== ContractStatus.COMPLETED && contract.status !== ContractStatus.CANCELLED} />
-                <ContractContactPanel contractId={contract.id} available={contract.status === ContractStatus.ACTIVE || contract.status === ContractStatus.COMPLETED} />
-
-                {canValidateCompletion && (
-                    <CompletionValidationPanel
-                        contractId={contract.id}
-                        roleId={(contract as any).roleId}
-                    />
-                )}
             </div>
             {isSignModalOpen && (
                 <SignContractModal

@@ -56,15 +56,14 @@ const UserGuidePage = lazy(() => import('./views/UserGuidePage').then((m) => ({ 
 const TutorialsPage = lazy(() => import('./views/TutorialsPage').then((m) => ({ default: m.TutorialsPage })));
 
 const CompanyEngineerDashboardPage = lazy(() => import("./views/CompanyEngineerDashboardPage"));
-const CompanyTalentPoolPage = lazy(() => import("./views/CompanyTalentPoolPage"));
-const TeamAssemblyPage = lazy(() => import("./views/TeamAssemblyPage"));
-const WorkforceInsightsPage = lazy(() => import("./views/WorkforceInsightsPage"));
-const CompanyAuditPage = lazy(() => import("./views/CompanyAuditPage"));
 const WatchDemoPage = lazy(() => import("./views/WatchDemoPage"));
 const RoleSkillBuilderPage = lazy(() => import("./views/RoleSkillBuilderPage"));
 const EngineerProfileSetupPage = lazy(() => import("./views/EngineerProfileSetupPage"));
 const EngineerPersonalBusinessProfilePage = lazy(() => import("./views/EngineerPersonalBusinessProfilePage"));
-const AccountRecoveryPage = lazy(() => import("./views/AccountRecoveryPage"));
+const ForgotPasswordPage = lazy(() => import("./views/AccountAccessPages").then((m) => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage = lazy(() => import("./views/AccountAccessPages").then((m) => ({ default: m.ResetPasswordPage })));
+const VerifyEmailPage = lazy(() => import("./views/AccountAccessPages").then((m) => ({ default: m.VerifyEmailPage })));
+const AccountSecurityPage = lazy(() => import("./views/AccountAccessPages").then((m) => ({ default: m.AccountSecurityPage })));
 
 function PageLoadingFallback() {
   return (
@@ -330,9 +329,19 @@ const { page, setPage } = useNavigation();
       <Route path="/engineer/product-awareness" element={renderPersistentShell(roleGate(<ProductAwarenessExperiencePage />, [Role.ENGINEER]))} />
       <Route path="/login" element={renderPersistentShell(<DemoLoginPage onSignedIn={handleDemoSignedIn} />)} />
       <Route path="/signin" element={renderPersistentShell(<DemoLoginPage onSignedIn={handleDemoSignedIn} />)} />
-      <Route path="/forgot-password" element={<Suspense fallback={<PageLoadingFallback/>}><AccountRecoveryPage/></Suspense>} />
-      <Route path="/reset-password" element={<Suspense fallback={<PageLoadingFallback/>}><AccountRecoveryPage/></Suspense>} />
-      <Route path="/verify-email" element={<Suspense fallback={<PageLoadingFallback/>}><AccountRecoveryPage/></Suspense>} />
+      <Route path="/forgot-password" element={renderPersistentShell(<ForgotPasswordPage />)} />
+      <Route path="/reset-password" element={renderPersistentShell(<ResetPasswordPage />)} />
+      <Route path="/verify-email" element={renderPersistentShell(<VerifyEmailPage />)} />
+      <Route
+        path="/account/security"
+        element={renderPersistentShell(
+          <RealAccountGate hasRealAccount={Boolean(user)}><AccountSecurityPage /></RealAccountGate>
+        )}
+      />
+      <Route path="/engineer/dashboard" element={renderPersistentShell(roleGate(<EngineerDashboard />, [Role.ENGINEER]))} />
+      <Route path="/company/dashboard" element={renderPersistentShell(roleGate(<CompanyDashboard />, [Role.COMPANY]))} />
+      <Route path="/resourcing/dashboard" element={renderPersistentShell(roleGate(<ResourcingDashboard />, [Role.RESOURCING_COMPANY]))} />
+      <Route path="/admin/dashboard" element={renderPersistentShell(roleGate(<AdminDashboard />, [Role.ADMIN]))} />
       <Route path="/company/signup" element={<CompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
       <Route path="/engineer/signup" element={<EngineerSignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
       <Route path="/resourcing/signup" element={<ResourcingCompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
@@ -341,20 +350,12 @@ const { page, setPage } = useNavigation();
       <Route path="/engineer/team-company" element={renderPersistentShell(roleGate(<EngineerTeamCompanyPage />, [Role.ENGINEER]))} />
       <Route path="/engineer/availability" element={renderPersistentShell(roleGate(<EngineerAvailabilityPage />, [Role.ENGINEER]))} />
       <Route path="/watch-demo" element={renderPersistentShell(<WatchDemoPage />, true)} />
-      <Route path="/engineer/profile-setup" element={renderPersistentShell(<EngineerProfileSetupPage />)} />
-      <Route path="/engineer/personal-business-profile" element={renderPersistentShell(<EngineerPersonalBusinessProfilePage />)} />
-      <Route path="/engineer/skills-profile" element={renderPersistentShell(<RoleSkillBuilderPage />)} />
-      <Route path="/role-skills" element={renderPersistentShell(<RoleSkillBuilderPage />)} />
-      <Route path="/company/engineers" element={renderPersistentShell(<CompanyEngineerDashboardPage />)} />
-      <Route path="/company/talent-pool" element={renderPersistentShell(<CompanyTalentPoolPage />)} />
-      <Route path="/company/team-assembly" element={renderPersistentShell(<TeamAssemblyPage />)} />
-      <Route path="/company/workforce-insights" element={renderPersistentShell(<WorkforceInsightsPage />)} />
-      <Route path="/company/audit" element={renderPersistentShell(<CompanyAuditPage />)} />
-      <Route path="/resourcing/engineers" element={renderPersistentShell(<CompanyEngineerDashboardPage />)} />
-      <Route path="/resourcing/talent-pool" element={renderPersistentShell(<CompanyTalentPoolPage />)} />
-      <Route path="/resourcing/team-assembly" element={renderPersistentShell(<TeamAssemblyPage />)} />
-      <Route path="/resourcing/workforce-insights" element={renderPersistentShell(<WorkforceInsightsPage />)} />
-      <Route path="/resourcing/audit" element={renderPersistentShell(<CompanyAuditPage />)} />
+      <Route path="/engineer/profile-setup" element={renderPersistentShell(roleGate(<EngineerProfileSetupPage />, [Role.ENGINEER]))} />
+      <Route path="/engineer/personal-business-profile" element={renderPersistentShell(roleGate(<EngineerPersonalBusinessProfilePage />, [Role.ENGINEER]))} />
+      <Route path="/engineer/skills-profile" element={renderPersistentShell(roleGate(<RoleSkillBuilderPage />, [Role.ENGINEER]))} />
+      <Route path="/role-skills" element={renderPersistentShell(roleGate(<RoleSkillBuilderPage />, [Role.ENGINEER]))} />
+      <Route path="/company/engineers" element={renderPersistentShell(roleGate(<CompanyEngineerDashboardPage />, [Role.COMPANY, Role.RESOURCING_COMPANY]))} />
+      <Route path="/resourcing/engineers" element={renderPersistentShell(roleGate(<CompanyEngineerDashboardPage />, [Role.RESOURCING_COMPANY]))} />
       <Route path="*" element={renderLegacyPage()} />
     </Routes>
   );

@@ -1,104 +1,130 @@
-﻿import React from 'react';
-// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
-import { useAppContext } from '../../context/InteractionContext';
+import React, { useEffect, useState } from 'react';
 import { StatCard } from '../../components/StatCard';
-import { DollarSign, Star, Zap, Megaphone, PlusCircle, Save, Image, TrendingUp } from '../../components/Icons';
+import { DollarSign, ShieldCheck, Star, TrendingUp } from '../../components/Icons';
+import { getAdminSubscriptionBillingSummary, type AdminSubscriptionBillingSummary } from '../../services/billingService';
+import { getAdminPricingResearchSummary, type PricingResearchSummary } from '../../services/pricingResearchService';
 
-// Mock data for this simulation
-const MOCK_AD_CAMPAIGNS = [
-    { id: 'ad-1', company: 'Crestron', title: 'New DM NVX+ Launch', budget: 5000, spend: 2340, status: 'Active', placement: 'Engineer Dashboard' },
-    { id: 'ad-2', company: 'Cisco', title: 'CCNP Certification Drive', budget: 7500, spend: 7120, status: 'Active', placement: 'Job Search Results' },
-    { id: 'ad-3', company: 'AVIXA', title: 'CTS Prep Course Promo', budget: 3000, spend: 3000, status: 'Completed', placement: 'Forum Sidebar' },
-];
+const formatPercent = (value: number | null) => value === null ? '—' : `${Math.round(value * 100)}%`;
+const formatScore = (value: number | null) => value === null ? '—' : value.toFixed(1);
+const formatPrice = (value: number | null) => value === null ? '—' : `£${Number.isInteger(value) ? value : value.toFixed(1)}`;
+const label = (value: string) => value.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
 
 export const MonetizationView = () => {
-    const { invoices } = useAppContext();
-    
-    // Calculate revenue streams from transactions
-    const subscriptionRevenue = (invoices as any[]).filter(item=>item.status==='paid').reduce((sum,item)=>sum+Number(item.amountPence||0)/100,0);
-    const adRevenue = MOCK_AD_CAMPAIGNS.reduce((sum, ad) => sum + ad.spend, 0);
+    const [billing, setBilling] = useState<AdminSubscriptionBillingSummary | null>(null);
+    const [research, setResearch] = useState<PricingResearchSummary | null>(null);
+    const [error, setError] = useState('');
 
-    const totalRevenue = subscriptionRevenue + adRevenue;
+    useEffect(() => {
+        Promise.all([
+            getAdminSubscriptionBillingSummary(),
+            getAdminPricingResearchSummary(),
+        ])
+            .then(([billingSummary, researchSummary]) => {
+                setBilling(billingSummary);
+                setResearch(researchSummary);
+            })
+            .catch((reason) => setError(reason instanceof Error ? reason.message : 'Could not load commercial evidence.'));
+    }, []);
+
+    if (error) return <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-5 text-red-800">{error}</div>;
+    if (!billing || !research) return <p className="text-gray-600">Loading commercial evidence…</p>;
+
+    const activePaidMemberships = billing.active + billing.trialing;
+    const likelyResponses = research.segments.reduce((sum, segment) => sum + segment.likelyToPayResponses, 0);
+    const statedIntentRate = research.totalResponses > 0 ? likelyResponses / research.totalResponses : null;
 
     return (
         <div>
-            <h1 className="text-3xl font-bold mb-6 flex items-center">
-                <DollarSign size={30} className="mr-3"/>
-                Monetization Overview
-            </h1>
-            <p className="mb-6 text-sm text-gray-600">Platform billing covers TechSubbies membership only. Job rates, invoices and payments are not platform revenue and are not tracked here.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <StatCard icon={TrendingUp} value={`£${totalRevenue.toLocaleString()}`} label="Total Revenue" colorClass="bg-green-500" />
-                <StatCard icon={Star} value={`£${subscriptionRevenue.toLocaleString()}`} label="Subscription Revenue" colorClass="bg-blue-500" />
-                <StatCard icon={Megaphone} value={`£${adRevenue.toLocaleString()}`} label="Advertising Revenue" colorClass="bg-orange-500" />
+            <header className="mb-6">
+                <h1 className="flex items-center text-3xl font-bold">
+                    <DollarSign size={30} className="mr-3" />
+                    Monetization Evidence
+                </h1>
+                <p className="mt-2 max-w-3xl text-sm text-gray-600">
+                    Compare real paid-membership state with stated willingness to pay. Survey intent is research evidence, not booked revenue.
+                </p>
+            </header>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                <StatCard icon={Star} value={String(activePaidMemberships)} label="Active / Trial Paid Accounts" colorClass="bg-blue-500" />
+                <StatCard icon={TrendingUp} value={String(research.totalResponses)} label="Pricing Research Responses" colorClass="bg-green-500" />
+                <StatCard icon={DollarSign} value={formatPercent(statedIntentRate)} label="Likely to Pay (Stated)" colorClass="bg-amber-500" />
+                <StatCard icon={ShieldCheck} value="0%" label="Commission on Work Fees" colorClass="bg-purple-500" />
             </div>
 
-            <div className="mt-8 bg-white p-6 rounded-lg shadow">
-                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold flex items-center"><Megaphone size={22} className="mr-3 text-orange-500"/> Ad Campaign Manager</h2>
-                    <button className="flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700">
-                        <PlusCircle size={18} className="mr-2" /> New Campaign
-                    </button>
+            <section className="mt-6 rounded-xl border bg-white p-5 shadow-sm">
+                <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+                    <div>
+                        <h2 className="text-lg font-bold text-gray-900">Willingness to pay by account type</h2>
+                        <p className="mt-1 text-sm text-gray-500">Price figures are median monthly research responses, not approved TechSubbies prices.</p>
+                    </div>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Likely = score 4–5 / 5</span>
                 </div>
-                
-                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+
+                <div className="mt-4 overflow-x-auto">
+                    <table className="min-w-full text-left text-sm">
+                        <thead className="border-b text-xs uppercase tracking-wide text-gray-500">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Advertiser</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campaign Title</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Budget / Spend</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-3 py-2">Segment</th>
+                                <th className="px-3 py-2 text-right">Responses</th>
+                                <th className="px-3 py-2 text-right">Value /5</th>
+                                <th className="px-3 py-2 text-right">Pay likelihood /5</th>
+                                <th className="px-3 py-2 text-right">Likely to pay</th>
+                                <th className="px-3 py-2 text-right">Good value</th>
+                                <th className="px-3 py-2 text-right">Expensive</th>
+                                <th className="px-3 py-2 text-right">Too expensive</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {MOCK_AD_CAMPAIGNS.map(ad => (
-                                <tr key={ad.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{ad.company}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{ad.title}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        £{ad.spend.toLocaleString()} / £{ad.budget.toLocaleString()}
-                                        <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1"><div className="bg-blue-600 h-1.5 rounded-full" style={{width: `${(ad.spend / ad.budget) * 100}%`}}></div></div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap"><span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${ad.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>{ad.status}</span></td>
+                        <tbody>
+                            {research.segments.map((segment) => (
+                                <tr key={segment.role} className="border-b last:border-0">
+                                    <td className="px-3 py-3 font-semibold text-gray-900">{segment.role}</td>
+                                    <td className="px-3 py-3 text-right">{segment.responses}</td>
+                                    <td className="px-3 py-3 text-right">{formatScore(segment.averageValueScore)}</td>
+                                    <td className="px-3 py-3 text-right">{formatScore(segment.averageLikelihoodToPay)}</td>
+                                    <td className="px-3 py-3 text-right">{formatPercent(segment.likelyToPayRate)}</td>
+                                    <td className="px-3 py-3 text-right">{formatPrice(segment.medianPriceGoodValue)}</td>
+                                    <td className="px-3 py-3 text-right">{formatPrice(segment.medianPriceExpensive)}</td>
+                                    <td className="px-3 py-3 text-right">{formatPrice(segment.medianPriceTooExpensive)}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
+            </section>
+
+            <div className="mt-6 grid gap-4 lg:grid-cols-3">
+                {research.segments.map((segment) => (
+                    <section key={segment.role} className="rounded-xl border bg-white p-5 shadow-sm">
+                        <h3 className="font-bold text-gray-900">{segment.role}</h3>
+                        <p className="mt-1 text-xs text-gray-500">{segment.responses} research responses</p>
+
+                        <h4 className="mt-4 text-xs font-bold uppercase tracking-wide text-gray-500">Top value drivers</h4>
+                        <ul className="mt-2 space-y-1 text-sm text-gray-700">
+                            {segment.topValueDrivers.length > 0
+                                ? segment.topValueDrivers.map((item) => <li key={item.driver} className="flex justify-between gap-3"><span>{label(item.driver)}</span><strong>{item.responses}</strong></li>)
+                                : <li className="text-gray-400">No responses yet</li>}
+                        </ul>
+
+                        <h4 className="mt-4 text-xs font-bold uppercase tracking-wide text-gray-500">Main blockers</h4>
+                        <ul className="mt-2 space-y-1 text-sm text-gray-700">
+                            {segment.blockers.length > 0
+                                ? segment.blockers.slice(0, 3).map((item) => <li key={item.blocker} className="flex justify-between gap-3"><span>{label(item.blocker)}</span><strong>{item.responses}</strong></li>)
+                                : <li className="text-gray-400">No responses yet</li>}
+                        </ul>
+                    </section>
+                ))}
             </div>
 
-             <div className="mt-8 bg-white p-6 rounded-lg shadow">
-                <h2 className="text-xl font-bold mb-4">Create New Ad Campaign (Simulation)</h2>
-                 <form className="space-y-4 max-w-2xl">
-                    <div>
-                        <label className="block text-sm font-medium">Advertiser Name</label>
-                        <input type="text" placeholder="e.g., Crestron" className="w-full border p-2 rounded bg-gray-100" readOnly />
-                    </div>
-                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium">Placement Area</label>
-                            <select className="w-full border p-2 rounded bg-gray-100"><option>Engineer Dashboard Sidebar</option></select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium">Budget (£)</label>
-                            <input type="number" placeholder="5000" className="w-full border p-2 rounded bg-gray-100" readOnly />
-                        </div>
-                    </div>
-                     <div>
-                        <label className="block text-sm font-medium">Ad Creative</label>
-                         <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                             <div className="space-y-1 text-center"><Image size={40} className="mx-auto text-gray-400" /><p className="text-sm text-gray-600">Upload an image or video</p></div>
-                        </div>
-                    </div>
-                     <div className="flex justify-end pt-4 border-t">
-                        <button type="button" className="flex items-center px-6 py-2 bg-blue-600 text-white font-bold rounded-md disabled:bg-blue-300" disabled>
-                            <Save size={18} className="mr-2" /> Save Campaign
-                        </button>
-                    </div>
-                </form>
-            </div>
+            <section className="mt-6 rounded-lg border border-green-200 bg-green-50 p-6 shadow-sm">
+                <h2 className="flex items-center text-xl font-bold text-green-950">
+                    <ShieldCheck size={22} className="mr-3" />
+                    Commercial model boundary
+                </h2>
+                <p className="mt-3 max-w-3xl text-sm leading-6 text-green-900">
+                    TechSubbies revenue comes from membership subscriptions. Engineering rates, invoices and project payments remain direct arrangements between members, with no placement, success or percentage fee payable to TechSubbies.
+                </p>
+            </section>
         </div>
     );
 };
-

@@ -44,11 +44,8 @@ All endpoints should be prefixed with `/api`.
 - `GET /contracts`: Get all contracts for the authenticated user.
 - `POST /contracts`: Create a new draft contract.
 - `POST /contracts/:contractId/sign`: E-sign a contract.
-- `POST /contracts/:contractId/sign`: Record a party's signature.
-- `POST /contracts/:contractId/timesheets`: Submit delivery time/evidence.
-- `PATCH /timesheets/:timesheetId`: Approve or reject delivery time.
-
-TechSubbies does not collect, escrow, invoice or pay job fees. Commercial settlement remains directly between the company and engineer.
+- `PATCH /contracts/:contractId/milestones/:milestoneId/start`: Confirm that milestone work may begin. TechSubbies does not process payment.
+- `POST /contracts/:contractId/milestones/:milestoneId/approve`: Approve a completed milestone.
 
 ---
 
@@ -70,41 +67,17 @@ The client calls this endpoint *after* successfully uploading the file to the `u
 
 ---
 
-## 4. Membership billing only
+## 4. Membership Billing
 
-Billing endpoints are limited to TechSubbies membership plans. They must never accept a job, application, contract, milestone or timesheet amount.
+Any future Stripe integration is limited to TechSubbies membership and optional platform-feature purchases. Payments for engineering services remain entirely between the company and engineer.
 
-- `GET /api/membership`: current authenticated engineer subscription and invoice history.
-- `GET /api/membership/invoices`: membership invoice history.
-- `POST /api/membership/checkout` with `{ "plan": "professional|skills|business" }`: creates a Stripe-hosted recurring membership checkout for an engineer account.
-- `POST /api/membership/webhook`: Stripe webhook endpoint. It requires a valid `Stripe-Signature`, consumes the raw request body, records event IDs for idempotency, and is the only route that activates or cancels membership.
-
-Successful browser redirection never activates a membership. Activation follows only a verified `checkout.session.completed` event reporting paid or no-payment-required status. Job, application, contract and timesheet identifiers are not accepted by billing endpoints.
+### `POST /api/billing/create-membership-intent`
+- **Request Body:** `{ "planId": "engineer-pro", "currency": "gbp" }`
+- **Success Response (200):** `{ "clientSecret": "pi_..." }`
 
 ---
 
-## 5. Account security and privacy
-
-- `POST /api/auth/verification/request` and `/verification/confirm`: 24-hour, hashed, single-use email-verification tokens.
-- `POST /api/auth/password/forgot` and `/password/reset`: non-enumerating recovery request and 30-minute, hashed, single-use reset token. Resetting increments the session version and invalidates existing JWTs.
-- `POST /api/auth/sessions/revoke`: invalidates all existing sessions for the authenticated account.
-- `GET /api/users/me/export`: downloads the authenticated account and its marketplace records without password material.
-- `DELETE /api/users/me`: requires the current password and exact `DELETE MY ACCOUNT` confirmation. Active or unsigned contracts block deletion; eligible deletion removes related marketplace and private records transactionally.
-
-Production account emails require the SMTP and `ACCOUNT_ACTION_URL` settings documented in `.env.example`.
-
-### Private documents
-
-- `POST /api/documents`: authenticated raw PDF/JPEG/PNG upload, maximum 10 MB, using `X-Document-Type` and `X-File-Name` headers.
-- `GET /api/documents`: lists the owner’s metadata without storage keys.
-- `GET /api/documents/:id/content`: private owner-only download with `no-store` caching.
-- `DELETE /api/documents/:id`: removes the owner’s metadata and stored bytes.
-
-The server compares MIME declarations with file signatures, creates opaque storage keys, records SHA-256 hashes, sanitises filenames and never exposes the storage directory as static content.
-
----
-
-## 6. E-Signatures (DocuSign/HelloSign Integration)
+## 5. E-Signatures (DocuSign/HelloSign Integration)
 
 The backend will create the signing session and provide the frontend with an embedded signing URL.
 
@@ -114,7 +87,7 @@ The backend will create the signing session and provide the frontend with an emb
 
 ---
 
-## 7. Real-time Services (WebSocket API)
+## 6. Real-time Services (WebSocket API)
 
 A WebSocket server is required for real-time messaging and notifications. The client will connect upon login.
 

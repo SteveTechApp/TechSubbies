@@ -10,12 +10,21 @@ export type RoleFamily =
   | "uc"
   | "security"
   | "infrastructure"
-  | "design"
-  | "project-delivery"
-  | "field-service"
   | "live-events"
-  | "cloud-platform"
+  | "design"
+  | "management"
+  | "service"
+  | "product-awareness"
+  | "specialist"
+  | "field-service"
+  | "wireless"
+  | "systems"
+  | "cloud"
   | "data"
+  | "devops"
+  | "consultancy"
+  | "project-delivery"
+  | "cloud-platform"
   | "quality-assurance"
   | "architecture";
 
@@ -65,12 +74,7 @@ export interface RoleSkillDefinition {
   distinguishedFrom?: Array<{ roleId: string; distinction: string }>;
 }
 
-export interface RoleKnowledgeRequirement {
-  topic: string;
-  expectation: string;
-  suggestedTags: string[];
-  prerequisiteEligible: boolean;
-}
+export interface RoleKnowledgeRequirement { topic: string; expectation: string; suggestedTags: string[]; prerequisiteEligible: boolean; }
 
 export interface EngineerSkillRating {
   skillId: string;
@@ -87,8 +91,6 @@ export interface EngineerSkillRating {
 
 export interface EngineerRoleSkillProfile {
   roleId: string;
-  overallCapability?: "assist" | "deliver" | "diagnose" | "lead";
-  capabilities?: Array<{ skillId: string; claim: "independent" | "support" | "not-offered" }>;
   ratings: EngineerSkillRating[];
   productTags: string[];
   brandTags: string[];
@@ -96,9 +98,6 @@ export interface EngineerRoleSkillProfile {
   certificationTags: string[];
   uploadedEvidenceNotes: string[];
   profileNotes: string;
-  customKeywords?: string[];
-  productExperience?: Record<string, "aware" | "installed" | "configured" | "commissioned" | "programmed" | "certified">;
-  evidence?: Array<{ type: string; note: string }>;
 }
 
 export interface RoleSkillFilter {

@@ -24,9 +24,12 @@ export const TimesheetRow = ({ timesheet, contract, userRole }: TimesheetRowProp
     const { approveTimesheet } = useAppContext();
     const [isLoading, setIsLoading] = useState(false);
     
+    const totalAmount = Number(contract.amount) * timesheet.days;
+
     const handleApprove = async () => {
         setIsLoading(true);
-        await approveTimesheet(contract.id, timesheet.id);
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
+        approveTimesheet(contract.id, timesheet.id);
         setIsLoading(false);
     };
 
@@ -35,7 +38,7 @@ export const TimesheetRow = ({ timesheet, contract, userRole }: TimesheetRowProp
         if ((userRole === Role.COMPANY || userRole === Role.ADMIN) && timesheet.status === 'submitted') {
             return (
                 <button onClick={handleApprove} className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700">
-                    Approve Time
+                    Approve Timesheet
                 </button>
             );
         }
@@ -46,7 +49,7 @@ export const TimesheetRow = ({ timesheet, contract, userRole }: TimesheetRowProp
         <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md border">
             <div>
                 <p className="font-semibold">{timesheet.period}</p>
-                <p className="text-sm text-gray-600">{timesheet.hours || ((timesheet.days || 0) * 8)} hours{timesheet.workSummary?` · ${timesheet.workSummary}`:''}</p>
+                <p className="text-sm text-gray-600">{timesheet.days} days at {contract.currency}{contract.amount}/day = <span className="font-bold">{contract.currency}{totalAmount.toFixed(2)}</span></p>
             </div>
             <div className="flex items-center gap-4">
                 <StatusBadge status={timesheet.status} />

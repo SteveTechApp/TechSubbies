@@ -6,14 +6,37 @@ import { usersRouter } from "./routes/users.js";
 import { aiRouter } from "./routes/ai.js";
 import { partnershipsRouter } from "./routes/partnerships.js";
 import { companyAttachmentsRouter } from "./routes/companyAttachments.js";
-import { marketplaceRouter } from "./routes/marketplace.js";
-import { trustRouter } from "./routes/trust.js";
-import { databaseIntegrity, db } from "./lib/db.js";
-import { randomUUID } from "node:crypto";
-import { membershipBillingRouter, membershipWebhook, membershipWebhookBody } from "./routes/membershipBilling.js";
-import { log } from "./lib/logger.js";
-import { documentsRouter } from "./routes/documents.js";
-import { AppError, defaultHttpErrorCode, errorBody } from "./lib/errors.js";
+import { applicationsRouter, jobsRouter } from "./routes/jobs.js";
+import { contractsRouter } from "./routes/contracts.js";
+import { conversationsRouter } from "./routes/conversations.js";
+import { notificationsRouter } from "./routes/notifications.js";
+import { realtimeRouter } from "./routes/realtime.js";
+import { adminRouter } from "./routes/admin.js";
+import { evidenceRouter } from "./routes/evidence.js";
+import { adminCertificatesRouter, certificatesRouter } from "./routes/certificates.js";
+import { dropboxSignWebhookRouter, esignRouter } from "./routes/esign.js";
+import { adminBillingRouter, billingRouter, stripeBillingWebhookRouter } from "./routes/billing.js";
+import { adminContractSupportRouter, contractSupportRouter } from "./routes/contractSupport.js";
+import { adminTaxonomyRouter, taxonomyRouter } from "./routes/taxonomy.js";
+import { adminMarketplaceAnalyticsRouter, marketplaceAnalyticsRouter } from "./routes/marketplaceAnalytics.js";
+import { adminPricingResearchRouter, pricingResearchRouter } from "./routes/pricingResearch.js";
+import { adminCommercialValidationRouter } from "./routes/commercialValidation.js";
+import { requireCsrf, securityHeaders } from "./middleware/security.js";
+import { createRateLimiter } from "./middleware/rateLimit.js";
+import { frontendOrigin, validateRuntimeConfig } from "./lib/config.js";
+import { requireAuth, requireRole, requireVerifiedEmailForMutation } from "./middleware/auth.js";
+import { checkDatabaseConnection } from "./lib/db.js";
+import { checkEvidenceRepository } from "./lib/evidenceRepository.js";
+import { checkCertificateRepository } from "./lib/certificateRepository.js";
+import { checkEsignRepository } from "./lib/esignRepository.js";
+import { checkBillingRepository } from "./lib/billingRepository.js";
+import { checkContractSupportRepository } from "./lib/contractSupportRepository.js";
+import { checkNotificationRepository } from "./lib/notificationRepository.js";
+import { checkTaxonomyRepository } from "./lib/taxonomyRepository.js";
+import { checkMarketplaceAnalyticsRepository } from "./lib/marketplaceAnalyticsRepository.js";
+import { checkPricingResearchRepository } from "./lib/pricingResearchRepository.js";
+import { checkCommercialValidationRepository } from "./lib/commercialValidationRepository.js";
+import { requestContext, requestLogger, safeErrorHandler } from "./middleware/observability.js";
 
 type AppOptions = {
   readinessCheck?: () => boolean;
@@ -41,29 +64,12 @@ export function createApp(options: AppOptions = {}) {
 
   app.use("/api/billing/stripe/webhook", stripeBillingWebhookRouter);
 
-  app.disable("x-powered-by");
-  app.set("trust proxy", 1);
-  const allowedOrigins = FRONTEND_ORIGIN.split(",").map((value) => value.trim()).filter(Boolean);
-  app.use(cors({ origin(origin, callback) { if (!origin || allowedOrigins.includes(origin)) return callback(null, true); return callback(new Error("Origin not allowed.")); }, credentials: false }));
-  app.use((req, res, next) => {
-    const requestId = String(req.headers["x-request-id"] || randomUUID());
-    res.setHeader("X-Request-Id", requestId);
-    res.setHeader("X-Content-Type-Options", "nosniff");
-    res.setHeader("X-Frame-Options", "DENY");
-    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-    res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-    res.setHeader("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
-    const started=Date.now();res.on("finish",()=>log("info","http.request",{requestId,method:req.method,path:req.path,statusCode:res.statusCode,durationMs:Date.now()-started}));
-    next();
-  });
-  app.post("/api/membership/webhook", membershipWebhookBody, membershipWebhook);
   app.use(express.json({ limit: "2mb" }));
-  app.use((req,res,next)=>{const send=res.json.bind(res);res.json=((body:unknown)=>{if(res.statusCode>=400&&body&&typeof body==="object"&&!Array.isArray(body)&&"error" in body&&!Object.hasOwn(body,"code")){return send({...body,code:defaultHttpErrorCode(res.statusCode)});}return send(body);}) as typeof res.json;next();});
+  app.use(requireCsrf);
 
-  app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok", service: "techsubbies-api" });
+  app.get("/api/health/live", (_req, res) => {
+    res.json({ status: "ok" });
   });
-  app.get("/api/ready", (_req, res) => { try { const integrity=databaseIntegrity(); return res.status(integrity.ok?200:503).json({ status: integrity.ok?"ready":"not-ready", database: integrity.quickCheck }); } catch { return res.status(503).json({ status: "not-ready" }); } });
 
   const readinessCheck = options.readinessCheck
     || (() => checkDatabaseConnection()
@@ -161,15 +167,25 @@ export function createApp(options: AppOptions = {}) {
 
   app.use("/api/partnerships", partnershipsRouter);
   app.use("/api/company-attachments", companyAttachmentsRouter);
-  app.use("/api", marketplaceRouter);
-  app.use("/api", membershipBillingRouter);
-  app.use("/api", documentsRouter);
-  app.use("/api/trust", trustRouter);
+  app.use("/api/jobs", jobsRouter);
+  app.use("/api/applications", applicationsRouter);
+  app.use("/api/contracts", contractsRouter);
+  app.use("/api/conversations", conversationsRouter);
+  app.use("/api/notifications", notificationsRouter);
+  app.use("/api/realtime", realtimeRouter);
+  app.use("/api/evidence", evidenceRouter);
+  app.use("/api/certificates", certificatesRouter);
+  app.use("/api/esign", esignRouter);
+  app.use("/api/billing", billingRouter);
+  app.use("/api/contract-support", contractSupportRouter);
+  app.use("/api/taxonomy", taxonomyRouter);
+  app.use("/api/marketplace-analytics", marketplaceAnalyticsRouter);
+  app.use("/api/pricing-research", pricingResearchRouter);
 
   app.use("/api", (_req, res) => {
     res.status(404).json({ error: "Not found." });
   });
-  app.use((error: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => { if (error.message === "Origin not allowed.") return res.status(403).json({ error: "Origin not allowed.",code:"ORIGIN_NOT_ALLOWED" }); if(error instanceof AppError){log(error.statusCode>=500?"error":"warn","http.application-error",{requestId:res.getHeader("X-Request-Id"),method:req.method,path:req.path,errorName:error.name,code:error.code,message:error.message});return res.status(error.statusCode).json(errorBody(error));} log("error","http.unhandled-error",{requestId:res.getHeader("X-Request-Id"),method:req.method,path:req.path,errorName:error.name,message:error.message}); return res.status(500).json({ error: "Internal server error.",code:"INTERNAL_ERROR" }); });
+  app.use(safeErrorHandler);
 
   return app;
 }

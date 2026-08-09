@@ -1,28 +1,22 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { createUser, findUserByEmail } from "../lib/db.js";
-import { signToken } from "../middleware/auth.js";
-import { toPrivateUser } from "../lib/publicUser.js";
-import { createRateLimit } from "../middleware/rateLimit.js";
-import { createHash, randomBytes } from "node:crypto";
-import { consumeAccountToken, createAccountToken, findUserById, markEmailVerified, revokeUserSessions, updatePasswordAndRevokeSessions } from "../lib/db.js";
-import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
-import { sendAccountEmail } from "../lib/accountEmail.js";
-import { canonicaliseEngineerProfile } from "../domain/marketplaceSchema.js";
+import { createUser, findUserByEmail, findUserById, markEmailVerified, revokeUserSessions, syncEngineerRoleProfiles, updateUserPassword } from "../lib/db.js";
+import { requireAuth, signToken, type AuthedRequest } from "../middleware/auth.js";
+import { toPublicUser } from "../lib/publicUser.js";
+import { clearAuthCookies, setAuthCookies } from "../middleware/security.js";
+import { consumeAccountToken, issueAccountToken } from "../lib/accountTokens.js";
+import { sendEmail } from "../lib/email.js";
+import { frontendOrigin } from "../lib/config.js";
+import { listAccountAuditForUser, recordAccountAudit } from "../lib/accountAudit.js";
 
 export const authRouter = Router();
-const emailKey=(req:any)=>`${req.ip}:${String(req.body?.email||'').trim().toLowerCase()}`;
-const loginLimit=createRateLimit({windowMs:15*60_000,max:Number(process.env.LOGIN_ATTEMPT_LIMIT)||5,key:emailKey});
-const registerLimit=createRateLimit({windowMs:60*60_000,max:Number(process.env.REGISTRATION_LIMIT)||25});
-const recoveryLimit=createRateLimit({windowMs:60*60_000,max:Number(process.env.RECOVERY_LIMIT)||5,key:emailKey});
-const hashToken=(value:string)=>createHash("sha256").update(value).digest("hex");
-function issueAccountToken(userId:string,purpose:"verify-email"|"reset-password",minutes:number){const token=randomBytes(32).toString("base64url");createAccountToken(userId,purpose,hashToken(token),new Date(Date.now()+minutes*60_000).toISOString());return token;}
-function deliveryResponse(token:string):Record<string,string>{return process.env.NODE_ENV==="test"?{debugToken:token}:{};}
 
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8, "Password must be at least 8 characters."),
+  // Privileged roles such as Admin must never be assignable through the
+  // public registration endpoint.
   role: z.enum(["Engineer", "Company", "Resourcing Company"]),
   name: z.string().min(1),
   // Full role-specific profile object the frontend already builds
@@ -30,36 +24,68 @@ const registerSchema = z.object({
   profileData: z.record(z.any()).optional().default({}),
 });
 
-authRouter.post("/register", registerLimit, async (req, res) => {
+authRouter.post("/register", async (req, res) => {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues.map((i) => i.message).join(", ") });
   }
   const { password, role, name, profileData } = parsed.data;
-  const email=parsed.data.email.trim().toLowerCase();
+  const email = parsed.data.email.trim().toLowerCase();
 
   if (findUserByEmail(email)) {
     return res.status(409).json({ error: "An account with this email already exists." });
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  let storedProfile:Record<string,unknown>={ ...profileData, name, contact: { email, ...(profileData.contact || {}) } };
-  try{if(role==="Engineer")storedProfile=canonicaliseEngineerProfile(storedProfile);}catch(error){return res.status(400).json({error:error instanceof Error?error.message:"Invalid engineer capability profile."});}
+  const safeProfileData = { ...profileData };
+  delete safeProfileData.profileTier;
+  delete safeProfileData.requestedProfileTier;
+  delete safeProfileData.membershipRequestedAt;
+  if (role === "Engineer") {
+    safeProfileData.profileTier = "Bronze";
+  }
   const user = createUser({
     email,
     password: passwordHash,
     role,
     name,
-    profile: JSON.stringify(storedProfile),
+    profile: JSON.stringify({ ...safeProfileData, name, contact: { email, ...(safeProfileData.contact || {}) } }),
   });
+  // The isolated browser suite cannot consume the in-memory development
+  // email outbox. Keep the bypass explicit and unavailable by default.
+  if (process.env.E2E_AUTO_VERIFY_EMAIL === "true") {
+    markEmailVerified(user.id);
+    user.emailVerified = 1;
+  }
   if (role === "Engineer") {
     syncEngineerRoleProfiles(user.id, safeProfileData.roleProfiles);
   }
 
-  const verificationToken=issueAccountToken(user.id,"verify-email",24*60);
-  await sendAccountEmail({email:user.email,name:user.name,purpose:"verify-email",token:verificationToken});
-  const token = signToken(user.id,user.sessionVersion);
-  return res.status(201).json({ token, user: toPrivateUser(user),verificationRequired:true,...deliveryResponse(verificationToken) });
+  const token = signToken(user.id);
+  const verificationToken = issueAccountToken(user.id, "verify-email", 24 * 60 * 60 * 1000);
+  let verificationEmailSent = true;
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: "Verify your TechSubbies email",
+      text: `${frontendOrigin()}/verify-email?token=${encodeURIComponent(verificationToken)}`,
+    });
+  } catch (error) {
+    verificationEmailSent = false;
+    console.error("Verification email delivery failed after registration.", error);
+  }
+  setAuthCookies(res, token);
+  recordAccountAudit({
+    eventType: "account.registered",
+    outcome: "success",
+    userId: user.id,
+    requestId: res.locals.requestId,
+  });
+  return res.status(201).json({
+    ...(process.env.NODE_ENV === "production" ? {} : { token }),
+    user: toPublicUser(user),
+    verificationEmailSent,
+  });
 });
 
 const loginSchema = z.object({
@@ -67,27 +93,201 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-authRouter.post("/login", loginLimit, async (req, res) => {
+authRouter.post("/login", async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Email and password are required." });
   }
-  const password=parsed.data.password;
-  const email=parsed.data.email.trim().toLowerCase();
+  const { email, password } = parsed.data;
 
   const user = findUserByEmail(email);
-  const dummyHash = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
-  const valid = await bcrypt.compare(password, user?.password || dummyHash);
-  if (!user || !valid) {
+  if (!user || user.deletedAt || user.suspendedAt) {
+    recordAccountAudit({
+      eventType: "login.failed",
+      outcome: "failure",
+      subject: email,
+      requestId: res.locals.requestId,
+    });
     return res.status(401).json({ error: "Invalid credentials." });
   }
 
-  const token = signToken(user.id,user.sessionVersion);
-  return res.json({ token, user: toPrivateUser(user) });
+  const valid = await bcrypt.compare(password, user.password);
+  if (!valid) {
+    recordAccountAudit({
+      eventType: "login.failed",
+      outcome: "failure",
+      userId: user.id,
+      subject: email,
+      requestId: res.locals.requestId,
+    });
+    return res.status(401).json({ error: "Invalid credentials." });
+  }
+
+  const token = signToken(user.id);
+  setAuthCookies(res, token);
+  recordAccountAudit({
+    eventType: "login.succeeded",
+    outcome: "success",
+    userId: user.id,
+    requestId: res.locals.requestId,
+  });
+  return res.json({
+    ...(process.env.NODE_ENV === "production" ? {} : { token }),
+    user: toPublicUser(user),
+  });
 });
 
-authRouter.post("/verification/request",recoveryLimit,async(req,res,next)=>{try{const parsed=z.object({email:z.string().email()}).safeParse(req.body);if(parsed.success){const user=findUserByEmail(parsed.data.email.toLowerCase());if(user&&!user.emailVerifiedAt){const token=issueAccountToken(user.id,"verify-email",24*60);await sendAccountEmail({email:user.email,name:user.name,purpose:"verify-email",token});}}return res.status(202).json({message:"If the account can be verified, instructions have been sent."});}catch(error){next(error);}});
-authRouter.post("/verification/confirm",(req,res)=>{const parsed=z.object({token:z.string().min(20)}).safeParse(req.body);if(!parsed.success)return res.status(400).json({error:"Invalid or expired verification token."});const record=consumeAccountToken(hashToken(parsed.data.token),"verify-email");if(!record)return res.status(400).json({error:"Invalid or expired verification token."});const user=markEmailVerified(record.userId)!;return res.json({verified:true,user:toPrivateUser(user)});});
-authRouter.post("/password/forgot",recoveryLimit,async(req,res,next)=>{try{let debug:Record<string,string>={};const parsed=z.object({email:z.string().email()}).safeParse(req.body);if(parsed.success){const user=findUserByEmail(parsed.data.email.toLowerCase());if(user){const token=issueAccountToken(user.id,"reset-password",30);debug=deliveryResponse(token);await sendAccountEmail({email:user.email,name:user.name,purpose:"reset-password",token});}}return res.status(202).json({message:"If an account exists, password reset instructions have been sent.",...debug});}catch(error){next(error);}});
-authRouter.post("/password/reset",async(req,res)=>{const parsed=z.object({token:z.string().min(20),password:z.string().min(12)}).safeParse(req.body);if(!parsed.success)return res.status(400).json({error:"A valid token and password of at least 12 characters are required."});const record=consumeAccountToken(hashToken(parsed.data.token),"reset-password");if(!record)return res.status(400).json({error:"Invalid or expired reset token."});await updatePasswordAndRevokeSessions(record.userId,await bcrypt.hash(parsed.data.password,12));return res.json({reset:true});});
-authRouter.post("/sessions/revoke",requireAuth,(req:AuthedRequest,res)=>{revokeUserSessions(req.userId!);return res.json({revoked:true});});
+// Development-only demo access still uses a genuine signed backend session,
+// so protected admin screens exercise the same authorization path as real
+// accounts. The route is deliberately absent in production.
+authRouter.post("/demo", async (req, res) => {
+  if (process.env.NODE_ENV === "production") return res.status(404).json({ error: "Not found." });
+
+  const parsed = z.object({
+    email: z.literal("admin@techsubbies.demo"),
+    password: z.literal("password"),
+  }).safeParse(req.body);
+  if (!parsed.success) return res.status(401).json({ error: "Invalid demo credentials." });
+
+  let user = findUserByEmail(parsed.data.email);
+  if (!user) {
+    user = createUser({
+      email: parsed.data.email,
+      password: await bcrypt.hash(parsed.data.password, 10),
+      role: "Admin",
+      name: "Platform Admin",
+      profile: JSON.stringify({
+        name: "Platform Admin",
+        role: "Admin",
+        location: "Platform HQ",
+        permissions: ["all"],
+        contact: { email: parsed.data.email },
+      }),
+    });
+    markEmailVerified(user.id);
+    user = findUserByEmail(parsed.data.email)!;
+  }
+
+  const token = signToken(user.id);
+  setAuthCookies(res, token);
+  return res.json({ user: toPublicUser(user) });
+});
+
+authRouter.post("/logout", (_req, res) => {
+  clearAuthCookies(res);
+  return res.status(204).end();
+});
+
+authRouter.post("/verification/request", requireAuth, async (req: AuthedRequest, res) => {
+  const user = req.authUser!;
+  if (user.emailVerified) return res.status(204).end();
+  const token = issueAccountToken(user.id, "verify-email", 24 * 60 * 60 * 1000);
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: "Verify your TechSubbies email",
+      text: `${frontendOrigin()}/verify-email?token=${encodeURIComponent(token)}`,
+    });
+  } catch {
+    return res.status(503).json({ error: "Verification email is temporarily unavailable. Please try again." });
+  }
+  return res.status(202).json({ message: "Verification email queued." });
+});
+
+authRouter.post("/verification/confirm", async (req, res) => {
+  const parsed = z.object({ token: z.string().min(20) }).safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "A valid verification token is required." });
+  const userId = consumeAccountToken(parsed.data.token, "verify-email");
+  if (!userId || !markEmailVerified(userId)) {
+    return res.status(400).json({ error: "This verification link is invalid or expired." });
+  }
+  recordAccountAudit({
+    eventType: "email.verified",
+    outcome: "success",
+    userId,
+    requestId: res.locals.requestId,
+  });
+  return res.json({ verified: true });
+});
+
+authRouter.post("/password-reset/request", async (req, res) => {
+  const parsed = z.object({ email: z.string().email() }).safeParse(req.body);
+  if (parsed.success) {
+    const user = findUserByEmail(parsed.data.email.trim().toLowerCase());
+    if (user) {
+      const token = issueAccountToken(user.id, "reset-password", 60 * 60 * 1000);
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: "Reset your TechSubbies password",
+          text: `${frontendOrigin()}/reset-password?token=${encodeURIComponent(token)}`,
+        });
+      } catch (error) {
+        // Preserve the identical response for known and unknown addresses.
+        console.error("Password reset email delivery failed.", error);
+      }
+    }
+  }
+  // Identical response prevents account enumeration.
+  return res.status(202).json({ message: "If that account exists, a reset email has been queued." });
+});
+
+authRouter.post("/password-reset/confirm", async (req, res) => {
+  const parsed = z.object({
+    token: z.string().min(20),
+    newPassword: z.string().min(8),
+  }).safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "A valid token and password are required." });
+  const userId = consumeAccountToken(parsed.data.token, "reset-password");
+  if (!userId) return res.status(400).json({ error: "This reset link is invalid or expired." });
+  await bcrypt.hash(parsed.data.newPassword, 12).then((hash) => updateUserPassword(userId, hash));
+  recordAccountAudit({
+    eventType: "password.reset",
+    outcome: "success",
+    userId,
+    requestId: res.locals.requestId,
+  });
+  return res.status(204).end();
+});
+
+authRouter.post("/password/change", requireAuth, async (req: AuthedRequest, res) => {
+  const parsed = z.object({
+    currentPassword: z.string().min(1),
+    newPassword: z.string().min(8),
+  }).safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Current and new passwords are required." });
+  const user = findUserById(req.userId!)!;
+  if (!(await bcrypt.compare(parsed.data.currentPassword, user.password))) {
+    return res.status(401).json({ error: "Current password is incorrect." });
+  }
+  updateUserPassword(user.id, await bcrypt.hash(parsed.data.newPassword, 12));
+  recordAccountAudit({
+    eventType: "password.changed",
+    outcome: "success",
+    userId: user.id,
+    requestId: res.locals.requestId,
+  });
+  return res.status(204).end();
+});
+
+authRouter.get("/security-events", requireAuth, (req: AuthedRequest, res) => {
+  const events = listAccountAuditForUser(req.userId!).map((event) => ({
+    id: event.id,
+    eventType: event.eventType,
+    outcome: event.outcome,
+    createdAt: event.createdAt,
+  }));
+  return res.json({ events });
+});
+
+authRouter.post("/sessions/revoke-all", requireAuth, (req: AuthedRequest, res) => {
+  revokeUserSessions(req.userId!);
+  recordAccountAudit({
+    eventType: "sessions.revoked",
+    outcome: "success",
+    userId: req.userId!,
+    requestId: res.locals.requestId,
+  });
+  clearAuthCookies(res);
+  return res.status(204).end();
+});

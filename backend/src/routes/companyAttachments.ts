@@ -11,14 +11,17 @@ import {
   updateUserProfile,
 } from "../lib/db.js";
 import { toPublicUser } from "../lib/publicUser.js";
-import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
-import { decodePersistedObject } from "../lib/persistedData.js";
-import { ENGINEER_PROFILE_SCHEMA_VERSION } from "../domain/marketplaceTypes.js";
+import { requireAuth, requireRole, type AuthedRequest } from "../middleware/auth.js";
 
 export const companyAttachmentsRouter = Router();
 
 function readProfile(profileJson: string): Record<string, unknown> {
-  return decodePersistedObject(profileJson,{entity:"user profile",id:"company-attachment-profile",versionKey:"profileSchemaVersion",maximumVersion:ENGINEER_PROFILE_SCHEMA_VERSION});
+  try {
+    const parsed = JSON.parse(profileJson);
+    return typeof parsed === "object" && parsed !== null ? parsed : {};
+  } catch {
+    return {};
+  }
 }
 
 const requestSchema = z.object({

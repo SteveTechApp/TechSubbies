@@ -70,7 +70,7 @@ export const MOCK_CONTRACTS: Contract[] = [
         companyId: 'comp-2',
         engineerId: 'eng-2',
         type: ContractType.SOW,
-        description: `This Statement of Work (SOW) is made between Starlight Events ("the Client") and Samantha Greene ("the Contractor"). The Contractor will complete the milestones as defined in this contract. TechSubbies records completion and approval only; invoicing and payment are handled directly between the parties.`,
+        description: `This Statement of Work (SOW) is made between Starlight Events ("the Client") and Samantha Greene ("the Contractor"). The Contractor will complete the milestones as defined in this contract. The parties manage invoicing, payment and tax obligations directly, outside TechSubbies.`,
         amount: 2500,
         currency: Currency.GBP,
         status: ContractStatus.ACTIVE,
@@ -132,19 +132,5 @@ export const MOCK_COLLABORATION_POSTS: CollaborationPost[] = [
         startDate: new Date('2024-08-15'),
         postedDate: new Date('2024-07-22'),
         status: 'open',
-    }
-];
-
-export const MOCK_INVOICES: Invoice[] = [
-    {
-        id: 'inv-1',
-        contractId: 'contract-2',
-        companyId: 'comp-2',
-        engineerId: 'eng-2',
-        items: [{ description: 'Milestone: Pre-wire & First Fix', amount: 1000 }],
-        total: 1000,
-        issueDate: new Date('2024-08-10'),
-        dueDate: new Date('2024-08-24'),
-        status: InvoiceStatus.SENT,
     }
 ];

@@ -1,9 +1,10 @@
+import fs from "node:fs";
 import path from "node:path";
-import { randomUUID } from "node:crypto";
 import { describe, it, expect, beforeAll } from "vitest";
 import request from "supertest";
 
-const TEST_DB = path.join(process.cwd(), "data", `test-partnerships-${randomUUID()}.db`);
+const TEST_DB = path.join(process.cwd(), "data", "test-partnerships.db");
+fs.rmSync(TEST_DB, { force: true });
 process.env.DB_FILE = TEST_DB;
 process.env.JWT_SECRET = "test-secret";
 
