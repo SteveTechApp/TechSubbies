@@ -6,7 +6,7 @@ import { subscribeRealtime } from "../lib/realtimeHub.js";
 
 export const realtimeRouter = Router();
 
-realtimeRouter.get("/events", requireAuth, (req: AuthedRequest, res) => {
+realtimeRouter.get("/events", requireAuth, async (req: AuthedRequest, res) => {
   res.status(200);
   res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
   res.setHeader("Cache-Control", "no-cache, no-transform");
@@ -20,9 +20,13 @@ realtimeRouter.get("/events", requireAuth, (req: AuthedRequest, res) => {
     res.write(`data: ${JSON.stringify(data)}\n\n`);
   };
 
+  const [unreadMessages, unreadNotifications] = await Promise.all([
+    countUnreadMessagesForUser(req.userId!),
+    countUnreadNotifications(req.userId!),
+  ]);
   writeEvent("realtime.connected", {
-    unreadMessages: countUnreadMessagesForUser(req.userId!),
-    unreadNotifications: countUnreadNotifications(req.userId!),
+    unreadMessages,
+    unreadNotifications,
     connectedAt: new Date().toISOString(),
   });
 

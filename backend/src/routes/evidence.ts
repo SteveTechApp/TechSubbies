@@ -37,7 +37,7 @@ function requestId(req: AuthedRequest) {
   return String(req.res?.locals.requestId || "unknown-request");
 }
 
-function canReadEvidence(req: AuthedRequest, evidence: EvidenceObjectRow) {
+async function canReadEvidence(req: AuthedRequest, evidence: EvidenceObjectRow) {
   if (req.userId === evidence.ownerUserId || req.authUser?.role === "Admin") return true;
   if (!["Company", "Resourcing Company"].includes(req.authUser?.role || "")) return false;
   if (!req.authUser?.emailVerified) return false;
@@ -47,11 +47,11 @@ function canReadEvidence(req: AuthedRequest, evidence: EvidenceObjectRow) {
 export const evidenceRouter = Router();
 evidenceRouter.use(requireAuth);
 
-evidenceRouter.get("/mine", (req: AuthedRequest, res) => {
-  return res.json(listEvidenceObjectsForOwner(req.userId!).map(publicEvidence));
+evidenceRouter.get("/mine", async (req: AuthedRequest, res) => {
+  return res.json((await listEvidenceObjectsForOwner(req.userId!)).map(publicEvidence));
 });
 
-evidenceRouter.post("/", requireRole("Engineer"), (req: AuthedRequest, res) => {
+evidenceRouter.post("/", requireRole("Engineer"), async (req: AuthedRequest, res) => {
   const parsed = z.object({
     purpose: z.enum(["cv", "certification", "skill_evidence"]),
     fileName: z.string().trim().min(1).max(180),
@@ -64,14 +64,14 @@ evidenceRouter.post("/", requireRole("Engineer"), (req: AuthedRequest, res) => {
     });
   }
 
-  const evidence = createEvidenceObject({
+  const evidence = await createEvidenceObject({
     ownerUserId: req.userId!,
     purpose: parsed.data.purpose,
     fileName: parsed.data.fileName,
     contentType: parsed.data.contentType,
     declaredSizeBytes: parsed.data.sizeBytes,
   });
-  recordEvidenceAccess({
+  await recordEvidenceAccess({
     evidenceId: evidence.id,
     actorUserId: req.userId!,
     action: "metadata.created",
@@ -86,10 +86,10 @@ evidenceRouter.put(
   requireRole("Engineer"),
   uploadBody,
   async (req: AuthedRequest, res) => {
-    const evidence = findEvidenceObject(req.params.evidenceId);
+    const evidence = await findEvidenceObject(req.params.evidenceId);
     if (!evidence) return res.status(404).json({ error: "Evidence item not found." });
     if (evidence.ownerUserId !== req.userId) {
-      recordEvidenceAccess({
+      await recordEvidenceAccess({
         evidenceId: evidence.id,
         actorUserId: req.userId!,
         action: "content.access_denied",
@@ -110,8 +110,8 @@ evidenceRouter.put(
     try {
       await putEvidenceObject(evidence.objectKey, req.body, evidence.contentType);
       const sha256 = createHash("sha256").update(req.body).digest("hex");
-      const ready = markEvidenceReady(evidence.id, req.body.length, sha256)!;
-      recordEvidenceAccess({
+      const ready = (await markEvidenceReady(evidence.id, req.body.length, sha256))!;
+      await recordEvidenceAccess({
         evidenceId: evidence.id,
         actorUserId: req.userId!,
         action: "content.uploaded",
@@ -120,7 +120,7 @@ evidenceRouter.put(
       });
       return res.json(publicEvidence(ready));
     } catch {
-      recordEvidenceAccess({
+      await recordEvidenceAccess({
         evidenceId: evidence.id,
         actorUserId: req.userId!,
         action: "content.access_failed",
@@ -132,17 +132,17 @@ evidenceRouter.put(
   }
 );
 
-evidenceRouter.get("/:evidenceId/audit", requireRole("Admin"), (req, res) => {
-  const evidence = findEvidenceObject(req.params.evidenceId);
+evidenceRouter.get("/:evidenceId/audit", requireRole("Admin"), async (req, res) => {
+  const evidence = await findEvidenceObject(req.params.evidenceId);
   if (!evidence) return res.status(404).json({ error: "Evidence item not found." });
-  return res.json(listEvidenceAccessEvents(evidence.id));
+  return res.json(await listEvidenceAccessEvents(evidence.id));
 });
 
 evidenceRouter.get("/:evidenceId/content", async (req: AuthedRequest, res) => {
-  const evidence = findEvidenceObject(req.params.evidenceId);
+  const evidence = await findEvidenceObject(req.params.evidenceId);
   if (!evidence) return res.status(404).json({ error: "Evidence item not found." });
-  if (!canReadEvidence(req, evidence)) {
-    recordEvidenceAccess({
+  if (!(await canReadEvidence(req, evidence))) {
+    await recordEvidenceAccess({
       evidenceId: evidence.id,
       actorUserId: req.userId!,
       action: "content.access_denied",
@@ -157,7 +157,7 @@ evidenceRouter.get("/:evidenceId/content", async (req: AuthedRequest, res) => {
 
   try {
     const stored = await getEvidenceObject(evidence.objectKey, evidence.contentType);
-    recordEvidenceAccess({
+    await recordEvidenceAccess({
       evidenceId: evidence.id,
       actorUserId: req.userId!,
       action: "content.accessed",
@@ -173,7 +173,7 @@ evidenceRouter.get("/:evidenceId/content", async (req: AuthedRequest, res) => {
     );
     return res.send(stored.body);
   } catch {
-    recordEvidenceAccess({
+    await recordEvidenceAccess({
       evidenceId: evidence.id,
       actorUserId: req.userId!,
       action: "content.access_failed",

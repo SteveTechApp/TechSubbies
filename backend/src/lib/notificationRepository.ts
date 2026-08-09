@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { db } from "./db.js";
+import { database, db } from "./db.js";
 
 export type NotificationRow = {
   id: string;
@@ -26,18 +26,16 @@ db.exec(`
     ON user_notifications(userId, isRead, timestamp DESC);
 `);
 
-export function checkNotificationRepository(): boolean {
-  return Boolean(db.prepare(
-    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'user_notifications'"
-  ).get());
+export function checkNotificationRepository(): Promise<boolean> {
+  return database.tableExists("user_notifications");
 }
 
-export function createNotification(input: {
+export async function createNotification(input: {
   userId: string;
   type: string;
   text: string;
   link: string;
-}): NotificationRow {
+}): Promise<NotificationRow> {
   const row: NotificationRow = {
     id: randomUUID(),
     userId: input.userId,
@@ -47,44 +45,44 @@ export function createNotification(input: {
     isRead: 0,
     timestamp: new Date().toISOString(),
   };
-  db.prepare(`
+  await database.execute(`
     INSERT INTO user_notifications (id, userId, type, text, link, isRead, timestamp)
     VALUES (?, ?, ?, ?, ?, 0, ?)
-  `).run(row.id, row.userId, row.type, row.text, row.link, row.timestamp);
+  `, [row.id, row.userId, row.type, row.text, row.link, row.timestamp]);
   return row;
 }
 
-export function listNotificationsForUser(userId: string, limit = 100): NotificationRow[] {
+export function listNotificationsForUser(userId: string, limit = 100): Promise<NotificationRow[]> {
   const safeLimit = Math.max(1, Math.min(200, Math.trunc(limit)));
-  return db.prepare(`
+  return database.queryMany<NotificationRow>(`
     SELECT * FROM user_notifications
     WHERE userId = ?
     ORDER BY timestamp DESC
     LIMIT ?
-  `).all(userId, safeLimit) as unknown as NotificationRow[];
+  `, [userId, safeLimit]);
 }
 
-export function countUnreadNotifications(userId: string): number {
-  const row = db.prepare(
-    "SELECT COUNT(*) AS total FROM user_notifications WHERE userId = ? AND isRead = 0"
-  ).get(userId) as { total: number };
-  return row.total;
+export async function countUnreadNotifications(userId: string): Promise<number> {
+  const row = await database.queryOne<{ total: number }>(
+    "SELECT COUNT(*) AS total FROM user_notifications WHERE userId = ? AND isRead = 0", [userId]
+  );
+  return row?.total ?? 0;
 }
 
-export function markNotificationRead(id: string, userId: string): NotificationRow | undefined {
-  db.prepare(
+export async function markNotificationRead(id: string, userId: string): Promise<NotificationRow | undefined> {
+  await database.execute(
     "UPDATE user_notifications SET isRead = 1 WHERE id = ? AND userId = ?"
-  ).run(id, userId);
-  return db.prepare(
-    "SELECT * FROM user_notifications WHERE id = ? AND userId = ?"
-  ).get(id, userId) as unknown as NotificationRow | undefined;
+  , [id, userId]);
+  return database.queryOne<NotificationRow>(
+    "SELECT * FROM user_notifications WHERE id = ? AND userId = ?", [id, userId]
+  );
 }
 
-export function markAllNotificationsRead(userId: string): number {
-  const result = db.prepare(
+export async function markAllNotificationsRead(userId: string): Promise<number> {
+  const result = await database.execute(
     "UPDATE user_notifications SET isRead = 1 WHERE userId = ? AND isRead = 0"
-  ).run(userId);
-  return Number(result.changes);
+  , [userId]);
+  return result.changes;
 }
 
 export function toPublicNotification(row: NotificationRow) {

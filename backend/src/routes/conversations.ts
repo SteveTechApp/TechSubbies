@@ -26,10 +26,10 @@ function otherParticipantId(conversation: { participantAId: string; participantB
   return conversation.participantAId === userId ? conversation.participantBId : conversation.participantAId;
 }
 
-function publicConversationForUser(conversation: ConversationRow, userId: string) {
+async function publicConversationForUser(conversation: ConversationRow, userId: string) {
   return {
     ...toPublicConversation(conversation),
-    unreadCount: countUnreadMessagesForConversation(conversation.id, userId),
+    unreadCount: await countUnreadMessagesForConversation(conversation.id, userId),
   };
 }
 
@@ -44,16 +44,16 @@ conversationsRouter.post("/", requireAuth, async (req: AuthedRequest, res) => {
   if (!findUserById(otherUserId)) return res.status(404).json({ error: "That user could not be found." });
 
   const existing = findConversationBetween(req.userId!, otherUserId);
-  if (existing) return res.status(200).json(publicConversationForUser(existing, req.userId!));
+  if (existing) return res.status(200).json(await publicConversationForUser(existing, req.userId!));
 
   const conversation = createConversation(req.userId!, otherUserId);
-  return res.status(201).json(publicConversationForUser(conversation, req.userId!));
+  return res.status(201).json(await publicConversationForUser(conversation, req.userId!));
 });
 
 conversationsRouter.get("/me", requireAuth, async (req: AuthedRequest, res) => {
-  return res.json(listConversationsForUser(req.userId!).map((conversation) =>
+  return res.json(await Promise.all(listConversationsForUser(req.userId!).map((conversation) =>
     publicConversationForUser(conversation, req.userId!)
-  ));
+  )));
 });
 
 conversationsRouter.get("/:conversationId/messages", requireAuth, async (req: AuthedRequest, res) => {
@@ -72,12 +72,12 @@ conversationsRouter.post("/:conversationId/read", requireAuth, async (req: Authe
     return res.status(403).json({ error: "You are not part of this conversation." });
   }
 
-  const messageIds = markConversationMessagesRead(conversation.id, req.userId!);
+  const messageIds = await markConversationMessagesRead(conversation.id, req.userId!);
   const payload = {
     conversationId: conversation.id,
     readerId: req.userId!,
     messageIds,
-    unreadCount: countUnreadMessagesForConversation(conversation.id, req.userId!),
+    unreadCount: await countUnreadMessagesForConversation(conversation.id, req.userId!),
   };
   publishRealtime(req.userId!, "conversation.read", payload);
   publishRealtime(otherParticipantId(conversation, req.userId!), "conversation.read", payload);
@@ -102,11 +102,11 @@ conversationsRouter.post("/:conversationId/messages", requireAuth, async (req: A
   const sender = findUserById(req.userId!);
   const refreshedConversation = findConversationById(conversation.id)!;
 
-  const recipientConversation = publicConversationForUser(refreshedConversation, recipientId);
+  const recipientConversation = await publicConversationForUser(refreshedConversation, recipientId);
   publishRealtime(recipientId, "message.created", { message: publicMessage, conversation: recipientConversation });
   publishRealtime(recipientId, "conversation.updated", { conversation: recipientConversation });
 
-  const notification = createNotification({
+  const notification = await createNotification({
     userId: recipientId,
     type: "message",
     text: `${sender?.name || "Someone"} sent you a message`,

@@ -133,7 +133,7 @@ describe("private evidence storage", () => {
       expect.objectContaining({ action: "content.accessed", outcome: "success", actorUserId: admin.id }),
     ]));
 
-    const storedEvents = listEvidenceAccessEvents(created.body.id);
+    const storedEvents = await listEvidenceAccessEvents(created.body.id);
     expect(storedEvents.length).toBeGreaterThanOrEqual(5);
   });
 });

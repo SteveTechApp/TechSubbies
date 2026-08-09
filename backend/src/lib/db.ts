@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { currentSchemaVersion, runMigrations } from "./migrations.js";
 import { canonicalizeRoleId, migrateRoleFields } from "./canonicalRoles.js";
+import { SqliteDatabase } from "./database.js";
 
 // Uses Node's built-in SQLite module (stable since Node 22.5, no native
 // binary download required) rather than a database engine that needs to
@@ -14,6 +15,7 @@ const DB_FILE = process.env.DB_FILE || path.join(process.cwd(), "data", "techsub
 fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
 
 export const db = new DatabaseSync(DB_FILE);
+export const database = new SqliteDatabase(db);
 
 // WAL allows readers to continue while a write is committed. A bounded busy
 // timeout absorbs short write contention instead of immediately failing a

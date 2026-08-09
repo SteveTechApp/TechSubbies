@@ -1,38 +1,40 @@
-import { db } from "./db.js";
+import { database } from "./db.js";
 
-export function countUnreadMessagesForConversation(conversationId: string, userId: string): number {
-  const row = db.prepare(`
+export async function countUnreadMessagesForConversation(conversationId: string, userId: string): Promise<number> {
+  const row = await database.queryOne<{ total: number }>(`
     SELECT COUNT(*) AS total
     FROM messages
     WHERE conversationId = ? AND senderId <> ? AND isRead = 0
-  `).get(conversationId, userId) as { total: number };
-  return row.total;
+  `, [conversationId, userId]);
+  return row?.total ?? 0;
 }
 
-export function countUnreadMessagesForUser(userId: string): number {
-  const row = db.prepare(`
+export async function countUnreadMessagesForUser(userId: string): Promise<number> {
+  const row = await database.queryOne<{ total: number }>(`
     SELECT COUNT(*) AS total
     FROM messages
     JOIN conversations ON conversations.id = messages.conversationId
     WHERE messages.senderId <> ?
       AND messages.isRead = 0
       AND (conversations.participantAId = ? OR conversations.participantBId = ?)
-  `).get(userId, userId, userId) as { total: number };
-  return row.total;
+  `, [userId, userId, userId]);
+  return row?.total ?? 0;
 }
 
-export function markConversationMessagesRead(conversationId: string, userId: string): string[] {
-  const unread = db.prepare(`
+export async function markConversationMessagesRead(conversationId: string, userId: string): Promise<string[]> {
+  return database.transaction(async (transaction) => {
+  const unread = await transaction.queryMany<{ id: string }>(`
     SELECT id
     FROM messages
     WHERE conversationId = ? AND senderId <> ? AND isRead = 0
     ORDER BY timestamp ASC
-  `).all(conversationId, userId) as unknown as Array<{ id: string }>;
+  `, [conversationId, userId]);
   if (unread.length === 0) return [];
-  db.prepare(`
+  await transaction.execute(`
     UPDATE messages
     SET isRead = 1
     WHERE conversationId = ? AND senderId <> ? AND isRead = 0
-  `).run(conversationId, userId);
+  `, [conversationId, userId]);
   return unread.map((row) => row.id);
+  });
 }

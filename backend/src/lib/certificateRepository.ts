@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { db, findUserById } from "./db.js";
+import { database, db, findUserById } from "./db.js";
 import { findEvidenceObject } from "./evidenceRepository.js";
 
 export type CertificateVerificationStatus = "pending" | "verified" | "rejected";
@@ -60,14 +60,11 @@ db.exec(`
     ON certificate_verifications(expiresAt);
 `);
 
-export function checkCertificateRepository(): boolean {
-  const row = db.prepare(
-    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'certificate_verifications'"
-  ).get() as { name?: string } | undefined;
-  return row?.name === "certificate_verifications";
+export function checkCertificateRepository(): Promise<boolean> {
+  return database.tableExists("certificate_verifications");
 }
 
-export function createCertificateSubmission(input: {
+export async function createCertificateSubmission(input: {
   ownerUserId: string;
   evidenceId: string;
   name: string;
@@ -76,89 +73,79 @@ export function createCertificateSubmission(input: {
   issuedAt?: string;
   expiresAt?: string;
   visibility: CertificateVisibility;
-}): CertificateRow {
-  const evidence = findEvidenceObject(input.evidenceId);
+}): Promise<CertificateRow> {
+  const evidence = await findEvidenceObject(input.evidenceId);
   if (!evidence || evidence.ownerUserId !== input.ownerUserId) {
     throw new Error("EVIDENCE_NOT_OWNED");
   }
   if (evidence.purpose !== "certification" || evidence.status !== "ready") {
     throw new Error("EVIDENCE_NOT_READY_CERTIFICATE");
   }
-  const existing = findCertificateByEvidenceId(input.evidenceId);
+  const existing = await findCertificateByEvidenceId(input.evidenceId);
   if (existing) throw new Error("CERTIFICATE_ALREADY_SUBMITTED");
 
   const id = randomUUID();
   const now = new Date().toISOString();
-  db.prepare(`
+  await database.execute(`
     INSERT INTO certificate_verifications (
       id, ownerUserId, evidenceId, name, issuer, certificateNumber,
       issuedAt, expiresAt, verificationStatus, visibility, createdAt, updatedAt
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
-  `).run(
-    id,
-    input.ownerUserId,
-    input.evidenceId,
-    input.name,
-    input.issuer,
-    input.certificateNumber || null,
-    input.issuedAt || null,
-    input.expiresAt || null,
-    input.visibility,
-    now,
-    now
+  `, [id, input.ownerUserId, input.evidenceId, input.name, input.issuer,
+    input.certificateNumber || null, input.issuedAt || null, input.expiresAt || null,
+    input.visibility, now, now]);
+  return (await findCertificateById(id))!;
+}
+
+export function findCertificateById(id: string): Promise<CertificateRow | undefined> {
+  return database.queryOne<CertificateRow>("SELECT * FROM certificate_verifications WHERE id = ?", [id]);
+}
+
+export function findCertificateByEvidenceId(evidenceId: string): Promise<CertificateRow | undefined> {
+  return database.queryOne<CertificateRow>("SELECT * FROM certificate_verifications WHERE evidenceId = ?", [evidenceId]);
+}
+
+export function listCertificatesForOwner(ownerUserId: string): Promise<CertificateRow[]> {
+  return database.queryMany<CertificateRow>(
+    "SELECT * FROM certificate_verifications WHERE ownerUserId = ? ORDER BY createdAt DESC", [ownerUserId]
   );
-  return findCertificateById(id)!;
 }
 
-export function findCertificateById(id: string): CertificateRow | undefined {
-  return db.prepare("SELECT * FROM certificate_verifications WHERE id = ?").get(id) as unknown as CertificateRow | undefined;
-}
-
-export function findCertificateByEvidenceId(evidenceId: string): CertificateRow | undefined {
-  return db.prepare("SELECT * FROM certificate_verifications WHERE evidenceId = ?").get(evidenceId) as unknown as CertificateRow | undefined;
-}
-
-export function listCertificatesForOwner(ownerUserId: string): CertificateRow[] {
-  return db.prepare(
-    "SELECT * FROM certificate_verifications WHERE ownerUserId = ? ORDER BY createdAt DESC"
-  ).all(ownerUserId) as unknown as CertificateRow[];
-}
-
-export function setCertificateVisibility(
+export async function setCertificateVisibility(
   id: string,
   ownerUserId: string,
   visibility: CertificateVisibility
-): CertificateRow | undefined {
+): Promise<CertificateRow | undefined> {
   const now = new Date().toISOString();
-  const result = db.prepare(`
+  const result = await database.execute(`
     UPDATE certificate_verifications
     SET visibility = ?, updatedAt = ?
     WHERE id = ? AND ownerUserId = ?
-  `).run(visibility, now, id, ownerUserId);
+  `, [visibility, now, id, ownerUserId]);
   return result.changes ? findCertificateById(id) : undefined;
 }
 
-export function reviewCertificate(
+export async function reviewCertificate(
   id: string,
   reviewerId: string,
   status: Exclude<CertificateVerificationStatus, "pending">,
   note: string
-): CertificateRow | undefined {
-  const current = findCertificateById(id);
+): Promise<CertificateRow | undefined> {
+  const current = await findCertificateById(id);
   if (!current || current.verificationStatus !== "pending") return undefined;
   const now = new Date().toISOString();
-  db.prepare(`
+  await database.execute(`
     UPDATE certificate_verifications
     SET verificationStatus = ?, reviewerId = ?, reviewNote = ?, reviewedAt = ?, updatedAt = ?
     WHERE id = ? AND verificationStatus = 'pending'
-  `).run(status, reviewerId, note || null, now, now, id);
+  `, [status, reviewerId, note || null, now, now, id]);
   return findCertificateById(id);
 }
 
 export function listAdminCertificateQueue(
   status: CertificateVerificationStatus = "pending"
-): AdminCertificateQueueItem[] {
-  return db.prepare(`
+): Promise<AdminCertificateQueueItem[]> {
+  return database.queryMany<AdminCertificateQueueItem>(`
     SELECT c.*, u.name AS ownerName, u.email AS ownerEmail,
            e.fileName AS evidenceFileName, e.contentType AS evidenceContentType
     FROM certificate_verifications c
@@ -166,7 +153,7 @@ export function listAdminCertificateQueue(
     JOIN evidence_objects e ON e.id = c.evidenceId
     WHERE c.verificationStatus = ?
     ORDER BY c.createdAt ASC
-  `).all(status) as unknown as AdminCertificateQueueItem[];
+  `, [status]);
 }
 
 export function isCertificateCurrentlyValid(certificate: CertificateRow, now = new Date()): boolean {
@@ -175,8 +162,8 @@ export function isCertificateCurrentlyValid(certificate: CertificateRow, now = n
   return new Date(certificate.expiresAt).getTime() > now.getTime();
 }
 
-export function canMarketplaceReadEvidence(evidenceId: string, now = new Date()): boolean {
-  const certificate = findCertificateByEvidenceId(evidenceId);
+export async function canMarketplaceReadEvidence(evidenceId: string, now = new Date()): Promise<boolean> {
+  const certificate = await findCertificateByEvidenceId(evidenceId);
   return Boolean(
     certificate
     && certificate.visibility === "marketplace"
@@ -184,8 +171,8 @@ export function canMarketplaceReadEvidence(evidenceId: string, now = new Date())
   );
 }
 
-export function listMarketplaceCertificates(ownerUserId: string, now = new Date()): CertificateRow[] {
-  return listCertificatesForOwner(ownerUserId).filter(
+export async function listMarketplaceCertificates(ownerUserId: string, now = new Date()): Promise<CertificateRow[]> {
+  return (await listCertificatesForOwner(ownerUserId)).filter(
     (certificate) => certificate.visibility === "marketplace" && isCertificateCurrentlyValid(certificate, now)
   );
 }
@@ -202,16 +189,16 @@ export function reminderStageFor(certificate: CertificateRow, now = new Date()):
   return null;
 }
 
-export function listCertificatesDueExpiryReminder(now = new Date()): Array<{
+export async function listCertificatesDueExpiryReminder(now = new Date()): Promise<Array<{
   certificate: CertificateRow;
   stage: CertificateReminderStage;
   ownerEmail: string;
   ownerName: string;
-}> {
-  const rows = db.prepare(`
+}>> {
+  const rows = await database.queryMany<CertificateRow>(`
     SELECT * FROM certificate_verifications
     WHERE verificationStatus = 'verified' AND expiresAt IS NOT NULL
-  `).all() as unknown as CertificateRow[];
+  `);
   return rows.flatMap((certificate) => {
     const stage = reminderStageFor(certificate, now);
     if (!stage || certificate.expiryReminderStage === stage) return [];
@@ -221,8 +208,9 @@ export function listCertificatesDueExpiryReminder(now = new Date()): Array<{
   });
 }
 
-export function markCertificateReminderSent(id: string, stage: CertificateReminderStage) {
-  db.prepare(
-    "UPDATE certificate_verifications SET expiryReminderStage = ?, updatedAt = ? WHERE id = ?"
-  ).run(stage, new Date().toISOString(), id);
+export async function markCertificateReminderSent(id: string, stage: CertificateReminderStage): Promise<void> {
+  await database.execute(
+    "UPDATE certificate_verifications SET expiryReminderStage = ?, updatedAt = ? WHERE id = ?",
+    [stage, new Date().toISOString(), id]
+  );
 }

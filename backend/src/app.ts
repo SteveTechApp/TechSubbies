@@ -39,7 +39,7 @@ import { checkCommercialValidationRepository } from "./lib/commercialValidationR
 import { requestContext, requestLogger, safeErrorHandler } from "./middleware/observability.js";
 
 type AppOptions = {
-  readinessCheck?: () => boolean;
+  readinessCheck?: () => boolean | Promise<boolean>;
 };
 
 export function createApp(options: AppOptions = {}) {
@@ -72,20 +72,22 @@ export function createApp(options: AppOptions = {}) {
   });
 
   const readinessCheck = options.readinessCheck
-    || (() => checkDatabaseConnection()
-      && checkEvidenceRepository()
-      && checkCertificateRepository()
-      && checkEsignRepository()
-      && checkBillingRepository()
-      && checkContractSupportRepository()
-      && checkNotificationRepository()
-      && checkTaxonomyRepository()
-      && checkMarketplaceAnalyticsRepository()
-      && checkPricingResearchRepository()
-      && checkCommercialValidationRepository());
-  const readinessHandler = (_req: express.Request, res: express.Response) => {
+    || (async () => (await Promise.all([
+      checkDatabaseConnection(),
+      checkEvidenceRepository(),
+      checkCertificateRepository(),
+      checkEsignRepository(),
+      checkBillingRepository(),
+      checkContractSupportRepository(),
+      checkNotificationRepository(),
+      checkTaxonomyRepository(),
+      checkMarketplaceAnalyticsRepository(),
+      checkPricingResearchRepository(),
+      checkCommercialValidationRepository(),
+    ])).every(Boolean));
+  const readinessHandler = async (_req: express.Request, res: express.Response) => {
     try {
-      if (!readinessCheck()) throw new Error("Readiness check returned false.");
+      if (!(await readinessCheck())) throw new Error("Readiness check returned false.");
       return res.json({ status: "ready", checks: { database: "ok" } });
     } catch {
       return res.status(503).json({ status: "unavailable", checks: { database: "unavailable" } });

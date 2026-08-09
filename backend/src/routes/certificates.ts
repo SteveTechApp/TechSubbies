@@ -44,11 +44,11 @@ function publicCertificate(certificate: CertificateRow) {
 export const certificatesRouter = Router();
 certificatesRouter.use(requireAuth);
 
-certificatesRouter.get("/mine", requireRole("Engineer"), (req: AuthedRequest, res) => {
-  return res.json(listCertificatesForOwner(req.userId!).map(publicCertificate));
+certificatesRouter.get("/mine", requireRole("Engineer"), async (req: AuthedRequest, res) => {
+  return res.json((await listCertificatesForOwner(req.userId!)).map(publicCertificate));
 });
 
-certificatesRouter.post("/", requireRole("Engineer"), (req: AuthedRequest, res) => {
+certificatesRouter.post("/", requireRole("Engineer"), async (req: AuthedRequest, res) => {
   const parsed = z.object({
     evidenceId: z.string().uuid(),
     name: z.string().trim().min(2).max(160),
@@ -69,7 +69,7 @@ certificatesRouter.post("/", requireRole("Engineer"), (req: AuthedRequest, res) 
   }
 
   try {
-    const certificate = createCertificateSubmission({
+    const certificate = await createCertificateSubmission({
       ownerUserId: req.userId!,
       evidenceId: parsed.data.evidenceId,
       name: parsed.data.name,
@@ -92,10 +92,10 @@ certificatesRouter.post("/", requireRole("Engineer"), (req: AuthedRequest, res) 
   }
 });
 
-certificatesRouter.patch("/:certificateId/visibility", requireRole("Engineer"), (req: AuthedRequest, res) => {
+certificatesRouter.patch("/:certificateId/visibility", requireRole("Engineer"), async (req: AuthedRequest, res) => {
   const parsed = z.object({ visibility: z.enum(["private", "marketplace"]) }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Choose Private or Marketplace visibility." });
-  const updated = setCertificateVisibility(
+  const updated = await setCertificateVisibility(
     req.params.certificateId,
     req.userId!,
     parsed.data.visibility
@@ -104,24 +104,24 @@ certificatesRouter.patch("/:certificateId/visibility", requireRole("Engineer"), 
   return res.json(publicCertificate(updated));
 });
 
-certificatesRouter.get("/engineer/:userId", (req: AuthedRequest, res) => {
+certificatesRouter.get("/engineer/:userId", async (req: AuthedRequest, res) => {
   const role = req.authUser?.role;
   if (role === "Admin") {
-    return res.json(listMarketplaceCertificates(req.params.userId).map(publicCertificate));
+    return res.json((await listMarketplaceCertificates(req.params.userId)).map(publicCertificate));
   }
   if (!role || !["Company", "Resourcing Company"].includes(role) || !req.authUser?.emailVerified) {
     return res.status(403).json({ error: "A verified marketplace account is required to view certificate evidence." });
   }
-  return res.json(listMarketplaceCertificates(req.params.userId).map(publicCertificate));
+  return res.json((await listMarketplaceCertificates(req.params.userId)).map(publicCertificate));
 });
 
 export const adminCertificatesRouter = Router();
 adminCertificatesRouter.use(requireAuth, requireRole("Admin"));
 
-adminCertificatesRouter.get("/", (req, res) => {
+adminCertificatesRouter.get("/", async (req, res) => {
   const parsed = z.enum(["pending", "verified", "rejected"]).safeParse(req.query.status || "pending");
   if (!parsed.success) return res.status(400).json({ error: "Unsupported certificate verification status." });
-  return res.json({ certificates: listAdminCertificateQueue(parsed.data) });
+  return res.json({ certificates: await listAdminCertificateQueue(parsed.data) });
 });
 
 adminCertificatesRouter.patch("/:certificateId/review", async (req: AuthedRequest, res) => {
@@ -133,9 +133,9 @@ adminCertificatesRouter.patch("/:certificateId/review", async (req: AuthedReques
     return res.status(400).json({ error: "Choose verified or rejected; rejection requires a reason of at least 10 characters." });
   }
 
-  const current = findCertificateById(req.params.certificateId);
+  const current = await findCertificateById(req.params.certificateId);
   if (!current) return res.status(404).json({ error: "Certificate not found." });
-  const updated = reviewCertificate(
+  const updated = await reviewCertificate(
     current.id,
     req.userId!,
     parsed.data.status,

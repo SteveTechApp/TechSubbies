@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { db } from "./db.js";
+import { database, db } from "./db.js";
 
 export type EvidencePurpose = "cv" | "certification" | "skill_evidence";
 export type EvidenceStatus = "pending" | "ready";
@@ -71,17 +71,15 @@ db.exec(`
     ON evidence_access_events(actorUserId, createdAt DESC);
 `);
 
-export function checkEvidenceRepository(): boolean {
-  const objectTable = db.prepare(
-    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'evidence_objects'"
-  ).get() as { name?: string } | undefined;
-  const auditTable = db.prepare(
-    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'evidence_access_events'"
-  ).get() as { name?: string } | undefined;
-  return objectTable?.name === "evidence_objects" && auditTable?.name === "evidence_access_events";
+export async function checkEvidenceRepository(): Promise<boolean> {
+  const [objectTable, auditTable] = await Promise.all([
+    database.tableExists("evidence_objects"),
+    database.tableExists("evidence_access_events"),
+  ]);
+  return objectTable && auditTable;
 }
 
-export function createEvidenceObject(input: {
+export async function createEvidenceObject(input: {
   ownerUserId: string;
   purpose: EvidencePurpose;
   fileName: string;
@@ -91,46 +89,37 @@ export function createEvidenceObject(input: {
   const id = randomUUID();
   const objectKey = `evidence/${input.ownerUserId}/${id}`;
   const now = new Date().toISOString();
-  db.prepare(`
+  await database.execute(`
     INSERT INTO evidence_objects (
       id, ownerUserId, purpose, objectKey, fileName, contentType,
       declaredSizeBytes, status, createdAt, updatedAt
     ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
-  `).run(
-    id,
-    input.ownerUserId,
-    input.purpose,
-    objectKey,
-    input.fileName,
-    input.contentType,
-    input.declaredSizeBytes,
-    now,
-    now
+  `, [id, input.ownerUserId, input.purpose, objectKey, input.fileName,
+    input.contentType, input.declaredSizeBytes, now, now]);
+  return (await findEvidenceObject(id))!;
+}
+
+export function findEvidenceObject(id: string): Promise<EvidenceObjectRow | undefined> {
+  return database.queryOne<EvidenceObjectRow>("SELECT * FROM evidence_objects WHERE id = ?", [id]);
+}
+
+export function listEvidenceObjectsForOwner(ownerUserId: string): Promise<EvidenceObjectRow[]> {
+  return database.queryMany<EvidenceObjectRow>(
+    "SELECT * FROM evidence_objects WHERE ownerUserId = ? ORDER BY createdAt DESC", [ownerUserId]
   );
-  return findEvidenceObject(id)!;
 }
 
-export function findEvidenceObject(id: string): EvidenceObjectRow | undefined {
-  return db.prepare("SELECT * FROM evidence_objects WHERE id = ?").get(id) as unknown as EvidenceObjectRow | undefined;
-}
-
-export function listEvidenceObjectsForOwner(ownerUserId: string): EvidenceObjectRow[] {
-  return db.prepare(
-    "SELECT * FROM evidence_objects WHERE ownerUserId = ? ORDER BY createdAt DESC"
-  ).all(ownerUserId) as unknown as EvidenceObjectRow[];
-}
-
-export function markEvidenceReady(id: string, storedSizeBytes: number, sha256: string) {
+export async function markEvidenceReady(id: string, storedSizeBytes: number, sha256: string) {
   const now = new Date().toISOString();
-  db.prepare(`
+  await database.execute(`
     UPDATE evidence_objects
     SET status = 'ready', storedSizeBytes = ?, sha256 = ?, updatedAt = ?
     WHERE id = ?
-  `).run(storedSizeBytes, sha256, now, id);
+  `, [storedSizeBytes, sha256, now, id]);
   return findEvidenceObject(id);
 }
 
-export function recordEvidenceAccess(input: {
+export async function recordEvidenceAccess(input: {
   evidenceId: string;
   actorUserId: string;
   action: EvidenceAuditAction;
@@ -146,24 +135,17 @@ export function recordEvidenceAccess(input: {
     requestId: input.requestId,
     createdAt: new Date().toISOString(),
   };
-  db.prepare(`
+  await database.execute(`
     INSERT INTO evidence_access_events (
       id, evidenceId, actorUserId, action, outcome, requestId, createdAt
     ) VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    event.id,
-    event.evidenceId,
-    event.actorUserId,
-    event.action,
-    event.outcome,
-    event.requestId,
-    event.createdAt
-  );
+  `, [event.id, event.evidenceId, event.actorUserId, event.action,
+    event.outcome, event.requestId, event.createdAt]);
   return event;
 }
 
-export function listEvidenceAccessEvents(evidenceId: string): EvidenceAccessEventRow[] {
-  return db.prepare(
-    "SELECT * FROM evidence_access_events WHERE evidenceId = ? ORDER BY createdAt DESC"
-  ).all(evidenceId) as unknown as EvidenceAccessEventRow[];
+export function listEvidenceAccessEvents(evidenceId: string): Promise<EvidenceAccessEventRow[]> {
+  return database.queryMany<EvidenceAccessEventRow>(
+    "SELECT * FROM evidence_access_events WHERE evidenceId = ? ORDER BY createdAt DESC", [evidenceId]
+  );
 }

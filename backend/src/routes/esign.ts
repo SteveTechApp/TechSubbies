@@ -51,7 +51,7 @@ function parseContractData(data: string) {
 }
 
 async function ensureRequest(contractId: string) {
-  const existing = findContractEsignRequest(contractId);
+  const existing = await findContractEsignRequest(contractId);
   if (existing) return existing;
 
   const contract = findContractById(contractId);
@@ -71,7 +71,7 @@ async function ensureRequest(contractId: string) {
     engineer: { id: engineer.id, name: engineer.name, email: engineer.email },
     company: { id: company.id, name: company.name, email: company.email },
   });
-  return createContractEsignRequest({
+  return await createContractEsignRequest({
     contractId: contract.id,
     provider: created.provider,
     providerRequestId: created.providerRequestId,
@@ -149,8 +149,8 @@ function signedAt(signature: DropboxSignature) {
     : new Date().toISOString();
 }
 
-function applySignedState(callback: DropboxCallback, contractId: string) {
-  const request = findContractEsignRequest(contractId);
+async function applySignedState(callback: DropboxCallback, contractId: string) {
+  const request = await findContractEsignRequest(contractId);
   if (!request) return;
   const initialContract = findContractById(contractId);
   if (!initialContract || [CONTRACT_STATUS.CANCELLED, CONTRACT_STATUS.COMPLETED].includes(initialContract.status as any)) {
@@ -201,7 +201,7 @@ export const dropboxSignWebhookRouter = Router();
 dropboxSignWebhookRouter.post(
   "/",
   raw({ type: "multipart/form-data", limit: "1mb" }),
-  (req, res) => {
+  async (req, res) => {
     const callback = Buffer.isBuffer(req.body)
       ? extractCallback(req.body, String(req.headers["content-type"] || ""))
       : null;
@@ -225,10 +225,10 @@ dropboxSignWebhookRouter.post(
       return res.status(200).type("text/plain").send("Hello API Event Received");
     }
 
-    const request = findEsignRequestByProviderId(providerRequestId);
+    const request = await findEsignRequestByProviderId(providerRequestId);
     if (request) {
       const relatedSignatureId = event.event_metadata?.related_signature_id || "";
-      const isNew = recordContractEsignEvent({
+      const isNew = await recordContractEsignEvent({
         eventKey: `${providerRequestId}:${event.event_hash}:${relatedSignatureId}`,
         providerRequestId,
         eventType: event.event_type,
@@ -236,14 +236,14 @@ dropboxSignWebhookRouter.post(
       });
       if (isNew) {
         if (event.event_type === "signature_request_signed" || event.event_type === "signature_request_all_signed") {
-          applySignedState(callback!, request.contractId);
+          await applySignedState(callback!, request.contractId);
         }
         if (event.event_type === "signature_request_all_signed") {
-          updateContractEsignStatus(request.contractId, "all_signed");
+          await updateContractEsignStatus(request.contractId, "all_signed");
         } else if (event.event_type === "signature_request_downloadable") {
-          updateContractEsignStatus(request.contractId, "completed");
+          await updateContractEsignStatus(request.contractId, "completed");
         } else if (event.event_type === "signature_request_declined") {
-          updateContractEsignStatus(request.contractId, "declined");
+          await updateContractEsignStatus(request.contractId, "declined");
         }
       }
     }

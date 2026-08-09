@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { db } from "./db.js";
+import { database, db } from "./db.js";
 
 export type ContractEsignRequestRow = {
   contractId: string;
@@ -48,21 +48,23 @@ db.exec(`
     ON contract_esign_events(providerRequestId, createdAt DESC);
 `);
 
-export function checkEsignRepository(): boolean {
-  const requestTable = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'contract_esign_requests'").get();
-  const eventTable = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'contract_esign_events'").get();
-  return Boolean(requestTable && eventTable);
+export async function checkEsignRepository(): Promise<boolean> {
+  const tables = await Promise.all([
+    database.tableExists("contract_esign_requests"),
+    database.tableExists("contract_esign_events"),
+  ]);
+  return tables.every(Boolean);
 }
 
-export function findContractEsignRequest(contractId: string): ContractEsignRequestRow | undefined {
-  return db.prepare("SELECT * FROM contract_esign_requests WHERE contractId = ?").get(contractId) as unknown as ContractEsignRequestRow | undefined;
+export function findContractEsignRequest(contractId: string): Promise<ContractEsignRequestRow | undefined> {
+  return database.queryOne<ContractEsignRequestRow>("SELECT * FROM contract_esign_requests WHERE contractId = ?", [contractId]);
 }
 
-export function findEsignRequestByProviderId(providerRequestId: string): ContractEsignRequestRow | undefined {
-  return db.prepare("SELECT * FROM contract_esign_requests WHERE providerRequestId = ?").get(providerRequestId) as unknown as ContractEsignRequestRow | undefined;
+export function findEsignRequestByProviderId(providerRequestId: string): Promise<ContractEsignRequestRow | undefined> {
+  return database.queryOne<ContractEsignRequestRow>("SELECT * FROM contract_esign_requests WHERE providerRequestId = ?", [providerRequestId]);
 }
 
-export function createContractEsignRequest(input: {
+export async function createContractEsignRequest(input: {
   contractId: string;
   provider: string;
   providerRequestId: string;
@@ -70,47 +72,36 @@ export function createContractEsignRequest(input: {
   companySignatureId: string;
 }) {
   const now = new Date().toISOString();
-  db.prepare(`
+  await database.execute(`
     INSERT INTO contract_esign_requests (
       contractId, provider, providerRequestId, engineerSignatureId,
       companySignatureId, status, createdAt, updatedAt
     ) VALUES (?, ?, ?, ?, ?, 'awaiting_signatures', ?, ?)
-  `).run(
-    input.contractId,
-    input.provider,
-    input.providerRequestId,
-    input.engineerSignatureId,
-    input.companySignatureId,
-    now,
-    now
-  );
-  return findContractEsignRequest(input.contractId)!;
+  `, [input.contractId, input.provider, input.providerRequestId,
+    input.engineerSignatureId, input.companySignatureId, now, now]);
+  return (await findContractEsignRequest(input.contractId))!;
 }
 
-export function updateContractEsignStatus(contractId: string, status: string) {
-  db.prepare("UPDATE contract_esign_requests SET status = ?, updatedAt = ? WHERE contractId = ?")
-    .run(status, new Date().toISOString(), contractId);
+export async function updateContractEsignStatus(contractId: string, status: string) {
+  await database.execute(
+    "UPDATE contract_esign_requests SET status = ?, updatedAt = ? WHERE contractId = ?",
+    [status, new Date().toISOString(), contractId]
+  );
   return findContractEsignRequest(contractId);
 }
 
-export function recordContractEsignEvent(input: {
+export async function recordContractEsignEvent(input: {
   eventKey: string;
   providerRequestId: string;
   eventType: string;
   signatureId?: string | null;
-}): boolean {
+}): Promise<boolean> {
   try {
-    db.prepare(`
+    await database.execute(`
       INSERT INTO contract_esign_events (id, eventKey, providerRequestId, eventType, signatureId, createdAt)
       VALUES (?, ?, ?, ?, ?, ?)
-    `).run(
-      randomUUID(),
-      input.eventKey,
-      input.providerRequestId,
-      input.eventType,
-      input.signatureId ?? null,
-      new Date().toISOString()
-    );
+    `, [randomUUID(), input.eventKey, input.providerRequestId, input.eventType,
+      input.signatureId ?? null, new Date().toISOString()]);
     return true;
   } catch (error) {
     if (error instanceof Error && /UNIQUE constraint failed/.test(error.message)) return false;

@@ -43,7 +43,7 @@ function reminderText(stage: CertificateReminderStage, certificateName: string, 
 }
 
 export async function runCertificateExpiryReminderSweep(now = new Date()) {
-  const due = listCertificatesDueExpiryReminder(now);
+  const due = await listCertificatesDueExpiryReminder(now);
   let sent = 0;
   for (const item of due) {
     try {
@@ -54,7 +54,7 @@ export async function runCertificateExpiryReminderSweep(now = new Date()) {
           : `Certificate expiry reminder: ${item.certificate.name}`,
         text: `Hi ${item.ownerName},\n\n${reminderText(item.stage, item.certificate.name, item.certificate.expiresAt!)}\n`,
       });
-      markCertificateReminderSent(item.certificate.id, item.stage);
+      await markCertificateReminderSent(item.certificate.id, item.stage);
       sent += 1;
     } catch {
       // Leave the reminder stage unchanged so a later sweep can retry.
