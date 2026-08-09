@@ -29,7 +29,7 @@ const ProjectTrackerCard = ({ project, onAssignClick }: { project: Project, onAs
             totalMilestones += contract.milestones.length;
             contract.milestones.forEach(milestone => {
                 const amount = Number(milestone.amount) || 0;
-                if (milestone.status === 'Completed & Paid') {
+                if (milestone.status === 'Approved') {
                     completedMilestones++;
                     spentBudget += amount;
                 }

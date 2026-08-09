@@ -19,20 +19,19 @@
     "e2e": "npm run e2e:reset && concurrently --kill-others --success command-test --names backend,frontend,test \"npm run e2e:backend\" \"npm run e2e:frontend\" \"npm run e2e:wait-and-run\""
   },
   "dependencies": {
-    "@google/genai": "^1.15.0",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
-    "framer-motion": "11.3.12",
+    "framer-motion": "13.0.0",
     "lit": "^3.3.1",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "react-router-dom": "^7.18.1"
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-router": "8.3.0"
   },
   "devDependencies": {
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22.14.0",
-    "@types/react": "^18.3.31",
-    "@types/react-dom": "^18.3.7",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^5.0.0",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",

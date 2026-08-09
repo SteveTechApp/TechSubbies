@@ -15,10 +15,31 @@ import { log } from "./lib/logger.js";
 import { documentsRouter } from "./routes/documents.js";
 import { AppError, defaultHttpErrorCode, errorBody } from "./lib/errors.js";
 
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
+type AppOptions = {
+  readinessCheck?: () => boolean;
+};
 
-export function createApp() {
+export function createApp(options: AppOptions = {}) {
+  validateRuntimeConfig();
   const app = express();
+  const production = process.env.NODE_ENV === "production";
+  const authRateLimit = createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    max: production ? 10 : 100,
+    name: "authentication",
+  });
+  const aiRateLimit = createRateLimiter({
+    windowMs: 60 * 1000,
+    max: production ? 30 : 300,
+    name: "AI",
+  });
+
+  app.use(requestContext);
+  app.use(requestLogger);
+  app.use(securityHeaders);
+  app.use(cors({ origin: frontendOrigin(), credentials: true }));
+
+  app.use("/api/billing/stripe/webhook", stripeBillingWebhookRouter);
 
   app.disable("x-powered-by");
   app.set("trust proxy", 1);
@@ -44,9 +65,100 @@ export function createApp() {
   });
   app.get("/api/ready", (_req, res) => { try { const integrity=databaseIntegrity(); return res.status(integrity.ok?200:503).json({ status: integrity.ok?"ready":"not-ready", database: integrity.quickCheck }); } catch { return res.status(503).json({ status: "not-ready" }); } });
 
-  app.use("/api/auth", authRouter);
+  const readinessCheck = options.readinessCheck
+    || (() => checkDatabaseConnection()
+      && checkEvidenceRepository()
+      && checkCertificateRepository()
+      && checkEsignRepository()
+      && checkBillingRepository()
+      && checkContractSupportRepository()
+      && checkNotificationRepository()
+      && checkTaxonomyRepository()
+      && checkMarketplaceAnalyticsRepository()
+      && checkPricingResearchRepository()
+      && checkCommercialValidationRepository());
+  const readinessHandler = (_req: express.Request, res: express.Response) => {
+    try {
+      if (!readinessCheck()) throw new Error("Readiness check returned false.");
+      return res.json({ status: "ready", checks: { database: "ok" } });
+    } catch {
+      return res.status(503).json({ status: "unavailable", checks: { database: "unavailable" } });
+    }
+  };
+
+  app.get("/api/health/ready", readinessHandler);
+  app.get("/api/health", readinessHandler);
+
+  app.use("/api/auth", authRateLimit, authRouter);
+
+  app.post("/api/users/me/membership-selection", requireAuth, (req, res, next) => {
+    if (process.env.BILLING_PROVIDER === "stripe") {
+      return res.status(409).json({
+        error: "Paid membership changes must use secure subscription billing.",
+        code: "BILLING_PROVIDER_REQUIRED",
+      });
+    }
+    next();
+  });
+  app.post(
+    "/api/admin/membership-selections/:userId/confirm",
+    requireAuth,
+    requireRole("Admin"),
+    (req, res, next) => {
+      if (process.env.BILLING_PROVIDER === "stripe") {
+        return res.status(409).json({
+          error: "Paid memberships are activated only from verified Stripe subscription events.",
+          code: "BILLING_PROVIDER_REQUIRED",
+        });
+      }
+      next();
+    }
+  );
+
   app.use("/api/users", usersRouter);
-  app.use("/api/ai", aiRouter);
+  app.use("/api/admin/billing", adminBillingRouter);
+  app.use("/api/admin/contract-support", adminContractSupportRouter);
+  app.use("/api/admin/taxonomy", adminTaxonomyRouter);
+  app.use("/api/admin/marketplace-analytics", adminMarketplaceAnalyticsRouter);
+  app.use("/api/admin/pricing-research", adminPricingResearchRouter);
+  app.use("/api/admin/commercial-validation", adminCommercialValidationRouter);
+  app.use("/api/admin", adminRouter);
+  app.use("/api/admin/certificates", adminCertificatesRouter);
+  app.use("/api/ai", aiRateLimit, aiRouter);
+
+  app.use("/api/esign/dropbox-sign/webhook", dropboxSignWebhookRouter);
+
+  app.use(
+    [
+      "/api/partnerships",
+      "/api/company-attachments",
+      "/api/jobs",
+      "/api/applications",
+      "/api/contracts",
+      "/api/conversations",
+      "/api/notifications",
+      "/api/evidence",
+      "/api/certificates",
+      "/api/esign",
+      "/api/billing",
+      "/api/contract-support",
+      "/api/taxonomy",
+      "/api/marketplace-analytics",
+      "/api/pricing-research",
+    ],
+    requireVerifiedEmailForMutation
+  );
+
+  app.patch("/api/contracts/:contractId/sign", (req, res, next) => {
+    if (process.env.ESIGN_PROVIDER === "dropbox_sign") {
+      return res.status(409).json({
+        error: "This contract must be signed through the secure e-signature workflow.",
+        code: "ESIGN_PROVIDER_REQUIRED",
+      });
+    }
+    next();
+  });
+
   app.use("/api/partnerships", partnershipsRouter);
   app.use("/api/company-attachments", companyAttachmentsRouter);
   app.use("/api", marketplaceRouter);
@@ -54,7 +166,6 @@ export function createApp() {
   app.use("/api", documentsRouter);
   app.use("/api/trust", trustRouter);
 
-  // Keep this last: catches anything unmatched under /api.
   app.use("/api", (_req, res) => {
     res.status(404).json({ error: "Not found." });
   });

@@ -52,6 +52,9 @@ authRouter.post("/register", registerLimit, async (req, res) => {
     name,
     profile: JSON.stringify(storedProfile),
   });
+  if (role === "Engineer") {
+    syncEngineerRoleProfiles(user.id, safeProfileData.roleProfiles);
+  }
 
   const verificationToken=issueAccountToken(user.id,"verify-email",24*60);
   await sendAccountEmail({email:user.email,name:user.name,purpose:"verify-email",token:verificationToken});

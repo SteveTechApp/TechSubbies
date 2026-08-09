@@ -24,6 +24,14 @@ describe('AuthContext', () => {
     expect(result.current.user).toBeNull();
   });
 
+  it('exposes session restoration progress before resolving signed-out state', async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+
+    expect(result.current.isAuthLoading).toBe(true);
+    await waitFor(() => expect(result.current.isAuthLoading).toBe(false));
+    expect(result.current.user).toBeNull();
+  });
+
   it('logs in the mock user for the requested role', () => {
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
 

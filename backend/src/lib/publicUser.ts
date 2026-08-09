@@ -13,6 +13,7 @@ export function toPublicUser(user: UserRow) {
   return {
     id: user.id,
     role: user.role,
+    emailVerified: Boolean(user.emailVerified),
     profile: {
       id: user.id,
       name: user.name,

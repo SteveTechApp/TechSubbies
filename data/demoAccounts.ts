@@ -16,7 +16,9 @@ export type DemoSession = {
   signedInAt: string;
 };
 
-export const demoAccounts: DemoAccount[] = [
+export const isDemoAccessEnabled = import.meta.env.DEV;
+
+export const demoAccounts: DemoAccount[] = isDemoAccessEnabled ? [
   {
     id: "demo-admin",
     name: "Demo Admin",
@@ -24,12 +26,12 @@ export const demoAccounts: DemoAccount[] = [
     password: "password",
     role: "Admin",
   },
-];
+] : [];
 
 export const demoSessionKey = "techsubbies_demo_session";
 
 export function getDemoSession(): DemoSession | null {
-  if (typeof window === "undefined") {
+  if (!isDemoAccessEnabled || typeof window === "undefined") {
     return null;
   }
 
@@ -48,6 +50,9 @@ export function getDemoSession(): DemoSession | null {
 }
 
 export function setDemoSession(account: DemoAccount): DemoSession {
+  if (!isDemoAccessEnabled) {
+    throw new Error("Demo access is disabled in production.");
+  }
   const session: DemoSession = {
     id: account.id,
     name: account.name,
@@ -69,6 +74,9 @@ export function clearDemoSession() {
 }
 
 export function validateDemoLogin(email: string, password: string): DemoAccount | null {
+  if (!isDemoAccessEnabled) {
+    return null;
+  }
   const normalisedEmail = email.trim().toLowerCase();
 
   return (

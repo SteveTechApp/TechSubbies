@@ -1,4 +1,4 @@
-import { Application, Review, Conversation, Message, ApplicationStatus, Contract, ContractStatus, ContractType, Currency, Milestone, MilestoneStatus, Transaction, TransactionType, Timesheet, Project, Discipline, TimesheetStatus, CollaborationPost, Invoice, InvoiceStatus, PaymentTerms } from '../../types';
+import { Application, Review, Conversation, Message, ApplicationStatus, Contract, ContractStatus, ContractType, Currency, MilestoneStatus, Transaction, TransactionType, Timesheet, Project, Discipline, TimesheetStatus, CollaborationPost } from '../../types';
 
 export const MOCK_APPLICATIONS: Application[] = [
     { jobId: 'job-1', engineerId: 'eng-1', date: new Date('2024-06-20'), status: ApplicationStatus.COMPLETED, reviewed: true },
@@ -45,8 +45,7 @@ export const MOCK_MESSAGES: Message[] = [
 ];
 
 export const MOCK_TIMESHEETS: Timesheet[] = [
-    // FIX: Changed status from string 'paid' to the enum member `TimesheetStatus.PAID`.
-    { id: 'ts-1', contractId: 'contract-1', engineerId: 'eng-1', period: 'Week ending 2024-08-02', days: 5, status: TimesheetStatus.PAID }
+    { id: 'ts-1', contractId: 'contract-1', engineerId: 'eng-1', period: 'Week ending 2024-08-02', days: 5, status: TimesheetStatus.APPROVED }
 ];
 
 export const MOCK_CONTRACTS: Contract[] = [
@@ -78,19 +77,15 @@ export const MOCK_CONTRACTS: Contract[] = [
         engineerSignature: { name: 'Samantha Greene', date: new Date('2024-07-25') },
         companySignature: { name: 'Starlight Events', date: new Date('2024-07-25') },
         milestones: [
-            { id: 'm1', description: 'Phase 1: Initial Site Survey & Report', amount: 500, status: MilestoneStatus.COMPLETED_PAID },
-            { id: 'm2', description: 'Pre-wire & First Fix', amount: 1000, status: MilestoneStatus.SUBMITTED_FOR_APPROVAL },
-            { id: 'm3', description: 'Final Installation & Handover', amount: 1000, status: MilestoneStatus.AWAITING_FUNDING },
+            { id: 'm1', description: 'Phase 1: Initial Site Survey & Report', amount: 500, status: MilestoneStatus.APPROVED },
+            { id: 'm2', description: 'Pre-wire & First Fix', amount: 1000, status: MilestoneStatus.SUBMITTED },
+            { id: 'm3', description: 'Final Installation & Handover', amount: 1000, status: MilestoneStatus.NOT_STARTED },
         ],
     }
 ];
 
 export const MOCK_TRANSACTIONS: Transaction[] = [
-    { id: 'txn-1', userId: 'user-eng-eng-1', contractId: 'contract-2', type: TransactionType.PAYOUT, description: "Payout for Milestone: Phase 1: Initial Site Survey & Report", amount: 475, date: new Date('2024-07-28') },
-    { id: 'txn-2', userId: 'user-eng-eng-1', contractId: 'contract-2', type: TransactionType.PLATFORM_FEE, description: "Platform Fee (5%) for Milestone: Phase 1", amount: -25, date: new Date('2024-07-28') },
-    { id: 'txn-3', userId: 'user-comp-comp-2', contractId: 'contract-2', type: TransactionType.ESCROW_FUNDING, description: "Funded Milestone: Phase 1: Initial Site Survey & Report", amount: -500, date: new Date('2024-07-26') },
-    { id: 'txn-4', userId: 'user-eng-eng-1', contractId: 'contract-1', type: TransactionType.PAYOUT, description: "Payout for Timesheet: Week ending 2024-08-02", amount: 2612.50, date: new Date('2024-08-03') },
-    { id: 'txn-5', userId: 'user-comp-comp-1', contractId: 'contract-1', type: TransactionType.PLATFORM_FEE, description: "Platform Fee for Timesheet: Week ending 2024-08-02", amount: -137.50, date: new Date('2024-08-03') },
+    { id: 'txn-1', userId: 'user-eng-eng-1', type: TransactionType.SUBSCRIPTION, description: "Engineer membership", amount: 19, date: new Date('2024-08-01') },
 ];
 
 

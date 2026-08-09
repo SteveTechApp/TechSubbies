@@ -28,7 +28,7 @@ type Role = {
   distinguishedFrom?: Array<{ roleId: string; distinction: string }>;
 };
 
-const roles: Role[] = [
+const legacyRoles: Role[] = [
   {
     id: "av-installer",
     title: "AV Installation Engineer",

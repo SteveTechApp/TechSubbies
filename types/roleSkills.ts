@@ -76,6 +76,9 @@ export interface EngineerSkillRating {
   skillId: string;
   rating: SkillRating;
   evidenceNote: string;
+  // Engineer-declared recency. This is displayed as context and freshness,
+  // not treated as independent proof of competence.
+  lastUsedDate?: string;
   willingToDo: boolean;
   needsSupervision: boolean;
   canLead: boolean;

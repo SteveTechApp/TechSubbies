@@ -1,4 +1,4 @@
-import { defaultRoleSkillRoleId, roleSkillTaxonomy } from "../data/roleSkillTaxonomy";
+import { canonicalRoleRegistry } from "../data/canonicalRoleRegistry";
 import type {
   EngineerRoleSkillProfile,
   EngineerSkillRating,
@@ -15,27 +15,27 @@ function normalise(value: string): string {
 }
 
 export function getRoleSkillDefinitions(): RoleSkillDefinition[] {
-  return roleSkillTaxonomy;
+  return canonicalRoleRegistry;
 }
 
 export function getDefaultRoleSkillDefinition(): RoleSkillDefinition {
-  return getRoleSkillDefinition(defaultRoleSkillRoleId);
+  return canonicalRoleRegistry[0];
 }
 
 export function getRoleSkillDefinition(roleId: string): RoleSkillDefinition {
-  const found = roleSkillTaxonomy.find((role) => role.id === roleId);
+  const found = canonicalRoleRegistry.find((role) => role.id === roleId);
 
   if (found) {
     return found;
   }
 
-  return roleSkillTaxonomy[0];
+  return canonicalRoleRegistry[0];
 }
 
 export function filterRoleSkillDefinitions(filter: RoleSkillFilter): RoleSkillDefinition[] {
   const search = normalise(filter.searchText);
 
-  return roleSkillTaxonomy.filter((role) => {
+  return canonicalRoleRegistry.filter((role) => {
     if (filter.market !== "all" && role.market !== filter.market) {
       return false;
     }

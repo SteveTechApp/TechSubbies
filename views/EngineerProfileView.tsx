@@ -89,12 +89,12 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerPro
             <TopTrumpCard profile={profile} isEditable={isEditable} onEdit={onEdit} />
             <CapabilityPassportPanel engineer={profile} canManageTalentPool={!!isCompanyViewing} />
 
-            {/* --- NEW AI Match Score Section --- */}
+            {/* Evidence-adjusted requirement score for the selected job. */}
             {profile.matchScore !== undefined && (
                 <div className="bg-white p-6 rounded-lg shadow-lg border-t-4 border-purple-500">
                     <h2 className="text-2xl font-bold mb-2 flex items-center">
                         <Sparkles size={22} className="mr-2 text-purple-500" />
-                        AI Match Score
+                        Evidence-adjusted match
                     </h2>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-8 p-4">
                         <div className="relative w-32 h-32 flex-shrink-0">
@@ -123,14 +123,34 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerPro
                             </div>
                         </div>
                         <div className="flex-1 text-center sm:text-left">
-                            <p className="text-gray-600">
-                                This score represents the AI's assessment of how well this engineer's skills, experience, and specialist roles align with the requirements of the job you selected for the search.
-                            </p>
+                            <p className="text-gray-600">This score combines the engineer's stated skill levels with relevant completed-job reviews and verified certificates, then compares them with the selected job.</p>
                             <p className="mt-2 text-xs text-gray-500">
                                 Note: This is a guide. Always conduct your own interviews and due diligence.
                             </p>
                         </div>
                     </div>
+                    {profile.matchExplanation && profile.matchExplanation.skills.length > 0 && (
+                        <div className="mt-4 overflow-hidden rounded-lg border border-gray-200">
+                            <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-3 bg-gray-50 px-4 py-2 text-xs font-bold uppercase text-gray-500">
+                                <span>Requirement</span><span>Effective / needed</span><span>Evidence</span>
+                            </div>
+                            {profile.matchExplanation.skills.map(skill => (
+                                <div key={skill.skillName} className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-3 border-t border-gray-100 px-4 py-3 text-sm">
+                                    <div>
+                                        <p className="font-semibold text-gray-800">{skill.skillName}</p>
+                                        <p className="text-xs text-gray-500">
+                                            {skill.status === 'meets' ? 'Meets required level' : skill.status === 'missing' ? 'Not listed on profile' : `${skill.gap} points below required level`}
+                                        </p>
+                                    </div>
+                                    <span className={skill.status === 'meets' ? 'font-bold text-emerald-700' : 'font-bold text-amber-700'}>{skill.effectiveRating ?? '—'} / {skill.requiredLevel}</span>
+                                    <div className="max-w-48 text-right text-xs text-gray-600">
+                                        <p>{skill.evidenceCount ? `${skill.evidenceCount} item${skill.evidenceCount === 1 ? '' : 's'} · ${skill.evidenceFreshness}` : 'Self-rating only'}</p>
+                                        {skill.latestEvidenceDate && <p>{new Date(skill.latestEvidenceDate).toLocaleDateString()}</p>}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { ExperienceLevel } from '../../types';
-import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles';
+import { canonicalRoleRegistry } from '../../data/canonicalRoleRegistry';
 import { ArrowRight, Sparkles } from '../Icons';
 import { AIJobHelper } from '../AIJobHelper';
+import { requiresLeadSupervision, hasLeadSupervisionConfirmed } from '../../utils/leadSupervision';
 
 interface JobPostStep1Props {
     jobDetails: any;
@@ -10,33 +11,10 @@ interface JobPostStep1Props {
     onNext: () => void;
 }
 
-const requiresLeadConfirmation = (jobDetails: any) => {
-    const role = String(jobDetails.jobRole || '').toLowerCase();
-    const title = String(jobDetails.title || '').toLowerCase();
-    const level = String(jobDetails.experienceLevel || '').toLowerCase();
-
-    return (
-        level === 'junior' ||
-        role.includes('labour') ||
-        role.includes('helper') ||
-        role.includes('assistant') ||
-        role.includes('site support') ||
-        title.includes('labour') ||
-        title.includes('helper') ||
-        title.includes('assistant') ||
-        title.includes('site support')
-    );
-};
-
-const hasLeadConfirmation = (jobDetails: any) => {
-    const value = String(jobDetails.supervisionArrangement || '').toLowerCase();
-    return ['supervised', 'lead_engineer_present', 'qualified_engineer_present'].includes(value) && Boolean(jobDetails.supervisionDisclaimerAccepted);
-};
-
 export const JobPostStep1 = ({ jobDetails, setJobDetails, onNext }: JobPostStep1Props) => {
     const [showAiHelper, setShowAiHelper] = useState(false);
-    const needsLead = requiresLeadConfirmation(jobDetails);
-    const leadConfirmed = hasLeadConfirmation(jobDetails);
+    const needsLead = requiresLeadSupervision(jobDetails);
+    const leadConfirmed = hasLeadSupervisionConfirmed(jobDetails);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -44,8 +22,20 @@ export const JobPostStep1 = ({ jobDetails, setJobDetails, onNext }: JobPostStep1
     };
 
     const handleRoleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const roleName = e.target.value;
-        setJobDetails((prev: any) => ({ ...prev, jobRole: roleName, title: roleName }));
+        const roleId = e.target.value;
+        const role = canonicalRoleRegistry.find((item) => item.id === roleId);
+        if (!role) return;
+        setJobDetails((prev: any) => ({
+            ...prev,
+            canonicalRoleId: role.id,
+            jobRole: role.title,
+            title: prev.title && prev.canonicalRoleId ? prev.title : role.title,
+            deliveryContext: role.level === 'lead'
+                ? 'lead'
+                : role.level === 'entry'
+                    ? 'assisted'
+                    : (prev.deliveryContext || 'independent'),
+        }));
     };
 
     const handleLeadAccepted = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,7 +43,7 @@ export const JobPostStep1 = ({ jobDetails, setJobDetails, onNext }: JobPostStep1
     };
 
     const handleNext = () => {
-        if (!jobDetails.jobRole) {
+        if (!jobDetails.canonicalRoleId) {
             alert('Please select a Specialist Role to continue.');
             return;
         }
@@ -73,9 +63,11 @@ export const JobPostStep1 = ({ jobDetails, setJobDetails, onNext }: JobPostStep1
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Specialist Role</label>
-                        <select name="jobRole" value={jobDetails.jobRole} onChange={handleRoleSelect} className="w-full border p-2 rounded bg-white h-[42px]">
+                        <select name="canonicalRoleId" value={jobDetails.canonicalRoleId || ''} onChange={handleRoleSelect} className="w-full border p-2 rounded bg-white h-[42px]">
                             <option value="" disabled>-- Select a role to define skills --</option>
-                            {JOB_ROLE_DEFINITIONS.map(def => <option key={def.name} value={def.name}>{def.name}</option>)}
+                            {canonicalRoleRegistry.map(role => (
+                                <option key={role.id} value={role.id}>{role.title}</option>
+                            ))}
                         </select>
                     </div>
                     <div>
@@ -118,6 +110,29 @@ export const JobPostStep1 = ({ jobDetails, setJobDetails, onNext }: JobPostStep1
                         <input type="date" name="startDate" value={jobDetails.startDate} onChange={handleChange} className="w-full border p-2 rounded" />
                     </div>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg border border-blue-100 bg-blue-50 p-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Delivery context</label>
+                        <select name="deliveryContext" value={jobDetails.deliveryContext || 'independent'} onChange={handleChange} className="w-full border p-2 rounded bg-white h-[42px]">
+                            <option value="assisted">Assisted / working under a lead</option>
+                            <option value="independent">Independent delivery</option>
+                            <option value="lead">Lead / responsible engineer</option>
+                        </select>
+                        <p className="mt-1 text-xs text-gray-500">Stored with completed-job evidence so future matches can distinguish assisted experience from independent or lead delivery.</p>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Project scale</label>
+                        <select name="projectScale" value={jobDetails.projectScale || 'medium'} onChange={handleChange} className="w-full border p-2 rounded bg-white h-[42px]">
+                            <option value="small">Small — single task / room</option>
+                            <option value="medium">Medium — normal project / several rooms</option>
+                            <option value="large">Large — complex site / major deployment</option>
+                            <option value="programme">Programme — multi-site / phased rollout</option>
+                        </select>
+                        <p className="mt-1 text-xs text-gray-500">Project scale is evidence context only; it does not automatically increase a skill rating.</p>
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Supervision arrangement</label>
@@ -142,7 +157,7 @@ export const JobPostStep1 = ({ jobDetails, setJobDetails, onNext }: JobPostStep1
                 )}
             </div>
             <div className="flex justify-end mt-6">
-                <button onClick={handleNext} disabled={!jobDetails.jobRole || (needsLead && !leadConfirmed)} className="flex items-center px-6 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 disabled:bg-blue-300">
+                <button onClick={handleNext} disabled={!jobDetails.canonicalRoleId || (needsLead && !leadConfirmed)} className="flex items-center px-6 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 disabled:bg-blue-300">
                     Next: Define Skills <ArrowRight size={18} className="ml-2" />
                 </button>
             </div>

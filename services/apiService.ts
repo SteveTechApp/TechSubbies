@@ -1,4 +1,4 @@
-import { MOCK_ENGINEERS, MOCK_COMPANIES, MOCK_JOBS, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_CONTRACTS, MOCK_TRANSACTIONS, MOCK_PROJECTS, ALL_MOCK_USERS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_NOTIFICATIONS, MOCK_COLLABORATION_POSTS, MOCK_INVOICES } from '../data/mockData';
+import { MOCK_ENGINEERS, MOCK_COMPANIES, MOCK_JOBS, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_CONTRACTS, MOCK_TRANSACTIONS, MOCK_PROJECTS, ALL_MOCK_USERS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_NOTIFICATIONS, MOCK_COLLABORATION_POSTS } from '../data/mockData';
 import { MOCK_RESOURCING_COMPANY_1, MOCK_ADMIN_PROFILE, MOCK_FREE_ENGINEER, MOCK_ENGINEER_STEVE } from '../data/modules/mockStaticProfiles';
 import { ApplicationStatus, EngineerProfile, ProfileTier, Role, User, ContractStatus, ContractType, MilestoneStatus, Timesheet, TimesheetStatus, PaymentTerms, InvoiceStatus, ForumPost, Notification, CollaborationPost, CompanyProfile, ResourcingCompanyProfile, Job, Discipline, Currency, Country, ExperienceLevel } from '../types';
 import type { MarketplaceShortlistResponse } from '../types/marketplaceApi';
@@ -9,33 +9,145 @@ import type { MarketplaceShortlistResponse } from '../types/marketplaceApi';
 // retain their in-memory fixtures until they receive dedicated APIs.
 
 const simulateDelay = (ms: number = 500) => new Promise(res => setTimeout(res, ms));
+export const DEMO_DATA_ENABLED = import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_DATA !== 'false';
+
+export type AdminDeletionRequest = {
+  id: string;
+  userId: string;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'processed';
+  requestedAt: string;
+  responseDueAt: string;
+  reviewedAt: string | null;
+  reviewerId: string | null;
+  resolutionNote: string | null;
+  userMessage: string | null;
+  processedAt: string | null;
+  processorId: string | null;
+  accountEmail: string;
+  accountName: string;
+  accountRole: string;
+  eligibility: {
+    eligible: boolean;
+    blockers: Array<{ code: string; count: number; message: string }>;
+  };
+};
+
+export type AdminPrivacySummary = {
+  pending: number;
+  approved: number;
+  rejected: number;
+  processed: number;
+  overduePending: number;
+  oldestPendingAt: string | null;
+};
+
+export type AdminUserAccount = {
+  id: string;
+  email: string;
+  role: string;
+  name: string;
+  emailVerified: number;
+  suspendedAt: string | null;
+  suspensionReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminPlatformMetrics = {
+  users: {
+    total: number;
+    engineers: number;
+    companies: number;
+    resourcingCompanies: number;
+    suspended: number;
+  };
+  marketplace: {
+    jobsTotal: number;
+    jobsActive: number;
+    applications: number;
+    contractsTotal: number;
+    contractsActive: number;
+  };
+  privacyPending: number;
+  membershipPending: number;
+  pilotFunnel: {
+    profilesUpdated: number;
+    jobsPosted: number;
+    applicationsSubmitted: number;
+    contractsCreated: number;
+  };
+};
+
+export type AdminJob = {
+  id: string;
+  companyId: string;
+  title: string;
+  description: string;
+  location: string;
+  dayRate: string;
+  currency: string;
+  startDate?: string | null;
+  status: string;
+  postedDate: string;
+  companyName: string;
+  companyEmail: string;
+  moderatedAt: string | null;
+  moderationReason: string | null;
+};
+
+export type AdminMembershipSelection = {
+  userId: string;
+  email: string;
+  name: string;
+  activeTier: ProfileTier;
+  requestedTier: ProfileTier;
+  requestedAt: string;
+};
+
+export type AccountDeletionStatus = {
+  reference: string;
+  status: string;
+  requestedAt: string;
+  responseDueAt: string;
+  cancelledAt: string | null;
+  reviewedAt: string | null;
+  userMessage: string | null;
+  processedAt: string | null;
+};
 
 const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:4000/api';
 const ENABLE_DEMO_DATA=(import.meta as any).env?.VITE_ENABLE_DEMO_DATA==='true';
 const TOKEN_KEY = 'techsubbies_auth_token';
+const SESSION_HINT_KEY = 'techsubbies_has_session';
+const fetch = secureFetch;
+let cookieSessionAvailable = false;
 
 export function getAuthToken(): string | null {
+  if (cookieSessionAvailable) return "cookie-session";
   try {
-    return window.localStorage.getItem(TOKEN_KEY);
+    return window.localStorage.getItem(SESSION_HINT_KEY) === 'true' ? "cookie-session" : null;
   } catch {
     return null;
   }
 }
 
-function saveAuthToken(token: string) {
+function saveAuthToken(_token?: string) {
+  cookieSessionAvailable = true;
   try {
-    window.localStorage.setItem(TOKEN_KEY, token);
+    window.localStorage.removeItem(TOKEN_KEY);
+    window.localStorage.setItem(SESSION_HINT_KEY, 'true');
   } catch {
-    // localStorage unavailable (e.g. private browsing) - the session just
-    // won't survive a refresh, which matches the old mock behavior anyway.
+    // no-op
   }
 }
 
 function hydrateMarketplaceContract(contract:any){const signatures=contract.signatures||{};return{...contract,description:contract.description||contract.scope||'',jobTitle:contract.jobTitle||'Technical services agreement',type:contract.type||ContractType.SOW,milestones:Array.isArray(contract.milestones)?contract.milestones:[],timesheets:Array.isArray(contract.timesheets)?contract.timesheets:[],engineerSignature:signatures[contract.engineerId]||contract.engineerSignature||null,companySignature:signatures[contract.companyId]||contract.companySignature||null};}
 
 export function clearAuthToken() {
+  cookieSessionAvailable = false;
   try {
     window.localStorage.removeItem(TOKEN_KEY);
+    window.localStorage.removeItem(SESSION_HINT_KEY);
   } catch {
     // no-op
   }
@@ -58,7 +170,7 @@ async function backendRegister(payload: { email: string; password: string; role:
   if (!response.ok) {
     throw new Error(data?.error || 'Registration failed.');
   }
-  saveAuthToken(data.token);
+  saveAuthToken();
   return data.user as User;
 }
 
@@ -72,7 +184,7 @@ async function backendLogin(email: string, password: string) {
   if (!response.ok) {
     throw new Error(data?.error || 'Invalid credentials.');
   }
-  saveAuthToken(data.token);
+  saveAuthToken();
   return data.user as User;
 }
 
@@ -145,6 +257,280 @@ const apiService = {
     return backendLogin(email, password);
   },
 
+  loginWithDemoCredentials: async (email: string, password: string): Promise<User> => {
+    const response = await fetch(`${API_BASE_URL}/auth/demo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Demo login failed.');
+    saveAuthToken();
+    return data.user as User;
+  },
+
+  logoutSession: async (): Promise<void> => {
+    try {
+      await fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST' });
+    } catch (error) {
+      // Logging out must still complete locally when the development backend
+      // is stopped or temporarily unavailable.
+      if (!isNetworkError(error)) throw error;
+    } finally {
+      clearAuthToken();
+    }
+  },
+
+  requestPasswordReset: async (email: string): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/auth/password-reset/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!response.ok) throw new Error('Could not request a password reset.');
+  },
+
+  confirmPasswordReset: async (token: string, newPassword: string): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/auth/password-reset/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, newPassword }),
+    });
+    const data = response.status === 204 ? null : await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not reset the password.');
+  },
+
+  confirmEmailVerification: async (token: string): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/auth/verification/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not verify the email address.');
+  },
+
+  resendEmailVerification: async (): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/auth/verification/request`, { method: 'POST' });
+    if (!response.ok && response.status !== 204) {
+      const data = await response.json();
+      throw new Error(data?.error || 'Could not resend the verification email.');
+    }
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/auth/password/change`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    const data = response.status === 204 ? null : await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not change the password.');
+    clearAuthToken();
+  },
+
+  listSecurityEvents: async (): Promise<Array<{
+    id: string;
+    eventType: string;
+    outcome: string;
+    createdAt: string;
+  }>> => {
+    const response = await fetch(`${API_BASE_URL}/auth/security-events`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not load security activity.');
+    return data.events;
+  },
+
+  revokeAllSessions: async (): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/auth/sessions/revoke-all`, { method: 'POST' });
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data?.error || 'Could not sign out all devices.');
+    }
+    clearAuthToken();
+  },
+
+  exportMyAccountData: async (): Promise<unknown> => {
+    const response = await fetch(`${API_BASE_URL}/users/me/export`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not export account data.');
+    return data;
+  },
+
+  getDeletionRequest: async (): Promise<AccountDeletionStatus | null> => {
+    const response = await fetch(`${API_BASE_URL}/users/me/deletion-request`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not load deletion request.');
+    return data.request;
+  },
+
+  requestAccountDeletion: async (password: string): Promise<AccountDeletionStatus> => {
+    const response = await fetch(`${API_BASE_URL}/users/me/deletion-request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not request account deletion.');
+    return data.request;
+  },
+
+  cancelAccountDeletion: async (): Promise<AccountDeletionStatus> => {
+    const response = await fetch(`${API_BASE_URL}/users/me/deletion-request`, { method: 'DELETE' });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not cancel account deletion.');
+    return data.request;
+  },
+
+  listAdminDeletionRequests: async (
+    status: AdminDeletionRequest['status'] = 'pending',
+    options: { limit?: number; offset?: number; query?: string } = {}
+  ): Promise<{ requests: AdminDeletionRequest[]; total: number; limit: number; offset: number }> => {
+    const parameters = new URLSearchParams({
+      status,
+      limit: String(options.limit ?? 20),
+      offset: String(options.offset ?? 0),
+      query: options.query ?? '',
+    });
+    const response = await fetch(`${API_BASE_URL}/admin/deletion-requests?${parameters}`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not load privacy requests.');
+    return data;
+  },
+
+  getAdminPrivacySummary: async (): Promise<AdminPrivacySummary> => {
+    const response = await fetch(`${API_BASE_URL}/admin/privacy-summary`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not load privacy operations summary.');
+    return data.summary;
+  },
+
+  listAdminUsers: async (
+    options: { limit?: number; offset?: number; query?: string } = {}
+  ): Promise<{ users: AdminUserAccount[]; total: number; limit: number; offset: number }> => {
+    const parameters = new URLSearchParams({
+      limit: String(options.limit ?? 25),
+      offset: String(options.offset ?? 0),
+      query: options.query ?? '',
+    });
+    const response = await fetch(`${API_BASE_URL}/admin/users?${parameters}`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not load user accounts.');
+    return data;
+  },
+
+  getAdminPlatformMetrics: async (): Promise<AdminPlatformMetrics> => {
+    const response = await fetch(`${API_BASE_URL}/admin/metrics`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not load platform metrics.');
+    return data.metrics;
+  },
+
+  listAdminMembershipSelections: async (): Promise<AdminMembershipSelection[]> => {
+    const response = await fetch(`${API_BASE_URL}/admin/membership-selections`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not load membership requests.');
+    return data.selections;
+  },
+
+  confirmAdminMembershipSelection: async (
+    userId: string
+  ): Promise<{ userId: string; activeTier: ProfileTier; notificationSent: boolean }> => {
+    const response = await fetch(`${API_BASE_URL}/admin/membership-selections/${userId}/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirmation: 'BILLING VERIFIED' }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not activate membership.');
+    return data;
+  },
+
+  rejectAdminMembershipSelection: async (
+    userId: string,
+    reason: string
+  ): Promise<{ userId: string; activeTier: ProfileTier; notificationSent: boolean }> => {
+    const response = await fetch(`${API_BASE_URL}/admin/membership-selections/${userId}/reject`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not reject membership request.');
+    return data;
+  },
+
+  listAdminJobs: async (
+    options: { limit?: number; offset?: number; query?: string } = {}
+  ): Promise<{ jobs: AdminJob[]; total: number; limit: number; offset: number }> => {
+    const parameters = new URLSearchParams({
+      limit: String(options.limit ?? 25),
+      offset: String(options.offset ?? 0),
+      query: options.query ?? '',
+    });
+    const response = await fetch(`${API_BASE_URL}/admin/jobs?${parameters}`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not load job listings.');
+    return data;
+  },
+
+  moderateAdminJob: async (
+    jobId: string,
+    status: 'active' | 'closed',
+    reason?: string
+  ): Promise<{ job: AdminJob; notificationSent: boolean }> => {
+    const response = await fetch(`${API_BASE_URL}/admin/jobs/${jobId}/moderation`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, ...(status === 'closed' ? { reason } : {}) }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not update job status.');
+    return data;
+  },
+
+  setAdminUserSuspension: async (
+    userId: string,
+    suspended: boolean,
+    reason?: string
+  ): Promise<{ user: AdminUserAccount; notificationSent: boolean }> => {
+    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/suspension`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ suspended, ...(suspended ? { reason } : {}) }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not update account status.');
+    return data;
+  },
+
+  reviewAdminDeletionRequest: async (
+    requestId: string,
+    decision: 'approved' | 'rejected',
+    note: string,
+    userMessage: string
+  ): Promise<AdminDeletionRequest> => {
+    const response = await fetch(`${API_BASE_URL}/admin/deletion-requests/${requestId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decision, note, userMessage }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not review privacy request.');
+    return data.request;
+  },
+
+  processAdminDeletionRequest: async (requestId: string, confirmation: string): Promise<AdminDeletionRequest> => {
+    const response = await fetch(`${API_BASE_URL}/admin/deletion-requests/${requestId}/process`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirmation }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || 'Could not process privacy request.');
+    return data.request;
+  },
+
   // Looks up a single profile by id from the backend (public data, no
   // auth required to read it - matches GET /users/:profileId in the spec).
   getUserById: async (id: string): Promise<User | null> => {
@@ -166,12 +552,12 @@ const apiService = {
     }
   },
 
-  // Restores a signed-in session after a page reload, using the JWT saved
-  // in localStorage. Returns null if there's no token, the token is
-  // unreadable, or the backend can't be reached (e.g. not running).
+  // Restore identity only after the backend validates the signed token.
   getCurrentUserFromToken: async (): Promise<User | null> => {
-    const token = getAuthToken();
-    if (!token) return null;
+    // The authentication cookie is HttpOnly, so the browser cannot inspect
+    // it directly. This non-sensitive hint prevents anonymous/demo sessions
+    // from probing a protected endpoint and generating a routine 401.
+    if (!getAuthToken()) return null;
     try {
       const response=await fetch(`${API_BASE_URL}/users/me`,{headers:{Authorization:`Bearer ${token}`}});
       if(!response.ok)return null;
@@ -208,7 +594,6 @@ const apiService = {
           compliance: data.compliance || {},
           identity: data.identity || {},
           badges: [],
-          platformCredits: 1,
           loyaltyPoints: 0,
           roleSkillProfiles: data.roleSkillProfiles || [],
           sectorProfiles: data.sectorProfiles || [],
@@ -242,7 +627,7 @@ const apiService = {
           calendarSyncUrl: `https://wingman.com/cal/eng-${Date.now()}.ics`,
           badges: [],
           contact: { email: data.email },
-          platformCredits: 1, loyaltyPoints: 0,
+          loyaltyPoints: 0,
       };
       const newUser: User = { id: `user-${newEngineer.id}`, role: Role.ENGINEER, profile: newEngineer };
       MOCK_ENGINEERS.push(newEngineer);
@@ -343,6 +728,44 @@ const apiService = {
       throw new Error(data?.error || 'Could not update profile.');
     }
     return data as User;
+  },
+
+  requestMembershipChange: async (tier: ProfileTier): Promise<{
+    activeTier: ProfileTier;
+    requestedTier: ProfileTier;
+    requestedAt: string;
+  }> => {
+    const token = getAuthToken();
+    if (token) {
+      const response = await fetch(`${API_BASE_URL}/users/me/membership-selection`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ tier }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || 'Could not record your membership selection.');
+      }
+      return data;
+    }
+
+    await simulateDelay(200);
+    return {
+      activeTier: ProfileTier.BASIC,
+      requestedTier: tier,
+      requestedAt: new Date().toISOString(),
+    };
+  },
+
+  cancelMembershipChange: async (): Promise<{ activeTier: ProfileTier }> => {
+    const response = await fetch(`${API_BASE_URL}/users/me/membership-selection`, {
+      method: 'DELETE',
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.error || 'Could not cancel your membership selection.');
+    }
+    return data;
   },
 
   // --- ENGINEER PARTNERSHIPS ("team" pairing) ---
@@ -477,6 +900,11 @@ const apiService = {
       if(!ENABLE_DEMO_DATA)throw new Error('Sign in to save a company profile.');await simulateDelay(); const company=MOCK_COMPANIES.find(c=>c.id===profileId); if(!company)throw new Error("Company not found"); Object.assign(company,profileData); return {...company};
   },
   
+  // Posts a job on the real backend (see backend/src/routes/jobs.ts) so it's
+  // actually saved and visible to other users hitting the same backend.
+  // Falls back to the old in-memory mock if there's no signed-in backend
+  // session, or the backend simply can't be reached - same pattern as
+  // createEngineer/createCompany above.
   postJob: async (jobData: any): Promise<Job> => {
     const token = getAuthToken();
     if (!token) throw new Error('A verified company account is required to post a job.');

@@ -1,15 +1,28 @@
-import { Type } from "@google/genai";
 // FIX: Add Product and ProductFeatures types for new AI method.
 import { EngineerProfile, Job, JobSkillRequirement, Skill, Insight, ExperienceLevel, Product, ProductFeatures } from "../types";
 import { JOB_ROLE_DEFINITIONS } from '../data/jobRoles';
-import { shortlistByRequirementScore, getRequiredLevel } from './skillMatching';
+import { shortlistByRequirementScore, getRequiredLevel, type EvidenceContext } from './skillMatching';
+import { secureFetch } from './httpClient';
+import { API_BASE_URL } from './apiConfig';
 
 // All AI calls go through the backend now instead of talking to Google's
 // Gemini API directly from the browser. The API key lives only on the
 // server (backend/.env) - see backend/src/routes/ai.ts. This file keeps
 // the exact same public methods as before so nothing else in the app has
 // to change.
-const API_BASE_URL = (typeof process !== 'undefined' && (process as any).env?.API_BASE_URL) || 'http://localhost:4000/api';
+const fetch = secureFetch;
+
+// These are the JSON schema primitive names accepted by the backend AI
+// endpoint. Importing the full browser SDK for this five-value enum added
+// hundreds of kilobytes to every initial page despite all model calls being
+// server-side.
+const Type = {
+    OBJECT: 'OBJECT',
+    ARRAY: 'ARRAY',
+    STRING: 'STRING',
+    INTEGER: 'INTEGER',
+    BOOLEAN: 'BOOLEAN',
+} as const;
 
 async function postJSON(path: string, body: unknown): Promise<any> {
     try {
@@ -236,8 +249,8 @@ class GeminiService {
     // required level (see services/skillMatching.ts), and only that
     // shortlist is handed to the AI for final ranking/explanation - so the
     // sliders actually gate who's considered, not just wording in a prompt.
-    async findBestMatchesForJob(job: Job, engineers: EngineerProfile[]): Promise<any> {
-        const shortlisted = shortlistByRequirementScore(engineers, job, 15);
+    async findBestMatchesForJob(job: Job, engineers: EngineerProfile[], evidenceContext?: EvidenceContext): Promise<any> {
+        const shortlisted = shortlistByRequirementScore(engineers, job, 15, evidenceContext);
 
         const engineerProfiles = shortlisted.map(e => {
             const engineerSkills = e.selectedJobRoles?.flatMap(r => r.skills.map(s => `${s.name} (${s.rating})`)).join(', ') || 'No detailed skills listed';
@@ -358,6 +371,15 @@ class GeminiService {
         };
 
         return this.generateWithSchema(prompt, schema);
+    }
+
+    // Used by ChatWindow.tsx to translate an incoming message into the
+    // reader's preferred language (SettingsContext's `language`). Detects
+    // the source language server-side so the UI can label the original
+    // ("Show original (French)") without asking the user what language
+    // they wrote in.
+    async translateText(text: string, targetLanguage: string): Promise<{ translatedText?: string; detectedSourceLanguage?: string; error?: string }> {
+        return postJSON('/ai/translate', { text, targetLanguage });
     }
 
     // Simple mock for AI auto-reply

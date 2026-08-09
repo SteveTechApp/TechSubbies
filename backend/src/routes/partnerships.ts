@@ -40,7 +40,7 @@ const requestSchema = z.object({
 });
 
 // POST /api/partnerships/request - send (or auto-accept a matching) partner request by email.
-partnershipsRouter.post("/request", requireAuth, async (req: AuthedRequest, res) => {
+partnershipsRouter.post("/request", requireAuth, requireRole("Engineer"), async (req: AuthedRequest, res) => {
   const parsed = requestSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "A valid partner email is required." });
@@ -89,7 +89,7 @@ partnershipsRouter.post("/request", requireAuth, async (req: AuthedRequest, res)
 });
 
 // POST /api/partnerships/:id/accept - the invited partner accepts.
-partnershipsRouter.post("/:id/accept", requireAuth, async (req: AuthedRequest, res) => {
+partnershipsRouter.post("/:id/accept", requireAuth, requireRole("Engineer"), async (req: AuthedRequest, res) => {
   const request = findPartnershipRequestById(req.params.id);
   if (!request) {
     return res.status(404).json({ error: "Partner request not found." });
@@ -108,7 +108,7 @@ partnershipsRouter.post("/:id/accept", requireAuth, async (req: AuthedRequest, r
 });
 
 // POST /api/partnerships/:id/decline - the invited partner declines.
-partnershipsRouter.post("/:id/decline", requireAuth, async (req: AuthedRequest, res) => {
+partnershipsRouter.post("/:id/decline", requireAuth, requireRole("Engineer"), async (req: AuthedRequest, res) => {
   const request = findPartnershipRequestById(req.params.id);
   if (!request) {
     return res.status(404).json({ error: "Partner request not found." });
@@ -125,7 +125,7 @@ partnershipsRouter.post("/:id/decline", requireAuth, async (req: AuthedRequest, 
 });
 
 // POST /api/partnerships/remove - unlink the signed-in engineer from their current partner.
-partnershipsRouter.post("/remove", requireAuth, async (req: AuthedRequest, res) => {
+partnershipsRouter.post("/remove", requireAuth, requireRole("Engineer"), async (req: AuthedRequest, res) => {
   const user = findUserById(req.userId!);
   if (!user) {
     return res.status(404).json({ error: "Account not found." });
@@ -150,7 +150,7 @@ partnershipsRouter.post("/remove", requireAuth, async (req: AuthedRequest, res) 
 });
 
 // GET /api/partnerships/me - incoming/outgoing requests and current accepted partner.
-partnershipsRouter.get("/me", requireAuth, async (req: AuthedRequest, res) => {
+partnershipsRouter.get("/me", requireAuth, requireRole("Engineer"), async (req: AuthedRequest, res) => {
   const user = findUserById(req.userId!);
   if (!user) {
     return res.status(404).json({ error: "Account not found." });

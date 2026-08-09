@@ -1,105 +1,122 @@
-import React, { useState, useMemo } from 'react';
-// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
-import { useAppContext } from '../../context/InteractionContext';
-import { Search, MapPin, Calendar, DollarSign, Home, ArrowUp } from '../../components/Icons';
-import { formatDisplayDate } from '../../utils/dateFormatter';
+import React, { useEffect, useState } from 'react';
+import { Home, Search } from '../../components/Icons';
+import apiService, { type AdminJob } from '../../services/apiService';
 
-interface JobManagementViewProps {
-    setActiveView: (view: string) => void;
-}
+const PAGE_SIZE = 25;
 
-export const JobManagementView = ({ setActiveView }: JobManagementViewProps) => {
-    const { jobs, companies, toggleJobStatus } = useAppContext();
-    const [searchTerm, setSearchTerm] = useState('');
+export const JobManagementView = ({ setActiveView }: { setActiveView: (view: string) => void }) => {
+    const [jobs, setJobs] = useState<AdminJob[]>([]);
+    const [reasons, setReasons] = useState<Record<string, string>>({});
+    const [searchInput, setSearchInput] = useState('');
+    const [query, setQuery] = useState('');
+    const [offset, setOffset] = useState(0);
+    const [total, setTotal] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [workingId, setWorkingId] = useState<string | null>(null);
+    const [error, setError] = useState('');
+    const [message, setMessage] = useState('');
 
-    const getCompanyName = (companyId: string) => {
-        return companies.find(c => c.id === companyId)?.name || 'Unknown Company';
+    useEffect(() => {
+        setLoading(true);
+        setError('');
+        apiService.listAdminJobs({ limit: PAGE_SIZE, offset, query })
+            .then((result) => {
+                setJobs(result.jobs);
+                setTotal(result.total);
+            })
+            .catch((reason) => setError(reason instanceof Error ? reason.message : 'Could not load job listings.'))
+            .finally(() => setLoading(false));
+    }, [offset, query]);
+
+    const updateStatus = async (job: AdminJob) => {
+        const closing = job.status === 'active';
+        const reason = reasons[job.id]?.trim() || '';
+        if (closing && reason.length < 10) {
+            setError('Enter a closure reason of at least 10 characters.');
+            return;
+        }
+        setWorkingId(job.id);
+        setError('');
+        setMessage('');
+        try {
+            const result = await apiService.moderateAdminJob(job.id, closing ? 'closed' : 'active', reason);
+            setJobs((current) => current.map((item) => item.id === job.id ? { ...item, ...result.job } : item));
+            setReasons((current) => ({ ...current, [job.id]: '' }));
+            const delivery = result.notificationSent ? ' The posting company was notified.' : ' The listing changed, but email delivery failed.';
+            setMessage((closing ? 'The listing was closed and removed from public search.' : 'The listing was reopened.') + delivery);
+        } catch (reason) {
+            setError(reason instanceof Error ? reason.message : 'Could not update job status.');
+        } finally {
+            setWorkingId(null);
+        }
     };
 
-    const filteredJobs = useMemo(() => {
-        return jobs.filter(job =>
-            job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            getCompanyName(job.companyId).toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [jobs, searchTerm, companies]);
-
     return (
-        <div id="page-top">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Job Management</h1>
-                <button
-                    onClick={() => setActiveView('Dashboard')}
-                    className="flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors"
-                >
-                    <Home size={18} className="mr-2" />
-                    Home
+        <div>
+            <div className="mb-6 flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold">Job Management</h1>
+                    <p className="mt-1 text-gray-600">Review and moderate real marketplace listings.</p>
+                </div>
+                <button onClick={() => setActiveView('Dashboard')} className="flex items-center rounded-md bg-blue-700 px-4 py-2 font-semibold text-white">
+                    <Home size={18} className="mr-2" />Home
                 </button>
             </div>
 
+            {error && <div role="alert" className="mb-4 rounded-md bg-red-50 p-3 text-red-700">{error}</div>}
+            {message && <div role="status" className="mb-4 rounded-md bg-green-50 p-3 text-green-800">{message}</div>}
 
-            <div className="mb-4 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                    type="text"
-                    placeholder="Search by job title or company name..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md p-2 pl-10 focus:ring-2 focus:ring-blue-500"
-                />
-            </div>
+            <form className="mb-5 flex gap-2 rounded-lg border bg-white p-3" onSubmit={(event) => {
+                event.preventDefault();
+                setOffset(0);
+                setQuery(searchInput.trim());
+            }}>
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <label className="sr-only" htmlFor="admin-job-search">Search job listings</label>
+                    <input id="admin-job-search" value={searchInput} maxLength={100} onChange={(event) => setSearchInput(event.target.value)} placeholder="Search title, company, email, or reference" className="w-full rounded-md border p-2 pl-10" />
+                </div>
+                <button className="rounded-md bg-blue-700 px-4 py-2 font-semibold text-white">Search</button>
+                {query && <button type="button" onClick={() => { setSearchInput(''); setQuery(''); setOffset(0); }} className="rounded-md border px-4 py-2">Clear</button>}
+            </form>
 
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job Title</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {filteredJobs.map(job => (
-                            <tr key={job.id}>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm font-medium text-gray-900">{job.title}</div>
-                                    <div className="text-sm text-gray-500 flex items-center mt-1">
-                                        <MapPin size={14} className="mr-1" />{job.location}
+            {loading ? <p>Loading job listings…</p> : jobs.length === 0 ? (
+                <div className="rounded-lg border bg-white p-8 text-center text-gray-600">No jobs match this search.</div>
+            ) : (
+                <div className="space-y-4">
+                    {jobs.map((job) => {
+                        const active = job.status === 'active';
+                        return (
+                            <section key={job.id} className="rounded-lg border bg-white p-5 shadow-sm">
+                                <div className="flex flex-col justify-between gap-2 sm:flex-row">
+                                    <div>
+                                        <h2 className="font-semibold text-gray-900">{job.title}</h2>
+                                        <p className="text-sm text-gray-600">{job.companyName} · {job.companyEmail}</p>
+                                        <p className="mt-1 text-xs text-gray-500">Reference: {job.id}</p>
                                     </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm text-gray-900">{getCompanyName(job.companyId)}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <div className="flex items-center"><DollarSign size={14} className="mr-1" />{job.currency}{job.dayRate}/day</div>
-                                    <div className="flex items-center mt-1"><Calendar size={14} className="mr-1" />Starts: {formatDisplayDate(job.startDate)}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${job.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                        {job.status}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button
-                                        onClick={() => toggleJobStatus(job.id)}
-                                        className={`px-3 py-1 rounded-md text-white ${job.status === 'active' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
-                                    >
-                                        {job.status === 'active' ? 'Deactivate' : 'Reactivate'}
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-             <div className="mt-8 text-center">
-                <a href="#page-top" className="inline-flex items-center text-blue-600 hover:underline font-semibold">
-                    <ArrowUp size={16} className="mr-2" />
-                    Return to Top
-                </a>
-            </div>
+                                    <span className={`h-fit rounded-full px-3 py-1 text-xs font-semibold ${active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{job.status}</span>
+                                </div>
+                                <p className="mt-3 text-sm text-gray-600">{job.location} · {job.currency}{job.dayRate}/day</p>
+                                {!active && job.moderationReason && <p className="mt-3 rounded-md bg-red-50 p-3 text-sm text-red-800">Closure reason: {job.moderationReason}</p>}
+                                {active && (
+                                    <>
+                                        <label className="mt-3 block text-sm font-medium" htmlFor={`job-reason-${job.id}`}>Closure reason</label>
+                                        <textarea id={`job-reason-${job.id}`} rows={2} maxLength={500} value={reasons[job.id] || ''} onChange={(event) => setReasons((current) => ({ ...current, [job.id]: event.target.value }))} className="mt-1 w-full rounded-md border p-2" />
+                                    </>
+                                )}
+                                <button type="button" disabled={workingId === job.id} onClick={() => updateStatus(job)} className={`mt-3 rounded-md px-4 py-2 font-semibold text-white disabled:opacity-40 ${active ? 'bg-red-700' : 'bg-green-700'}`}>
+                                    {active ? 'Close listing' : 'Reopen listing'}
+                                </button>
+                            </section>
+                        );
+                    })}
+                    <nav className="flex items-center justify-between rounded-lg border bg-white p-3" aria-label="Job listing pages">
+                        <button disabled={offset === 0} onClick={() => setOffset((value) => Math.max(0, value - PAGE_SIZE))} className="rounded-md border px-3 py-2 disabled:opacity-40">Previous</button>
+                        <span className="text-sm text-gray-600">{offset + 1}–{Math.min(offset + jobs.length, total)} of {total}</span>
+                        <button disabled={offset + jobs.length >= total} onClick={() => setOffset((value) => value + PAGE_SIZE)} className="rounded-md border px-3 py-2 disabled:opacity-40">Next</button>
+                    </nav>
+                </div>
+            )}
         </div>
     );
 };

@@ -1,10 +1,14 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Navigate, Routes, Route } from 'react-router';
 import PersistentAppHeader from "./components/PersistentAppHeader";
+import EmailVerificationBanner from "./components/EmailVerificationBanner";
+import RoleAccessGate from "./components/RoleAccessGate";
+import RealAccountGate from "./components/RealAccountGate";
 import { clearDemoSession, getDemoSession, type DemoSession } from "./data/demoAccounts";
 import { useNavigation } from './context/NavigationContext';
 import { useAuth } from './context/AuthContext';
-import { Page } from './types';
+import { Page, Role } from './types';
+import { dashboardPathForRole } from "./utils/accountRoutes";
 
 // Common Components (small, always needed - kept in the main bundle)
 import { Footer } from './components/Footer';
@@ -168,11 +172,12 @@ function DemoSessionBar({
 }
 const App = () => {
 const { page, setPage } = useNavigation();
-  const { user } = useAuth();
+  const { user, isAuthLoading } = useAuth();
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
   const renderPersistentShell = (content: React.ReactNode, showFooter = false) => (
     <div className="flex min-h-screen flex-col bg-slate-950">
       <PersistentAppHeader />
+      <EmailVerificationBanner />
       <main className="flex-grow">
         <Suspense fallback={<PageLoadingFallback />}>{content}</Suspense>
       </main>
@@ -205,6 +210,10 @@ const { page, setPage } = useNavigation();
   const pathname = normalisePathname();
   const isPublicPath = isPublicDirectPath(pathname) || TechSubbiesHowItWorksFaqHashRoute();
   const isSignedIn = Boolean(user || demoSession);
+  const currentRole = user?.role || demoSession?.role;
+  const roleGate = (content: React.ReactNode, allowedRoles: Role[]) => (
+    <RoleAccessGate currentRole={currentRole} allowedRoles={allowedRoles}>{content}</RoleAccessGate>
+  );
 
   function handleDemoSignedIn(session: DemoSession) {
     setDemoSessionState(session);
@@ -214,6 +223,10 @@ const { page, setPage } = useNavigation();
     clearDemoSession();
     setDemoSessionState(null);
     window.location.href = "/";
+  }
+
+  if (!isPublicPath && isAuthLoading && !demoSession) {
+    return renderPersistentShell(<PageLoadingFallback />);
   }
 
   if (!isPublicPath && !isSignedIn) {
@@ -284,6 +297,7 @@ const { page, setPage } = useNavigation();
     return (
         <div className="flex flex-col min-h-screen">
             <PersistentAppHeader />
+            <EmailVerificationBanner />
             <main className="flex-grow">
                 <Suspense fallback={<PageLoadingFallback />}>{renderPage()}</Suspense>
             </main>
@@ -301,11 +315,19 @@ const { page, setPage } = useNavigation();
 
   return (
     <Routes>
-      <Route path="/opportunity-intake" element={renderPersistentShell(<LiveOpportunityIntakePage />)} />
-      <Route path="/matching/intake" element={renderPersistentShell(<LiveOpportunityIntakePage />)} />
+      <Route
+        path="/"
+        element={
+          isSignedIn
+            ? <Navigate to={dashboardPathForRole(currentRole)} replace />
+            : renderLegacyPage()
+        }
+      />
+      <Route path="/opportunity-intake" element={renderPersistentShell(roleGate(<LiveOpportunityIntakePage />, [Role.COMPANY, Role.RESOURCING_COMPANY]))} />
+      <Route path="/matching/intake" element={renderPersistentShell(roleGate(<LiveOpportunityIntakePage />, [Role.COMPANY, Role.RESOURCING_COMPANY]))} />
       <Route path="/matching-demo" element={renderPersistentShell(<OpportunityMatchingDemoPage />)} />
       <Route path="/how-it-works/matching-demo" element={renderPersistentShell(<OpportunityMatchingDemoPage />)} />
-      <Route path="/engineer/product-awareness" element={renderPersistentShell(<ProductAwarenessExperiencePage />)} />
+      <Route path="/engineer/product-awareness" element={renderPersistentShell(roleGate(<ProductAwarenessExperiencePage />, [Role.ENGINEER]))} />
       <Route path="/login" element={renderPersistentShell(<DemoLoginPage onSignedIn={handleDemoSignedIn} />)} />
       <Route path="/signin" element={renderPersistentShell(<DemoLoginPage onSignedIn={handleDemoSignedIn} />)} />
       <Route path="/forgot-password" element={<Suspense fallback={<PageLoadingFallback/>}><AccountRecoveryPage/></Suspense>} />
@@ -315,9 +337,9 @@ const { page, setPage } = useNavigation();
       <Route path="/engineer/signup" element={<EngineerSignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
       <Route path="/resourcing/signup" element={<ResourcingCompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
       <Route path="/how-it-works/faq" element={renderPersistentShell(<HowItWorksFaqPage />, true)} />
-      <Route path="/engineer/profile" element={renderPersistentShell(<EngineerProfileHubPage />)} />
-      <Route path="/engineer/team-company" element={renderPersistentShell(<EngineerTeamCompanyPage />)} />
-      <Route path="/engineer/availability" element={renderPersistentShell(<EngineerAvailabilityPage />)} />
+      <Route path="/engineer/profile" element={renderPersistentShell(roleGate(<EngineerProfileHubPage />, [Role.ENGINEER]))} />
+      <Route path="/engineer/team-company" element={renderPersistentShell(roleGate(<EngineerTeamCompanyPage />, [Role.ENGINEER]))} />
+      <Route path="/engineer/availability" element={renderPersistentShell(roleGate(<EngineerAvailabilityPage />, [Role.ENGINEER]))} />
       <Route path="/watch-demo" element={renderPersistentShell(<WatchDemoPage />, true)} />
       <Route path="/engineer/profile-setup" element={renderPersistentShell(<EngineerProfileSetupPage />)} />
       <Route path="/engineer/personal-business-profile" element={renderPersistentShell(<EngineerPersonalBusinessProfilePage />)} />

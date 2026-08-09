@@ -1,12 +1,21 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { DashboardSidebar } from '../components/DashboardSidebar';
+import { DashboardShell } from '../components/DashboardShell';
+import { DashboardHelpCenter } from '../components/DashboardHelpCenter';
 import { Role } from '../types';
 import { DashboardView } from './AdminDashboard/DashboardView';
 import { UserManagementView } from './AdminDashboard/UserManagementView';
 import { JobManagementView } from './AdminDashboard/JobManagementView';
 import { MonetizationView } from './AdminDashboard/MonetizationView';
 import { PlatformSettingsView } from './AdminDashboard/PlatformSettingsView';
+import { PrivacyRequestsView } from './AdminDashboard/PrivacyRequestsView';
+import { SubscriptionBillingView } from './AdminDashboard/SubscriptionBillingView';
+import { CertificateVerificationView } from './AdminDashboard/CertificateVerificationView';
+import { ContractSupportView } from './AdminDashboard/ContractSupportView';
+import { TaxonomyEditorView } from './AdminDashboard/TaxonomyEditorView';
+import { AdjacentFamiliesView } from './AdminDashboard/AdjacentFamiliesView';
+import { MarketplaceAnalyticsView } from './AdminDashboard/MarketplaceAnalyticsView';
+import { CommercialValidationView } from './AdminDashboard/CommercialValidationView';
 
 export const AdminDashboard = () => {
     const { user } = useAuth();
@@ -20,25 +29,40 @@ export const AdminDashboard = () => {
         switch (activeView) {
             case 'Dashboard':
                 return <DashboardView setActiveView={setActiveView}/>;
+            case 'Marketplace Analytics':
+                return <MarketplaceAnalyticsView />;
+            case 'Commercial Validation':
+                return <CommercialValidationView />;
             case 'Manage Users':
                 return <UserManagementView />;
+            case 'Role Taxonomy':
+                return <TaxonomyEditorView />;
+            case 'Adjacent Families':
+                return <AdjacentFamiliesView />;
             case 'Manage Jobs':
                 return <JobManagementView setActiveView={setActiveView} />;
+            case 'Privacy Requests':
+                return <PrivacyRequestsView />;
+            case 'Subscription Billing':
+                return <SubscriptionBillingView />;
+            case 'Contract Support':
+                return <ContractSupportView />;
+            case 'Certificate Verification':
+                return <CertificateVerificationView />;
             case 'Monetization':
                 return <MonetizationView />;
             case 'Platform Settings':
                 return <PlatformSettingsView />;
+            case 'Help Center':
+                return <DashboardHelpCenter role={user.role} setActiveView={setActiveView} />;
             default:
                 return <div>Dashboard</div>;
         }
     };
 
     return (
-        <div className="flex h-screen bg-gray-100">
-            <DashboardSidebar activeView={activeView} setActiveView={setActiveView} />
-            <main className="flex-1 p-6 overflow-y-auto">
-                {renderView()}
-            </main>
-        </div>
+        <DashboardShell activeView={activeView} setActiveView={setActiveView}>
+            {renderView()}
+        </DashboardShell>
     );
 };

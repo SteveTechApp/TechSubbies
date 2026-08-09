@@ -10,6 +10,7 @@ if (process.env.NODE_ENV === "production" && (!process.env.JWT_SECRET || process
 if(process.env.NODE_ENV==="production"&&process.env.REQUIRE_EXTERNAL_SERVICES==="true"){const required=["STRIPE_SECRET_KEY","STRIPE_WEBHOOK_SECRET","STRIPE_PRICE_PROFESSIONAL","STRIPE_PRICE_SKILLS","STRIPE_PRICE_BUSINESS","SMTP_HOST","EMAIL_FROM","ACCOUNT_ACTION_URL"];const missing=required.filter(key=>!process.env[key]);if(missing.length)throw new Error(`Missing required production configuration: ${missing.join(", ")}`);}
 
 const app = createApp();
+startCertificateExpiryReminderScheduler();
 
 const server = app.listen(PORT, () => {
   log("info","service.started",{port:PORT,environment:process.env.NODE_ENV||"development"});

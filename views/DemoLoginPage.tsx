@@ -1,11 +1,15 @@
 import React, { useState } from "react";
 import {
+  isDemoAccessEnabled,
   setDemoSession,
   validateDemoLogin,
   type DemoSession,
 } from "../data/demoAccounts";
 import apiService from "../services/apiService";
 import { useAuth } from "../context/AuthContext";
+import { dashboardPathForRole } from "../utils/accountRoutes";
+import { MOCK_USERS } from "../data/mockData";
+import { Role } from "../types";
 
 type DemoLoginPageProps = {
   onSignedIn?: (session: DemoSession) => void;
@@ -17,8 +21,8 @@ function inputClass() {
 
 export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
   const { setUser } = useAuth();
-  const [email, setEmail] = useState("admin@techsubbies.demo");
-  const [password, setPassword] = useState("password");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -28,36 +32,28 @@ export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
     setIsSubmitting(true);
 
     try {
-      // Try a real account first (one created through the sign-up
-      // wizards, backed by the real backend). Any failure here - wrong
-      // password, no such account, or the backend not running - falls
-      // through to the local demo accounts below rather than blocking
-      // the user.
+      const demoAccount = isDemoAccessEnabled ? validateDemoLogin(email, password) : null;
+      if (demoAccount) {
+        await apiService.loginWithDemoCredentials(email, password);
+        const session = setDemoSession(demoAccount);
+        setUser(MOCK_USERS[demoAccount.role as Role]);
+        if (onSignedIn) onSignedIn(session);
+        else window.location.href = dashboardPathForRole(demoAccount.role);
+        return;
+      }
+
       const realUser = await apiService.loginWithPassword(email, password);
       setUser(realUser);
-      window.location.href = "/";
+      window.location.href = dashboardPathForRole(realUser.role);
       return;
-    } catch {
-      // Fall through to demo login.
+    } catch (reason) {
+      // Only use the development fallback when the entered credentials
+      // actually belong to a demo account. This preserves useful backend
+      // errors for developers signing in with real accounts.
+      setError(reason instanceof Error ? reason.message : "Login failed. Check your email and password.");
     } finally {
       setIsSubmitting(false);
     }
-
-    const account = validateDemoLogin(email, password);
-
-    if (!account) {
-      setError("Login failed. Check the demo email and password.");
-      return;
-    }
-
-    const session = setDemoSession(account);
-
-    if (onSignedIn) {
-      onSignedIn(session);
-      return;
-    }
-
-    window.location.href = "/opportunity-intake";
   }
 
   return (
@@ -74,7 +70,7 @@ export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
             Public pages stay open. Project intake, matching tools, dashboards, engineer records and admin areas require a signed-in session.
           </p>
 
-          <div className="mt-6 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-5">
+          {isDemoAccessEnabled && <div className="mt-6 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-5">
             <h2 className="font-bold text-cyan-200">Demo admin account</h2>
             <div className="mt-3 grid gap-2 text-sm text-slate-300">
               <div>Email: <span className="font-mono text-white">admin@techsubbies.demo</span></div>
@@ -84,7 +80,18 @@ export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
             <p className="mt-3 text-xs leading-5 text-slate-500">
               This is a local development login. If you created a real account through one of the sign-up wizards, sign in with that email and password instead.
             </p>
-          </div>
+            <button
+              type="button"
+              onClick={() => {
+                setEmail("admin@techsubbies.demo");
+                setPassword("password");
+                setError("");
+              }}
+              className="mt-4 rounded-lg border border-cyan-200/30 px-3 py-2 text-xs font-bold text-cyan-100 hover:bg-cyan-200/10"
+            >
+              Use demo credentials
+            </button>
+          </div>}
         </section>
 
         <form onSubmit={submit} className="rounded-3xl border border-white/10 bg-slate-900 p-6">
@@ -99,6 +106,8 @@ export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
           <label className="mt-5 block">
             <span className="text-sm font-semibold text-slate-200">Email</span>
             <input
+              required
+              type="email"
               className={`${inputClass()} mt-2`}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
@@ -109,6 +118,7 @@ export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
           <label className="mt-4 block">
             <span className="text-sm font-semibold text-slate-200">Password</span>
             <input
+              required
               className={`${inputClass()} mt-2`}
               type="password"
               value={password}
@@ -125,6 +135,13 @@ export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
             {isSubmitting ? "Signing in..." : "Sign in"}
           </button>
           <a href="/forgot-password" className="mt-4 block text-center text-sm font-bold text-cyan-300 hover:text-cyan-200">Forgot password?</a>
+
+          <a
+            href="/forgot-password"
+            className="mt-4 block text-center text-sm font-semibold text-cyan-200 hover:text-cyan-100"
+          >
+            Forgot password?
+          </a>
 
           <a
             href="/"

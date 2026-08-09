@@ -63,7 +63,6 @@ export const MOCK_FREE_ENGINEER: EngineerProfile = {
     calendarSyncUrl: 'https://wingman.com/cal/eng-free.ics',
     badges: [],
     contact: { email: 'john.smith.demo@wingman.com', phone: '07123456789' },
-    platformCredits: 1,
     loyaltyPoints: 120,
     referralCode: 'REFJOHN123',
 };
@@ -131,7 +130,6 @@ export const MOCK_ENGINEER_STEVE: EngineerProfile = {
     calendarSyncUrl: 'https://wingman.com/cal/eng-steve.ics',
     badges: [BADGES['verified-id'], BADGES['contracts-10'], BADGES['top-contributor'], BADGES['cts-certified']],
     contact: { email: 'steve.goodwin.demo@wingman.com', phone: '07123456789' },
-    platformCredits: 5,
     loyaltyPoints: 850,
     hasReceivedCompletionBonus: true,
     lastMonthlyCreditDate: new Date('2024-07-01'),

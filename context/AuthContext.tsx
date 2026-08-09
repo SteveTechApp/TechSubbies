@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Role } from '../types';
 import { MOCK_USERS, MOCK_USER_FREE_ENGINEER } from '../data/mockData';
-import apiService, { getAuthToken, clearAuthToken } from '../services/apiService';
+import { getDemoSession } from '../data/demoAccounts';
+import apiService from '../services/apiService';
 
 interface AuthContextType {
     user: User | null;
+    isAuthLoading: boolean;
     login: (role: Role) => void;
     logout: () => void;
     createAndLoginEngineer: (data: any) => Promise<void>;
@@ -17,18 +19,29 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<User | null>(() => {
+        const demoSession = getDemoSession();
+        return demoSession ? MOCK_USERS[demoSession.role as Role] || null : null;
+    });
+    const [isAuthLoading, setIsAuthLoading] = useState(true);
 
     // Restore a real (backend-backed) session after a page reload, if a
     // login token was saved. Demo-role sessions (via `login` below) are
     // intentionally not persisted - that's a quick local testing shortcut,
     // not a real account.
     useEffect(() => {
-        if (!getAuthToken()) return;
         let cancelled = false;
-        apiService.getCurrentUserFromToken().then((restoredUser) => {
+        const demoSession = getDemoSession();
+        const restoreSession = demoSession
+            ? apiService.loginWithDemoCredentials(demoSession.email, 'password')
+            : apiService.getCurrentUserFromToken();
+        restoreSession.then((restoredUser) => {
             if (!cancelled && restoredUser) {
                 setUser(restoredUser);
+            }
+        }).finally(() => {
+            if (!cancelled) {
+                setIsAuthLoading(false);
             }
         });
         return () => {
@@ -40,11 +53,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Simple login simulation
         // FIX: Correctly log in the mock user for the selected role.
         setUser(MOCK_USERS[role] || null);
+        setIsAuthLoading(false);
     };
 
     const logout = () => {
-        clearAuthToken();
         setUser(null);
+        setIsAuthLoading(false);
+        void apiService.logoutSession();
     };
     
     // FIX: Implemented createAndLoginEngineer to fix missing property error.
@@ -66,7 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, createAndLoginEngineer, createAndLoginCompany, createAndLoginResourcingCompany, setUser }}>
+        <AuthContext.Provider value={{ user, isAuthLoading, login, logout, createAndLoginEngineer, createAndLoginCompany, createAndLoginResourcingCompany, setUser }}>
             {children}
         </AuthContext.Provider>
     );

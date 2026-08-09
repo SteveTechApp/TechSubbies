@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { computeSkillRequirementScore, findEngineerSkillRating, getRequiredLevel, shortlistByRequirementScore } from './skillMatching';
-import { EngineerProfile, Job, SkillImportance } from '../types';
+import { computeSkillRequirementScore, explainSkillRequirementMatch, findEngineerSkillRating, getEffectiveSkillRating, getRequiredLevel, shortlistByRequirementScore } from './skillMatching';
+import { Currency, EngineerProfile, ExperienceLevel, Job, JobType, Review, SkillImportance } from '../types';
 
 function makeEngineer(skills: { name: string; rating: number }[]): EngineerProfile {
     return {
@@ -72,6 +72,75 @@ describe('computeSkillRequirementScore', () => {
     });
 });
 
+describe('getEffectiveSkillRating', () => {
+    const completedJob: Job = {
+        id: 'job-1',
+        companyId: 'company-1',
+        title: 'AV Install - Kings Cross',
+        description: 'desc',
+        location: 'London',
+        dayRate: '400',
+        duration: '5 days',
+        currency: Currency.GBP,
+        startDate: null,
+        postedDate: new Date('2026-01-01'),
+        jobType: JobType.CONTRACT,
+        experienceLevel: ExperienceLevel.SENIOR,
+        jobRole: 'AV Engineer',
+        skillRequirements: [{ name: 'Skill A', importance: SkillImportance.ESSENTIAL, requiredLevel: 60 }],
+        status: 'closed',
+    };
+    const goodReview: Review = {
+        id: 'review-1',
+        jobId: 'job-1',
+        companyId: 'company-1',
+        engineerId: 'eng-1',
+        peerRating: 5,
+        customerRating: 5,
+        comment: 'Great work',
+        date: new Date('2026-02-01'),
+    };
+
+    it('returns null when the engineer has never rated the skill, same as findEngineerSkillRating', () => {
+        const engineer = makeEngineer([{ name: 'Skill A', rating: 70 }]);
+        expect(getEffectiveSkillRating(engineer, 'Skill Nobody Has', { jobs: [completedJob], reviews: [goodReview] })).toBeNull();
+    });
+
+    it('returns the plain self-rating when there is no completed-job or certificate evidence', () => {
+        const engineer = makeEngineer([{ name: 'Skill A', rating: 40 }]);
+        expect(getEffectiveSkillRating(engineer, 'Skill A', { jobs: [], reviews: [] })).toBe(40);
+    });
+
+    it('pulls the rating up when a completed, highly-reviewed job backs the skill', () => {
+        const engineer = makeEngineer([{ name: 'Skill A', rating: 40 }]);
+        const effective = getEffectiveSkillRating(engineer, 'Skill A', { jobs: [completedJob], reviews: [goodReview] });
+        expect(effective).toBeGreaterThan(40);
+    });
+});
+
+describe('computeSkillRequirementScore with evidence context', () => {
+    it('uses the evidence-adjusted rating instead of the plain self-rating when a context is supplied', () => {
+        const engineer = makeEngineer([{ name: 'Skill A', rating: 40 }]);
+        const job = makeJob([{ name: 'Skill A', importance: SkillImportance.ESSENTIAL, requiredLevel: 60 }]);
+        const completedJob: Job = { ...job, id: 'job-1', title: 'Past Job', skillRequirements: job.skillRequirements };
+        const review: Review = {
+            id: 'review-1',
+            jobId: 'job-1',
+            companyId: 'company-1',
+            engineerId: 'eng-1',
+            peerRating: 5,
+            customerRating: 5,
+            comment: 'Great',
+            date: new Date('2026-02-01'),
+        };
+
+        const plainScore = computeSkillRequirementScore(engineer, job);
+        const evidenceScore = computeSkillRequirementScore(engineer, job, { jobs: [completedJob], reviews: [review] });
+
+        expect(evidenceScore).toBeGreaterThan(plainScore);
+    });
+});
+
 describe('shortlistByRequirementScore', () => {
     it('ranks engineers highest-scoring first and respects the limit', () => {
         const strong = makeEngineer([{ name: 'Skill A', rating: 90 }]);
@@ -85,5 +154,28 @@ describe('shortlistByRequirementScore', () => {
         expect(shortlist).toHaveLength(1);
         expect(shortlist[0].id).toBe('strong');
         expect(shortlist[0].requirementScore).toBe(100);
+    });
+});
+
+describe('explainSkillRequirementMatch', () => {
+    it('reports evidence freshness, below-level gaps and missing skills', () => {
+        const engineer = makeEngineer([{ name: 'Skill A', rating: 40 }]);
+        const selectedJob = makeJob([
+            { name: 'Skill A', importance: SkillImportance.ESSENTIAL, requiredLevel: 80 },
+            { name: 'Skill B', importance: SkillImportance.ESSENTIAL, requiredLevel: 60 },
+        ]);
+        const evidenceJob = { ...makeJob([{ name: 'Skill A', importance: SkillImportance.ESSENTIAL }]), id: 'evidence-job', title: 'Recent install' };
+        const review = {
+            id: 'review-evidence', jobId: 'evidence-job', companyId: 'company-1', engineerId: 'eng-1',
+            peerRating: 5, customerRating: 5, comment: 'Strong work', date: new Date(),
+        } as Review;
+
+        const explanation = explainSkillRequirementMatch(engineer, selectedJob, { jobs: [evidenceJob], reviews: [review] });
+
+        expect(explanation.evidenceBackedSkills).toBe(1);
+        expect(explanation.skillGaps).toBe(1);
+        expect(explanation.missingSkills).toBe(1);
+        expect(explanation.skills[0]).toMatchObject({ status: 'gap', evidenceCount: 1, evidenceFreshness: 'recent' });
+        expect(explanation.skills[1]).toMatchObject({ status: 'missing', gap: 60, evidenceFreshness: 'none' });
     });
 });

@@ -20,6 +20,8 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     currentPageContext: string;
     // --- Profile Management ---
     updateEngineerProfile: (profileData: Partial<EngineerProfile>) => Promise<void>;
+    requestMembershipChange: (tier: ProfileTier) => Promise<void>;
+    cancelMembershipChange: () => Promise<void>;
     updateCompanyProfile: (profileData: Partial<CompanyProfile>) => Promise<void>;
     boostProfile: () => void;
     addSkillsToProfile: (skills: any[]) => void;
@@ -27,8 +29,9 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     // --- Job & Application Management ---
     postJob: (jobData: any) => Promise<Job>;
     applyForJob: (jobId: string, engineerId: string) => void;
-    applyForJobWithCredit: (jobId: string) => void;
-    sendOffer: (jobId: string, engineerId: string) => void;
+    markApplicationsViewed: (jobId: string) => void;
+    sendOffer: (jobId: string, engineerId: string) => Promise<void>;
+    rejectApplication: (jobId: string, engineerId: string) => Promise<void>;
     inviteEngineerToJob: (jobId: string, engineerId: string) => void;
     // --- Contract & Payment Management ---
     createContract: (contract: any) => Promise<any>;
@@ -42,6 +45,10 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     // --- Communication ---
     startConversationAndNavigate: (otherPartyProfileId: string, navigateCallback: () => void) => void;
     sendMessage: (conversationId: string, text: string) => Promise<void>;
+    // Polls the real backend for any new messages in a conversation and
+    // merges them in - used by ChatWindow while a conversation is open,
+    // since there's no push/WebSocket connection (see apiService.ts).
+    refreshConversationMessages: (conversationId: string) => void;
     // --- AI & Gemini ---
     getApplicantDeepDive: (job: Job, engineer: EngineerProfile) => Promise<any>;
     // FIX: Add missing method definition
@@ -109,6 +116,47 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         } catch (error: any) { alert(error.message || 'Company profile could not be saved.'); }
     };
 
+    const requestMembershipChange = async (tier: ProfileTier) => {
+        if (!user || user.role !== Role.ENGINEER) return;
+        const selection = await apiService.requestMembershipChange(tier);
+        const pendingMembership = {
+            requestedProfileTier: selection.requestedTier,
+            membershipRequestedAt: selection.requestedAt,
+        };
+        auth.setUser(previous => {
+            if (!previous || previous.role !== Role.ENGINEER) return previous;
+            return { ...previous, profile: { ...previous.profile, ...pendingMembership } };
+        });
+        setAppData(previous => ({
+            ...previous,
+            engineers: previous.engineers.map(engineer =>
+                engineer.id === user.profile.id ? { ...engineer, ...pendingMembership } : engineer
+            ),
+        }));
+    };
+
+    const cancelMembershipChange = async () => {
+        if (!user || user.role !== Role.ENGINEER) return;
+        await apiService.cancelMembershipChange();
+        auth.setUser(previous => {
+            if (!previous || previous.role !== Role.ENGINEER) return previous;
+            const profile = { ...(previous.profile as EngineerProfile) };
+            delete profile.requestedProfileTier;
+            delete profile.membershipRequestedAt;
+            return { ...previous, profile };
+        });
+        setAppData(previous => ({
+            ...previous,
+            engineers: previous.engineers.map(engineer => {
+                if (engineer.id !== user.profile.id) return engineer;
+                const updated = { ...engineer };
+                delete updated.requestedProfileTier;
+                delete updated.membershipRequestedAt;
+                return updated;
+            }),
+        }));
+    };
+
     const boostProfile = () => updateEngineerProfile({ isBoosted: true });
     const addSkillsToProfile = (skills: any[]) => alert(`${skills.length} skills added!`);
     const reactivateProfile = () => updateEngineerProfile({ status: 'active' });
@@ -128,12 +176,42 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         } catch (error: any) { alert(error.message || 'Could not submit application.'); }
     };
     
-    const applyForJobWithCredit = (jobId: string) => {
-        if (!user || user.role !== Role.ENGINEER) return;
-        const profile = user.profile as EngineerProfile;
-        if(profile.platformCredits > 0){
-            updateEngineerProfile({ platformCredits: profile.platformCredits - 1 });
-            applyForJob(jobId, user.profile.id);
+    const persistApplicationStatus = async (
+        application: Application,
+        status: ApplicationStatus.VIEWED | ApplicationStatus.OFFERED | ApplicationStatus.REJECTED
+    ) => {
+        const previousStatus = application.status;
+        const previousReviewed = application.reviewed;
+        setAppData(prev => ({
+            ...prev,
+            applications: prev.applications.map(app =>
+                app.jobId === application.jobId && app.engineerId === application.engineerId
+                    ? { ...app, status, reviewed: true }
+                    : app
+            ),
+        }));
+
+        if (!application.id) return;
+        try {
+            const saved = await apiService.updateApplicationStatus(application.id, status);
+            if (saved) {
+                setAppData(prev => ({
+                    ...prev,
+                    applications: prev.applications.map(app =>
+                        app.id === application.id ? saved : app
+                    ),
+                }));
+            }
+        } catch (error) {
+            setAppData(prev => ({
+                ...prev,
+                applications: prev.applications.map(app =>
+                    app.id === application.id
+                        ? { ...app, status: previousStatus, reviewed: previousReviewed }
+                        : app
+                ),
+            }));
+            throw error;
         }
     };
     
@@ -173,14 +251,41 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
             return saved;
         } catch (error: any) { alert(error.message || 'Could not complete contract.'); }
     };
-    const fundMilestone = (contractId: string, milestoneId: string) => {
-        setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? {...m, status: MilestoneStatus.FUNDED_IN_PROGRESS} : m) } : c) }));
+    const startMilestone = (contractId: string, milestoneId: string) => {
+        const previousContracts = data.contracts;
+        setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? {...m, status: MilestoneStatus.IN_PROGRESS} : m) } : c) }));
+        apiService.startMilestone(contractId, milestoneId)
+            .then(updated => {
+                if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
+            })
+            .catch((error: any) => {
+                setAppData(prev => ({ ...prev, contracts: previousContracts }));
+                alert(error?.message || 'Could not start milestone.');
+            });
     };
     const submitMilestoneForApproval = (contractId: string, milestoneId: string) => {
-        setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? {...m, status: MilestoneStatus.SUBMITTED_FOR_APPROVAL} : m) } : c) }));
+        const previousContracts = data.contracts;
+        setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? {...m, status: MilestoneStatus.SUBMITTED} : m) } : c) }));
+        apiService.submitMilestoneForApproval(contractId, milestoneId)
+            .then(updated => {
+                if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
+            })
+            .catch((error: any) => {
+                setAppData(prev => ({ ...prev, contracts: previousContracts }));
+                alert(error?.message || 'Could not submit milestone for approval.');
+            });
     };
     const approveMilestone = (contractId: string, milestoneId: string) => {
-        setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? {...m, status: MilestoneStatus.APPROVED_PENDING_INVOICE} : m) } : c) }));
+        const previousContracts = data.contracts;
+        setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? {...m, status: MilestoneStatus.APPROVED} : m) } : c) }));
+        apiService.approveMilestone(contractId, milestoneId)
+            .then(updated => {
+                if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
+            })
+            .catch((error: any) => {
+                setAppData(prev => ({ ...prev, contracts: previousContracts }));
+                alert(error?.message || 'Could not approve milestone.');
+            });
     };
 
     const submitTimesheet = async (contractId: string, timesheetData: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => {
@@ -200,15 +305,72 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const startConversationAndNavigate = (otherPartyProfileId: string, navigateCallback: () => void) => {
-        alert(`Starting conversation with ${otherPartyProfileId}`);
+        const otherUser = data.findUserByProfileId(otherPartyProfileId);
+        if (!user || !otherUser) {
+            navigateCallback();
+            return;
+        }
+
+        const existing = data.conversations.find(
+            c => c.participantIds.includes(user.id) && c.participantIds.includes(otherUser.id)
+        );
+        if (existing) {
+            navigateCallback();
+            return;
+        }
+
+        const optimisticConversation: Conversation = {
+            id: `convo-${Date.now()}`,
+            participantIds: [user.id, otherUser.id],
+            lastMessageTimestamp: new Date(),
+            lastMessageText: '',
+        };
+        setAppData(prev => ({ ...prev, conversations: [optimisticConversation, ...prev.conversations] }));
+        apiService.startOrGetConversation(otherUser.id)
+            .then(saved => {
+                if (saved) setAppData(prev => ({ ...prev, conversations: prev.conversations.map(c => c.id === optimisticConversation.id ? saved : c) }));
+            })
+            .catch((error: any) => {
+                setAppData(prev => ({ ...prev, conversations: prev.conversations.filter(c => c.id !== optimisticConversation.id) }));
+                alert(error?.message || 'Could not start conversation.');
+            });
         navigateCallback();
     };
 
     const sendMessage = async (conversationId: string, text: string) => {
-        await new Promise(resolve => setTimeout(resolve, 500));
         const newMessage = { id: `msg-${Date.now()}`, conversationId, senderId: user!.id, text, timestamp: new Date(), isRead: false };
-        setAppData(prev => ({...prev, messages: [...prev.messages, newMessage]}));
+        setAppData(prev => ({
+            ...prev,
+            messages: [...prev.messages, newMessage],
+            conversations: prev.conversations.map(c => c.id === conversationId ? { ...c, lastMessageText: text, lastMessageTimestamp: newMessage.timestamp } : c),
+        }));
         realtimeService.simulateNewMessage(conversationId, newMessage); // Simulate push
+
+        try {
+            const saved = await apiService.sendMessage(conversationId, text);
+            if (saved) {
+                setAppData(prev => ({ ...prev, messages: prev.messages.map(m => m.id === newMessage.id ? saved : m) }));
+            }
+        } catch (error: any) {
+            setAppData(prev => ({ ...prev, messages: prev.messages.filter(m => m.id !== newMessage.id) }));
+            alert(error?.message || 'Could not send message.');
+        }
+    };
+
+    // Pulls the latest messages for a conversation from the real backend
+    // and merges them in. Called on an interval by ChatWindow while a
+    // conversation is open, to approximate real-time delivery without a
+    // WebSocket connection. `null` means "no session, or unreachable" - left
+    // alone rather than treated as "no messages", so it can never wipe out
+    // messages that only exist locally (e.g. no backend running at all).
+    const refreshConversationMessages = (conversationId: string) => {
+        apiService.getBackendMessagesForConversation(conversationId).then(backendMessages => {
+            if (backendMessages === null) return;
+            setAppData(prev => {
+                const otherConversationsMessages = prev.messages.filter(m => m.conversationId !== conversationId);
+                return { ...prev, messages: [...otherConversationsMessages, ...backendMessages] };
+            });
+        });
     };
 
     const getApplicantDeepDive = async (job: Job, engineer: EngineerProfile) => {const shortlist=await apiService.getJobShortlist(job.id);const candidate=shortlist.candidates.find((item)=>item.engineerId===engineer.id);if(!candidate)throw new Error('This engineer has not applied for the selected job.');const probes=candidate.risks;return{analysis:{summary:`${candidate.outcome} candidate with an explainable suitability score of ${candidate.score}/100. This assessment uses declared profile and application data only.`,strengths:candidate.reasons,areas_to_probe:probes,interview_questions:probes.length?probes.map((risk)=>`Please provide practical evidence addressing: ${risk}`):['Describe the most comparable assignment you delivered and the evidence available.']}};};
@@ -279,14 +441,17 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         createAndLoginResourcingCompany: auth.createAndLoginResourcingCompany,
         createAndLoginEngineer: auth.createAndLoginEngineer,
         updateEngineerProfile,
+        requestMembershipChange,
+        cancelMembershipChange,
         updateCompanyProfile,
         boostProfile,
         addSkillsToProfile,
         reactivateProfile,
         postJob,
         applyForJob,
-        applyForJobWithCredit,
+        markApplicationsViewed,
         sendOffer,
+        rejectApplication,
         inviteEngineerToJob,
         createContract,
         signContract,
@@ -298,6 +463,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         approveTimesheet,
         startConversationAndNavigate,
         sendMessage,
+        refreshConversationMessages,
         getApplicantDeepDive,
         analyzeProductForFeatures,
         toggleUserStatus,

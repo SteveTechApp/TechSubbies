@@ -2,7 +2,7 @@ import React from 'react';
 
 // Define props based on the output of calculateFinancials
 interface FinancialForecastProps {
-    revenue: { subscriptions: number; microtransactions: number; advertising: number; total: number; };
+    revenue: { subscriptions: number; total: number; };
     users: number;
     costs: { fixed: number; variable: number; staffing: number; payrollTax: number; total: number; headcount: { support: number; developers: number; total: number; } };
     profit: { gross: number; tax: number; net: number; };

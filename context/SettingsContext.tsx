@@ -19,7 +19,10 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguage] = useState<Language>(Language.ENGLISH);
   const [currency, setCurrency] = useState<Currency>(Currency.GBP);
   
-  const t = (key: string) => i18n[language][key] || key;
+  // Falls back to the English dictionary (and then to the raw key) so that
+  // newly-added languages work immediately for chat translation even
+  // before someone writes out their full UI dictionary in i18n.ts.
+  const t = (key: string) => (i18n[language] ?? i18n[Language.ENGLISH])?.[key] || key;
   const chatSession = useMemo(() => geminiService.chat, []);
 
   return (

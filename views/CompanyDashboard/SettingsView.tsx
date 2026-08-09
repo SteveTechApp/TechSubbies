@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router';
 import { CompanyProfile } from '../../types';
-import { Save } from '../../components/Icons';
+import { Save, ShieldCheck } from '../../components/Icons';
 
 interface SettingsViewProps {
     profile: CompanyProfile;
@@ -81,6 +82,18 @@ export const SettingsView = ({ profile, onSave }: SettingsViewProps) => {
                     </button>
                 </div>
             </form>
+            <section className="mt-6 max-w-2xl rounded-lg border border-blue-200 bg-blue-50 p-6 shadow-sm">
+                <h2 className="flex items-center text-lg font-bold text-blue-900">
+                    <ShieldCheck size={20} className="mr-2" />
+                    Account security and privacy
+                </h2>
+                <p className="mt-2 text-sm text-blue-800">
+                    Manage your password, active sessions, data export, and account deletion request.
+                </p>
+                <Link to="/account/security" className="mt-4 inline-block rounded-md bg-blue-700 px-4 py-2 font-semibold text-white hover:bg-blue-800">
+                    Open Account Security
+                </Link>
+            </section>
         </div>
     );
 };

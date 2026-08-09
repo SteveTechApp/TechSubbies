@@ -18,6 +18,11 @@ const JobCard = ({ job, onSelect, onEdit, onDelete }: { job: Job, onSelect: () =
 
     return (
         <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+            {job.moderationReason && (
+                <div className="mb-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                    <strong>Closed by TechSubbies:</strong> {job.moderationReason}
+                </div>
+            )}
             <div className="flex justify-between items-start">
                 <div>
                     <h3 className="text-lg font-bold text-blue-700">{job.title}</h3>
@@ -28,6 +33,9 @@ const JobCard = ({ job, onSelect, onEdit, onDelete }: { job: Job, onSelect: () =
                     <button onClick={onDelete} className="p-2 text-gray-500 hover:text-red-600 hover:bg-gray-100 rounded-full"><Trash2 size={16}/></button>
                 </div>
             </div>
+            <span className={`mt-2 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${job.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700'}`}>
+                {job.status}
+            </span>
             <div className="flex justify-between items-end mt-4">
                 <div>
                     <p className="text-sm text-gray-600 flex items-center"><DollarSign size={14} className="mr-1.5"/>{job.currency}{job.dayRate} / day</p>
@@ -152,7 +160,9 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
                         ))}
                     </div>
                 ) : (
-                    <p className="text-center p-8 bg-gray-50 rounded-lg">No applicants yet.</p>
+                    <p className="text-center p-8 bg-gray-50 rounded-lg">
+                        {applicantsForSelectedJob.length > 0 ? 'No applicants match these filters.' : 'No applicants yet.'}
+                    </p>
                 )}
                  {selectedApplicant && selectedJob && (
                     <CreateContractModal
@@ -175,7 +185,12 @@ export const MyJobsView = ({ myJobs, setActiveView }: MyJobsViewProps) => {
                     <JobCard 
                         key={job.id} 
                         job={job}
-                        onSelect={() => setSelectedJob(job)}
+                        onSelect={() => {
+                            setSelectedJob(job);
+                            setApplicantFilter('all');
+                            setApplicantSearch('');
+                            markApplicationsViewed(job.id);
+                        }}
                         onEdit={() => alert(`Editing job: ${job.title}`)}
                         onDelete={() => alert(`Deleting job: ${job.title}`)}
                     />

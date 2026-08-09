@@ -114,12 +114,51 @@ const EngineerCardComponent = ({ profile, onClick, matchScore }: EngineerCardPro
 
             <div className="mt-3 pt-3 border-t border-gray-100">
                 {matchScore !== undefined ? (
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h4 className="text-xs font-bold text-gray-500 uppercase">AI Match Score</h4>
-                            <p className="text-sm text-gray-600">Based on your job requirements.</p>
+                    <div>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h4 className="text-xs font-bold text-gray-500 uppercase">Evidence-adjusted match</h4>
+                                <p className="text-sm text-gray-600">Skills are checked against the selected job.</p>
+                            </div>
+                            <CircularProgress score={matchScore} />
                         </div>
-                        <CircularProgress score={matchScore} />
+                        {profile.matchExplanation && (
+                            <div className="mt-3 space-y-2 border-t border-gray-100 pt-2">
+                                <div className="flex flex-wrap gap-1 text-xs">
+                                    <span className="rounded-full bg-emerald-50 px-2 py-1 font-medium text-emerald-700">
+                                        {profile.matchExplanation.evidenceBackedSkills} evidence-backed
+                                    </span>
+                                    {profile.matchExplanation.skillGaps > 0 && (
+                                        <span className="rounded-full bg-amber-50 px-2 py-1 font-medium text-amber-700">
+                                            {profile.matchExplanation.skillGaps} below level
+                                        </span>
+                                    )}
+                                    {profile.matchExplanation.missingSkills > 0 && (
+                                        <span className="rounded-full bg-red-50 px-2 py-1 font-medium text-red-700">
+                                            {profile.matchExplanation.missingSkills} missing
+                                        </span>
+                                    )}
+                                </div>
+                                {profile.matchExplanation.skills.slice(0, 3).map(skill => (
+                                    <div key={skill.skillName} className="rounded-md bg-gray-50 px-2 py-1.5 text-xs">
+                                        <div className="flex justify-between gap-2 font-medium text-gray-700">
+                                            <span className="truncate">{skill.skillName}</span>
+                                            <span className={skill.status === 'meets' ? 'text-emerald-700' : 'text-amber-700'}>
+                                                {skill.effectiveRating ?? '—'} / {skill.requiredLevel}
+                                            </span>
+                                        </div>
+                                        <p className="mt-0.5 text-gray-500">
+                                            {skill.evidenceCount > 0
+                                                ? `${skill.evidenceCount} evidence item${skill.evidenceCount === 1 ? '' : 's'} · ${skill.evidenceFreshness}`
+                                                : skill.status === 'missing' ? 'Skill not listed' : 'Self-rating only'}
+                                        </p>
+                                    </div>
+                                ))}
+                                {profile.matchExplanation.skills.length > 3 && (
+                                    <p className="text-xs text-gray-500">Open profile for {profile.matchExplanation.skills.length - 3} more requirement details.</p>
+                                )}
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <>

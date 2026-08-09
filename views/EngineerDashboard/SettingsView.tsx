@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router';
 import { EngineerProfile } from '../../types';
 import { Save, ArrowLeft, ShieldCheck, AlertTriangle } from '../../components/Icons';
 // FIX: Replaced incorrect context hook 'useInteractions' with the correct hook 'useAppContext'.
@@ -129,8 +130,8 @@ export const SettingsView = ({ profile, onSave, setActiveView }: SettingsViewPro
                             <AlertTriangle size={20} className="mr-2"/>
                             Danger Zone
                          </h3>
-                         <p className="text-sm text-red-700 mb-3">This action is irreversible and will permanently delete your account and all associated data.</p>
-                         <button onClick={() => alert("This is a demo. Account deletion is not implemented.")} className="w-full px-4 py-2 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700">Delete My Account</button>
+                         <p className="text-sm text-red-700 mb-3">Deletion requests require password confirmation and privacy review. Some transaction records may be retained where legally required.</p>
+                         <Link to="/account/security" className="block w-full px-4 py-2 bg-red-600 text-center text-white font-semibold rounded-md hover:bg-red-700">Review deletion options</Link>
                     </div>
                 </div>
             </div>

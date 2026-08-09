@@ -16,6 +16,34 @@ fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
 export const db = new DatabaseSync(DB_FILE);
 db.exec("PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL; PRAGMA busy_timeout = 5000;");
 
+// WAL allows readers to continue while a write is committed. A bounded busy
+// timeout absorbs short write contention instead of immediately failing a
+// marketplace action with SQLITE_BUSY.
+db.prepare("PRAGMA journal_mode = WAL").get();
+db.exec(`
+  PRAGMA synchronous = NORMAL;
+  PRAGMA foreign_keys = ON;
+  PRAGMA busy_timeout = 5000;
+`);
+
+export function checkDatabaseConnection(): boolean {
+  const result = db.prepare("SELECT 1 AS ok").get() as { ok?: number } | undefined;
+  return result?.ok === 1 && currentSchemaVersion(db) === LATEST_SCHEMA_VERSION;
+}
+
+export function getDatabaseRuntimeSettings() {
+  const journal = db.prepare("PRAGMA journal_mode").get() as { journal_mode: string };
+  const synchronous = db.prepare("PRAGMA synchronous").get() as { synchronous: number };
+  const foreignKeys = db.prepare("PRAGMA foreign_keys").get() as { foreign_keys: number };
+  const busyTimeout = db.prepare("PRAGMA busy_timeout").get() as { timeout: number };
+  return {
+    journalMode: journal.journal_mode,
+    synchronous: synchronous.synchronous,
+    foreignKeys: foreignKeys.foreign_keys === 1,
+    busyTimeoutMs: busyTimeout.timeout,
+  };
+}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
@@ -24,9 +52,31 @@ db.exec(`
     role TEXT NOT NULL,
     name TEXT NOT NULL,
     profile TEXT NOT NULL,
+    emailVerified INTEGER NOT NULL DEFAULT 0,
+    sessionVersion INTEGER NOT NULL DEFAULT 0,
     createdAt TEXT NOT NULL,
     updatedAt TEXT NOT NULL
   );
+`);
+
+// Existing development databases pre-date email verification.
+const userColumns = db.prepare("PRAGMA table_info(users)").all() as unknown as { name: string }[];
+if (!userColumns.some((column) => column.name === "emailVerified")) {
+  db.exec("ALTER TABLE users ADD COLUMN emailVerified INTEGER NOT NULL DEFAULT 0");
+}
+if (!userColumns.some((column) => column.name === "sessionVersion")) {
+  db.exec("ALTER TABLE users ADD COLUMN sessionVersion INTEGER NOT NULL DEFAULT 0");
+}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS account_tokens (
+    tokenHash TEXT PRIMARY KEY,
+    userId TEXT NOT NULL,
+    type TEXT NOT NULL,
+    expiresAt TEXT NOT NULL,
+    createdAt TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS account_tokens_user_type ON account_tokens(userId, type);
 `);
 
 db.exec(`
@@ -229,6 +279,12 @@ export interface UserRow {
   role: string;
   name: string;
   profile: string;
+  emailVerified: number;
+  sessionVersion: number;
+  deletedAt: string | null;
+  suspendedAt: string | null;
+  suspensionReason: string | null;
+  suspendedBy: string | null;
   createdAt: string;
   updatedAt: string;
   emailVerifiedAt: string|null;
@@ -244,7 +300,9 @@ export function findUserById(id: string): UserRow | undefined {
 }
 
 export function listUsers(): UserRow[] {
-  return db.prepare("SELECT * FROM users ORDER BY createdAt DESC").all() as unknown as UserRow[];
+  return db.prepare(
+    "SELECT * FROM users WHERE deletedAt IS NULL AND suspendedAt IS NULL ORDER BY createdAt DESC"
+  ).all() as unknown as UserRow[];
 }
 
 export function createUser(input: { email: string; password: string; role: string; name: string; profile: string }): UserRow {
@@ -384,4 +442,394 @@ export function updateCompanyAttachmentRequestStatus(
   const now = new Date().toISOString();
   db.prepare("UPDATE company_attachment_requests SET status = ?, updatedAt = ? WHERE id = ?").run(status, now, id);
   return findCompanyAttachmentRequestById(id);
+}
+
+// --- Jobs ---
+// The job-specific fields (title, description, dayRate, skillRequirements,
+// etc - see types/index.ts `Job` on the frontend) are stored as a single
+// JSON blob, the same pattern as `users.profile`, so the frontend's Job
+// shape can evolve without a matching migration every time.
+
+export interface JobRow {
+  id: string;
+  companyId: string;
+  data: string;
+  status: string;
+  postedDate: string;
+  updatedAt: string;
+  moderatedAt: string | null;
+  moderatorId: string | null;
+  moderationReason: string | null;
+}
+
+export function createJob(companyId: string, data: Record<string, unknown>): JobRow {
+  const id = randomUUID();
+  const now = new Date().toISOString();
+  db.prepare(
+    "INSERT INTO jobs (id, companyId, data, status, postedDate, updatedAt) VALUES (?, ?, ?, 'active', ?, ?)"
+  ).run(id, companyId, JSON.stringify(data), now, now);
+  return findJobById(id)!;
+}
+
+export function findJobById(id: string): JobRow | undefined {
+  return db.prepare("SELECT * FROM jobs WHERE id = ?").get(id) as unknown as JobRow | undefined;
+}
+
+export function listActiveJobs(): JobRow[] {
+  return db.prepare(`
+    SELECT jobs.* FROM jobs
+    JOIN users ON users.id = jobs.companyId
+    WHERE jobs.status = 'active'
+      AND users.deletedAt IS NULL
+      AND users.suspendedAt IS NULL
+    ORDER BY jobs.postedDate DESC
+  `).all() as unknown as JobRow[];
+}
+
+export function listJobsForCompany(companyId: string): JobRow[] {
+  return db
+    .prepare("SELECT * FROM jobs WHERE companyId = ? ORDER BY postedDate DESC")
+    .all(companyId) as unknown as JobRow[];
+}
+
+export function updateJob(
+  id: string,
+  updates: { data?: Record<string, unknown>; status?: string }
+): JobRow | undefined {
+  const existing = findJobById(id);
+  if (!existing) return undefined;
+
+  const mergedData = updates.data ? { ...JSON.parse(existing.data), ...updates.data } : JSON.parse(existing.data);
+  const status = updates.status || existing.status;
+  const now = new Date().toISOString();
+
+  db.prepare("UPDATE jobs SET data = ?, status = ?, updatedAt = ? WHERE id = ?").run(
+    JSON.stringify(mergedData),
+    status,
+    now,
+    id
+  );
+  return findJobById(id);
+}
+
+export type AdminJobRow = JobRow & {
+  companyName: string;
+  companyEmail: string;
+};
+
+export function listAdminJobs(options: {
+  limit: number;
+  offset: number;
+  query: string;
+}): AdminJobRow[] {
+  const query = `%${options.query.trim().toLowerCase()}%`;
+  return db.prepare(`
+    SELECT jobs.*, users.name AS companyName, users.email AS companyEmail
+    FROM jobs
+    JOIN users ON users.id = jobs.companyId
+    WHERE (? = '%%'
+      OR LOWER(json_extract(jobs.data, '$.title')) LIKE ?
+      OR LOWER(users.name) LIKE ?
+      OR LOWER(users.email) LIKE ?
+      OR LOWER(jobs.id) LIKE ?)
+    ORDER BY jobs.postedDate DESC
+    LIMIT ? OFFSET ?
+  `).all(query, query, query, query, query, options.limit, options.offset) as unknown as AdminJobRow[];
+}
+
+export function countAdminJobs(queryText: string): number {
+  const query = `%${queryText.trim().toLowerCase()}%`;
+  const row = db.prepare(`
+    SELECT COUNT(*) AS total
+    FROM jobs
+    JOIN users ON users.id = jobs.companyId
+    WHERE (? = '%%'
+      OR LOWER(json_extract(jobs.data, '$.title')) LIKE ?
+      OR LOWER(users.name) LIKE ?
+      OR LOWER(users.email) LIKE ?
+      OR LOWER(jobs.id) LIKE ?)
+  `).get(query, query, query, query, query) as { total: number };
+  return row.total;
+}
+
+export function moderateJob(
+  id: string,
+  status: "active" | "closed",
+  moderatorId: string,
+  reason: string | null
+): JobRow | undefined {
+  const existing = findJobById(id);
+  if (!existing) return undefined;
+  const now = new Date().toISOString();
+  db.prepare(`
+    UPDATE jobs
+    SET status = ?, moderatedAt = ?, moderatorId = ?,
+        moderationReason = ?, updatedAt = ?
+    WHERE id = ?
+  `).run(status, now, moderatorId, status === "closed" ? reason : null, now, id);
+  return findJobById(id);
+}
+
+// --- Applications ---
+
+export interface ApplicationRow {
+  id: string;
+  jobId: string;
+  engineerId: string;
+  status: string;
+  reviewed: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function createApplication(jobId: string, engineerId: string, status: string): ApplicationRow {
+  const id = randomUUID();
+  const now = new Date().toISOString();
+  db.prepare(
+    "INSERT INTO applications (id, jobId, engineerId, status, reviewed, createdAt, updatedAt) VALUES (?, ?, ?, ?, 0, ?, ?)"
+  ).run(id, jobId, engineerId, status, now, now);
+  return findApplicationById(id)!;
+}
+
+export function findApplicationById(id: string): ApplicationRow | undefined {
+  return db.prepare("SELECT * FROM applications WHERE id = ?").get(id) as unknown as ApplicationRow | undefined;
+}
+
+export function findApplication(jobId: string, engineerId: string): ApplicationRow | undefined {
+  return db
+    .prepare("SELECT * FROM applications WHERE jobId = ? AND engineerId = ?")
+    .get(jobId, engineerId) as unknown as ApplicationRow | undefined;
+}
+
+export function listApplicationsForJob(jobId: string): ApplicationRow[] {
+  return db
+    .prepare("SELECT * FROM applications WHERE jobId = ? ORDER BY createdAt DESC")
+    .all(jobId) as unknown as ApplicationRow[];
+}
+
+export function listApplicationsForEngineer(engineerId: string): ApplicationRow[] {
+  return db
+    .prepare("SELECT * FROM applications WHERE engineerId = ? ORDER BY createdAt DESC")
+    .all(engineerId) as unknown as ApplicationRow[];
+}
+
+export function listApplicationsForCompany(companyId: string): ApplicationRow[] {
+  return db.prepare(`
+    SELECT applications.*
+    FROM applications
+    JOIN jobs ON jobs.id = applications.jobId
+    WHERE jobs.companyId = ?
+    ORDER BY applications.createdAt DESC
+  `).all(companyId) as unknown as ApplicationRow[];
+}
+
+export function updateApplicationStatus(id: string, status: string, reviewed?: boolean): ApplicationRow | undefined {
+  const existing = findApplicationById(id);
+  if (!existing) return undefined;
+  const now = new Date().toISOString();
+  db.prepare("UPDATE applications SET status = ?, reviewed = ?, updatedAt = ? WHERE id = ?").run(
+    status,
+    reviewed === undefined ? existing.reviewed : reviewed ? 1 : 0,
+    now,
+    id
+  );
+  return findApplicationById(id);
+}
+
+// --- Contracts, milestones & timesheets ---
+// Like `jobs.data`, the free-form contract fields (description, amount,
+// currency, type, jobTitle...) live in a JSON blob so the frontend's
+// Contract shape can evolve without a migration. Milestones, timesheets and
+// the two signatures get their own columns (still JSON-encoded) because
+// they're each updated independently and often - keeping them separate
+// avoids re-writing the whole blob on every milestone tick.
+
+export interface ContractRow {
+  id: string;
+  jobId: string;
+  companyId: string;
+  engineerId: string;
+  data: string;
+  status: string;
+  engineerSignature: string | null;
+  companySignature: string | null;
+  milestones: string;
+  timesheets: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function createContract(
+  companyId: string,
+  engineerId: string,
+  jobId: string,
+  status: string,
+  data: Record<string, unknown>,
+  milestones: unknown[]
+): ContractRow {
+  const id = randomUUID();
+  const now = new Date().toISOString();
+  db.prepare(
+    "INSERT INTO contracts (id, jobId, companyId, engineerId, data, status, engineerSignature, companySignature, milestones, timesheets, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, ?, '[]', ?, ?)"
+  ).run(id, jobId, companyId, engineerId, JSON.stringify(data), status, JSON.stringify(milestones), now, now);
+  return findContractById(id)!;
+}
+
+export function createContractAndHireApplication(
+  applicationId: string,
+  companyId: string,
+  engineerId: string,
+  jobId: string,
+  status: string,
+  data: Record<string, unknown>,
+  milestones: unknown[]
+): ContractRow {
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const contract = createContract(companyId, engineerId, jobId, status, data, milestones);
+    if (!updateApplicationStatus(applicationId, "Hired", true)) {
+      throw new Error("Application disappeared while creating the contract.");
+    }
+    db.exec("COMMIT");
+    return contract;
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
+export function findContractById(id: string): ContractRow | undefined {
+  return db.prepare("SELECT * FROM contracts WHERE id = ?").get(id) as unknown as ContractRow | undefined;
+}
+
+export function findContractForApplication(jobId: string, engineerId: string): ContractRow | undefined {
+  return db
+    .prepare("SELECT * FROM contracts WHERE jobId = ? AND engineerId = ?")
+    .get(jobId, engineerId) as unknown as ContractRow | undefined;
+}
+
+export function listContractsForUser(userId: string): ContractRow[] {
+  return db
+    .prepare("SELECT * FROM contracts WHERE companyId = ? OR engineerId = ? ORDER BY createdAt DESC")
+    .all(userId, userId) as unknown as ContractRow[];
+}
+
+export function updateContractSignature(
+  id: string,
+  field: "engineerSignature" | "companySignature",
+  signature: { name: string; date: string },
+  status: string
+): ContractRow | undefined {
+  const now = new Date().toISOString();
+  db.prepare(`UPDATE contracts SET ${field} = ?, status = ?, updatedAt = ? WHERE id = ?`).run(
+    JSON.stringify(signature),
+    status,
+    now,
+    id
+  );
+  return findContractById(id);
+}
+
+export function updateContractMilestones(id: string, milestones: unknown[]): ContractRow | undefined {
+  const now = new Date().toISOString();
+  db.prepare("UPDATE contracts SET milestones = ?, updatedAt = ? WHERE id = ?").run(
+    JSON.stringify(milestones),
+    now,
+    id
+  );
+  return findContractById(id);
+}
+
+export function updateContractTimesheets(id: string, timesheets: unknown[]): ContractRow | undefined {
+  const now = new Date().toISOString();
+  db.prepare("UPDATE contracts SET timesheets = ?, updatedAt = ? WHERE id = ?").run(
+    JSON.stringify(timesheets),
+    now,
+    id
+  );
+  return findContractById(id);
+}
+
+// --- Conversations & messages ---
+// Every conversation in this app is a 1:1 chat between two users, so the
+// two participants get their own indexed columns (participantAId /
+// participantBId) rather than a JSON blob - that makes "find the
+// conversation between these two people" and "list my conversations" plain
+// indexed lookups instead of a JSON scan.
+
+export interface ConversationRow {
+  id: string;
+  participantAId: string;
+  participantBId: string;
+  lastMessageText: string;
+  lastMessageTimestamp: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function createConversation(userAId: string, userBId: string): ConversationRow {
+  const id = randomUUID();
+  const now = new Date().toISOString();
+  db.prepare(
+    "INSERT INTO conversations (id, participantAId, participantBId, lastMessageText, lastMessageTimestamp, createdAt, updatedAt) VALUES (?, ?, ?, '', ?, ?, ?)"
+  ).run(id, userAId, userBId, now, now, now);
+  return findConversationById(id)!;
+}
+
+export function findConversationById(id: string): ConversationRow | undefined {
+  return db.prepare("SELECT * FROM conversations WHERE id = ?").get(id) as unknown as ConversationRow | undefined;
+}
+
+export function findConversationBetween(userAId: string, userBId: string): ConversationRow | undefined {
+  return db
+    .prepare(
+      "SELECT * FROM conversations WHERE (participantAId = ? AND participantBId = ?) OR (participantAId = ? AND participantBId = ?)"
+    )
+    .get(userAId, userBId, userBId, userAId) as unknown as ConversationRow | undefined;
+}
+
+export function listConversationsForUser(userId: string): ConversationRow[] {
+  return db
+    .prepare(
+      "SELECT * FROM conversations WHERE participantAId = ? OR participantBId = ? ORDER BY lastMessageTimestamp DESC"
+    )
+    .all(userId, userId) as unknown as ConversationRow[];
+}
+
+function touchConversation(id: string, lastMessageText: string, lastMessageTimestamp: string) {
+  db.prepare("UPDATE conversations SET lastMessageText = ?, lastMessageTimestamp = ?, updatedAt = ? WHERE id = ?").run(
+    lastMessageText,
+    lastMessageTimestamp,
+    lastMessageTimestamp,
+    id
+  );
+}
+
+export interface MessageRow {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  text: string;
+  timestamp: string;
+  isRead: number;
+}
+
+export function createMessage(conversationId: string, senderId: string, text: string): MessageRow {
+  const id = randomUUID();
+  const now = new Date().toISOString();
+  db.prepare(
+    "INSERT INTO messages (id, conversationId, senderId, text, timestamp, isRead) VALUES (?, ?, ?, ?, ?, 0)"
+  ).run(id, conversationId, senderId, text, now);
+  touchConversation(conversationId, text, now);
+  return findMessageById(id)!;
+}
+
+export function findMessageById(id: string): MessageRow | undefined {
+  return db.prepare("SELECT * FROM messages WHERE id = ?").get(id) as unknown as MessageRow | undefined;
+}
+
+export function listMessagesForConversation(conversationId: string): MessageRow[] {
+  return db
+    .prepare("SELECT * FROM messages WHERE conversationId = ? ORDER BY timestamp ASC")
+    .all(conversationId) as unknown as MessageRow[];
 }

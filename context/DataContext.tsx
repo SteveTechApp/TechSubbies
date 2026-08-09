@@ -7,7 +7,6 @@ const initialAppState = {
     engineers: [], companies: [], jobs: [], applications: [], reviews: [], allUsers: [],
     conversations: [], messages: [], contracts: [], transactions: [], projects: [],
     forumPosts: [], forumComments: [], notifications: [], collaborationPosts: [],
-    invoices: [],
 };
 
 interface DataContextType {
@@ -27,7 +26,6 @@ interface DataContextType {
     forumComments: ForumComment[];
     notifications: Notification[];
     collaborationPosts: CollaborationPost[];
-    invoices: Invoice[];
     setAppData: React.Dispatch<React.SetStateAction<typeof initialAppState>>;
     findUserById: (userId: string) => User | undefined;
     findUserByProfileId: (profileId: string) => User | undefined;
@@ -41,9 +39,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const [appData, setAppData] = useState(initialAppState);
 
     useEffect(() => {
+        if (isAuthLoading) return;
+
         const loadData = async () => {
             setIsLoading(true);
-            const data = await apiService.getInitialData();
+            const data = await apiService.getInitialData(user?.role);
             setAppData(data as any); // Cast as any to handle potential missing keys in mock setup
             setIsLoading(false);
         };

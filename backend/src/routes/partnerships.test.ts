@@ -8,6 +8,7 @@ process.env.DB_FILE = TEST_DB;
 process.env.JWT_SECRET = "test-secret";
 
 const { createApp } = await import("../app.js");
+const { markEmailVerified } = await import("../lib/db.js");
 const app = createApp();
 
 async function registerEngineer(email: string, name: string) {
@@ -18,6 +19,7 @@ async function registerEngineer(email: string, name: string) {
     name,
     profileData: {},
   });
+  markEmailVerified(res.body.user.id);
   return { token: res.body.token as string, id: res.body.user.id as string };
 }
 
@@ -29,6 +31,7 @@ async function registerResourcingCompany(email: string, name: string) {
     name,
     profileData: { managedEngineerIds: [] },
   });
+  markEmailVerified(res.body.user.id);
   return { token: res.body.token as string, id: res.body.user.id as string };
 }
 

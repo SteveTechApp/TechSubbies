@@ -10,9 +10,39 @@ process.env.DB_FILE = TEST_DB;
 process.env.JWT_SECRET = "test-secret";
 
 const { createApp } = await import("../app.js");
+const { developmentEmailOutbox, resetEmailProvider, setEmailProvider } = await import("../lib/email.js");
+const { getDatabaseRuntimeSettings, LATEST_SCHEMA_VERSION } = await import("../lib/db.js");
+const { currentSchemaVersion } = await import("../lib/migrations.js");
+const { db } = await import("../lib/db.js");
+const { findAccountAuditByRequestId } = await import("../lib/accountAudit.js");
 const app = createApp();
 
+function tokenFromLastEmail(): string {
+  const email = developmentEmailOutbox.at(-1);
+  if (!email) throw new Error("Expected an email in the development outbox.");
+  const token = new URL(email.text).searchParams.get("token");
+  if (!token) throw new Error("Expected a token in the development email.");
+  return token;
+}
+
 describe("POST /api/auth/register", () => {
+  it("always provisions public engineer registrations on Bronze", async () => {
+    const response = await request(app).post("/api/auth/register").send({
+      email: "membership-tamper@example.com",
+      password: "correcthorsebattery",
+      role: "Engineer",
+      name: "Membership Tamper",
+      profileData: {
+        profileTier: "Platinum",
+        requestedProfileTier: "Platinum",
+      },
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.user.profile.profileTier).toBe("Bronze");
+    expect(response.body.user.profile.requestedProfileTier).toBeUndefined();
+  });
+
   it("creates a new account and returns a token", async () => {
     const res = await request(app).post("/api/auth/register").send({
       email: "alice@example.com",
@@ -27,6 +57,51 @@ describe("POST /api/auth/register", () => {
     expect(res.body.user.role).toBe("Engineer");
     expect(res.body.user.profile.name).toBe("Alice Example");
     expect(res.body.user.profile.contact.email).toBe("alice@example.com");
+    const cookies = res.headers["set-cookie"] as unknown as string[];
+    expect(cookies.some((cookie) => cookie.startsWith("techsubbies_session=") && cookie.includes("HttpOnly"))).toBe(true);
+    expect(cookies.some((cookie) => cookie.startsWith("techsubbies_csrf="))).toBe(true);
+    expect(findAccountAuditByRequestId(res.headers["x-request-id"])[0]).toMatchObject({
+      eventType: "account.registered",
+      outcome: "success",
+      userId: res.body.user.id,
+      subjectHash: null,
+    });
+  });
+
+  it("persists normalized role profiles and skill evidence", async () => {
+    const registration = await request(app).post("/api/auth/register").send({
+      email: "role-evidence@example.com",
+      password: "correcthorsebattery",
+      role: "Engineer",
+      name: "Role Evidence",
+      profileData: {
+        roleProfiles: [{
+          expectationId: "av-installation-engineer",
+          roleId: "av-installation-engineer",
+          enabled: true,
+          maximumResponsibility: "competent",
+          targetDayRate: 375,
+          willingToWorkAsSupport: true,
+          willingToLead: false,
+          specialistOnly: false,
+          profileNote: "Commercial installs",
+          skills: [{ skill: "Cable termination", minimumLevel: 3, importance: 5, selfLevel: 4, evidenceNote: "Recent rack build" }],
+        }],
+      },
+    });
+
+    const response = await request(app)
+      .get("/api/users/me/role-profiles")
+      .set("Authorization", `Bearer ${registration.body.token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(1);
+    expect(response.body[0]).toMatchObject({
+      roleId: "av-installation-engineer",
+      targetDayRate: 375,
+      willingToWorkAsSupport: true,
+      skills: [{ skill: "Cable termination", selfLevel: 4, evidenceNote: "Recent rack build" }],
+    });
   });
 
   it("rejects a password shorter than 8 characters", async () => {
@@ -38,6 +113,19 @@ describe("POST /api/auth/register", () => {
     });
 
     expect(res.status).toBe(400);
+  });
+
+  it("rejects attempts to self-register as an admin", async () => {
+    const response = await request(app).post("/api/auth/register").send({
+      email: "attacker@example.com",
+      password: "strong-password",
+      role: "Admin",
+      name: "Unauthorised Admin",
+      profileData: {},
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/Invalid enum value|Invalid option/i);
   });
 
   it("rejects a duplicate email", async () => {
@@ -64,6 +152,69 @@ describe("POST /api/auth/register", () => {
   });
 });
 
+describe("cookie session security", () => {
+  it("requires a matching CSRF token for cookie-authenticated state changes", async () => {
+    const agent = request.agent(app);
+    const login = await agent.post("/api/auth/register").send({
+      email: "cookie-session@example.com",
+      password: "correcthorsebattery",
+      role: "Engineer",
+      name: "Cookie Session",
+    });
+    const cookies = login.headers["set-cookie"] as unknown as string[];
+    const csrfCookie = cookies.find((cookie) => cookie.startsWith("techsubbies_csrf="));
+    const csrfToken = decodeURIComponent(csrfCookie!.split(";")[0].split("=")[1]);
+
+    const rejected = await agent.post("/api/auth/logout");
+    expect(rejected.status).toBe(403);
+
+    const accepted = await agent.post("/api/auth/logout").set("X-CSRF-Token", csrfToken);
+    expect(accepted.status).toBe(204);
+  });
+
+  it("adds baseline security headers", async () => {
+    const res = await request(app).get("/api/health");
+    expect(res.headers["x-content-type-options"]).toBe("nosniff");
+    expect(res.headers["x-frame-options"]).toBe("DENY");
+    expect(res.headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+  });
+
+  it("reports process liveness and database readiness separately", async () => {
+    const live = await request(app).get("/api/health/live");
+    const ready = await request(app).get("/api/health/ready");
+
+    expect(live.status).toBe(200);
+    expect(live.body).toEqual({ status: "ok" });
+    expect(live.headers["x-request-id"]).toMatch(/^[0-9a-f-]{36}$/);
+    expect(ready.status).toBe(200);
+    expect(ready.body).toEqual({ status: "ready", checks: { database: "ok" } });
+  });
+
+  it("returns a non-sensitive 503 when readiness checks fail", async () => {
+    const unavailableApp = createApp({ readinessCheck: () => false });
+    const response = await request(unavailableApp).get("/api/health/ready");
+
+    expect(response.status).toBe(503);
+    expect(response.body).toEqual({
+      status: "unavailable",
+      checks: { database: "unavailable" },
+    });
+  });
+
+  it("uses contention-safe SQLite runtime settings", () => {
+    expect(getDatabaseRuntimeSettings()).toEqual({
+      journalMode: "wal",
+      synchronous: 1,
+      foreignKeys: true,
+      busyTimeoutMs: 5000,
+    });
+  });
+
+  it("records the current schema migration version", () => {
+    expect(currentSchemaVersion(db)).toBe(LATEST_SCHEMA_VERSION);
+  });
+});
+
 describe("POST /api/auth/login", () => {
   beforeAll(async () => {
     await request(app).post("/api/auth/register").send({
@@ -85,6 +236,27 @@ describe("POST /api/auth/login", () => {
     expect(res.body.user.role).toBe("Company");
   });
 
+  it("lets a user review only privacy-filtered security events", async () => {
+    const login = await request(app).post("/api/auth/login").send({
+      email: "bob@example.com",
+      password: "correcthorsebattery",
+    });
+    const response = await request(app)
+      .get("/api/auth/security-events")
+      .set("Authorization", `Bearer ${login.body.token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.events.length).toBeGreaterThan(0);
+    expect(response.body.events[0]).toEqual(expect.objectContaining({
+      id: expect.any(String),
+      eventType: expect.any(String),
+      outcome: expect.any(String),
+      createdAt: expect.any(String),
+    }));
+    expect(response.body.events[0]).not.toHaveProperty("subjectHash");
+    expect(response.body.events[0]).not.toHaveProperty("userId");
+  });
+
   it("rejects the wrong password", async () => {
     const res = await request(app).post("/api/auth/login").send({
       email: "bob@example.com",
@@ -92,6 +264,10 @@ describe("POST /api/auth/login", () => {
     });
 
     expect(res.status).toBe(401);
+    const event = findAccountAuditByRequestId(res.headers["x-request-id"])[0];
+    expect(event).toMatchObject({ eventType: "login.failed", outcome: "failure" });
+    expect(event.subjectHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(event.subjectHash).not.toContain("bob@example.com");
   });
 
   it("rejects a login for an email that was never registered", async () => {
@@ -117,4 +293,125 @@ describe("secure account lifecycle",()=>{
   it("resets a password and revokes previously issued sessions",async()=>{const registered=await request(app).post("/api/auth/register").send({email:"reset@example.com",password:"correcthorsebattery",role:"Engineer",name:"Reset Me"});const oldToken=registered.body.token;const forgot=await request(app).post("/api/auth/password/forgot").send({email:"reset@example.com"});expect(forgot.status).toBe(202);expect(forgot.body.debugToken).toBeTruthy();const reset=await request(app).post("/api/auth/password/reset").send({token:forgot.body.debugToken,password:"a-new-secure-password"});expect(reset.status).toBe(200);const oldSession=await request(app).get("/api/users/me").set("Authorization",`Bearer ${oldToken}`);expect(oldSession.status).toBe(401);const login=await request(app).post("/api/auth/login").send({email:"reset@example.com",password:"a-new-secure-password"});expect(login.status).toBe(200);});
   it("revokes all sessions from an authenticated request",async()=>{const registered=await request(app).post("/api/auth/register").send({email:"revoke@example.com",password:"correcthorsebattery",role:"Engineer",name:"Revoke Me"});const revoke=await request(app).post("/api/auth/sessions/revoke").set("Authorization",`Bearer ${registered.body.token}`);expect(revoke.status).toBe(200);const after=await request(app).get("/api/users/me").set("Authorization",`Bearer ${registered.body.token}`);expect(after.status).toBe(401);});
   it("returns the same password recovery response for unknown accounts",async()=>{const response=await request(app).post("/api/auth/password/forgot").send({email:"unknown-account@example.com"});expect(response.status).toBe(202);expect(response.body.message).toMatch(/If an account exists/);});
+});
+
+describe("email verification and password recovery", () => {
+  it("keeps a newly created account usable when email delivery is temporarily unavailable", async () => {
+    setEmailProvider({ send: async () => { throw new Error("provider unavailable"); } });
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      const response = await request(app).post("/api/auth/register").send({
+        email: "delivery-failure@example.com",
+        password: "correcthorsebattery",
+        role: "Engineer",
+        name: "Delivery Failure",
+      });
+      expect(response.status).toBe(201);
+      expect(response.body.user.id).toBeTruthy();
+      expect(response.body.user.role).toBe("Engineer");
+      expect(response.body.verificationEmailSent).toBe(false);
+    } finally {
+      resetEmailProvider();
+      consoleError.mockRestore();
+    }
+  });
+
+  it("verifies an email with a hashed, single-use token", async () => {
+    const registered = await request(app).post("/api/auth/register").send({
+      email: "verify@example.com",
+      password: "correcthorsebattery",
+      role: "Engineer",
+      name: "Verify Me",
+    });
+    expect(registered.body.user.emailVerified).toBe(false);
+    const token = tokenFromLastEmail();
+
+    const verified = await request(app).post("/api/auth/verification/confirm").send({ token });
+    expect(verified.status).toBe(200);
+    expect(verified.body.verified).toBe(true);
+
+    const reused = await request(app).post("/api/auth/verification/confirm").send({ token });
+    expect(reused.status).toBe(400);
+  });
+
+  it("uses the same reset-request response for known and unknown accounts", async () => {
+    const known = await request(app)
+      .post("/api/auth/password-reset/request")
+      .send({ email: "verify@example.com" });
+    const unknown = await request(app)
+      .post("/api/auth/password-reset/request")
+      .send({ email: "unknown@example.com" });
+    expect(known.status).toBe(202);
+    expect(unknown.status).toBe(202);
+    expect(known.body).toEqual(unknown.body);
+  });
+
+  it("resets a password with a single-use token", async () => {
+    await request(app).post("/api/auth/password-reset/request").send({ email: "verify@example.com" });
+    const token = tokenFromLastEmail();
+    const reset = await request(app)
+      .post("/api/auth/password-reset/confirm")
+      .send({ token, newPassword: "a-new-secure-password" });
+    expect(reset.status).toBe(204);
+
+    const login = await request(app).post("/api/auth/login").send({
+      email: "verify@example.com",
+      password: "a-new-secure-password",
+    });
+    expect(login.status).toBe(200);
+  });
+
+  it("changes a signed-in password after checking the current password", async () => {
+    const registered = await request(app).post("/api/auth/register").send({
+      email: "change-password@example.com",
+      password: "original-password",
+      role: "Company",
+      name: "Password Change",
+    });
+    const rejected = await request(app)
+      .post("/api/auth/password/change")
+      .set("Authorization", `Bearer ${registered.body.token}`)
+      .send({ currentPassword: "wrong-password", newPassword: "replacement-password" });
+    expect(rejected.status).toBe(401);
+
+    const changed = await request(app)
+      .post("/api/auth/password/change")
+      .set("Authorization", `Bearer ${registered.body.token}`)
+      .send({ currentPassword: "original-password", newPassword: "replacement-password" });
+    expect(changed.status).toBe(204);
+
+    const revoked = await request(app)
+      .get("/api/users/me")
+      .set("Authorization", `Bearer ${registered.body.token}`);
+    expect(revoked.status).toBe(401);
+  });
+});
+
+describe("session management", () => {
+  it("revokes every existing token and records the action", async () => {
+    const registered = await request(app).post("/api/auth/register").send({
+      email: "revoke-sessions@example.com",
+      password: "correcthorsebattery",
+      role: "Engineer",
+      name: "Revoke Sessions",
+    });
+    const token = registered.body.token as string;
+
+    const revoked = await request(app)
+      .post("/api/auth/sessions/revoke-all")
+      .set("Authorization", `Bearer ${token}`);
+    expect(revoked.status).toBe(204);
+    expect((revoked.headers["set-cookie"] as unknown as string[]).some(
+      (cookie) => cookie.startsWith("techsubbies_session=;")
+    )).toBe(true);
+
+    const oldSession = await request(app)
+      .get("/api/users/me")
+      .set("Authorization", `Bearer ${token}`);
+    expect(oldSession.status).toBe(401);
+    expect(findAccountAuditByRequestId(revoked.headers["x-request-id"])[0]).toMatchObject({
+      eventType: "sessions.revoked",
+      userId: registered.body.user.id,
+    });
+  });
 });

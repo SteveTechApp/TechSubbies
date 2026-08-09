@@ -1,117 +1,144 @@
-﻿import React, { useState, useMemo } from 'react';
-// FIX: Corrected import path for useAppContext to resolve 'not a module' error.
-import { useAppContext } from '../../context/InteractionContext';
-import { User, Role } from '../../types';
-import { Search, User as UserIcon, Building, ShieldCheck } from '../../components/Icons';
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import apiService, { type AdminUserAccount } from '../../services/apiService';
+import { Search } from '../../components/Icons';
+
+const PAGE_SIZE = 25;
 
 export const UserManagementView = () => {
-    const { allUsers, toggleUserStatus } = useAppContext();
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filterRole, setFilterRole] = useState('all');
+    const { user: currentUser } = useAuth();
+    const [accounts, setAccounts] = useState<AdminUserAccount[]>([]);
+    const [reasons, setReasons] = useState<Record<string, string>>({});
+    const [searchInput, setSearchInput] = useState('');
+    const [query, setQuery] = useState('');
+    const [offset, setOffset] = useState(0);
+    const [total, setTotal] = useState(0);
+    const [workingId, setWorkingId] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [message, setMessage] = useState('');
 
-    const filteredUsers = useMemo(() => {
-        return allUsers
-            .filter(user => {
-                const roleMatch = filterRole === 'all' || user.role === filterRole;
-                const searchMatch = user.profile.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                    ('contact' in user.profile && 'email' in user.profile.contact && user.profile.contact.email.toLowerCase().includes(searchTerm.toLowerCase()));
-                return roleMatch && searchMatch;
+    useEffect(() => {
+        setLoading(true);
+        setError('');
+        apiService.listAdminUsers({ limit: PAGE_SIZE, offset, query })
+            .then((result) => {
+                setAccounts(result.users);
+                setTotal(result.total);
             })
-            .sort((a, b) => a.profile.name.localeCompare(b.profile.name));
-    }, [allUsers, searchTerm, filterRole]);
+            .catch((reason) => setError(reason instanceof Error ? reason.message : 'Could not load user accounts.'))
+            .finally(() => setLoading(false));
+    }, [offset, query]);
 
-    const getRoleDisplay = (role: Role) => {
-        switch (role) {
-            case Role.ENGINEER: return { text: 'Engineer', icon: UserIcon, color: 'text-green-600' };
-            case Role.COMPANY: return { text: 'Company', icon: Building, color: 'text-blue-600' };
-            case Role.RESOURCING_COMPANY: return { text: 'Resourcing', icon: Building, color: 'text-indigo-600' };
-            case Role.ADMIN: return { text: 'Admin', icon: ShieldCheck, color: 'text-purple-600' };
-            default: return { text: 'Unknown', icon: UserIcon, color: 'text-gray-500' };
+    const updateSuspension = async (account: AdminUserAccount) => {
+        const suspending = !account.suspendedAt;
+        const reason = reasons[account.id]?.trim() || '';
+        if (suspending && reason.length < 10) {
+            setError('Enter a suspension reason of at least 10 characters.');
+            return;
+        }
+        setWorkingId(account.id);
+        setError('');
+        setMessage('');
+        try {
+            const result = await apiService.setAdminUserSuspension(account.id, suspending, reason);
+            setAccounts((current) => current.map((item) => item.id === account.id ? { ...item, ...result.user } : item));
+            setReasons((current) => ({ ...current, [account.id]: '' }));
+            const delivery = result.notificationSent ? ' A notification email was sent.' : ' The account changed, but email delivery failed.';
+            setMessage((suspending
+                ? `${account.name} was suspended and all sessions were revoked.`
+                : `${account.name} was reactivated. They must sign in again.`) + delivery);
+        } catch (reason) {
+            setError(reason instanceof Error ? reason.message : 'Could not update account status.');
+        } finally {
+            setWorkingId(null);
         }
     };
 
     return (
         <div>
-            <h1 className="text-3xl font-bold mb-6">User Management</h1>
-            
-            <div className="mb-4 flex flex-col sm:flex-row justify-between items-center gap-4 p-3 bg-white rounded-lg shadow-sm border">
-                <div className="relative w-full sm:w-auto sm:flex-grow">
+            <h1 className="text-3xl font-bold mb-2">User Management</h1>
+            <p className="mb-6 text-gray-600">Search real accounts and enforce marketplace access decisions.</p>
+
+            {error && <div role="alert" className="mb-4 rounded-md bg-red-50 p-3 text-red-700">{error}</div>}
+            {message && <div role="status" className="mb-4 rounded-md bg-green-50 p-3 text-green-800">{message}</div>}
+
+            <form
+                className="mb-5 flex flex-col gap-2 rounded-lg border bg-white p-3 shadow-sm sm:flex-row"
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    setOffset(0);
+                    setQuery(searchInput.trim());
+                }}
+            >
+                <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <label className="sr-only" htmlFor="admin-user-search">Search accounts</label>
                     <input
-                        type="text"
-                        placeholder="Search by name or email..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full border border-gray-300 rounded-md p-2 pl-10 focus:ring-2 focus:ring-blue-500"
+                        id="admin-user-search"
+                        value={searchInput}
+                        maxLength={100}
+                        onChange={(event) => setSearchInput(event.target.value)}
+                        placeholder="Search by account name or email"
+                        className="w-full rounded-md border border-gray-300 p-2 pl-10"
                     />
                 </div>
-                 <div className="flex items-center gap-2">
-                    <label htmlFor="roleFilter" className="text-sm font-medium text-gray-700">Filter by role:</label>
-                    <select
-                        id="roleFilter"
-                        value={filterRole}
-                        onChange={(e) => setFilterRole(e.target.value)}
-                        className="text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 bg-white"
-                    >
-                        <option value="all">All Roles</option>
-                        <option value={Role.ENGINEER}>Engineer</option>
-                        <option value={Role.COMPANY}>Company</option>
-                        <option value={Role.RESOURCING_COMPANY}>Resourcing Companies</option>
-                        <option value={Role.ADMIN}>Admin</option>
-                    </select>
-                </div>
-            </div>
+                <button className="rounded-md bg-blue-700 px-4 py-2 font-semibold text-white">Search</button>
+                {query && <button type="button" onClick={() => { setSearchInput(''); setQuery(''); setOffset(0); }} className="rounded-md border px-4 py-2">Clear</button>}
+            </form>
 
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {filteredUsers.map(user => {
-                            const roleInfo = getRoleDisplay(user.role);
-                            const email = 'contact' in user.profile && 'email' in user.profile.contact ? user.profile.contact.email : 'N/A';
-                            return (
-                                <tr key={user.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <img className="h-10 w-10 rounded-full" src={user.profile.avatar} alt="" />
-                                            <div className="ml-4">
-                                                <div className="text-sm font-medium text-gray-900">{user.profile.name}</div>
-                                                <div className="text-sm text-gray-500">{email}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className={`text-sm font-semibold flex items-center ${roleInfo.color}`}>
-                                            <roleInfo.icon size={16} className="mr-1.5" />
-                                            {roleInfo.text}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.profile.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                            {user.profile.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button 
-                                            onClick={() => toggleUserStatus(user.profile.id)}
-                                            className={`px-3 py-1 rounded-md text-white ${user.profile.status === 'active' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
-                                        >
-                                            {user.profile.status === 'active' ? 'Suspend' : 'Reactivate'}
-                                        </button>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
+            {loading ? <p>Loading user accounts…</p> : accounts.length === 0 ? (
+                <div className="rounded-lg border bg-white p-8 text-center text-gray-600">No accounts match this search.</div>
+            ) : (
+                <div className="space-y-4">
+                    {accounts.map((account) => {
+                        const suspended = Boolean(account.suspendedAt);
+                        const isSelf = account.id === currentUser?.id;
+                        return (
+                            <section key={account.id} className="rounded-lg border bg-white p-5 shadow-sm">
+                                <div className="flex flex-col justify-between gap-2 sm:flex-row">
+                                    <div>
+                                        <h2 className="font-semibold text-gray-900">{account.name}</h2>
+                                        <p className="text-sm text-gray-600">{account.email} · {account.role}</p>
+                                    </div>
+                                    <span className={`h-fit rounded-full px-3 py-1 text-xs font-semibold ${suspended ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                                        {suspended ? 'Suspended' : 'Active'}
+                                    </span>
+                                </div>
+                                {suspended && account.suspensionReason && (
+                                    <p className="mt-3 rounded-md bg-red-50 p-3 text-sm text-red-800">Reason: {account.suspensionReason}</p>
+                                )}
+                                {!suspended && !isSelf && (
+                                    <>
+                                        <label className="mt-3 block text-sm font-medium text-gray-700" htmlFor={`reason-${account.id}`}>Suspension reason</label>
+                                        <textarea
+                                            id={`reason-${account.id}`}
+                                            rows={2}
+                                            maxLength={500}
+                                            value={reasons[account.id] || ''}
+                                            onChange={(event) => setReasons((current) => ({ ...current, [account.id]: event.target.value }))}
+                                            className="mt-1 w-full rounded-md border border-gray-300 p-2"
+                                        />
+                                    </>
+                                )}
+                                <button
+                                    type="button"
+                                    disabled={isSelf || workingId === account.id}
+                                    onClick={() => updateSuspension(account)}
+                                    className={`mt-3 rounded-md px-4 py-2 font-semibold text-white disabled:opacity-40 ${suspended ? 'bg-green-700' : 'bg-red-700'}`}
+                                >
+                                    {isSelf ? 'Current administrator' : suspended ? 'Reactivate account' : 'Suspend account'}
+                                </button>
+                            </section>
+                        );
+                    })}
+                    <nav className="flex items-center justify-between rounded-lg border bg-white p-3" aria-label="User account pages">
+                        <button disabled={offset === 0} onClick={() => setOffset((value) => Math.max(0, value - PAGE_SIZE))} className="rounded-md border px-3 py-2 disabled:opacity-40">Previous</button>
+                        <span className="text-sm text-gray-600">{offset + 1}–{Math.min(offset + accounts.length, total)} of {total}</span>
+                        <button disabled={offset + accounts.length >= total} onClick={() => setOffset((value) => value + PAGE_SIZE)} className="rounded-md border px-3 py-2 disabled:opacity-40">Next</button>
+                    </nav>
+                </div>
+            )}
         </div>
     );
 };

@@ -26,7 +26,7 @@ const requestSchema = z.object({
 });
 
 // POST /api/company-attachments/request - engineer requests to join a resourcing company.
-companyAttachmentsRouter.post("/request", requireAuth, async (req: AuthedRequest, res) => {
+companyAttachmentsRouter.post("/request", requireAuth, requireRole("Engineer"), async (req: AuthedRequest, res) => {
   const parsed = requestSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "A resourcing company id is required." });
@@ -63,7 +63,11 @@ companyAttachmentsRouter.post("/request", requireAuth, async (req: AuthedRequest
 });
 
 // POST /api/company-attachments/:id/approve - resourcing company approves the engineer's request.
-companyAttachmentsRouter.post("/:id/approve", requireAuth, async (req: AuthedRequest, res) => {
+companyAttachmentsRouter.post(
+  "/:id/approve",
+  requireAuth,
+  requireRole("Resourcing Company"),
+  async (req: AuthedRequest, res) => {
   const request = findCompanyAttachmentRequestById(req.params.id);
   if (!request) {
     return res.status(404).json({ error: "Request not found." });
@@ -99,10 +103,15 @@ companyAttachmentsRouter.post("/:id/approve", requireAuth, async (req: AuthedReq
 
   updateCompanyAttachmentRequestStatus(request.id, "accepted");
   return res.json({ status: "accepted", request: findCompanyAttachmentRequestById(request.id) });
-});
+  }
+);
 
 // POST /api/company-attachments/:id/reject - resourcing company rejects the engineer's request.
-companyAttachmentsRouter.post("/:id/reject", requireAuth, async (req: AuthedRequest, res) => {
+companyAttachmentsRouter.post(
+  "/:id/reject",
+  requireAuth,
+  requireRole("Resourcing Company"),
+  async (req: AuthedRequest, res) => {
   const request = findCompanyAttachmentRequestById(req.params.id);
   if (!request) {
     return res.status(404).json({ error: "Request not found." });
@@ -116,16 +125,21 @@ companyAttachmentsRouter.post("/:id/reject", requireAuth, async (req: AuthedRequ
 
   updateCompanyAttachmentRequestStatus(request.id, "declined");
   return res.json({ status: "declined", request: findCompanyAttachmentRequestById(request.id) });
-});
+  }
+);
 
 // GET /api/company-attachments/me - the signed-in engineer's own requests.
-companyAttachmentsRouter.get("/me", requireAuth, async (req: AuthedRequest, res) => {
+companyAttachmentsRouter.get("/me", requireAuth, requireRole("Engineer"), async (req: AuthedRequest, res) => {
   const requests = listCompanyAttachmentRequestsForEngineer(req.userId!);
   return res.json({ requests });
 });
 
 // GET /api/company-attachments/pending - pending requests awaiting the signed-in resourcing company.
-companyAttachmentsRouter.get("/pending", requireAuth, async (req: AuthedRequest, res) => {
+companyAttachmentsRouter.get(
+  "/pending",
+  requireAuth,
+  requireRole("Resourcing Company"),
+  async (req: AuthedRequest, res) => {
   const requests = listPendingCompanyAttachmentRequestsForCompany(req.userId!);
   const withEngineers = requests.map((request) => {
     const engineer = findUserById(request.engineerId);
@@ -135,4 +149,5 @@ companyAttachmentsRouter.get("/pending", requireAuth, async (req: AuthedRequest,
     };
   });
   return res.json({ requests: withEngineers });
-});
+  }
+);

@@ -1,23 +1,24 @@
-// services/eSignatureService.ts
+import { API_BASE_URL } from './apiConfig';
+import { secureFetch } from './httpClient';
 
-// This is a mock e-signature service.
-// In a real application, this would integrate with a service like DocuSign or HelloSign.
+export type SigningSession = {
+  provider: 'local' | 'dropbox_sign';
+  signUrl: string | null;
+  expiresAt: number | null;
+  signer: 'engineer' | 'company';
+  signerName: string;
+};
 
 class ESignatureService {
-  async createSignatureRequest(document: string, signerName: string, signerEmail: string): Promise<{ success: boolean; signatureId: string }> {
-    console.log(`Creating signature request for ${signerName} (${signerEmail})`);
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const signatureId = `sig_${Date.now()}`;
-    console.log(`Signature request created with ID: ${signatureId}`);
-    return { success: true, signatureId };
-  }
-
-  async getSignatureStatus(signatureId: string): Promise<'pending' | 'signed' | 'declined'> {
-    console.log(`Checking status for signature ID: ${signatureId}`);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    // Simulate a signed status for demo purposes
-    return 'signed';
+  async createSigningSession(contractId: string): Promise<SigningSession> {
+    const response = await secureFetch(`${API_BASE_URL}/esign/contracts/${contractId}/session`, {
+      method: 'POST',
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.error || 'Could not open the secure signing service.');
+    }
+    return data as SigningSession;
   }
 }
 

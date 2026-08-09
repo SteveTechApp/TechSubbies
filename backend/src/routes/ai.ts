@@ -110,6 +110,57 @@ USER QUERY: "${parsed.data.query}"`;
   }
 });
 
+// POST /api/ai/translate - translate a chat message (or any short text)
+// into the reader's preferred language. Also reports what language the
+// text was detected as, so the UI can skip translating a message that's
+// already in the reader's language and can label the original ("Show
+// original (French)").
+const translateSchema = z.object({
+  text: z.string().min(1),
+  targetLanguage: z.string().min(1),
+});
+
+aiRouter.post("/translate", async (req, res) => {
+  if (!genAI) return notConfigured(res);
+
+  const parsed = translateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "text and targetLanguage are required." });
+  }
+
+  try {
+    const prompt = `Detect the language of the following message and translate it into ${parsed.data.targetLanguage}. Preserve the tone and meaning - this is a chat message between a freelance AV/IT engineer and a company, so keep it natural and professional, not overly literal.
+
+MESSAGE:
+"""
+${parsed.data.text}
+"""`;
+
+    const response = await genAI.models.generateContent({
+      model: MODEL,
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "OBJECT",
+          properties: {
+            detectedSourceLanguage: { type: "STRING", description: "Name of the language the original message was written in, e.g. 'French'." },
+            translatedText: { type: "STRING" },
+          },
+          required: ["detectedSourceLanguage", "translatedText"],
+        },
+      },
+    });
+
+    const jsonStr = (response.text || "").trim();
+    if (!jsonStr) throw new Error("Empty response from AI model.");
+    const { detectedSourceLanguage, translatedText } = JSON.parse(jsonStr);
+    return res.json({ detectedSourceLanguage, translatedText });
+  } catch (error: any) {
+    return res.status(502).json({ error: error.message || "Failed to translate the message." });
+  }
+});
+
 // POST /api/ai/tutorial-video - script + video generation. This can take a
 // while (real video generation is polled to completion server-side), which
 // matches the app's existing behavior of awaiting the whole thing at once.

@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { EngineerProfile, SelectedJobRole, ProfileTier } from '../../types';
 import { JOB_ROLE_DEFINITIONS } from '../../data/jobRoles';
+import { MEMBERSHIP_PLAN_BY_TIER } from '../../data/membershipPlans';
 import { Plus, Trash2, Edit } from '../Icons';
 import { EditSkillProfileModal } from '../EditSkillProfileModal';
+import { useAppContext } from '../../context/InteractionContext';
 
 const UpgradeCta = ({ requiredTier, onUpgradeClick, message }: { requiredTier: string, onUpgradeClick: () => void, message: string }) => (
     <div className="text-center p-6 bg-gray-100 rounded-lg border-2 border-dashed">
@@ -20,6 +22,11 @@ interface SkillsAndRolesSectionProps {
 }
 
 export const SkillsAndRolesSection = ({ profile, formData, setFormData, setActiveView }: SkillsAndRolesSectionProps) => {
+    // Pulled in purely to feed the skills-matrix evidence loop (see
+    // utils/skillEvidence.ts) - lets the skill editor show real completed-job
+    // and certificate evidence alongside each self-rating, without changing
+    // how roles/skills themselves are saved.
+    const { jobs, reviews } = useAppContext();
     const [isSkillModalOpen, setIsSkillModalOpen] = useState(false);
     const [editingRole, setEditingRole] = useState<{ role: SelectedJobRole, index: number } | null>(null);
     const [roleToAdd, setRoleToAdd] = useState<SelectedJobRole | null>(null);
@@ -28,13 +35,7 @@ export const SkillsAndRolesSection = ({ profile, formData, setFormData, setActiv
     const roles = useMemo(() => formData.selectedJobRoles || [], [formData.selectedJobRoles]);
     const canUseSpecialistRoles = profile.profileTier !== ProfileTier.BASIC;
 
-    const ROLE_LIMITS: { [key in ProfileTier]: number } = {
-        [ProfileTier.BASIC]: 0,
-        [ProfileTier.PROFESSIONAL]: 1,
-        [ProfileTier.SKILLS]: 3,
-        [ProfileTier.BUSINESS]: 5,
-    };
-    const roleLimit = ROLE_LIMITS[profile.profileTier];
+    const roleLimit = MEMBERSHIP_PLAN_BY_TIER[profile.profileTier].specialistRoleLimit;
     const canAddMoreRoles = roles.length < roleLimit;
 
     const getNextTier = () => {
@@ -169,9 +170,13 @@ export const SkillsAndRolesSection = ({ profile, formData, setFormData, setActiv
                     setEditingRole(null);
                     setRoleToAdd(null);
                 }} 
-                onSave={handleSaveRole} 
-                availableRoles={availableRoles} 
+                onSave={handleSaveRole}
+                availableRoles={availableRoles}
                 initialRole={editingRole?.role || roleToAdd || undefined}
+                engineerId={profile.id}
+                jobs={jobs}
+                reviews={reviews}
+                certifications={profile.certifications}
             />
         </>
     );
