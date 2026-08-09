@@ -124,6 +124,7 @@ export default function DemoLoginPage({ onSignedIn }: DemoLoginPageProps) {
           >
             {isSubmitting ? "Signing in..." : "Sign in"}
           </button>
+          <a href="/forgot-password" className="mt-4 block text-center text-sm font-bold text-cyan-300 hover:text-cyan-200">Forgot password?</a>
 
           <a
             href="/"

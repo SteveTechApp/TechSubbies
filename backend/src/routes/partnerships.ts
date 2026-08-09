@@ -12,16 +12,13 @@ import {
 } from "../lib/db.js";
 import { toPublicUser } from "../lib/publicUser.js";
 import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
+import { decodePersistedObject } from "../lib/persistedData.js";
+import { ENGINEER_PROFILE_SCHEMA_VERSION } from "../domain/marketplaceTypes.js";
 
 export const partnershipsRouter = Router();
 
 function readProfile(profileJson: string): Record<string, unknown> {
-  try {
-    const parsed = JSON.parse(profileJson);
-    return typeof parsed === "object" && parsed !== null ? parsed : {};
-  } catch {
-    return {};
-  }
+  return decodePersistedObject(profileJson,{entity:"engineer profile",id:"partnership-profile",versionKey:"profileSchemaVersion",maximumVersion:ENGINEER_PROFILE_SCHEMA_VERSION});
 }
 
 // Sets partnerEngineerId + partnerStatus on both engineers' stored profiles

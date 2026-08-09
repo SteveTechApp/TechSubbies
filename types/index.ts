@@ -97,6 +97,8 @@ export enum MilestoneStatus {
 export enum TimesheetStatus {
     SUBMITTED = 'submitted',
     APPROVED = 'approved',
+    REJECTED = 'rejected',
+    /** @deprecated legacy demo data only; TechSubbies does not settle job payments. */
     PAID = 'paid',
 }
 
@@ -176,6 +178,13 @@ export interface EngineerProfile extends UserProfile {
     currency: Currency;
     availability: Date;
     selectedJobRoles?: SelectedJobRole[]; // Detailed skills profiles
+    sectorProfiles?: Array<{
+        sector: 'AV' | 'IT';
+        includedInGeneralSearch: boolean;
+        acceptLowResponsibilityWork: boolean;
+        scope: 'general-support-only';
+        ratings?: Record<string, number>;
+    }>;
     cv?: {
         fileName: string;
         fileUrl: string;
@@ -337,7 +346,9 @@ export interface Timesheet {
     contractId: string;
     engineerId: string;
     period: string;
-    days: number;
+    days?: number;
+    hours?: number;
+    workSummary?: string;
     status: TimesheetStatus;
 }
 
@@ -360,11 +371,14 @@ export interface Contract {
 
 export enum TransactionType {
     SUBSCRIPTION = 'subscription',
-    ESCROW_FUNDING = 'escrow_funding',
-    PAYOUT = 'payout',
-    PLATFORM_FEE = 'platform_fee',
     PLATFORM_CREDIT_PURCHASE = 'platform_credit_purchase',
     AI_DEEP_DIVE_PURCHASE = 'ai_deep_dive_purchase',
+    /** @deprecated legacy demo values; never created by the marketplace API. */
+    ESCROW_FUNDING = 'escrow_funding',
+    /** @deprecated legacy demo values; never created by the marketplace API. */
+    PAYOUT = 'payout',
+    /** @deprecated legacy demo values; never created by the marketplace API. */
+    PLATFORM_FEE = 'platform_fee',
 }
 
 export interface Transaction {
@@ -384,9 +398,12 @@ export interface InvoiceItem {
 
 export interface Invoice {
     id: string;
-    contractId: string;
-    companyId: string;
-    engineerId: string;
+    userId?: string;
+    plan?: string;
+    /** @deprecated legacy job-invoice demo fields. */
+    contractId?: string;
+    companyId?: string;
+    engineerId?: string;
     items: InvoiceItem[];
     total: number;
     issueDate: Date;

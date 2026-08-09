@@ -11,7 +11,7 @@ import {
     User, Role, EngineerProfile, CompanyProfile, Job, Application, Review, Conversation, Message,
     Contract, Transaction, Project, ForumPost, ForumComment, Notification, CollaborationPost, ResourcingCompanyProfile,
     // FIX: Added missing TimesheetStatus and Product-related imports.
-    Invoice, ApplicationStatus, ContractStatus, MilestoneStatus, Timesheet, PaymentTerms, InvoiceStatus, TimesheetStatus, Product, ProductFeatures,
+    Invoice, ApplicationStatus, ContractStatus, MilestoneStatus, Timesheet, InvoiceStatus, TimesheetStatus, Product, ProductFeatures,
 } from '../types';
 
 interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<typeof useSettings> {
@@ -31,14 +31,14 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     sendOffer: (jobId: string, engineerId: string) => void;
     inviteEngineerToJob: (jobId: string, engineerId: string) => void;
     // --- Contract & Payment Management ---
-    createContract: (contract: any) => void;
+    createContract: (contract: any) => Promise<any>;
     signContract: (contractId: string, signatureName: string) => void;
+    completeContract: (contractId: string) => Promise<any>;
     fundMilestone: (contractId: string, milestoneId: string) => void;
     submitMilestoneForApproval: (contractId: string, milestoneId: string) => void;
     approveMilestone: (contractId: string, milestoneId: string) => void;
-    submitTimesheet: (contractId: string, timesheetData: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => void;
-    approveTimesheet: (contractId: string, timesheetId: string) => void;
-    generateInvoice: (contractId: string, paymentTerms: PaymentTerms) => void;
+    submitTimesheet: (contractId: string, timesheetData: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => Promise<any>;
+    approveTimesheet: (contractId: string, timesheetId: string) => Promise<any>;
     // --- Communication ---
     startConversationAndNavigate: (otherPartyProfileId: string, navigateCallback: () => void) => void;
     sendMessage: (conversationId: string, text: string) => Promise<void>;
@@ -65,7 +65,6 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     postCollaboration: (postData: any) => void;
     proposeCollaboration: (targetEngineerId: string, navigateCallback: () => void) => void;
     // --- Misc ---
-    purchasePlatformCredits: (amount: number) => void;
     redeemLoyaltyPoints: (points: number) => void;
     saveStoryboardAsCaseStudy: (title: string, panels: any[]) => void;
     applicantForDeepDive: { job: Job, engineer: EngineerProfile } | null;
@@ -93,37 +92,21 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
     // --- Profile Management ---
     const updateEngineerProfile = async (profileData: Partial<EngineerProfile>) => {
         if (!user || user.role !== Role.ENGINEER) return;
-        // FIX: Correctly update user state with a type guard and cast to prevent type errors.
-        auth.setUser(prevUser => {
-            if (!prevUser || prevUser.role !== Role.ENGINEER) return prevUser;
-            return {
-                ...prevUser,
-                profile: {
-                    ...(prevUser.profile as EngineerProfile),
-                    ...profileData,
-                },
-            };
-        });
-        setAppData(prev => ({ ...prev, engineers: prev.engineers.map(e => e.id === user.profile.id ? { ...e, ...profileData } : e) }));
-        await apiService.updateEngineerProfile(user.profile.id, profileData);
-        alert('Profile saved!');
+        try {
+            const saved = await apiService.updateEngineerProfile(user.profile.id, profileData);
+            auth.setUser(prevUser => prevUser?.role === Role.ENGINEER ? { ...prevUser, profile: saved } : prevUser);
+            setAppData(prev => ({ ...prev, engineers: prev.engineers.map(e => e.id === user.profile.id ? saved : e) }));
+            alert('Profile saved!');
+        } catch (error: any) { alert(error.message || 'Profile could not be saved.'); }
     };
     
     const updateCompanyProfile = async (profileData: Partial<CompanyProfile>) => {
         if (!user || (user.role !== Role.COMPANY && user.role !== Role.RESOURCING_COMPANY)) return;
-        // FIX: Correctly update user state with a type guard and cast to prevent type errors.
-        auth.setUser(prevUser => {
-            if (!prevUser || (prevUser.role !== Role.COMPANY && prevUser.role !== Role.RESOURCING_COMPANY)) return prevUser;
-            return {
-                ...prevUser,
-                profile: {
-                    ...(prevUser.profile as CompanyProfile), // Safe cast as ResourcingCompanyProfile extends CompanyProfile
-                    ...profileData,
-                },
-            };
-        });
-        setAppData(prev => ({ ...prev, companies: prev.companies.map(c => c.id === user.profile.id ? { ...c, ...profileData } : c) }));
-        await apiService.updateCompanyProfile(user.profile.id, profileData);
+        try {
+            const saved = await apiService.updateCompanyProfile(user.profile.id, profileData);
+            auth.setUser(prevUser => prevUser && (prevUser.role === Role.COMPANY || prevUser.role === Role.RESOURCING_COMPANY) ? { ...prevUser, profile: saved } : prevUser);
+            setAppData(prev => ({ ...prev, companies: prev.companies.map(c => c.id === user.profile.id ? saved : c) }));
+        } catch (error: any) { alert(error.message || 'Company profile could not be saved.'); }
     };
 
     const boostProfile = () => updateEngineerProfile({ isBoosted: true });
@@ -137,10 +120,12 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         return newJob;
     };
 
-    const applyForJob = (jobId: string, engineerId: string) => {
-        const newApp = { jobId, engineerId, date: new Date(), status: ApplicationStatus.APPLIED, reviewed: false };
-        setAppData(prev => ({ ...prev, applications: [...prev.applications, newApp] }));
-        alert('Application submitted!');
+    const applyForJob = async (jobId: string, engineerId: string) => {
+        try {
+            const newApp = await apiService.applyForJob(jobId, engineerId);
+            setAppData(prev => ({ ...prev, applications: [...prev.applications, newApp] }));
+            alert('Application submitted!');
+        } catch (error: any) { alert(error.message || 'Could not submit application.'); }
     };
     
     const applyForJobWithCredit = (jobId: string) => {
@@ -152,8 +137,11 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         }
     };
     
-    const sendOffer = (jobId: string, engineerId: string) => {
-        setAppData(prev => ({ ...prev, applications: prev.applications.map(app => app.jobId === jobId && app.engineerId === engineerId ? { ...app, status: ApplicationStatus.OFFERED } : app) }));
+    const sendOffer = async (jobId: string, engineerId: string) => {
+        const application: any = data.applications.find(app => app.jobId === jobId && app.engineerId === engineerId);
+        if (!application?.id) return alert('This application must be persisted before an offer can be sent.');
+        const updated = await apiService.updateApplicationStatus(application.id, 'Offered');
+        setAppData(prev => ({ ...prev, applications: prev.applications.map((app: any) => app.id === application.id ? updated : app) }));
     };
 
     const inviteEngineerToJob = (jobId: string, engineerId: string) => {
@@ -161,16 +149,29 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         alert('Invite sent!');
     };
 
-    // --- Other interactions, mocked for now ---
-    const createContract = (contract: Contract) => setAppData(prev => ({...prev, contracts: [...prev.contracts, contract]}));
-    const signContract = (contractId: string, signatureName: string) => {
-        setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => {
-            if (c.id === contractId) {
-                if(user?.role === Role.ENGINEER) return { ...c, status: ContractStatus.SIGNED, engineerSignature: { name: signatureName, date: new Date() } };
-                if(user?.role === Role.COMPANY || user?.role === Role.ADMIN) return { ...c, status: ContractStatus.ACTIVE, companySignature: { name: signatureName, date: new Date() } };
-            }
-            return c;
-        })}));
+    const createContract = async (contract: Contract) => {
+        const application: any = data.applications.find(app => app.jobId === contract.jobId && app.engineerId === contract.engineerId);
+        if (!application?.id) throw new Error('Select a persisted application before creating a contract.');
+        try {
+            const saved = await apiService.createMarketplaceContract(application.id, contract.description, (contract as any).overrideExclusionReason, contract.type);
+            setAppData(prev => ({...prev, contracts: [...prev.contracts, saved]}));
+            setAppData(prev => ({...prev, applications: prev.applications.map((item:any)=>item.id===application.id?{...item,status:'Offered'}:item)}));
+            return saved;
+        } catch (error: any) { throw new Error(error.message || 'Could not create contract.'); }
+    };
+    const signContract = async (contractId: string, signatureName: string) => {
+        try {
+            const saved = await apiService.signMarketplaceContract(contractId);
+            setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? saved : c) }));
+            return saved;
+        } catch (error: any) { alert(error.message || 'Could not sign contract.'); }
+    };
+    const completeContract = async (contractId: string) => {
+        try {
+            const saved = await apiService.completeMarketplaceContract(contractId);
+            setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? saved : c) }));
+            return saved;
+        } catch (error: any) { alert(error.message || 'Could not complete contract.'); }
     };
     const fundMilestone = (contractId: string, milestoneId: string) => {
         setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? {...m, status: MilestoneStatus.FUNDED_IN_PROGRESS} : m) } : c) }));
@@ -182,39 +183,20 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, milestones: c.milestones.map(m => m.id === milestoneId ? {...m, status: MilestoneStatus.APPROVED_PENDING_INVOICE} : m) } : c) }));
     };
 
-    const submitTimesheet = (contractId: string, timesheetData: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => {
-        const newTimesheet: Timesheet = { ...timesheetData, id: `ts-${Date.now()}`, contractId, engineerId: user!.profile.id, status: TimesheetStatus.SUBMITTED };
-        setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, timesheets: [...(c.timesheets || []), newTimesheet] } : c) }));
+    const submitTimesheet = async (contractId: string, timesheetData: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => {
+        try {
+            const saved = await apiService.submitTimesheet(contractId, { period: timesheetData.period, hours: timesheetData.hours || (timesheetData.days || 0) * 8, days:timesheetData.days, workSummary: timesheetData.workSummary || 'Work completed' });
+            setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, timesheets: [...(c.timesheets || []), saved] } : c) }));
+            return saved;
+        } catch (error: any) { alert(error.message || 'Could not submit timesheet.'); }
     };
 
-    const approveTimesheet = (contractId: string, timesheetId: string) => {
-         setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, timesheets: (c.timesheets || []).map(ts => ts.id === timesheetId ? {...ts, status: TimesheetStatus.PAID } : ts) } : c) }));
-    };
-    
-    const generateInvoice = (contractId: string, paymentTerms: PaymentTerms) => {
-         const contract = data.contracts.find(c => c.id === contractId);
-         if (!contract) return;
-
-         const itemsToInvoice = contract.milestones
-             .filter(m => m.status === MilestoneStatus.APPROVED_PENDING_INVOICE)
-             .map(m => ({ description: `Milestone: ${m.description}`, amount: m.amount }));
-         
-         const total = itemsToInvoice.reduce((sum, item) => sum + item.amount, 0);
-
-         const newInvoice: Invoice = {
-             id: `inv-${Date.now()}`,
-             contractId,
-             companyId: contract.companyId,
-             engineerId: contract.engineerId,
-             items: itemsToInvoice,
-             total,
-             issueDate: new Date(),
-             dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // Mocking Net 14
-             status: InvoiceStatus.SENT
-         };
-
-         setAppData(prev => ({ ...prev, invoices: [...prev.invoices, newInvoice], contracts: prev.contracts.map(c => c.id === contractId ? {...c, milestones: c.milestones.map(m => m.status === MilestoneStatus.APPROVED_PENDING_INVOICE ? {...m, status: MilestoneStatus.COMPLETED_PAID} : m)} : c)}));
-         alert("Invoice generated and sent!");
+    const approveTimesheet = async (contractId: string, timesheetId: string) => {
+         try {
+             const saved = await apiService.reviewTimesheet(timesheetId, 'approved');
+             setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, timesheets: (c.timesheets || []).map(ts => ts.id === timesheetId ? saved : ts) } : c) }));
+             return saved;
+         } catch (error: any) { alert(error.message || 'Could not approve timesheet.'); }
     };
     
     const startConversationAndNavigate = (otherPartyProfileId: string, navigateCallback: () => void) => {
@@ -229,7 +211,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         realtimeService.simulateNewMessage(conversationId, newMessage); // Simulate push
     };
 
-    const getApplicantDeepDive = async (job: Job, engineer: EngineerProfile) => ({ analysis: { summary: "This is a mock AI summary.", strengths: ["Good with Crestron"], areas_to_probe: ["Biamp experience"], interview_questions: ["Tell me about your largest project."] }});
+    const getApplicantDeepDive = async (job: Job, engineer: EngineerProfile) => {const shortlist=await apiService.getJobShortlist(job.id);const candidate=shortlist.candidates.find((item)=>item.engineerId===engineer.id);if(!candidate)throw new Error('This engineer has not applied for the selected job.');const probes=candidate.risks;return{analysis:{summary:`${candidate.outcome} candidate with an explainable suitability score of ${candidate.score}/100. This assessment uses declared profile and application data only.`,strengths:candidate.reasons,areas_to_probe:probes,interview_questions:probes.length?probes.map((risk)=>`Please provide practical evidence addressing: ${risk}`):['Describe the most comparable assignment you delivered and the evidence available.']}};};
     // FIX: Add missing method implementation
     const analyzeProductForFeatures = (product: Product) => {
         return geminiService.analyzeProductForFeatures(product);
@@ -271,12 +253,6 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         cb();
     };
     
-    const purchasePlatformCredits = (amount: number) => {
-        if(!user || user.role !== Role.ENGINEER) return;
-        const currentProfile = user.profile as EngineerProfile;
-        updateEngineerProfile({ platformCredits: (currentProfile.platformCredits || 0) + amount });
-    };
-
     const redeemLoyaltyPoints = (points: number) => {
          if(!user || user.role !== Role.ENGINEER) return;
         const currentProfile = user.profile as EngineerProfile;
@@ -314,12 +290,12 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         inviteEngineerToJob,
         createContract,
         signContract,
+        completeContract,
         fundMilestone,
         submitMilestoneForApproval,
         approveMilestone,
         submitTimesheet,
         approveTimesheet,
-        generateInvoice,
         startConversationAndNavigate,
         sendMessage,
         getApplicantDeepDive,
@@ -336,7 +312,6 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         markNotificationsAsRead,
         postCollaboration,
         proposeCollaboration,
-        purchasePlatformCredits,
         redeemLoyaltyPoints,
         saveStoryboardAsCaseStudy,
         applicantForDeepDive, 

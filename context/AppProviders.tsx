@@ -9,17 +9,17 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 export const AppProviders = ({ children }: { children: ReactNode }) => {
   return (
     <ErrorBoundary>
-      <DataProvider>
-        <SettingsProvider>
-          <AuthProvider>
+      <AuthProvider>
+        <DataProvider>
+          <SettingsProvider>
             <NavigationProvider>
               <InteractionProvider>
                 {children}
               </InteractionProvider>
             </NavigationProvider>
-          </AuthProvider>
-        </SettingsProvider>
-      </DataProvider>
+          </SettingsProvider>
+        </DataProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 };

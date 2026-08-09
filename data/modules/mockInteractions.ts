@@ -71,7 +71,7 @@ export const MOCK_CONTRACTS: Contract[] = [
         companyId: 'comp-2',
         engineerId: 'eng-2',
         type: ContractType.SOW,
-        description: `This Statement of Work (SOW) is made between Starlight Events ("the Client") and Samantha Greene ("the Contractor"). The Contractor will complete the milestones as defined in this contract. Payment will be released from escrow upon successful completion and approval of each milestone.`,
+        description: `This Statement of Work (SOW) is made between Starlight Events ("the Client") and Samantha Greene ("the Contractor"). The Contractor will complete the milestones as defined in this contract. TechSubbies records completion and approval only; invoicing and payment are handled directly between the parties.`,
         amount: 2500,
         currency: Currency.GBP,
         status: ContractStatus.ACTIVE,

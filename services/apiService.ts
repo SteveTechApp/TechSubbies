@@ -1,17 +1,17 @@
 import { MOCK_ENGINEERS, MOCK_COMPANIES, MOCK_JOBS, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_CONTRACTS, MOCK_TRANSACTIONS, MOCK_PROJECTS, ALL_MOCK_USERS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_NOTIFICATIONS, MOCK_COLLABORATION_POSTS, MOCK_INVOICES } from '../data/mockData';
 import { MOCK_RESOURCING_COMPANY_1, MOCK_ADMIN_PROFILE, MOCK_FREE_ENGINEER, MOCK_ENGINEER_STEVE } from '../data/modules/mockStaticProfiles';
-import { ApplicationStatus, EngineerProfile, ProfileTier, Role, User, ContractStatus, MilestoneStatus, Timesheet, TimesheetStatus, PaymentTerms, InvoiceStatus, ForumPost, Notification, CollaborationPost, CompanyProfile, ResourcingCompanyProfile, Job, Discipline, Currency, Country, ExperienceLevel } from '../types';
+import { ApplicationStatus, EngineerProfile, ProfileTier, Role, User, ContractStatus, ContractType, MilestoneStatus, Timesheet, TimesheetStatus, PaymentTerms, InvoiceStatus, ForumPost, Notification, CollaborationPost, CompanyProfile, ResourcingCompanyProfile, Job, Discipline, Currency, Country, ExperienceLevel } from '../types';
+import type { MarketplaceShortlistResponse } from '../types/marketplaceApi';
 
 // --- API Service ---
-// Account creation, login and profile updates now call the real backend
-// (see backend/API_SPECIFICATION.md and backend/src). Everything else
-// below is still an in-memory simulation of a backend API - jobs,
-// contracts, messaging, invoicing etc still reset on refresh. That's the
-// next phase of work, not this one.
+// Core account, profile, marketplace, trust and membership workflows call
+// the persistent backend. Legacy community/demo features lower in this file
+// retain their in-memory fixtures until they receive dedicated APIs.
 
 const simulateDelay = (ms: number = 500) => new Promise(res => setTimeout(res, ms));
 
-const API_BASE_URL = (typeof process !== 'undefined' && (process as any).env?.API_BASE_URL) || 'http://localhost:4000/api';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:4000/api';
+const ENABLE_DEMO_DATA=(import.meta as any).env?.VITE_ENABLE_DEMO_DATA==='true';
 const TOKEN_KEY = 'techsubbies_auth_token';
 
 export function getAuthToken(): string | null {
@@ -30,6 +30,8 @@ function saveAuthToken(token: string) {
     // won't survive a refresh, which matches the old mock behavior anyway.
   }
 }
+
+function hydrateMarketplaceContract(contract:any){const signatures=contract.signatures||{};return{...contract,description:contract.description||contract.scope||'',jobTitle:contract.jobTitle||'Technical services agreement',type:contract.type||ContractType.SOW,milestones:Array.isArray(contract.milestones)?contract.milestones:[],timesheets:Array.isArray(contract.timesheets)?contract.timesheets:[],engineerSignature:signatures[contract.engineerId]||contract.engineerSignature||null,companySignature:signatures[contract.companyId]||contract.companySignature||null};}
 
 export function clearAuthToken() {
   try {
@@ -75,27 +77,52 @@ async function backendLogin(email: string, password: string) {
 }
 
 const apiService = {
+  requestPasswordReset:async(email:string)=>{const response=await fetch(`${API_BASE_URL}/auth/password/forgot`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});const data=await response.json();if(!response.ok)throw new Error(data?.error||'Could not request a password reset.');return data;},
+  resetPassword:async(token:string,password:string)=>{const response=await fetch(`${API_BASE_URL}/auth/password/reset`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,password})});const data=await response.json();if(!response.ok)throw new Error(data?.error||'Could not reset password.');return data;},
+  confirmEmail:async(token:string)=>{const response=await fetch(`${API_BASE_URL}/auth/verification/confirm`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});const data=await response.json();if(!response.ok)throw new Error(data?.error||'Could not verify email.');return data;},
   // --- DATA FETCHING ---
   getInitialData: async () => {
-    await simulateDelay();
-    // In a real app, this would be multiple API calls (e.g., /users, /jobs, etc.)
+    let backendAvailable = false;
+    let persistedJobs: any[] = [];
+    let persistedApplications: any[] = [];
+    let persistedContracts: any[] = [];
+    let persistedUsers: User[] = [];
+    let membershipInvoices: any[] = [];
+    try {
+      const [jobsResponse,usersResponse] = await Promise.all([fetch(`${API_BASE_URL}/jobs`),fetch(`${API_BASE_URL}/users`)]);
+      backendAvailable = jobsResponse.ok && usersResponse.ok;
+      if (jobsResponse.ok) persistedJobs = await jobsResponse.json();
+      if (usersResponse.ok) persistedUsers = await usersResponse.json();
+      const token = getAuthToken();
+      if (token) {
+        const headers = { Authorization: `Bearer ${token}` };
+        const [applicationsResponse, contractsResponse, invoicesResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/applications`, { headers }), fetch(`${API_BASE_URL}/contracts`, { headers }), fetch(`${API_BASE_URL}/membership/invoices`, { headers }),
+        ]);
+        if (applicationsResponse.ok) persistedApplications = await applicationsResponse.json();
+        if (contractsResponse.ok) persistedContracts = (await contractsResponse.json()).map(hydrateMarketplaceContract);
+        if (invoicesResponse.ok) membershipInvoices = await invoicesResponse.json();
+      }
+    } catch { /* surfaced below as an empty operational state unless explicit demo data is enabled */ }
+    const persistedEngineers = persistedUsers.filter(user=>user.role===Role.ENGINEER).map(user=>user.profile as EngineerProfile);
+    const persistedCompanies = persistedUsers.filter(user=>user.role===Role.COMPANY||user.role===Role.RESOURCING_COMPANY).map(user=>user.profile as CompanyProfile);
     return {
-      engineers: [...MOCK_ENGINEERS, MOCK_ENGINEER_STEVE, MOCK_FREE_ENGINEER],
-      companies: [...MOCK_COMPANIES, MOCK_RESOURCING_COMPANY_1],
-      jobs: MOCK_JOBS,
-      applications: MOCK_APPLICATIONS,
-      reviews: MOCK_REVIEWS,
-      allUsers: ALL_MOCK_USERS,
-      conversations: MOCK_CONVERSATIONS,
-      messages: MOCK_MESSAGES,
-      contracts: MOCK_CONTRACTS,
-      transactions: MOCK_TRANSACTIONS,
-      projects: MOCK_PROJECTS,
-      forumPosts: MOCK_FORUM_POSTS,
-      forumComments: MOCK_FORUM_COMMENTS,
-      notifications: MOCK_NOTIFICATIONS,
-      collaborationPosts: MOCK_COLLABORATION_POSTS,
-      invoices: MOCK_INVOICES,
+      engineers: backendAvailable ? persistedEngineers : ENABLE_DEMO_DATA?[...MOCK_ENGINEERS, MOCK_ENGINEER_STEVE, MOCK_FREE_ENGINEER]:[],
+      companies: backendAvailable ? persistedCompanies : ENABLE_DEMO_DATA?[...MOCK_COMPANIES, MOCK_RESOURCING_COMPANY_1]:[],
+      jobs: backendAvailable ? persistedJobs : ENABLE_DEMO_DATA?MOCK_JOBS:[],
+      applications: backendAvailable ? persistedApplications : ENABLE_DEMO_DATA?MOCK_APPLICATIONS:[],
+      reviews: ENABLE_DEMO_DATA?MOCK_REVIEWS:[],
+      allUsers: backendAvailable ? persistedUsers : ENABLE_DEMO_DATA?ALL_MOCK_USERS:[],
+      conversations: ENABLE_DEMO_DATA?MOCK_CONVERSATIONS:[],
+      messages: ENABLE_DEMO_DATA?MOCK_MESSAGES:[],
+      contracts: backendAvailable ? persistedContracts : ENABLE_DEMO_DATA?MOCK_CONTRACTS:[],
+      transactions: [],
+      projects: ENABLE_DEMO_DATA?MOCK_PROJECTS:[],
+      forumPosts: ENABLE_DEMO_DATA?MOCK_FORUM_POSTS:[],
+      forumComments: ENABLE_DEMO_DATA?MOCK_FORUM_COMMENTS:[],
+      notifications: ENABLE_DEMO_DATA?MOCK_NOTIFICATIONS:[],
+      collaborationPosts: ENABLE_DEMO_DATA?MOCK_COLLABORATION_POSTS:[],
+      invoices: backendAvailable ? membershipInvoices : [],
     };
   },
 
@@ -146,10 +173,9 @@ const apiService = {
     const token = getAuthToken();
     if (!token) return null;
     try {
-      const payloadSegment = token.split('.')[1];
-      const payload = JSON.parse(atob(payloadSegment.replace(/-/g, '+').replace(/_/g, '/')));
-      if (!payload?.sub) return null;
-      return await apiService.getUserById(payload.sub);
+      const response=await fetch(`${API_BASE_URL}/users/me`,{headers:{Authorization:`Bearer ${token}`}});
+      if(!response.ok)return null;
+      return await response.json() as User;
     } catch {
       return null;
     }
@@ -184,10 +210,13 @@ const apiService = {
           badges: [],
           platformCredits: 1,
           loyaltyPoints: 0,
+          roleSkillProfiles: data.roleSkillProfiles || [],
+          sectorProfiles: data.sectorProfiles || [],
         },
       });
     } catch (error: any) {
       if (!isNetworkError(error)) throw error;
+      if(!ENABLE_DEMO_DATA)throw new Error('Registration service is unavailable. Your account was not created.');
 
       await simulateDelay();
       const newEngineer: EngineerProfile = {
@@ -237,6 +266,7 @@ const apiService = {
       });
     } catch (error: any) {
       if (!isNetworkError(error)) throw error;
+      if(!ENABLE_DEMO_DATA)throw new Error('Registration service is unavailable. Your account was not created.');
 
       await simulateDelay();
       const newCompany: CompanyProfile = {
@@ -273,6 +303,7 @@ const apiService = {
       });
     } catch (error: any) {
       if (!isNetworkError(error)) throw error;
+      if(!ENABLE_DEMO_DATA)throw new Error('Registration service is unavailable. Your account was not created.');
 
       await simulateDelay();
       const newResourcingCompany: ResourcingCompanyProfile = {
@@ -416,21 +447,13 @@ const apiService = {
   },
 
   // --- FILE UPLOADS (Production Pattern) ---
+  uploadDocument:async(file:File,documentType:'cv'|'certification'|'insurance'|'identity'|'capability-evidence')=>{const token=getAuthToken();if(!token)throw new Error('Sign in before uploading private documents.');const response=await fetch(`${API_BASE_URL}/documents`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':file.type,'X-Document-Type':documentType,'X-File-Name':file.name},body:file});const data=await response.json();if(!response.ok)throw new Error(data?.error||'Document upload failed.');return data as {id:string;fileUrl:string;originalName:string;status:string};},
   getPresignedUploadUrl: async (fileName: string, fileType: string): Promise<{ uploadUrl: string, fileUrl: string }> => {
-    await simulateDelay(300);
-    // This simulates the backend generating a secure, temporary URL for a direct client-to-S3 upload.
-    const uniqueId = `${Date.now()}-${fileName}`;
-    const uploadUrl = `https://mock-s3-bucket.com/uploads/${uniqueId}?signature=secure-token`;
-    const fileUrl = `https://cdn.wingman.com/uploads/${uniqueId}`; // The final, public URL
-    return { uploadUrl, fileUrl };
+    throw new Error(`Direct presigned uploads are not enabled. Upload ${fileName} through the authenticated document service (${fileType}).`);
   },
 
   confirmFileUpload: async (fileUrl: string, context: { entityId: string, documentType: string }): Promise<{ success: boolean }> => {
-    await simulateDelay(200);
-    // This simulates the client notifying the backend that the upload to S3 is complete,
-    // so the backend can link the fileUrl to the correct database entity (e.g., user profile, certification).
-    console.log(`Backend confirmed upload for ${fileUrl} for ${context.entityId}`);
-    return { success: true };
+    throw new Error(`Untrusted external file URLs cannot be attached (${fileUrl}, ${context.documentType}, ${context.entityId}).`);
   },
 
   // --- E-SIGNATURE ---
@@ -443,48 +466,85 @@ const apiService = {
   // --- OTHER "WRITE" OPERATIONS ---
   
   updateEngineerProfile: async (profileId: string, profileData: Partial<EngineerProfile>): Promise<EngineerProfile> => {
-    await simulateDelay();
-    const engineer = MOCK_ENGINEERS.find(e => e.id === profileId) || MOCK_ENGINEER_STEVE;
-    if (!engineer) throw new Error("Engineer not found");
-    Object.assign(engineer, profileData);
-    return { ...engineer }; // Return a copy to simulate fresh data from API
+    const token=getAuthToken();
+    if(token){const saved=await apiService.updateMyProfile(profileData as Record<string,unknown>);if(!saved||saved.role!==Role.ENGINEER)throw new Error('Engineer profile could not be saved.');return saved.profile as EngineerProfile;}
+    if(!ENABLE_DEMO_DATA)throw new Error('Sign in to save an engineer profile.');await simulateDelay(); const engineer=MOCK_ENGINEERS.find(e=>e.id===profileId)||MOCK_ENGINEER_STEVE; if(!engineer)throw new Error("Engineer not found"); Object.assign(engineer,profileData); return {...engineer};
   },
   
   updateCompanyProfile: async (profileId: string, profileData: Partial<CompanyProfile>): Promise<CompanyProfile> => {
-      await simulateDelay();
-      const company = MOCK_COMPANIES.find(c => c.id === profileId);
-      if (!company) throw new Error("Company not found");
-      Object.assign(company, profileData);
-      return { ...company };
+      const token=getAuthToken();
+      if(token){const saved=await apiService.updateMyProfile(profileData as Record<string,unknown>);if(!saved||![Role.COMPANY,Role.RESOURCING_COMPANY].includes(saved.role))throw new Error('Company profile could not be saved.');return saved.profile as CompanyProfile;}
+      if(!ENABLE_DEMO_DATA)throw new Error('Sign in to save a company profile.');await simulateDelay(); const company=MOCK_COMPANIES.find(c=>c.id===profileId); if(!company)throw new Error("Company not found"); Object.assign(company,profileData); return {...company};
   },
   
   postJob: async (jobData: any): Promise<Job> => {
-    await simulateDelay();
-    const newJob: Job = {
-      ...jobData,
-      id: `job-${Date.now()}`,
-      postedDate: new Date(),
-      status: 'active',
-    };
-    MOCK_JOBS.unshift(newJob);
-    return newJob;
+    const token = getAuthToken();
+    if (!token) throw new Error('A verified company account is required to post a job.');
+    const response = await fetch(`${API_BASE_URL}/jobs`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(jobData) });
+    const data = await response.json(); if (!response.ok) throw new Error(data?.error || 'Could not post job.'); return data as Job;
   },
+  getJobShortlist: async (jobId:string):Promise<MarketplaceShortlistResponse> => { const token=getAuthToken(); const response=await fetch(`${API_BASE_URL}/jobs/${jobId}/shortlist`,{headers:{Authorization:`Bearer ${token}`}}); const data=await response.json(); if(!response.ok)throw new Error(data?.error||'Could not load the applicant shortlist.'); return data as MarketplaceShortlistResponse; },
 
   // ... other "write" operations would follow the same async/Promise pattern
   // For brevity, we'll keep the existing synchronous mocks for less critical functions
   // but a full implementation would convert all of these.
 
    applyForJob: async (jobId: string, engineerId: string) => {
-    const newApplication = {
-      jobId,
-      engineerId,
-      date: new Date(),
-      status: ApplicationStatus.APPLIED,
-      reviewed: false,
-    };
-    MOCK_APPLICATIONS.push(newApplication);
-    return newApplication;
+    const token = getAuthToken(); if (!token) throw new Error('A verified engineer account is required to apply.');
+    const response = await fetch(`${API_BASE_URL}/jobs/${jobId}/apply`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ engineerId }) });
+    const data = await response.json(); if (!response.ok) throw new Error(data?.error || 'Could not apply.'); return data;
   },
+  listEngineers: async (): Promise<User[]> => { try { const response=await fetch(`${API_BASE_URL}/users`); if(!response.ok)return []; const all=await response.json() as User[]; return all.filter(user=>user.role===Role.ENGINEER); } catch { return []; } },
+
+  updateApplicationStatus: async (applicationId: string, status: string) => {
+    const token = getAuthToken(); const response = await fetch(`${API_BASE_URL}/applications/${applicationId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ status }) }); const data = await response.json(); if (!response.ok) throw new Error(data?.error || 'Could not update application.'); return data;
+  },
+  createMarketplaceContract: async (applicationId: string, scope: string, overrideExclusionReason?:string, type?:ContractType) => {
+    const token = getAuthToken(); const response = await fetch(`${API_BASE_URL}/contracts`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ applicationId, scope, description:scope, type:type||ContractType.SOW, overrideExclusionReason }) }); const data = await response.json(); if (!response.ok) throw new Error(data?.error || 'Could not create contract.'); return hydrateMarketplaceContract(data);
+  },
+  signMarketplaceContract: async (contractId: string) => {
+    const token = getAuthToken(); const response = await fetch(`${API_BASE_URL}/contracts/${contractId}/sign`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }); const data = await response.json(); if (!response.ok) throw new Error(data?.error || 'Could not sign contract.'); return hydrateMarketplaceContract(data);
+  },
+  submitTimesheet: async (contractId: string, entry: { period: string; hours: number; workSummary: string; days?:number }) => {
+    const token = getAuthToken(); const response = await fetch(`${API_BASE_URL}/contracts/${contractId}/timesheets`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(entry) }); const data = await response.json(); if (!response.ok) throw new Error(data?.error || 'Could not submit timesheet.'); return data;
+  },
+  reviewTimesheet: async (timesheetId: string, status: 'approved' | 'rejected') => {
+    const token = getAuthToken(); const response = await fetch(`${API_BASE_URL}/timesheets/${timesheetId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ status }) }); const data = await response.json(); if (!response.ok) throw new Error(data?.error || 'Could not review timesheet.'); return data;
+  },
+  completeMarketplaceContract: async (contractId: string) => {
+    const token = getAuthToken(); const response = await fetch(`${API_BASE_URL}/contracts/${contractId}/complete`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }); const data = await response.json(); if (!response.ok) throw new Error(data?.error || 'Could not complete contract.'); return hydrateMarketplaceContract(data);
+  },
+  createMembershipInvoice: async (plan: 'professional' | 'skills' | 'business') => {
+    const token = getAuthToken(); const response = await fetch(`${API_BASE_URL}/membership/invoices`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ plan }) }); const data = await response.json(); if (!response.ok) throw new Error(data?.error || 'Could not create membership invoice.'); return data;
+  },
+  createMembershipCheckout: async (plan: 'professional' | 'skills' | 'business') => {
+    const token=getAuthToken();const response=await fetch(`${API_BASE_URL}/membership/checkout`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({plan})});const data=await response.json();if(!response.ok)throw new Error(data?.error||'Could not start secure membership checkout.');return data as {invoice:any;checkoutUrl:string};
+  },
+  getEngineerValidations: async (engineerId: string) => {
+    const token=getAuthToken(); if(!token) return []; const response=await fetch(`${API_BASE_URL}/trust/engineers/${engineerId}/validations`,{headers:{Authorization:`Bearer ${token}`}}); return response.ok ? response.json() : [];
+  },
+  validateCompletedAssignment: async (contractId: string, validation: Record<string, unknown>) => {
+    const token=getAuthToken(); const response=await fetch(`${API_BASE_URL}/trust/contracts/${contractId}/validation`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify(validation)}); const data=await response.json(); if(!response.ok) throw new Error(data?.error||'Could not save validation.'); return data;
+  },
+  getTalentPool: async () => {
+    const token=getAuthToken(); if(!token) return []; const response=await fetch(`${API_BASE_URL}/trust/talent-pool`,{headers:{Authorization:`Bearer ${token}`}}); return response.ok ? response.json() : [];
+  },
+  saveTalentPoolEntry: async (engineerId: string, entry: Record<string, unknown>) => {
+    const token=getAuthToken(); const response=await fetch(`${API_BASE_URL}/trust/talent-pool/${engineerId}`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify(entry)}); const data=await response.json(); if(!response.ok) throw new Error(data?.error||'Could not update talent pool.'); return data;
+  },
+  removeTalentPoolEntry: async (engineerId: string) => {
+    const token=getAuthToken(); const response=await fetch(`${API_BASE_URL}/trust/talent-pool/${engineerId}`,{method:'DELETE',headers:{Authorization:`Bearer ${token}`}}); if(!response.ok&&response.status!==404) throw new Error('Could not remove talent-pool entry.');
+  },
+  confirmAvailability: async (availability: Record<string, unknown>) => {
+    const token=getAuthToken(); const response=await fetch(`${API_BASE_URL}/users/me/availability`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify(availability)}); const data=await response.json(); if(!response.ok) throw new Error(data?.error||'Could not confirm availability.'); return data;
+  },
+  getTechnicalWorkPack: async (contractId:string) => { const token=getAuthToken(); const response=await fetch(`${API_BASE_URL}/trust/contracts/${contractId}/work-pack`,{headers:{Authorization:`Bearer ${token}`}}); if(response.status===404)return null; const data=await response.json(); if(!response.ok)throw new Error(data?.error||'Could not load work pack.'); return data; },
+  saveTechnicalWorkPack: async (contractId:string,pack:Record<string,unknown>) => { const token=getAuthToken(); const response=await fetch(`${API_BASE_URL}/trust/contracts/${contractId}/work-pack`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify(pack)}); const data=await response.json(); if(!response.ok)throw new Error(data?.error||'Could not save work pack.'); return data; },
+  getProjectTeams: async () => { const token=getAuthToken(); const response=await fetch(`${API_BASE_URL}/trust/teams`,{headers:{Authorization:`Bearer ${token}`}}); const data=await response.json(); if(!response.ok)throw new Error(data?.error||'Could not load project teams.'); return data; },
+  createProjectTeam: async (team:Record<string,unknown>) => { const token=getAuthToken(); const response=await fetch(`${API_BASE_URL}/trust/teams`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify(team)}); const data=await response.json(); if(!response.ok)throw new Error(data?.error||'Could not save project team.'); return data; },
+  getWorkforceInsights: async () => { const token=getAuthToken(); const response=await fetch(`${API_BASE_URL}/trust/insights`,{headers:{Authorization:`Bearer ${token}`}}); const data=await response.json(); if(!response.ok)throw new Error(data?.error||'Could not load workforce insights.'); return data; },
+  getCompanyAudit: async () => { const token=getAuthToken(); const response=await fetch(`${API_BASE_URL}/trust/audit`,{headers:{Authorization:`Bearer ${token}`}}); const data=await response.json(); if(!response.ok)throw new Error(data?.error||'Could not load audit history.'); return data; },
+  getContractContact: async (contractId:string) => { const token=getAuthToken(); const response=await fetch(`${API_BASE_URL}/contracts/${contractId}/contacts`,{headers:{Authorization:`Bearer ${token}`}}); const data=await response.json(); if(!response.ok)throw new Error(data?.error||'Could not load contract contact.'); return data; },
 };
 
 export default apiService;

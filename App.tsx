@@ -52,10 +52,15 @@ const UserGuidePage = lazy(() => import('./views/UserGuidePage').then((m) => ({ 
 const TutorialsPage = lazy(() => import('./views/TutorialsPage').then((m) => ({ default: m.TutorialsPage })));
 
 const CompanyEngineerDashboardPage = lazy(() => import("./views/CompanyEngineerDashboardPage"));
+const CompanyTalentPoolPage = lazy(() => import("./views/CompanyTalentPoolPage"));
+const TeamAssemblyPage = lazy(() => import("./views/TeamAssemblyPage"));
+const WorkforceInsightsPage = lazy(() => import("./views/WorkforceInsightsPage"));
+const CompanyAuditPage = lazy(() => import("./views/CompanyAuditPage"));
 const WatchDemoPage = lazy(() => import("./views/WatchDemoPage"));
 const RoleSkillBuilderPage = lazy(() => import("./views/RoleSkillBuilderPage"));
 const EngineerProfileSetupPage = lazy(() => import("./views/EngineerProfileSetupPage"));
 const EngineerPersonalBusinessProfilePage = lazy(() => import("./views/EngineerPersonalBusinessProfilePage"));
+const AccountRecoveryPage = lazy(() => import("./views/AccountRecoveryPage"));
 
 function PageLoadingFallback() {
   return (
@@ -80,6 +85,9 @@ const publicDirectPaths = new Set([
   "/",
   "/login",
   "/signin",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
   "/company/signup",
   "/engineer/signup",
   "/resourcing/signup",
@@ -300,6 +308,9 @@ const { page, setPage } = useNavigation();
       <Route path="/engineer/product-awareness" element={renderPersistentShell(<ProductAwarenessExperiencePage />)} />
       <Route path="/login" element={renderPersistentShell(<DemoLoginPage onSignedIn={handleDemoSignedIn} />)} />
       <Route path="/signin" element={renderPersistentShell(<DemoLoginPage onSignedIn={handleDemoSignedIn} />)} />
+      <Route path="/forgot-password" element={<Suspense fallback={<PageLoadingFallback/>}><AccountRecoveryPage/></Suspense>} />
+      <Route path="/reset-password" element={<Suspense fallback={<PageLoadingFallback/>}><AccountRecoveryPage/></Suspense>} />
+      <Route path="/verify-email" element={<Suspense fallback={<PageLoadingFallback/>}><AccountRecoveryPage/></Suspense>} />
       <Route path="/company/signup" element={<CompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
       <Route path="/engineer/signup" element={<EngineerSignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
       <Route path="/resourcing/signup" element={<ResourcingCompanySignUpWizard onCancel={() => setPage(Page.LOGIN)} />} />
@@ -313,7 +324,15 @@ const { page, setPage } = useNavigation();
       <Route path="/engineer/skills-profile" element={renderPersistentShell(<RoleSkillBuilderPage />)} />
       <Route path="/role-skills" element={renderPersistentShell(<RoleSkillBuilderPage />)} />
       <Route path="/company/engineers" element={renderPersistentShell(<CompanyEngineerDashboardPage />)} />
+      <Route path="/company/talent-pool" element={renderPersistentShell(<CompanyTalentPoolPage />)} />
+      <Route path="/company/team-assembly" element={renderPersistentShell(<TeamAssemblyPage />)} />
+      <Route path="/company/workforce-insights" element={renderPersistentShell(<WorkforceInsightsPage />)} />
+      <Route path="/company/audit" element={renderPersistentShell(<CompanyAuditPage />)} />
       <Route path="/resourcing/engineers" element={renderPersistentShell(<CompanyEngineerDashboardPage />)} />
+      <Route path="/resourcing/talent-pool" element={renderPersistentShell(<CompanyTalentPoolPage />)} />
+      <Route path="/resourcing/team-assembly" element={renderPersistentShell(<TeamAssemblyPage />)} />
+      <Route path="/resourcing/workforce-insights" element={renderPersistentShell(<WorkforceInsightsPage />)} />
+      <Route path="/resourcing/audit" element={renderPersistentShell(<CompanyAuditPage />)} />
       <Route path="*" element={renderLegacyPage()} />
     </Routes>
   );

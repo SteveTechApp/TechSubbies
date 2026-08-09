@@ -14,7 +14,6 @@ const StatusBadge = ({ status }: { status: string }) => {
     const STATUS_INFO: Record<string, { text: string, color: string }> = {
         submitted: { text: 'Submitted', color: 'bg-yellow-100 text-yellow-800' },
         approved: { text: 'Approved', color: 'bg-blue-100 text-blue-800' },
-        paid: { text: 'Paid', color: 'bg-green-100 text-green-800' },
     };
     const info = STATUS_INFO[status] || { text: status, color: 'bg-gray-200 text-gray-800' };
     return <span className={`px-3 py-1 text-xs font-bold rounded-full ${info.color}`}>{info.text}</span>;
@@ -25,12 +24,9 @@ export const TimesheetRow = ({ timesheet, contract, userRole }: TimesheetRowProp
     const { approveTimesheet } = useAppContext();
     const [isLoading, setIsLoading] = useState(false);
     
-    const totalAmount = Number(contract.amount) * timesheet.days;
-
     const handleApprove = async () => {
         setIsLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-        approveTimesheet(contract.id, timesheet.id);
+        await approveTimesheet(contract.id, timesheet.id);
         setIsLoading(false);
     };
 
@@ -39,7 +35,7 @@ export const TimesheetRow = ({ timesheet, contract, userRole }: TimesheetRowProp
         if ((userRole === Role.COMPANY || userRole === Role.ADMIN) && timesheet.status === 'submitted') {
             return (
                 <button onClick={handleApprove} className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700">
-                    Approve & Pay
+                    Approve Time
                 </button>
             );
         }
@@ -50,7 +46,7 @@ export const TimesheetRow = ({ timesheet, contract, userRole }: TimesheetRowProp
         <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md border">
             <div>
                 <p className="font-semibold">{timesheet.period}</p>
-                <p className="text-sm text-gray-600">{timesheet.days} days at {contract.currency}{contract.amount}/day = <span className="font-bold">{contract.currency}{totalAmount.toFixed(2)}</span></p>
+                <p className="text-sm text-gray-600">{timesheet.hours || ((timesheet.days || 0) * 8)} hours{timesheet.workSummary?` · ${timesheet.workSummary}`:''}</p>
             </div>
             <div className="flex items-center gap-4">
                 <StatusBadge status={timesheet.status} />

@@ -295,8 +295,9 @@ function CompanyEngineerDashboardPage() {
             and control individual engineer records without removing engineer independence.
           </p>
         </section>
-        <aside style={styles.pill}>
-          {demoCompanyAccount.name} · {demoCompanyAccount.tier.toUpperCase()} tier
+        <aside style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "flex-end" }}>
+          <span style={styles.pill}>{demoCompanyAccount.name} · {demoCompanyAccount.tier.toUpperCase()} tier</span>
+          <a href="/resourcing/talent-pool" style={{ ...styles.pill, textDecoration: "none" }}>Open private talent pool</a>
         </aside>
       </header>
 

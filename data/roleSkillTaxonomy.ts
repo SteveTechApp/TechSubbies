@@ -1,4 +1,6 @@
 import type { RoleSkillDefinition, SkillRatingLabel } from "../types/roleSkills";
+import { marketRoleExtensions } from "./marketRoleExtensions";
+import { roleDistinctions } from "./roleDistinctions";
 
 export const skillRatingLabels: SkillRatingLabel[] = [
   { value: 0, label: "0", description: "No experience" },
@@ -47,7 +49,7 @@ export const commonProductAndBrandTags = [
   "SDVoE",
 ];
 
-export const roleSkillTaxonomy: RoleSkillDefinition[] = [
+const roleSkillTaxonomySeed: RoleSkillDefinition[] = [
   {
     id: "av-installation-engineer",
     market: "av",
@@ -383,6 +385,83 @@ export const roleSkillTaxonomy: RoleSkillDefinition[] = [
       },
     ],
   },
+  {
+    id: "av-control-systems-programmer", market: "av", family: "programming", title: "AV Control Systems Programmer", shortTitle: "Control Programmer", level: "specialist",
+    summary: "Programs, integrates and faults control processors, touch panels, device drivers and room automation.", suitableFor: ["Control programming", "GUI deployment", "System integration", "Code fault-finding"], typicalProjects: ["Crestron commissioning", "Extron control", "Q-SYS control", "Driver integration"],
+    recommendedTags: ["Crestron", "Extron", "Q-SYS", "AMX", "Lua", "SIMPL Windows"], evidenceTypes: ["Manufacturer certification", "Code sample", "Project reference", "Commissioning record"],
+    skillGroups: [{ id: "control-programming", title: "Programming and integration", description: "Platform programming is distinct from installation competence.", skills: [
+      { id: "control-logic", label: "Design and debug control logic", description: "Can build maintainable sequences, state and error handling.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["SIMPL Windows", "Lua"] },
+      { id: "control-gui", label: "Build and deploy control interfaces", description: "Can implement usable touch-panel or web control interfaces.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["Crestron", "Extron"] },
+      { id: "control-drivers", label: "Integrate third-party devices and APIs", description: "Can work with serial, IP and documented APIs.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["TCP/IP", "RS-232", "REST"] },
+      { id: "control-handover", label: "Version, document and hand over code", description: "Can provide source, backups and operational notes.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["Git"] },
+    ] }],
+  },
+  {
+    id: "av-lead-engineer", market: "av", family: "installation", title: "AV Lead Engineer / Site Lead", shortTitle: "AV Site Lead", level: "lead",
+    summary: "Owns site delivery, coordinates engineers, resolves installation issues and reports progress without implying specialist programming competence.", suitableFor: ["Site leadership", "Team supervision", "Quality control", "Client coordination"], typicalProjects: ["Multi-room rollout", "Construction site delivery", "Installation recovery"], recommendedTags: ["RAMS", "QA", "Snagging", "As-built drawings"], evidenceTypes: ["Lead reference", "Handover pack", "Site report", "Project photos"],
+    skillGroups: [{ id: "site-leadership", title: "Delivery leadership", description: "Responsibility, coordination and quality assurance.", skills: [
+      { id: "lead-work-plan", label: "Plan and allocate site work", description: "Can sequence work and brief a mixed-skill team.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: [] },
+      { id: "lead-drawings", label: "Interpret drawings and identify conflicts", description: "Can resolve or escalate design and site discrepancies.", requiredForGoodMatch: true, evidenceRecommended: false, suggestedTags: ["As-built drawings"] },
+      { id: "lead-qa", label: "Own QA, snagging and completion evidence", description: "Can inspect work and produce reliable completion records.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["QA"] },
+      { id: "lead-client", label: "Coordinate with client and project manager", description: "Can communicate progress, blockers and change impact.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: [] },
+    ] }],
+  },
+  {
+    id: "video-commissioning-engineer", market: "av", family: "commissioning", title: "Video Commissioning Engineer", shortTitle: "Video Commissioning", level: "specialist",
+    summary: "Commissions video distribution, displays and processing, with evidence-based EDID, HDCP, colour and scaling fault diagnosis.", suitableFor: ["Video commissioning", "Matrix systems", "Signal fault-finding", "Display calibration"], typicalProjects: ["Boardrooms", "Video walls", "Signal distribution", "Handover"], recommendedTags: ["Extron", "Crestron", "Lightware", "Kramer", "HDMI", "HDBaseT", "EDID", "HDCP"], evidenceTypes: ["Commissioning sheet", "Test results", "Manufacturer certification"],
+    skillGroups: [{ id: "video-commissioning", title: "Video systems", description: "End-to-end video configuration and diagnosis.", skills: [
+      { id: "video-signal-flow", label: "Validate end-to-end video signal flow", description: "Can isolate source, transport, processing and sink faults.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["HDMI", "HDBaseT"] },
+      { id: "video-edid-hdcp", label: "Diagnose EDID and HDCP", description: "Can resolve capability and content-protection failures.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["EDID", "HDCP"] },
+      { id: "video-scaling-colour", label: "Configure scaling, colour and HDR", description: "Can match formats across processors and displays.", requiredForGoodMatch: true, evidenceRecommended: false, suggestedTags: ["HDR", "4K"] },
+      { id: "video-docs", label: "Produce video commissioning records", description: "Can record firmware, formats, routes and acceptance results.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: [] },
+    ] }],
+  },
+  {
+    id: "it-service-desk-engineer", market: "it", family: "support", title: "IT Service Desk Engineer", shortTitle: "Service Desk", level: "skilled",
+    summary: "Provides structured L1/L2 user support, triage, identity, endpoint and application troubleshooting with disciplined escalation.", suitableFor: ["Help desk", "Desktop support", "User onboarding", "Incident triage"], typicalProjects: ["Service desk cover", "Office support", "Device rollout"], recommendedTags: ["Windows 11", "macOS", "Microsoft 365", "Entra ID", "Intune", "ServiceNow", "Jira Service Management"], evidenceTypes: ["ITIL certification", "Ticket metrics", "Manager reference"],
+    skillGroups: [{ id: "service-desk", title: "Support delivery", description: "Technical triage plus service-management discipline.", skills: [
+      { id: "sd-triage", label: "Triage and prioritise incidents", description: "Can establish impact, urgency and a reproducible fault description.", requiredForGoodMatch: true, evidenceRecommended: false, suggestedTags: ["ITIL"] },
+      { id: "sd-endpoints", label: "Support Windows and macOS endpoints", description: "Can resolve common device, peripheral and application issues.", requiredForGoodMatch: true, evidenceRecommended: false, suggestedTags: ["Windows 11", "macOS"] },
+      { id: "sd-identity", label: "Support accounts, MFA and permissions", description: "Can safely resolve common identity and access requests.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["Entra ID", "MFA"] },
+      { id: "sd-ticketing", label: "Document, communicate and escalate tickets", description: "Can maintain useful notes, SLAs and escalation context.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["ServiceNow", "Jira Service Management"] },
+    ] }],
+  },
+  {
+    id: "it-infrastructure-engineer", market: "it", family: "infrastructure", title: "Server / Infrastructure Engineer", shortTitle: "Infrastructure Engineer", level: "specialist",
+    summary: "Builds and supports server, virtualisation, storage, directory, backup and cloud infrastructure.", suitableFor: ["Server deployment", "Infrastructure support", "Migration", "Backup recovery"], typicalProjects: ["Windows Server migration", "VMware support", "Azure hybrid infrastructure"], recommendedTags: ["Windows Server", "Linux", "VMware", "Hyper-V", "Azure", "Active Directory", "Veeam"], evidenceTypes: ["Certification", "Change record", "Architecture diagram", "Project reference"],
+    skillGroups: [{ id: "infrastructure", title: "Core infrastructure", description: "Server and platform engineering competence.", skills: [
+      { id: "infra-server", label: "Administer Windows or Linux servers", description: "Can deploy, patch and diagnose production server workloads.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["Windows Server", "Linux"] },
+      { id: "infra-virtual", label: "Operate virtualisation platforms", description: "Can manage hosts, guests, storage and recovery.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["VMware", "Hyper-V"] },
+      { id: "infra-directory", label: "Administer directory and core services", description: "Can support AD, DNS, DHCP, policy and identity dependencies.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["Active Directory", "DNS", "DHCP"] },
+      { id: "infra-backup", label: "Validate backup and recovery", description: "Can test recoverability rather than assume job success.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["Veeam"] },
+    ] }],
+  },
+  {
+    id: "software-developer", market: "it", family: "programming", title: "Software Developer", shortTitle: "Developer", level: "specialist",
+    summary: "Designs, builds, tests and maintains software; the profile records language, framework, data and delivery experience rather than a generic developer label.", suitableFor: ["Web applications", "APIs", "Automation", "Application maintenance"], typicalProjects: ["Feature delivery", "API integration", "Legacy modernisation"], recommendedTags: ["TypeScript", "JavaScript", "React", "Node.js", "Python", ".NET", "Java", "SQL", "Git", "Docker"], evidenceTypes: ["Code portfolio", "Repository", "Technical interview", "Project reference"],
+    skillGroups: [{ id: "software-delivery", title: "Software delivery", description: "Engineering ability must be qualified by stack and evidence.", skills: [
+      { id: "dev-language", label: "Production programming in declared languages", description: "Can implement maintainable production code in the stated stack.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["TypeScript", "Python", ".NET", "Java"] },
+      { id: "dev-testing", label: "Automated unit and integration testing", description: "Can design reliable tests and diagnose failures.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["Vitest", "Jest", "Pytest"] },
+      { id: "dev-data-api", label: "Work with APIs and data stores", description: "Can design integrations, validation and persistence safely.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["REST", "SQL"] },
+      { id: "dev-delivery", label: "Use source control and delivery pipelines", description: "Can review, version and deploy changes through a team workflow.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["Git", "Docker", "CI/CD"] },
+    ] }],
+  },
+  {
+    id: "it-manager", market: "it", family: "infrastructure", title: "IT Manager / Technical Service Manager", shortTitle: "IT Manager", level: "lead",
+    summary: "Owns IT service delivery, suppliers, risk, budgets, change and team performance; management competence is recorded separately from hands-on engineering depth.", suitableFor: ["IT operations leadership", "Service ownership", "Supplier management", "Technical governance"], typicalProjects: ["Service improvement", "Technology roadmap", "Operational recovery"], recommendedTags: ["ITIL", "ISO 27001", "Microsoft 365", "Azure", "ServiceNow", "Budget management"], evidenceTypes: ["Leadership reference", "Service metrics", "Certification", "Programme case study"],
+    skillGroups: [{ id: "it-management", title: "Service leadership", description: "Operational accountability and decision-making.", skills: [
+      { id: "itm-service", label: "Own service levels and operational performance", description: "Can manage incidents, problems, capacity and continual improvement.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["ITIL"] },
+      { id: "itm-risk", label: "Manage security, continuity and technology risk", description: "Can assess controls, recovery readiness and risk treatment.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["ISO 27001"] },
+      { id: "itm-people", label: "Lead technical teams and suppliers", description: "Can allocate capability, develop people and hold vendors accountable.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: [] },
+      { id: "itm-roadmap", label: "Plan budgets, lifecycle and technical roadmap", description: "Can translate business needs into prioritised, costed change.", requiredForGoodMatch: true, evidenceRecommended: true, suggestedTags: ["Budget management"] },
+    ] }],
+  },
+  ...marketRoleExtensions,
 ];
+
+export const roleSkillTaxonomy: RoleSkillDefinition[] = roleSkillTaxonomySeed.map((role) => ({
+  ...role,
+  ...(roleDistinctions[role.id] || {}),
+}));
 
 export const defaultRoleSkillRoleId = "av-installation-engineer";

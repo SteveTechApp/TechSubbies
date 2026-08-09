@@ -11,6 +11,7 @@ import { AddNewEngineerView } from './ResourcingDashboard/AddNewEngineerView';
 import { MessagesView } from '../views/MessagesView';
 import { PlacementsView } from './ResourcingDashboard/PlacementsView';
 import { AnalyticsView } from './ResourcingDashboard/AnalyticsView';
+import { InvoicesView } from './InvoicesView';
 
 export const ResourcingDashboard = () => {
     const { user } = useAuth();
@@ -50,6 +51,8 @@ export const ResourcingDashboard = () => {
                 return <MessagesView />;
             case 'Analytics':
                 return <AnalyticsView />;
+            case 'Membership Invoices':
+                return <InvoicesView />;
             case 'Settings':
                 return <SettingsView profile={resourcingProfile} onSave={() => {}} />;
             case 'Add New Engineer':

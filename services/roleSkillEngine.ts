@@ -58,6 +58,9 @@ export function filterRoleSkillDefinitions(filter: RoleSkillFilter): RoleSkillDe
       role.suitableFor.join(" "),
       role.typicalProjects.join(" "),
       role.recommendedTags.join(" "),
+      (role.aliases || []).join(" "),
+      (role.coreResponsibilities || []).join(" "),
+      (role.workContexts || []).join(" "),
       role.skillGroups.map((group) => group.title + " " + group.skills.map((skill) => skill.label).join(" ")).join(" "),
     ].join(" "));
 
@@ -81,6 +84,14 @@ export function getRoleFamilies(): Array<RoleFamily | "all"> {
     "uc",
     "security",
     "infrastructure",
+    "design",
+    "project-delivery",
+    "field-service",
+    "live-events",
+    "cloud-platform",
+    "data",
+    "quality-assurance",
+    "architecture",
   ];
 }
 

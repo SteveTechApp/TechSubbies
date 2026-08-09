@@ -51,6 +51,7 @@ export const EngineerDashboard = () => {
             case 'Contracts':
                 return <ContractsView setActiveView={setActiveView} />;
             case 'Invoices':
+            case 'Membership Invoices':
                 return <InvoicesView />;
             case 'Messages':
                 return <MessagesView />;

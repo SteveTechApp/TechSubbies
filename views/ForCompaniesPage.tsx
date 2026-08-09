@@ -46,7 +46,7 @@ export const ForCompaniesPage = ({ onNavigate }: ForCompaniesPageProps) => {
               Create, send, and e-sign contracts directly on the platform. Choose from milestone-based SOWs or simple Day Rate agreements.
             </HighlightCard>
             <HighlightCard icon={KanbanSquare} title="Simplified Project Management">
-              Approve milestones or timesheets with a single click. For SOW projects, fund a secure escrow account for total peace of mind.
+              Approve milestones or timesheets with a clear audit trail. Job invoicing and payment remain directly between your company and the engineer.
             </HighlightCard>
             <HighlightCard icon={Briefcase} title="Build Your Dream Team">
               Don't just fill a role, build a flexible team. Use our Project Planner to map out your freelance needs for entire projects from start to finish.

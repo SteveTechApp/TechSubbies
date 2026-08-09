@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { Contract } from '../types';
 import { X, FileText, CheckCircle } from './Icons';
-import { eSignatureService } from '../services/eSignatureService';
 
 interface SignContractModalProps {
     isOpen: boolean;
     onClose: () => void;
     contract: Contract;
-    onSubmit: (signatureName: string) => void;
+    onSubmit: (signatureName: string) => Promise<void>;
 }
 
 export const SignContractModal = ({ isOpen, onClose, contract, onSubmit }: SignContractModalProps) => {
@@ -23,14 +22,12 @@ export const SignContractModal = ({ isOpen, onClose, contract, onSubmit }: SignC
             return;
         }
         setIsSigning(true);
-        // Simulate an e-signature API call
-        await eSignatureService.createSignatureRequest(contract.description, signatureName, 'test@example.com');
+        await onSubmit(signatureName);
         setIsSigning(false);
-        onSubmit(signatureName);
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-[300] p-4" onClick={onClose}>
             <div
                 className="bg-white rounded-lg m-4 max-w-3xl w-full relative transform transition-all duration-300 max-h-[90vh] flex flex-col"
                 onClick={e => e.stopPropagation()}
@@ -69,6 +66,7 @@ export const SignContractModal = ({ isOpen, onClose, contract, onSubmit }: SignC
                             disabled={!agreed}
                         />
                         <button
+                            data-testid="contract-sign-submit"
                             onClick={handleSign}
                             disabled={!agreed || !signatureName.trim() || isSigning}
                             className="flex items-center justify-center px-6 py-2 bg-green-600 text-white font-bold rounded-md hover:bg-green-700 disabled:bg-gray-400"

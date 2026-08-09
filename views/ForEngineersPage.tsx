@@ -43,7 +43,7 @@ export const ForEngineersPage = ({ onNavigate }: ForEngineersPageProps) => {
               No recruiters in the middle. Communicate, negotiate, and sign contracts directly with the hiring companies.
             </HighlightCard>
             <HighlightCard icon={DollarSign} title="Secure & Prompt Payments">
-                Utilize our escrow system for milestone projects. Once work is approved, payment is released. No more chasing invoices.
+                Record agreed scope, signatures, milestones and approved timesheets. Job invoicing and payment stay directly between you and the client.
             </HighlightCard>
              <HighlightCard icon={Users} title="Build Your Network">
                 Every completed contract adds a client to your permanent network, making it easy to get repeat work from companies who trust you.
@@ -80,7 +80,7 @@ export const ForEngineersPage = ({ onNavigate }: ForEngineersPageProps) => {
                  <div className="text-center md:text-left">
                     <div className="text-5xl font-extrabold text-blue-100 mb-2">04</div>
                     <h3 className="text-2xl font-bold mb-2">Get Paid & Grow</h3>
-                    <p className="text-gray-600">Submit timesheets or milestones for approval. Get paid securely and on time. Every completed job builds your reputation and network.</p>
+                    <p className="text-gray-600">Submit timesheets or milestones for client approval. TechSubbies records completion and builds your reputation; it does not process job payments.</p>
                 </div>
             </div>
         </div>

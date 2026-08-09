@@ -21,7 +21,7 @@ export const FAQ_DATA: FaqData = {
         },
         {
             question: "How do I get paid?",
-            answer: "We use a secure, integrated payment system. For Statement of Work (SOW) contracts, the client funds project milestones into an escrow account before you begin. Once you complete the work and it's approved, the funds are automatically released to you. For Day Rate contracts, you submit timesheets for approval, and payment is processed accordingly.",
+            answer: "You agree rates, invoicing arrangements and payment directly with the client. TechSubbies records contracts, signatures, delivery milestones and approved timesheets, but it never collects job funds, holds escrow, issues assignment invoices or pays engineers. The only invoices issued by TechSubbies are for platform membership.",
         },
         {
             question: "What is the 'Security Net Guarantee'?",
@@ -39,7 +39,7 @@ export const FAQ_DATA: FaqData = {
         },
         {
             question: "How do contracts work on the platform?",
-            answer: "You can create and send legally binding contracts directly through TechSubbies.com. Choose between a milestone-based Statement of Work (SOW) or a simple Day Rate agreement. Both parties e-sign on the platform, creating a secure and centralized record of your agreement.",
+            answer: "You can create and send direct agreements through TechSubbies.com using a Statement of Work or Day Rate structure. Both parties e-sign, creating a central record of scope and acceptance. Commercial payment remains outside TechSubbies.",
         },
         {
             question: "What is a 'Talent Pool'?",
@@ -53,7 +53,7 @@ export const FAQ_DATA: FaqData = {
         },
         {
             question: "How are disputes handled?",
-            answer: "All contracts on the platform are direct agreements between the Company and the Engineer. TechSubbies.com is not a party to these agreements. While we provide the framework and secure payment system, any disputes regarding work quality or scope must be resolved directly between the two parties.",
+            answer: "All contracts on the platform are direct agreements between the Company and the Engineer. TechSubbies.com is not a party to these agreements and does not process job payments. Disputes regarding work quality, scope, invoicing or payment must be resolved directly between the two parties.",
         },
         {
             question: "How is my data protected?",

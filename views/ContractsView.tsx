@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../context/InteractionContext';
 import { Contract, ContractStatus, UserProfile } from '../types';
-import { FileText, Calendar, DollarSign } from '../components/Icons';
+import { FileText, Calendar } from '../components/Icons';
 import { formatDisplayDate } from '../utils/dateFormatter';
 import { ContractDetailsView } from './ContractDetailsView';
 
@@ -31,7 +31,7 @@ const ContractCard = ({ contract, otherParty, onSelect }: ContractCardProps) => 
              <span className="text-xs font-bold text-gray-500">{contract.id}</span>
         </div>
         <div className="mt-3 pt-3 border-t text-sm text-gray-600 flex justify-between">
-            <span className="flex items-center"><DollarSign size={14} className="mr-1.5"/>{contract.currency}{typeof contract.amount === 'number' ? contract.amount.toLocaleString() : contract.amount}</span>
+            <span className="flex items-center">Direct agreement</span>
             <span className="flex items-center"><Calendar size={14} className="mr-1.5"/>{formatDisplayDate(new Date())}</span>
         </div>
     </button>
@@ -55,10 +55,11 @@ export const ContractsView = ({ setActiveView }: ContractsViewProps) => {
     if (!user) return null;
 
     if (selectedContract) {
+        const currentContract=contracts.find(item=>item.id===selectedContract.id)||selectedContract;
         return (
             <div>
                 <button onClick={() => setSelectedContract(null)} className="text-blue-600 hover:underline mb-4">&larr; Back to All Contracts</button>
-                <ContractDetailsView contract={selectedContract} />
+                <ContractDetailsView contract={currentContract} />
             </div>
         );
     }

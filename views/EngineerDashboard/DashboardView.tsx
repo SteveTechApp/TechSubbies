@@ -34,8 +34,8 @@ export const DashboardView = ({ engineerProfile, onUpgradeTier, setActiveView, b
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard icon={User} value={engineerProfile.profileViews.toString()} label="Profile Views" colorClass="bg-blue-500" />
-                <StatCard icon={Search} value={engineerProfile.searchAppearances.toString()} label="Search Appearances" colorClass="bg-green-500" />
+                <StatCard icon={User} value={String(engineerProfile.profileViews || 0)} label="Profile Views" colorClass="bg-blue-500" />
+                <StatCard icon={Search} value={String(engineerProfile.searchAppearances || 0)} label="Search Appearances" colorClass="bg-green-500" />
                 <StatCard icon={Briefcase} value={myApplications.length.toString()} label="Jobs Applied For" colorClass="bg-indigo-500" />
                 <StatCard icon={Star} value={averageRating.toFixed(1)} label="Average Rating" colorClass="bg-yellow-500" />
             </div>

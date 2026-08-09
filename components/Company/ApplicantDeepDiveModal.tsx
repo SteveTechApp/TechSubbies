@@ -24,7 +24,6 @@ export const ApplicantDeepDiveModal = ({ isOpen, onClose, job, engineer }: Appli
     const [analysis, setAnalysis] = useState<Analysis | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
-    const [isPaid, setIsPaid] = useState(false); // Simulate payment
 
     useEffect(() => {
         // Reset state when modal opens for a new applicant
@@ -32,18 +31,13 @@ export const ApplicantDeepDiveModal = ({ isOpen, onClose, job, engineer }: Appli
             setAnalysis(null);
             setIsLoading(false);
             setError('');
-            setIsPaid(false);
         }
     }, [isOpen, engineer]);
 
-    const handlePurchaseAndAnalyze = async () => {
+    const handleAnalyze = async () => {
         setIsLoading(true);
         setError('');
         
-        // Simulate payment API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setIsPaid(true);
-
         const result = await getApplicantDeepDive(job, engineer);
         if (result.error) {
             setError(result.error);
@@ -58,7 +52,7 @@ export const ApplicantDeepDiveModal = ({ isOpen, onClose, job, engineer }: Appli
             return (
                 <div className="text-center py-12">
                     <Loader className="animate-spin w-10 h-10 text-blue-600 mx-auto mb-4" />
-                    <p className="font-semibold">{isPaid ? 'Generating AI Analysis...' : 'Processing Payment...'}</p>
+                    <p className="font-semibold">Generating applicant analysis…</p>
                 </div>
             );
         }
@@ -90,14 +84,13 @@ export const ApplicantDeepDiveModal = ({ isOpen, onClose, job, engineer }: Appli
                 </div>
             );
         }
-        // Initial state: Payment prompt
         return (
             <div className="text-center py-8">
                 <BrainCircuit size={40} className="mx-auto text-purple-500 mb-4" />
-                <h3 className="text-xl font-bold">Unlock In-Depth Analysis</h3>
-                <p className="text-gray-600 my-2">Get an AI-powered deep dive into this candidate's suitability, including strengths, potential weaknesses, and tailored interview questions.</p>
-                <button onClick={handlePurchaseAndAnalyze} className="mt-4 px-6 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700">
-                    Pay £5.00 to Continue
+                <h3 className="text-xl font-bold">Generate In-Depth Analysis</h3>
+                <p className="text-gray-600 my-2">Use your TechSubbies membership tools to examine declared suitability, areas to verify and tailored interview questions. No separate purchase is required.</p>
+                <button onClick={handleAnalyze} className="mt-4 px-6 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700">
+                    Generate Analysis
                 </button>
             </div>
         );

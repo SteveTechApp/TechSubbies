@@ -8,6 +8,9 @@ import {
   type RoleExpectation,
   type SkillRequirement,
 } from "../data/roleExpectations";
+import { checkOpportunityReadiness } from "../services/trustEngine";
+import { useAppContext } from "../context/InteractionContext";
+import { toCanonicalRoleRequirement } from "../services/canonicalCapability";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -35,6 +38,7 @@ type EngineerNeed = {
   workingArrangement: "supervised" | "independent" | "lead";
   skills: SkillRequirement[];
   tags: string;
+  prerequisites: string[];
 };
 
 const emptyProject: ProjectDetails = {
@@ -68,6 +72,7 @@ function makeNeed(expectationId = roleExpectations[0].id): EngineerNeed {
     workingArrangement: expectation.canLeadOthers ? "lead" : expectation.canWorkAlone ? "independent" : "supervised",
     skills: cloneSkillRequirements(expectation.requiredSkills),
     tags: "",
+    prerequisites: [],
   };
 }
 
@@ -160,11 +165,14 @@ function expectationWarnings(need: EngineerNeed, expectation: RoleExpectation, p
 }
 
 export default function LiveOpportunityIntakePage() {
+  const { postJob } = useAppContext();
   const [step, setStep] = useState<Step>(1);
   const [project, setProject] = useState<ProjectDetails>(emptyProject);
   const [needs, setNeeds] = useState<EngineerNeed[]>([makeNeed()]);
   const [selectedNeedId, setSelectedNeedId] = useState<string>("");
   const [newSkillName, setNewSkillName] = useState("");
+  const [publishState, setPublishState] = useState<"idle" | "publishing" | "published">("idle");
+  const [publishError, setPublishError] = useState("");
 
   const selectedNeed = needs.find((need) => need.id === selectedNeedId) || needs[0];
   const selectedExpectation = selectedNeed ? getRoleExpectation(selectedNeed.expectationId) : roleExpectations[0];
@@ -189,6 +197,23 @@ export default function LiveOpportunityIntakePage() {
 
     return Math.round((values.filter(Boolean).length / values.length) * 100);
   }, [project]);
+
+  const publicationReadiness = useMemo(() => {
+    const warnings = needs.flatMap((need) => {
+      const expectation = getRoleExpectation(need.expectationId);
+      return checkOpportunityReadiness({
+        roleId: need.expectationId,
+        roleTitle: expectation.roleTitle,
+        workingArrangement: need.workingArrangement,
+        prerequisites: need.prerequisites,
+        location: project.siteLocation,
+        startDate: need.startDate,
+        scope: project.notes,
+      }).warnings.map((warning) => `${expectation.roleTitle}: ${warning}`);
+    });
+    if (!project.projectName.trim()) warnings.unshift("Add a project name.");
+    return { ready: warnings.length === 0, warnings: [...new Set(warnings)] };
+  }, [needs, project]);
 
   const groupedExpectations = useMemo(() => {
     return {
@@ -221,6 +246,32 @@ export default function LiveOpportunityIntakePage() {
       workingArrangement: expectation.canLeadOthers ? "lead" : expectation.canWorkAlone ? "independent" : "supervised",
       skills: cloneSkillRequirements(expectation.requiredSkills),
     });
+  }
+
+  async function publishOpportunity() {
+    if (!publicationReadiness.ready || publishState === "publishing") return;
+    setPublishState("publishing");
+    setPublishError("");
+    try {
+      await postJob({
+        title: project.projectName,
+        roleId: needs[0].expectationId,
+        roleIds: needs.map((need) => need.expectationId),
+        description: project.notes,
+        location: project.siteLocation,
+        status: "active",
+        projectDetails: project,
+        engineerNeeds: needs,
+        skillRequirements: needs.flatMap((need) => need.skills.map((skill) => ({ ...skill, roleId: need.expectationId }))),
+        prerequisites: needs.flatMap((need) => need.prerequisites),
+        jobSchemaVersion: 2,
+        roleRequirements: needs.map(toCanonicalRoleRequirement),
+      });
+      setPublishState("published");
+    } catch (error: any) {
+      setPublishError(error.message || "Could not publish this opportunity.");
+      setPublishState("idle");
+    }
   }
 
   function addNeed() {
@@ -557,7 +608,7 @@ export default function LiveOpportunityIntakePage() {
 
             <div className="mt-6 flex justify-end">
               <button type="button" onClick={() => setStep(3)} className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200">
-                Continue to skill levels
+                Continue to prerequisites
               </button>
             </div>
           </main>
@@ -594,60 +645,20 @@ export default function LiveOpportunityIntakePage() {
             <section className="rounded-3xl border border-white/10 bg-slate-900 p-6">
               <h2 className="text-xl font-bold text-cyan-300">{selectedExpectation.roleTitle}</h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-                These skills are auto-populated from the selected role expectation. Adjust only where the project genuinely changes the requirement.
+                TechSubbies applies the normal capability expectations automatically. Only add software, manufacturer or technical requirements that would genuinely disqualify an otherwise suitable engineer.
               </p>
-
-              <div className="mt-6 grid gap-3 md:grid-cols-[1fr_auto]">
-                <input className={inputClass()} value={newSkillName} onChange={(event) => setNewSkillName(event.target.value)} placeholder="Add another required skill..." />
-                <button type="button" onClick={addSkill} className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200">
-                  Add skill
-                </button>
-              </div>
-
-              <div className="mt-5 space-y-3">
-                {selectedNeed.skills.map((skill) => (
-                  <article key={skill.skill} className="rounded-2xl border border-white/10 bg-slate-950 p-4">
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div>
-                        <h3 className="font-bold text-white">{skill.skill}</h3>
-                        <p className="mt-1 text-xs text-slate-500">Minimum level {skill.minimumLevel} · importance {skill.importance}</p>
-                      </div>
-
-                      <button type="button" onClick={() => removeSkill(skill.skill)} className="self-start rounded-xl border border-red-300/40 px-3 py-2 text-xs font-bold text-red-200 hover:bg-red-300/10">
-                        Remove
-                      </button>
-                    </div>
-
-                    <div className="mt-4 grid gap-4 md:grid-cols-2">
-                      <Field label="Minimum competency">
-                        <select className={selectClass()} value={skill.minimumLevel} onChange={(event) => updateSkill(skill.skill, { minimumLevel: Number(event.target.value) as SkillRequirement["minimumLevel"] })}>
-                          <option value={0}>0 - Not required</option>
-                          <option value={1}>1 - Aware</option>
-                          <option value={2}>2 - Assisted</option>
-                          <option value={3}>3 - Competent</option>
-                          <option value={4}>4 - Advanced</option>
-                          <option value={5}>5 - Lead / specialist</option>
-                        </select>
-                      </Field>
-
-                      <Field label="Importance">
-                        <select className={selectClass()} value={skill.importance} onChange={(event) => updateSkill(skill.skill, { importance: Number(event.target.value) as SkillRequirement["importance"] })}>
-                          <option value={1}>1 - Useful</option>
-                          <option value={2}>2 - Helpful</option>
-                          <option value={3}>3 - Required</option>
-                          <option value={4}>4 - Important</option>
-                          <option value={5}>5 - Critical</option>
-                        </select>
-                      </Field>
-                    </div>
-                  </article>
-                ))}
+              <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950 p-5">
+                <h3 className="font-bold text-white">Included role expectations</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-400">{selectedExpectation.responsibilityStatement}</p>
+                <div className="mt-3 flex flex-wrap gap-2">{selectedNeed.skills.slice(0, 6).map((skill) => <span key={skill.skill} className="rounded-full border border-white/10 px-3 py-2 text-xs text-slate-300">{skill.skill}</span>)}</div>
               </div>
 
               <div className="mt-5">
-                <Field label="Supporting tags" hint="Tags are supporting search metadata only. They should not override skill level, evidence or site readiness.">
-                  <input className={inputClass()} value={selectedNeed.tags} onChange={(event) => updateNeed(selectedNeed.id, { tags: event.target.value })} placeholder="e.g. WyreStorm, Dante, Teams Rooms, London, night work" />
+                <Field label="Genuine prerequisites — maximum 3" hint="Examples: Crestron SIMPL programming, Q-SYS commissioning, Cisco Catalyst configuration. Do not add normal role skills here.">
+                  <div className="grid gap-3 md:grid-cols-[1fr_auto]"><input className={inputClass()} value={newSkillName} onChange={(event) => setNewSkillName(event.target.value)} placeholder="Required software, platform or manufacturer experience" /><button type="button" disabled={!newSkillName.trim() || selectedNeed.prerequisites.length >= 3} onClick={() => { const value=newSkillName.trim(); if(value && selectedNeed.prerequisites.length < 3) updateNeed(selectedNeed.id,{ prerequisites:[...selectedNeed.prerequisites,value] }); setNewSkillName(""); }} className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 disabled:opacity-40">Add prerequisite</button></div>
                 </Field>
+                <div className="mt-3 flex flex-wrap gap-2">{selectedNeed.prerequisites.map((item) => <button key={item} type="button" onClick={() => updateNeed(selectedNeed.id,{ prerequisites:selectedNeed.prerequisites.filter((value)=>value!==item) })} className="rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-xs font-bold text-amber-100">{item} ×</button>)}</div>
+                {selectedNeed.prerequisites.length >= 3 && <p className="mt-3 text-xs text-amber-200">Limit reached. More mandatory requirements may unnecessarily narrow the shortlist.</p>}
               </div>
 
               <div className="mt-6 flex justify-end">
@@ -665,6 +676,17 @@ export default function LiveOpportunityIntakePage() {
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
               This is the expectation package that should be visible to both the company and the engineer before invitation or acceptance.
             </p>
+
+            <section className={`mt-6 rounded-2xl border p-5 ${publicationReadiness.ready ? "border-emerald-300/30 bg-emerald-300/10" : "border-amber-300/30 bg-amber-300/10"}`}>
+              <div className={`font-bold ${publicationReadiness.ready ? "text-emerald-100" : "text-amber-100"}`}>
+                {publicationReadiness.ready ? "Ready to publish" : `${publicationReadiness.warnings.length} item(s) need attention before publishing`}
+              </div>
+              {!publicationReadiness.ready && (
+                <ul className="mt-3 space-y-1 text-sm leading-6 text-amber-50">
+                  {publicationReadiness.warnings.map((warning) => <li key={warning}>• {warning}</li>)}
+                </ul>
+              )}
+            </section>
 
             <section className="mt-6 rounded-2xl border border-white/10 bg-slate-950 p-5">
               <h3 className="text-lg font-bold text-white">{project.projectName || "Unnamed project"}</h3>
@@ -709,10 +731,11 @@ export default function LiveOpportunityIntakePage() {
                     <div className="mt-4 flex flex-wrap gap-2">
                       {need.skills.map((skill) => (
                         <span key={skill.skill} className="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-xs font-semibold text-cyan-100">
-                          {skill.skill}: L{skill.minimumLevel} / I{skill.importance}
+                          {skill.skill}
                         </span>
                       ))}
                     </div>
+                    {need.prerequisites.length > 0 && <div className="mt-4"><div className="text-sm font-bold text-amber-100">Mandatory prerequisites</div><div className="mt-2 flex flex-wrap gap-2">{need.prerequisites.map((item) => <span key={item} className="rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-xs font-bold text-amber-100">{item}</span>)}</div></div>}
 
                     <div className="mt-4 grid gap-3 md:grid-cols-2">
                       <div className="rounded-2xl border border-white/10 bg-slate-900 p-4">
@@ -739,6 +762,12 @@ export default function LiveOpportunityIntakePage() {
                 );
               })}
             </div>
+            <div className="mt-6 flex justify-end">
+              <button type="button" onClick={publishOpportunity} disabled={!publicationReadiness.ready || publishState !== "idle"} className="rounded-xl bg-cyan-300 px-6 py-3 text-sm font-bold text-slate-950 enabled:hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-40">
+                {publishState === "publishing" ? "Publishing…" : publishState === "published" ? "Opportunity published" : "Publish opportunity"}
+              </button>
+            </div>
+            {publishError && <p className="mt-3 text-right text-sm text-red-300">{publishError}</p>}
           </main>
         )}
       </div>

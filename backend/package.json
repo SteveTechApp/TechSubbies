@@ -7,16 +7,23 @@
     "dev": "tsx watch src/index.ts",
     "start": "node --import tsx src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:backup": "node scripts/backup-db.mjs",
+    "db:integrity": "node scripts/check-db.mjs",
+    "db:migrate": "node scripts/migrate-db.mjs",
+    "db:restore": "node scripts/restore-db.mjs",
+    "smoke": "node scripts/smoke-deployment.mjs"
   },
   "dependencies": {
+    "@google/genai": "^1.15.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
-    "zod": "^3.23.8",
-    "@google/genai": "^1.15.0"
+    "nodemailer": "^9.0.5",
+    "stripe": "^22.4.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -24,6 +31,7 @@
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^22.14.0",
+    "@types/nodemailer": "^8.0.1",
     "@types/supertest": "^6.0.2",
     "supertest": "^7.0.0",
     "tsx": "^4.19.2",

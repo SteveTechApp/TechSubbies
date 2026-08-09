@@ -9,7 +9,14 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check": "npm run typecheck && npm test && npm run build && npm test --prefix backend && npm run build --prefix backend",
+    "e2e:reset": "node tools/reset-e2e-db.mjs",
+    "e2e:backend": "cross-env DB_FILE=../data/techsubbies-e2e.db JWT_SECRET=techsubbies-e2e-secret-at-least-32-characters FRONTEND_ORIGIN=http://localhost:4173 PORT=4100 npm --prefix backend start",
+    "e2e:frontend": "cross-env VITE_API_BASE_URL=http://localhost:4100/api vite --port 4173",
+    "e2e:run": "cypress run",
+    "e2e:wait-and-run": "wait-on http://localhost:4100/api/health http://localhost:4173 && npm run e2e:run",
+    "e2e": "npm run e2e:reset && concurrently --kill-others --success command-test --names backend,frontend,test \"npm run e2e:backend\" \"npm run e2e:frontend\" \"npm run e2e:wait-and-run\""
   },
   "dependencies": {
     "@google/genai": "^1.15.0",
@@ -27,9 +34,13 @@
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "cypress": "^15.20.0",
     "jsdom": "^29.1.1",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "wait-on": "^8.0.5"
   }
 }

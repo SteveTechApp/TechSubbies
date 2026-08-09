@@ -1,34 +1,46 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# TechSubbies
 
-# Run and deploy your AI Studio app
+TechSubbies is a two-sided technical marketplace for companies, resourcing businesses, and engineers. The current product foundation covers canonical role/capability profiles, persisted opportunities and applications, explainable shortlisting, contracts, timesheets, membership billing, documents, and completion validation.
 
-This contains everything you need to run your app locally.
+## Repository layout
 
-View your app in AI Studio: https://ai.studio/apps/drive/1YybwIyYTK7ZoYAEVujEk_tBvqixA1CCF
+- `views/`, `components/`, `context/`, `services/`, `types/`: React/Vite application.
+- `backend/src/`: Express API, SQLite persistence, domain policy, and membership billing.
+- `cypress/e2e/`: persisted browser journeys.
+- `docs/ARCHITECTURE.md`: dependency boundaries and structural conventions.
+- `docs/DEVELOPMENT_PLAN.md`: phased delivery plan and exit criteria.
 
-## Run Locally
+## Local setup
 
-**Prerequisites:**  Node.js
+Requirements: Node.js 22.5 or newer.
 
+```powershell
+npm ci
+npm ci --prefix backend
+Copy-Item .env.local.example .env.local
+Copy-Item backend/.env.example backend/.env
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Start the API and frontend in separate terminals:
 
-## Compliance and certification model
+```powershell
+npm run dev --prefix backend
+npm run dev
+```
 
-TechSubbies includes a role-specific compliance taxonomy for safety, AV industry credentials, IT/networking certifications, manufacturer training, project management credentials, insurance, company standards and background checks.
+The frontend defaults to `http://localhost:5173`; the API defaults to `http://localhost:4000/api`.
 
-The compliance model is defined in:
+## Validation
 
-- `types/compliance.ts`
-- `data/compliance.ts`
-- `services/complianceEngine.ts`
-- `views/ComplianceStandardsPage.tsx`
-- `docs/TECHSUBBIES_COMPLIANCE_CERTIFICATION_MODEL.md`
+```powershell
+npm run check
+npm run e2e
+```
 
-Basic access stays open. Certificates increase trust and match confidence. Certificates become mandatory only when the project, site, customer, country or role genuinely requires them.
+`check` runs frontend typechecking, unit tests and build, followed by backend tests and build. The E2E command creates an isolated SQLite database and runs the marketplace golden path through Cypress.
+
+## Deployment
+
+Dockerfiles are provided for the frontend and backend, with local orchestration in `docker-compose.yml`. Configure secrets outside source control. Use `/api/health` for liveness and `/api/ready` for database readiness.
+
+Before any production launch, complete the production-data-store, billing reconciliation, audit, backup/restore, and observability exit criteria in the development plan.

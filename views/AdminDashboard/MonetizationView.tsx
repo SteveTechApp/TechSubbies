@@ -2,7 +2,6 @@
 // FIX: Corrected import path for useAppContext to resolve 'not a module' error.
 import { useAppContext } from '../../context/InteractionContext';
 import { StatCard } from '../../components/StatCard';
-import { TransactionType } from '../../types';
 import { DollarSign, Star, Zap, Megaphone, PlusCircle, Save, Image, TrendingUp } from '../../components/Icons';
 
 // Mock data for this simulation
@@ -13,17 +12,13 @@ const MOCK_AD_CAMPAIGNS = [
 ];
 
 export const MonetizationView = () => {
-    const { transactions } = useAppContext();
+    const { invoices } = useAppContext();
     
     // Calculate revenue streams from transactions
-    const subscriptionRevenue = transactions.filter(t => t.type === TransactionType.SUBSCRIPTION).reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    // FIX: Replaced non-existent TransactionTypes with actual types used for microtransactions.
-    const microtransactionRevenue = transactions
-        .filter(t => t.type === TransactionType.PLATFORM_CREDIT_PURCHASE || t.type === TransactionType.AI_DEEP_DIVE_PURCHASE)
-        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    const subscriptionRevenue = (invoices as any[]).filter(item=>item.status==='paid').reduce((sum,item)=>sum+Number(item.amountPence||0)/100,0);
     const adRevenue = MOCK_AD_CAMPAIGNS.reduce((sum, ad) => sum + ad.spend, 0);
 
-    const totalRevenue = subscriptionRevenue + microtransactionRevenue + adRevenue;
+    const totalRevenue = subscriptionRevenue + adRevenue;
 
     return (
         <div>
@@ -31,10 +26,10 @@ export const MonetizationView = () => {
                 <DollarSign size={30} className="mr-3"/>
                 Monetization Overview
             </h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <p className="mb-6 text-sm text-gray-600">Platform billing covers TechSubbies membership only. Job rates, invoices and payments are not platform revenue and are not tracked here.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <StatCard icon={TrendingUp} value={`£${totalRevenue.toLocaleString()}`} label="Total Revenue" colorClass="bg-green-500" />
                 <StatCard icon={Star} value={`£${subscriptionRevenue.toLocaleString()}`} label="Subscription Revenue" colorClass="bg-blue-500" />
-                <StatCard icon={Zap} value={`£${microtransactionRevenue.toLocaleString()}`} label="Microtransaction Revenue" colorClass="bg-purple-500" />
                 <StatCard icon={Megaphone} value={`£${adRevenue.toLocaleString()}`} label="Advertising Revenue" colorClass="bg-orange-500" />
             </div>
 

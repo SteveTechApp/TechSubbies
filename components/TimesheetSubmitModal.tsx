@@ -5,29 +5,28 @@ import { X } from './Icons';
 interface TimesheetSubmitModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (timesheet: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => void;
+    onSubmit: (timesheet: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => Promise<unknown>;
     contract: Contract;
 }
 
 export const TimesheetSubmitModal = ({ isOpen, onClose, onSubmit, contract }: TimesheetSubmitModalProps) => {
     const [period, setPeriod] = useState('');
-    const [days, setDays] = useState(0);
+    const [hours, setHours] = useState(0);
+    const [workSummary,setWorkSummary]=useState('');
 
     if (!isOpen) return null;
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!period.trim() || days <= 0) {
-            alert("Please enter a valid work period and number of days.");
+        if (!period.trim() || hours <= 0 || !workSummary.trim()) {
+            alert("Please enter a valid work period, hours and work summary.");
             return;
         }
-        onSubmit({ period, days });
+        await onSubmit({ period, hours, workSummary:workSummary.trim() });
     };
-    
-    const totalAmount = (Number(contract.amount) || 0) * days;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-[300] p-4" onClick={onClose}>
             <form
                 onSubmit={handleSubmit}
                 className="bg-white rounded-lg p-6 m-4 max-w-lg w-full relative transform transition-all duration-300"
@@ -54,22 +53,20 @@ export const TimesheetSubmitModal = ({ isOpen, onClose, onSubmit, contract }: Ti
                         />
                     </div>
                      <div>
-                        <label htmlFor="days" className="block font-medium mb-1">Number of Days Worked</label>
+                        <label htmlFor="hours" className="block font-medium mb-1">Hours Worked</label>
                         <input
-                            id="days"
+                            id="hours"
                             type="number"
-                            value={days}
-                            min="0.5"
-                            step="0.5"
-                            onChange={e => setDays(parseFloat(e.target.value) || 0)}
+                            value={hours}
+                            min="0.25"
+                            step="0.25"
+                            onChange={e => setHours(parseFloat(e.target.value) || 0)}
                             className="w-full border p-2 rounded-md focus:ring-2 focus:ring-blue-500"
                             required
                         />
                     </div>
-                     <div className="p-3 bg-gray-50 border rounded-md text-right">
-                        <span className="text-sm text-gray-500">Day Rate: {contract.currency}{contract.amount}</span>
-                        <p className="font-bold text-lg">Total Amount: {contract.currency}{totalAmount.toFixed(2)}</p>
-                    </div>
+                    <div><label htmlFor="work-summary" className="block font-medium mb-1">Work completed</label><textarea id="work-summary" value={workSummary} onChange={e=>setWorkSummary(e.target.value)} className="w-full rounded-md border p-2" rows={3} required/></div>
+                    <p className="rounded-md bg-blue-50 p-3 text-sm text-blue-900">This timesheet records delivery evidence for client approval. Rates, invoices and payment remain directly between the parties.</p>
                 </div>
 
                 <div className="flex justify-end space-x-4 mt-6 pt-4 border-t">

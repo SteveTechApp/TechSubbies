@@ -9,7 +9,15 @@ export type RoleFamily =
   | "audio"
   | "uc"
   | "security"
-  | "infrastructure";
+  | "infrastructure"
+  | "design"
+  | "project-delivery"
+  | "field-service"
+  | "live-events"
+  | "cloud-platform"
+  | "data"
+  | "quality-assurance"
+  | "architecture";
 
 export type SkillRating = 0 | 1 | 2 | 3 | 4 | 5;
 
@@ -42,12 +50,26 @@ export interface RoleSkillDefinition {
   title: string;
   shortTitle: string;
   level: "entry" | "skilled" | "specialist" | "lead";
+  profileKind?: "free-sector" | "job-role";
   summary: string;
   suitableFor: string[];
   typicalProjects: string[];
   skillGroups: RoleSkillGroup[];
   recommendedTags: string[];
   evidenceTypes: string[];
+  aliases?: string[];
+  coreResponsibilities?: string[];
+  workContexts?: string[];
+  knowledgeRequirements?: RoleKnowledgeRequirement[];
+  roleBoundaries?: string[];
+  distinguishedFrom?: Array<{ roleId: string; distinction: string }>;
+}
+
+export interface RoleKnowledgeRequirement {
+  topic: string;
+  expectation: string;
+  suggestedTags: string[];
+  prerequisiteEligible: boolean;
 }
 
 export interface EngineerSkillRating {
@@ -62,6 +84,8 @@ export interface EngineerSkillRating {
 
 export interface EngineerRoleSkillProfile {
   roleId: string;
+  overallCapability?: "assist" | "deliver" | "diagnose" | "lead";
+  capabilities?: Array<{ skillId: string; claim: "independent" | "support" | "not-offered" }>;
   ratings: EngineerSkillRating[];
   productTags: string[];
   brandTags: string[];
@@ -69,6 +93,9 @@ export interface EngineerRoleSkillProfile {
   certificationTags: string[];
   uploadedEvidenceNotes: string[];
   profileNotes: string;
+  customKeywords?: string[];
+  productExperience?: Record<string, "aware" | "installed" | "configured" | "commissioned" | "programmed" | "certified">;
+  evidence?: Array<{ type: string; note: string }>;
 }
 
 export interface RoleSkillFilter {

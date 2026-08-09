@@ -16,7 +16,7 @@ export const prospectusContent = {
         <ul>
             <li><strong>AI-Powered Skills Matching:</strong> Our proprietary 'Skills Profile' and AI matching engine go beyond simple keyword searches, analyzing granular, rated competencies to provide unparalleled match accuracy.</li>
             <li><strong>Disruptive Business Model:</strong> By being free for companies, we eliminate friction and build the largest possible pool of available contracts, creating a powerful network effect that attracts top engineering talent.</li>
-            <li><strong>Integrated Workflow:</strong> From search and discovery to contracting and payment, we manage the entire freelance workflow, creating a sticky ecosystem that encourages long-term user retention.</li>
+            <li><strong>Integrated Workflow:</strong> From search and discovery to contracting, approved time and completion evidence, we keep the freelance workflow auditable while commercial payment remains directly between the parties.</li>
             <li><strong>Vertical Focus:</strong> Our initial focus on the AV & IT niche allows us to build deep, domain-specific features that generic freelance platforms like Upwork or Fiverr cannot replicate.</li>
         </ul>
     `,

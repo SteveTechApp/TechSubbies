@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { Contract, User, Role, ContractStatus, UserProfile, CompanyProfile, EngineerProfile, Milestone, MilestoneStatus, ContractType, Timesheet, PaymentTerms } from '../types';
+import { Contract, User, Role, ContractStatus, UserProfile, CompanyProfile, EngineerProfile, Milestone, MilestoneStatus, ContractType, Timesheet } from '../types';
 import { useAppContext } from '../context/InteractionContext';
+import { CompletionValidationPanel } from '../components/CompletionValidationPanel';
+import { TechnicalWorkPackPanel } from '../components/TechnicalWorkPackPanel';
+import { ContractContactPanel } from '../components/ContractContactPanel';
 import { FileText, User as UserIcon, Building, Calendar, CheckCircle, Clock, DollarSign, Loader, BrainCircuit } from '../components/Icons';
 import { SignContractModal } from '../components/SignContractModal';
 import { formatDisplayDate } from '../utils/dateFormatter';
-import { PaymentModal } from '../components/PaymentModal';
 import { TimesheetRow } from '../components/TimesheetRow';
 import { TimesheetSubmitModal } from '../components/TimesheetSubmitModal';
-import { InvoiceGeneratorModal } from '../components/InvoiceGeneratorModal';
 
 interface ContractDetailsViewProps {
     contract: Contract;
@@ -26,11 +27,11 @@ const StatusBadge = ({ status, className }: { status: string, className?: string
         [ContractStatus.ACTIVE]: { text: 'Active & In Progress', color: 'bg-green-100 text-green-800' },
         [ContractStatus.COMPLETED]: { text: 'Completed', color: 'bg-purple-100 text-purple-800' },
         [ContractStatus.CANCELLED]: { text: 'Cancelled', color: 'bg-red-100 text-red-800' },
-        [MilestoneStatus.AWAITING_FUNDING]: { text: 'Awaiting Funding', color: 'bg-gray-200 text-gray-700' },
-        [MilestoneStatus.FUNDED_IN_PROGRESS]: { text: 'In Progress', color: 'bg-blue-100 text-blue-700' },
+        [MilestoneStatus.AWAITING_FUNDING]: { text: 'Agreed - Not Started', color: 'bg-gray-200 text-gray-700' },
+        [MilestoneStatus.FUNDED_IN_PROGRESS]: { text: 'Delivery In Progress', color: 'bg-blue-100 text-blue-700' },
         [MilestoneStatus.SUBMITTED_FOR_APPROVAL]: { text: 'Submitted', color: 'bg-yellow-100 text-yellow-700' },
-        [MilestoneStatus.APPROVED_PENDING_INVOICE]: { text: 'Approved - Pending Invoice', color: 'bg-teal-100 text-teal-800' },
-        [MilestoneStatus.COMPLETED_PAID]: { text: 'Paid', color: 'bg-green-100 text-green-700' },
+        [MilestoneStatus.APPROVED_PENDING_INVOICE]: { text: 'Delivery Approved', color: 'bg-teal-100 text-teal-800' },
+        [MilestoneStatus.COMPLETED_PAID]: { text: 'Completed', color: 'bg-green-100 text-green-700' },
     };
     const info = STATUS_INFO[status] || { text: status, color: 'bg-gray-200 text-gray-800' };
     return <span className={`px-3 py-1 text-xs font-bold rounded-full ${info.color} ${className}`}>{info.text}</span>;
@@ -53,7 +54,7 @@ const MilestoneRow = ({ milestone, contract, onFund, userRole }: { milestone: Mi
 
         if (userRole === Role.COMPANY || userRole === Role.ADMIN) {
             if (milestone.status === MilestoneStatus.AWAITING_FUNDING) {
-                return <button onClick={onFund} className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Fund Milestone</button>;
+                return <button onClick={onFund} className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Start Delivery</button>;
             }
             if (milestone.status === MilestoneStatus.SUBMITTED_FOR_APPROVAL) {
                 return <button onClick={() => handleAction(approveMilestone)} className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700">Approve Milestone</button>;
@@ -80,11 +81,9 @@ const MilestoneRow = ({ milestone, contract, onFund, userRole }: { milestone: Mi
 };
 
 export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
-    const { user, findUserByProfileId, signContract, fundMilestone, submitTimesheet, generateInvoice } = useAppContext();
+    const { user, findUserByProfileId, signContract, completeContract, fundMilestone, submitTimesheet } = useAppContext();
     const [isSignModalOpen, setIsSignModalOpen] = useState(false);
-    const [fundingMilestone, setFundingMilestone] = useState<Milestone | null>(null);
     const [isTimesheetModalOpen, setIsTimesheetModalOpen] = useState(false);
-    const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
 
     const engineerUser = findUserByProfileId(contract.engineerId);
@@ -97,50 +96,23 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
     if (!engineer || !company || !user) return <div>Loading contract parties...</div>;
     
     const canEngineerSign = user.profile.id === engineer.id && contract.status === ContractStatus.PENDING_SIGNATURE && !contract.engineerSignature;
-    const canCompanySign = (user.profile.id === company.id || user.role === Role.ADMIN) && contract.status === ContractStatus.SIGNED && !contract.companySignature;
+    const canCompanySign = (user.profile.id === company.id || user.role === Role.ADMIN) && contract.status === ContractStatus.PENDING_SIGNATURE && !contract.companySignature;
 
-    const approvedMilestones = contract.milestones.filter(m => m.status === MilestoneStatus.APPROVED_PENDING_INVOICE);
-    const canGenerateInvoice = user.role === Role.ENGINEER && approvedMilestones.length > 0;
+    const canValidateCompletion = user.role === Role.COMPANY && user.profile.id === company.id && contract.status === ContractStatus.COMPLETED;
+    const canCompleteContract = user.role === Role.COMPANY && user.profile.id === company.id && contract.status === ContractStatus.ACTIVE;
 
-    const handleSign = (signatureName: string) => {
-        signContract(contract.id, signatureName);
+    const handleSign = async (signatureName: string) => {
+        await signContract(contract.id, signatureName);
         setIsSignModalOpen(false);
     };
 
-    const handlePaymentSuccess = () => {
-        if (fundingMilestone) {
-            fundMilestone(contract.id, fundingMilestone.id);
-            setFundingMilestone(null);
-        }
-    };
-    
-    const handleTimesheetSubmit = (timesheetData: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => {
-        submitTimesheet(contract.id, timesheetData);
+    const handleTimesheetSubmit = async (timesheetData: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => {
+        await submitTimesheet(contract.id, timesheetData);
         setIsTimesheetModalOpen(false);
     };
 
-    const handleOpenInvoiceModal = () => {
-        setIsInvoiceModalOpen(true);
-    };
-
-    const handleInvoiceSubmit = (paymentTerms: PaymentTerms) => {
-        generateInvoice(contract.id, paymentTerms);
-        setIsInvoiceModalOpen(false);
-    };
-    
-
     return (
         <>
-            {fundingMilestone && (
-                <PaymentModal
-                    isOpen={!!fundingMilestone}
-                    onClose={() => setFundingMilestone(null)}
-                    onSuccess={handlePaymentSuccess}
-                    amount={fundingMilestone.amount}
-                    currency={String(contract.currency)}
-                    paymentDescription={`Fund Milestone: ${fundingMilestone.description}`}
-                />
-            )}
             {isTimesheetModalOpen && (
                 <TimesheetSubmitModal 
                     isOpen={isTimesheetModalOpen}
@@ -184,7 +156,7 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
                                     key={m.id} 
                                     milestone={m} 
                                     contract={contract}
-                                    onFund={() => setFundingMilestone(m)} 
+                                    onFund={() => fundMilestone(contract.id, m.id)}
                                     userRole={user.role} 
                                 />
                             )}
@@ -255,12 +227,22 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
                             Countersign & Activate
                         </button>
                     )}
-                     {canGenerateInvoice && (
-                        <button onClick={handleOpenInvoiceModal} className="px-6 py-2 bg-green-600 text-white font-bold rounded-md hover:bg-green-700">
-                            Generate Invoice for Approved Milestones
+                    {canCompleteContract && (
+                        <button onClick={() => completeContract(contract.id)} className="px-6 py-2 bg-purple-600 text-white font-bold rounded-md hover:bg-purple-700">
+                            Mark Assignment Complete
                         </button>
                     )}
                 </div>
+
+                <TechnicalWorkPackPanel contractId={contract.id} roleId={(contract as any).roleId} canEdit={user.role === Role.COMPANY && user.profile.id === company.id && contract.status !== ContractStatus.COMPLETED && contract.status !== ContractStatus.CANCELLED} />
+                <ContractContactPanel contractId={contract.id} available={contract.status === ContractStatus.ACTIVE || contract.status === ContractStatus.COMPLETED} />
+
+                {canValidateCompletion && (
+                    <CompletionValidationPanel
+                        contractId={contract.id}
+                        roleId={(contract as any).roleId}
+                    />
+                )}
             </div>
             {isSignModalOpen && (
                 <SignContractModal
@@ -268,14 +250,6 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
                     onClose={() => setIsSignModalOpen(false)}
                     contract={contract}
                     onSubmit={handleSign}
-                />
-            )}
-            {isInvoiceModalOpen && (
-                 <InvoiceGeneratorModal
-                    isOpen={isInvoiceModalOpen}
-                    onClose={() => setIsInvoiceModalOpen(false)}
-                    onSubmit={handleInvoiceSubmit}
-                    contract={contract}
                 />
             )}
         </>

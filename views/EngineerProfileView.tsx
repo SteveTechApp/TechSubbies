@@ -10,6 +10,7 @@ import { useAppContext } from '../context/InteractionContext';
 import { ShareProfileModal } from '../components/ShareProfileModal';
 import { CVSearch } from '../components/CVSearch';
 import { StoryboardViewer } from '../components/StoryboardViewer';
+import { CapabilityPassportPanel } from '../components/CapabilityPassportPanel';
 
 interface EngineerProfileViewProps {
     profile: EngineerProfile | null;
@@ -86,6 +87,7 @@ export const EngineerProfileView = ({ profile, isEditable, onEdit }: EngineerPro
             </div>
            
             <TopTrumpCard profile={profile} isEditable={isEditable} onEdit={onEdit} />
+            <CapabilityPassportPanel engineer={profile} canManageTalentPool={!!isCompanyViewing} />
 
             {/* --- NEW AI Match Score Section --- */}
             {profile.matchScore !== undefined && (

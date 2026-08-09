@@ -1,0 +1,47 @@
+services:
+  api:
+    build: ./backend
+    environment:
+      PORT: 4000
+      FRONTEND_ORIGIN: http://localhost:8080
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      DB_FILE: /data/techsubbies.db
+      DOCUMENT_STORAGE_DIR: /data/documents
+      REQUIRE_EXTERNAL_SERVICES: ${REQUIRE_EXTERNAL_SERVICES:-false}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_PROFESSIONAL: ${STRIPE_PRICE_PROFESSIONAL:-}
+      STRIPE_PRICE_SKILLS: ${STRIPE_PRICE_SKILLS:-}
+      STRIPE_PRICE_BUSINESS: ${STRIPE_PRICE_BUSINESS:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      ACCOUNT_ACTION_URL: ${ACCOUNT_ACTION_URL:-http://localhost:8080}
+    volumes:
+      - techsubbies-data:/data
+    ports: ["4000:4000"]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:4000/api/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+  web:
+    build:
+      context: .
+      args:
+        VITE_API_BASE_URL: /api
+    ports: ["8080:80"]
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+volumes:
+  techsubbies-data:
