@@ -23,8 +23,8 @@ import { createStripeBillingProvider, verifyStripeWebhook } from "../lib/stripeB
 
 const paidTierSchema = z.enum(["Silver", "Gold", "Platinum"]);
 
-function publicBillingState(userId: string) {
-  const state = getBillingState(userId);
+async function publicBillingState(userId: string) {
+  const state = await getBillingState(userId);
   return {
     tier: state.tier,
     status: state.status,
@@ -40,15 +40,15 @@ function publicBillingState(userId: string) {
 export const billingRouter = Router();
 billingRouter.use(requireAuth, requireRole("Engineer"));
 
-billingRouter.get("/me", (req: AuthedRequest, res) => {
-  return res.json(publicBillingState(req.userId!));
+billingRouter.get("/me", async (req: AuthedRequest, res) => {
+  return res.json(await publicBillingState(req.userId!));
 });
 
 billingRouter.post("/checkout", async (req: AuthedRequest, res) => {
   const parsed = z.object({ tier: paidTierSchema }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Choose Silver, Gold or Platinum." });
 
-  const existing = getBillingState(req.userId!);
+  const existing = await getBillingState(req.userId!);
   if (existing.subscriptionId && !["canceled", "unpaid", "incomplete_expired", "free"].includes(existing.status)) {
     return res.status(409).json({
       error: "An existing paid membership must be changed through Billing Management.",
@@ -77,7 +77,7 @@ billingRouter.post("/checkout", async (req: AuthedRequest, res) => {
 });
 
 billingRouter.post("/portal", async (req: AuthedRequest, res) => {
-  const state = getBillingState(req.userId!);
+  const state = await getBillingState(req.userId!);
   if (!state.customerId) {
     return res.status(404).json({ error: "No paid membership billing account exists yet." });
   }
@@ -92,11 +92,11 @@ billingRouter.post("/portal", async (req: AuthedRequest, res) => {
 
 export const adminBillingRouter = Router();
 adminBillingRouter.use(requireAuth, requireRole("Admin"));
-adminBillingRouter.get("/summary", (_req, res) => {
-  return res.json({ summary: getBillingSummary() });
+adminBillingRouter.get("/summary", async (_req, res) => {
+  return res.json({ summary: await getBillingSummary() });
 });
-adminBillingRouter.get("/accounts", (_req, res) => {
-  const accounts = listAdminBillingAccounts().map((account) => ({
+adminBillingRouter.get("/accounts", async (_req, res) => {
+  const accounts = (await listAdminBillingAccounts()).map((account) => ({
     userId: account.userId,
     name: account.name,
     email: account.email,
@@ -125,16 +125,16 @@ function stripeId(value: unknown): string | null {
   return null;
 }
 
-function userIdForStripeObject(object: any): string | null {
+async function userIdForStripeObject(object: any): Promise<string | null> {
   if (typeof object?.metadata?.user_id === "string" && object.metadata.user_id) return object.metadata.user_id;
   const subscriptionId = stripeId(object?.subscription) || (typeof object?.id === "string" && object?.object === "subscription" ? object.id : null);
   if (subscriptionId) {
-    const state = findBillingBySubscriptionId(subscriptionId);
+    const state = await findBillingBySubscriptionId(subscriptionId);
     if (state) return state.userId;
   }
   const customerId = stripeId(object?.customer);
   if (customerId) {
-    const state = findBillingByCustomerId(customerId);
+    const state = await findBillingByCustomerId(customerId);
     if (state) return state.userId;
   }
   return null;
@@ -182,7 +182,7 @@ stripeBillingWebhookRouter.post("/", raw({ type: "application/json", limit: "1mb
   if (!event.id || !event.type || !event.data?.object) {
     return res.status(400).send("Invalid Stripe webhook event");
   }
-  if (!recordBillingWebhookEvent(event.id, event.type)) {
+  if (!(await recordBillingWebhookEvent(event.id, event.type))) {
     return res.status(200).json({ received: true, duplicate: true });
   }
 
@@ -195,7 +195,7 @@ stripeBillingWebhookRouter.post("/", raw({ type: "application/json", limit: "1mb
     const customerId = stripeId(object.customer);
     const subscriptionId = stripeId(object.subscription);
     if (userId && customerId && subscriptionId) {
-      linkCheckoutToUser({ userId, customerId, subscriptionId });
+      await linkCheckoutToUser({ userId, customerId, subscriptionId });
       recordAccountAudit({
         eventType: "membership.checkout_completed",
         outcome: "success",
@@ -206,17 +206,17 @@ stripeBillingWebhookRouter.post("/", raw({ type: "application/json", limit: "1mb
   }
 
   if (["customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"].includes(event.type)) {
-    const userId = userIdForStripeObject(object);
+    const userId = await userIdForStripeObject(object);
     const customerId = stripeId(object.customer);
     const subscriptionId = stripeId(object.id);
     const existing = subscriptionId
-      ? findBillingBySubscriptionId(subscriptionId)
-      : customerId ? findBillingByCustomerId(customerId) : undefined;
+      ? await findBillingBySubscriptionId(subscriptionId)
+      : customerId ? await findBillingByCustomerId(customerId) : undefined;
     const priceId = stripeId(object.items?.data?.[0]?.price) || existing?.priceId || null;
     const tier = (priceId ? paidTierForStripePrice(priceId) : null) || existing?.tier || null;
     const status = String(object.status || (event.type.endsWith("deleted") ? "canceled" : "incomplete")) as BillingStatus;
     if (userId && customerId && subscriptionId && priceId && tier) {
-      const state = reconcileSubscription({
+      const state = await reconcileSubscription({
         userId,
         customerId,
         subscriptionId,
@@ -236,9 +236,9 @@ stripeBillingWebhookRouter.post("/", raw({ type: "application/json", limit: "1mb
   }
 
   if (event.type === "invoice.payment_failed") {
-    const userId = userIdForStripeObject(object);
+    const userId = await userIdForStripeObject(object);
     if (userId && typeof object.id === "string") {
-      recordInvoicePaymentFailure({ userId, invoiceId: object.id });
+      await recordInvoicePaymentFailure({ userId, invoiceId: object.id });
       await notifyPaymentFailure(userId);
       recordAccountAudit({
         eventType: "membership.payment_failed",
@@ -250,16 +250,16 @@ stripeBillingWebhookRouter.post("/", raw({ type: "application/json", limit: "1mb
   }
 
   if (event.type === "invoice.paid") {
-    const userId = userIdForStripeObject(object);
+    const userId = await userIdForStripeObject(object);
     if (userId && typeof object.id === "string") {
-      const state = recordInvoicePaid({ userId, invoiceId: object.id });
+      const state = await recordInvoicePaid({ userId, invoiceId: object.id });
       if (
         state.status === "past_due"
         && state.customerId
         && state.subscriptionId
         && state.priceId
       ) {
-        reconcileSubscription({
+        await reconcileSubscription({
           userId,
           customerId: state.customerId,
           subscriptionId: state.subscriptionId,

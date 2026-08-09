@@ -1,4 +1,4 @@
-import { db, findUserById, updateUserProfile } from "./db.js";
+import { database, db, findUserById, updateUserProfile } from "./db.js";
 
 export type MembershipTier = "Bronze" | "Silver" | "Gold" | "Platinum";
 export type BillingStatus =
@@ -90,40 +90,33 @@ function defaultState(userId: string): BillingState {
   };
 }
 
-export function checkBillingRepository(): boolean {
-  const row = db.prepare(`
-    SELECT COUNT(*) AS total
-    FROM sqlite_master
-    WHERE type = 'table' AND name IN ('subscription_billing', 'billing_webhook_events')
-  `).get() as { total: number };
-  return row.total === 2;
+export async function checkBillingRepository(): Promise<boolean> {
+  const tables = await Promise.all([
+    database.tableExists("subscription_billing"),
+    database.tableExists("billing_webhook_events"),
+  ]);
+  return tables.every(Boolean);
 }
 
-export function getBillingState(userId: string): BillingState {
-  const row = db.prepare("SELECT * FROM subscription_billing WHERE userId = ?").get(userId) as unknown as
-    | BillingState
-    | undefined;
+export async function getBillingState(userId: string): Promise<BillingState> {
+  const row = await database.queryOne<BillingState>("SELECT * FROM subscription_billing WHERE userId = ?", [userId]);
   return row || defaultState(userId);
 }
 
-export function findBillingByCustomerId(customerId: string): BillingState | undefined {
-  return db.prepare("SELECT * FROM subscription_billing WHERE customerId = ?").get(customerId) as unknown as
-    | BillingState
-    | undefined;
+export function findBillingByCustomerId(customerId: string): Promise<BillingState | undefined> {
+  return database.queryOne<BillingState>("SELECT * FROM subscription_billing WHERE customerId = ?", [customerId]);
 }
 
-export function findBillingBySubscriptionId(subscriptionId: string): BillingState | undefined {
-  return db.prepare("SELECT * FROM subscription_billing WHERE subscriptionId = ?").get(subscriptionId) as unknown as
-    | BillingState
-    | undefined;
+export function findBillingBySubscriptionId(subscriptionId: string): Promise<BillingState | undefined> {
+  return database.queryOne<BillingState>("SELECT * FROM subscription_billing WHERE subscriptionId = ?", [subscriptionId]);
 }
 
-export function recordBillingWebhookEvent(eventId: string, eventType: string): boolean {
+export async function recordBillingWebhookEvent(eventId: string, eventType: string): Promise<boolean> {
   try {
-    db.prepare(`
+    await database.execute(`
       INSERT INTO billing_webhook_events (eventId, eventType, receivedAt)
       VALUES (?, ?, ?)
-    `).run(eventId, eventType, new Date().toISOString());
+    `, [eventId, eventType, new Date().toISOString()]);
     return true;
   } catch (error) {
     if (error instanceof Error && /UNIQUE constraint failed/.test(error.message)) return false;
@@ -131,14 +124,14 @@ export function recordBillingWebhookEvent(eventId: string, eventType: string): b
   }
 }
 
-export function linkCheckoutToUser(input: {
+export async function linkCheckoutToUser(input: {
   userId: string;
   customerId: string;
   subscriptionId: string;
 }) {
-  const existing = getBillingState(input.userId);
+  const existing = await getBillingState(input.userId);
   const now = new Date().toISOString();
-  db.prepare(`
+  await database.execute(`
     INSERT INTO subscription_billing (
       userId, provider, customerId, subscriptionId, priceId, tier, status,
       currentPeriodEnd, cancelAtPeriodEnd, lastInvoiceId, lastPaymentFailedAt,
@@ -148,20 +141,9 @@ export function linkCheckoutToUser(input: {
       customerId = excluded.customerId,
       subscriptionId = excluded.subscriptionId,
       updatedAt = excluded.updatedAt
-  `).run(
-    input.userId,
-    input.customerId,
-    input.subscriptionId,
-    existing.priceId,
-    existing.tier,
-    existing.status,
-    existing.currentPeriodEnd,
-    existing.cancelAtPeriodEnd,
-    existing.lastInvoiceId,
-    existing.lastPaymentFailedAt,
-    existing.createdAt,
-    now
-  );
+  `, [input.userId, input.customerId, input.subscriptionId, existing.priceId,
+    existing.tier, existing.status, existing.currentPeriodEnd, existing.cancelAtPeriodEnd,
+    existing.lastInvoiceId, existing.lastPaymentFailedAt, existing.createdAt, now]);
   return getBillingState(input.userId);
 }
 
@@ -197,7 +179,7 @@ function syncProfileEntitlement(userId: string, state: BillingState) {
   updateUserProfile(user.id, JSON.stringify(profile), user.name);
 }
 
-export function reconcileSubscription(input: {
+export async function reconcileSubscription(input: {
   userId: string;
   customerId: string;
   subscriptionId: string;
@@ -207,9 +189,9 @@ export function reconcileSubscription(input: {
   currentPeriodEnd?: string | null;
   cancelAtPeriodEnd?: boolean;
 }) {
-  const existing = getBillingState(input.userId);
+  const existing = await getBillingState(input.userId);
   const now = new Date().toISOString();
-  db.prepare(`
+  await database.execute(`
     INSERT INTO subscription_billing (
       userId, provider, customerId, subscriptionId, priceId, tier, status,
       currentPeriodEnd, cancelAtPeriodEnd, lastInvoiceId, lastPaymentFailedAt,
@@ -225,50 +207,39 @@ export function reconcileSubscription(input: {
       currentPeriodEnd = excluded.currentPeriodEnd,
       cancelAtPeriodEnd = excluded.cancelAtPeriodEnd,
       updatedAt = excluded.updatedAt
-  `).run(
-    input.userId,
-    input.customerId,
-    input.subscriptionId,
-    input.priceId,
-    input.tier,
-    input.status,
-    input.currentPeriodEnd || null,
-    input.cancelAtPeriodEnd ? 1 : 0,
-    existing.lastInvoiceId,
-    existing.lastPaymentFailedAt,
-    existing.createdAt,
-    now
-  );
-  const state = getBillingState(input.userId);
+  `, [input.userId, input.customerId, input.subscriptionId, input.priceId, input.tier,
+    input.status, input.currentPeriodEnd || null, input.cancelAtPeriodEnd ? 1 : 0,
+    existing.lastInvoiceId, existing.lastPaymentFailedAt, existing.createdAt, now]);
+  const state = await getBillingState(input.userId);
   syncProfileEntitlement(input.userId, state);
   return state;
 }
 
-export function recordInvoicePaymentFailure(input: {
+export async function recordInvoicePaymentFailure(input: {
   userId: string;
   invoiceId: string;
 }) {
   const now = new Date().toISOString();
-  db.prepare(`
+  await database.execute(`
     UPDATE subscription_billing
     SET status = CASE WHEN status IN ('active', 'trialing') THEN 'past_due' ELSE status END,
         lastInvoiceId = ?, lastPaymentFailedAt = ?, updatedAt = ?
     WHERE userId = ?
-  `).run(input.invoiceId, now, now, input.userId);
-  const state = getBillingState(input.userId);
+  `, [input.invoiceId, now, now, input.userId]);
+  const state = await getBillingState(input.userId);
   syncProfileEntitlement(input.userId, state);
   return state;
 }
 
-export function recordInvoicePaid(input: { userId: string; invoiceId: string }) {
+export async function recordInvoicePaid(input: { userId: string; invoiceId: string }) {
   const now = new Date().toISOString();
-  db.prepare(`
+  await database.execute(`
     UPDATE subscription_billing
     SET status = CASE WHEN status = 'past_due' THEN 'active' ELSE status END,
         lastInvoiceId = ?, lastPaymentFailedAt = NULL, updatedAt = ?
     WHERE userId = ?
-  `).run(input.invoiceId, now, input.userId);
-  const state = getBillingState(input.userId);
+  `, [input.invoiceId, now, input.userId]);
+  const state = await getBillingState(input.userId);
   syncProfileEntitlement(input.userId, state);
   return state;
 }
@@ -287,8 +258,8 @@ export function stripePriceForPaidTier(tier: MembershipTier, env: NodeJS.Process
   return null;
 }
 
-export function listAdminBillingAccounts(): AdminBillingAccount[] {
-  return db.prepare(`
+export function listAdminBillingAccounts(): Promise<AdminBillingAccount[]> {
+  return database.queryMany<AdminBillingAccount>(`
     SELECT billing.*, users.name, users.email
     FROM subscription_billing billing
     JOIN users ON users.id = billing.userId
@@ -296,11 +267,11 @@ export function listAdminBillingAccounts(): AdminBillingAccount[] {
     ORDER BY
       CASE billing.status WHEN 'past_due' THEN 0 WHEN 'unpaid' THEN 1 ELSE 2 END,
       billing.updatedAt DESC
-  `).all() as unknown as AdminBillingAccount[];
+  `);
 }
 
-export function getBillingSummary(): BillingSummary {
-  const row = db.prepare(`
+export async function getBillingSummary(): Promise<BillingSummary> {
+  const row = await database.queryOne<BillingSummary>(`
     SELECT
       COUNT(*) AS paidAccounts,
       COALESCE(SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END), 0) AS active,
@@ -309,6 +280,6 @@ export function getBillingSummary(): BillingSummary {
       COALESCE(SUM(CASE WHEN cancelAtPeriodEnd = 1 THEN 1 ELSE 0 END), 0) AS endingAtPeriodEnd,
       COALESCE(SUM(CASE WHEN status IN ('canceled', 'unpaid', 'incomplete_expired') THEN 1 ELSE 0 END), 0) AS ended
     FROM subscription_billing
-  `).get() as BillingSummary;
-  return row;
+  `);
+  return row!;
 }

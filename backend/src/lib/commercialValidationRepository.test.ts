@@ -51,7 +51,7 @@ describe('commercialValidationRepository', () => {
     db.prepare('DELETE FROM users').run();
   });
 
-  it('marks an engineer cohort as observed-evidence-ready only after all evidence gates are met', () => {
+  it('marks an engineer cohort as observed-evidence-ready only after all evidence gates are met', async () => {
     const engineers = Array.from({ length: 10 }, (_, index) => createTestUser('Engineer', `eng-${index}`));
     engineers.forEach((engineer) => upsertPricingResearchResponse(engineer.id, 'Engineer', {
       ...researchInput,
@@ -66,7 +66,7 @@ describe('commercialValidationRepository', () => {
       `).run(`app-${index}`, `job-${index}`, engineer.id, now, now);
     });
 
-    engineers.slice(0, 3).forEach((engineer, index) => {
+    await Promise.all(engineers.slice(0, 3).map((engineer, index) =>
       reconcileSubscription({
         userId: engineer.id,
         customerId: `cus-${index}`,
@@ -76,8 +76,8 @@ describe('commercialValidationRepository', () => {
         status: 'active',
         currentPeriodEnd: null,
         cancelAtPeriodEnd: false,
-      });
-    });
+      })
+    ));
 
     const summary = getCommercialValidationSummary();
     const engineer = summary.roles.find((entry) => entry.role === 'Engineer')!;
