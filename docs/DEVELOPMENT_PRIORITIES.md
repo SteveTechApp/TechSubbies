@@ -1,6 +1,6 @@
 # TechSubbies Development Priorities
 
-Updated 8 August 2026. This is the current implementation backlog; the older
+Updated 9 August 2026. This is the current implementation backlog; the older
 Word planning documents are retained as historical snapshots.
 
 ## Completed foundations
@@ -116,6 +116,14 @@ Word planning documents are retained as historical snapshots.
 - [ ] Run the controlled commercial cohort and use observed retention, paid
   conversion and pricing-research response volume to validate or revise plan
   packaging/prices before making a production pricing change.
-- [ ] Migrate SQLite to managed PostgreSQL before horizontal scaling.
+- [x] Prepare the PostgreSQL migration boundary: live SQLite schema introspection,
+  PostgreSQL-oriented DDL generation, deterministic JSONL export, per-table row
+  counts and SHA-256 checksums, independent bundle verification, readiness
+  reporting and a fail-safe guard that prevents a premature PostgreSQL runtime
+  selection from silently continuing to write to SQLite.
+- [ ] Convert the synchronous SQLite repositories to an asynchronous database
+  interface, import a verified bundle into managed PostgreSQL staging, prove
+  row/relationship parity and complete the production PostgreSQL cutover before
+  horizontal scaling.
 - [ ] Add subscription revenue reporting, tax/accounting reconciliation and
   finance operations once commercial pricing is validated.

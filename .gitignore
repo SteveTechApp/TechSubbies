@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Generated database migration exports
+backend/data/postgres-migration/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

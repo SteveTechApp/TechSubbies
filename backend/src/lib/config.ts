@@ -1,3 +1,5 @@
+import { assertDatabaseRuntimeSupported } from "./databaseProvider.js";
+
 const PLACEHOLDER_SECRETS = new Set([
   "insecure-dev-secret-change-me",
   "change-this-to-a-long-random-string",
@@ -5,6 +7,7 @@ const PLACEHOLDER_SECRETS = new Set([
 ]);
 
 export function validateRuntimeConfig(env: NodeJS.ProcessEnv = process.env) {
+  assertDatabaseRuntimeSupported(env);
   if (env.NODE_ENV !== "production") return;
 
   const problems: string[] = [];

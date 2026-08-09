@@ -9,7 +9,11 @@
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
     "db:backup": "tsx src/scripts/backupDatabase.ts",
-    "db:verify-backup": "tsx src/scripts/verifyDatabaseBackup.ts"
+    "db:verify-backup": "tsx src/scripts/verifyDatabaseBackup.ts",
+    "db:postgres-readiness": "tsx src/scripts/postgresReadiness.ts",
+    "db:postgres-readiness:strict": "tsx src/scripts/postgresReadiness.ts --strict",
+    "db:postgres-export": "tsx src/scripts/exportPostgresMigrationBundle.ts",
+    "db:postgres-verify": "tsx src/scripts/verifyPostgresMigrationBundle.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
