@@ -35,6 +35,33 @@ usersRouter.get("/me/export", requireAuth, (req: AuthedRequest, res) => {
   return res.json(buildAccountDataExport(req.authUser!));
 });
 
+const availabilitySchema = z.object({
+  availableFrom: z.string().date(),
+  baseLocation: z.string().trim().min(2).max(200),
+  travelRadiusMiles: z.number().int().min(0).max(1000),
+  workingDays: z.array(z.enum(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])).min(1).max(7),
+  minimumNoticeDays: z.number().int().min(0).max(365),
+  overnightWork: z.boolean(),
+  weekendWork: z.enum(["no", "yes", "premium-only"]),
+  emergencyCallout: z.boolean(),
+});
+
+usersRouter.put("/me/availability", requireAuth, (req: AuthedRequest, res) => {
+  if (req.authUser!.role !== "Engineer") {
+    return res.status(403).json({ error: "Availability controls are available to engineer accounts." });
+  }
+  const parsed = availabilitySchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "Enter valid availability details." });
+  let profile: Record<string, unknown> = {};
+  try { profile = JSON.parse(req.authUser!.profile); } catch { profile = {}; }
+  const updated = updateUserProfile(req.userId!, JSON.stringify({
+    ...profile,
+    ...parsed.data,
+    availabilityConfirmedAt: new Date().toISOString(),
+  }), req.authUser!.name);
+  return res.json(toPublicUser(updated!));
+});
+
 const membershipTierSchema = z.enum(["Bronze", "Silver", "Gold", "Platinum"]);
 
 // Records a member's commercial selection without granting paid

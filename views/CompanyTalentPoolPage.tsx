@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import apiService from "../services/apiService";
 import type { TalentPoolEntry } from "../types/trust";
+import { errorMessage } from "../utils/errorMessage";
 
 const lists: TalentPoolEntry["list"][] = ["preferred", "approved", "backup", "restricted"];
 
@@ -11,7 +12,7 @@ export default function CompanyTalentPoolPage() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    apiService.getTalentPool().then(setEntries).catch((error) => setMessage(error.message)).finally(() => setLoading(false));
+    apiService.getTalentPool().then(setEntries).catch((error:unknown) => setMessage(errorMessage(error,"Talent pool could not be loaded."))).finally(() => setLoading(false));
   }, []);
 
   const visible = useMemo(() => filter === "all" ? entries : entries.filter((entry) => entry.list === filter), [entries, filter]);
@@ -27,12 +28,18 @@ export default function CompanyTalentPoolPage() {
       });
       setEntries((current) => current.map((item) => item.engineerId === entry.engineerId ? { ...item, ...saved } : item));
       setMessage("Talent-pool record saved.");
-    } catch (error: any) { setMessage(error.message || "Could not save the record."); }
+    } catch (error: unknown) { setMessage(errorMessage(error,"Could not save the record.")); }
   }
 
   async function removeEntry(engineerId: string) {
-    await apiService.removeTalentPoolEntry(engineerId);
-    setEntries((current) => current.filter((entry) => entry.engineerId !== engineerId));
+    setMessage("");
+    try {
+      await apiService.removeTalentPoolEntry(engineerId);
+      setEntries((current) => current.filter((entry) => entry.engineerId !== engineerId));
+      setMessage("Engineer removed from the talent pool.");
+    } catch (error: unknown) {
+      setMessage(errorMessage(error,"Could not remove the record."));
+    }
   }
 
   return <main className="min-h-screen bg-slate-950 px-5 py-8 text-white">

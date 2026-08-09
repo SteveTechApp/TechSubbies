@@ -81,6 +81,17 @@ describe("marketplace email verification", () => {
 });
 
 describe("jobs", () => {
+  it("rejects malformed skill requirements at the API boundary", async () => {
+    const company = await registerCompany("jobs-invalid-skills@example.com", "Invalid Skills Co");
+    const response = await request(app)
+      .post("/api/jobs")
+      .set("Authorization", `Bearer ${company.token}`)
+      .send({ ...sampleJob, skillRequirements: [{ name: "Crestron", importance: "critical", requiredLevel: 120 }] });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/invalid enum value|less than or equal to 100/i);
+  });
+
   it("lets a company post a job and lists it publicly", async () => {
     const company = await registerCompany("jobs-co-a@example.com", "Job Co A");
 

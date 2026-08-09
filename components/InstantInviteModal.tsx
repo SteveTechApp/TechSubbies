@@ -68,14 +68,14 @@ export const InstantInviteModal = ({ isOpen, onClose, job }: InstantInviteModalP
 
             const result = await geminiService.findBestMatchesForJob(job, availablePremiumEngineers);
             
-            if (result && result.matches) {
+            if ('matches' in result && result.matches) {
                 const topMatches = result.matches
                     .slice(0, 5)
                     .map(match => {
                         const engineer = engineers.find(e => e.id === match.id);
                         return engineer ? { ...engineer, matchScore: match.match_score } : null;
                     })
-                    .filter((e): e is EngineerProfile => e !== null);
+                    .filter(e => e !== null);
                 setMatchedEngineers(topMatches);
             }
             setIsLoading(false);

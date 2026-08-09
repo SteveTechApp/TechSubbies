@@ -18,6 +18,7 @@ export function toPublicContract(contract: ContractRow) {
   const data = parseJson<Record<string, unknown>>(contract.data, {});
 
   return {
+    schemaVersion: 1 as const,
     ...data,
     id: contract.id,
     jobId: contract.jobId,

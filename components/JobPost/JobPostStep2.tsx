@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { JobSkillRequirement, SkillImportance } from '../../types';
+import { JobPostDraft, JobSkillRequirement, SkillImportance } from '../../types';
 import { Save, Loader, Sparkles, X } from '../Icons';
 import { useAppContext } from '../../context/InteractionContext';
 import { getSkillBand } from '../../utils/skillBands';
 
 interface JobPostStep2Props {
-    jobDetails: any;
+    jobDetails: JobPostDraft;
     skillRequirements: JobSkillRequirement[];
     setSkillRequirements: React.Dispatch<React.SetStateAction<JobSkillRequirement[]>>;
     onBack: () => void;

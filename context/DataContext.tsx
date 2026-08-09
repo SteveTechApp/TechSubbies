@@ -3,7 +3,25 @@ import { EngineerProfile, CompanyProfile, Job, Application, Review, User, Conver
 import apiService from '../services/apiService';
 import { useAuth } from './AuthContext';
 
-const initialAppState = {
+interface AppData {
+    engineers: EngineerProfile[];
+    companies: (CompanyProfile | ResourcingCompanyProfile)[];
+    jobs: Job[];
+    applications: Application[];
+    reviews: Review[];
+    allUsers: User[];
+    conversations: Conversation[];
+    messages: Message[];
+    contracts: Contract[];
+    transactions: Transaction[];
+    projects: Project[];
+    forumPosts: ForumPost[];
+    forumComments: ForumComment[];
+    notifications: Notification[];
+    collaborationPosts: CollaborationPost[];
+}
+
+const initialAppState: AppData = {
     engineers: [], companies: [], jobs: [], applications: [], reviews: [], allUsers: [],
     conversations: [], messages: [], contracts: [], transactions: [], projects: [],
     forumPosts: [], forumComments: [], notifications: [], collaborationPosts: [],
@@ -26,7 +44,7 @@ interface DataContextType {
     forumComments: ForumComment[];
     notifications: Notification[];
     collaborationPosts: CollaborationPost[];
-    setAppData: React.Dispatch<React.SetStateAction<typeof initialAppState>>;
+    setAppData: React.Dispatch<React.SetStateAction<AppData>>;
     findUserById: (userId: string) => User | undefined;
     findUserByProfileId: (profileId: string) => User | undefined;
 }
@@ -44,7 +62,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const loadData = async () => {
             setIsLoading(true);
             const data = await apiService.getInitialData(user?.role);
-            setAppData(data as any); // Cast as any to handle potential missing keys in mock setup
+            setAppData(data);
             setIsLoading(false);
         };
         loadData();
@@ -54,7 +72,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const findUserByProfileId = (profileId: string) => appData.allUsers.find(u => u.profile.id === profileId);
 
     return (
-        <DataContext.Provider value={{ ...appData, isLoading, setAppData, findUserById, findUserByProfileId } as DataContextType}>
+        <DataContext.Provider value={{ ...appData, isLoading, setAppData, findUserById, findUserByProfileId }}>
             {children}
         </DataContext.Provider>
     );

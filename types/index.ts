@@ -211,6 +211,15 @@ export interface EngineerProfile extends UserProfile {
     unavailableDates?: UnavailableDateRange[];
     // How many days' notice the engineer needs before a booking can start.
     noticePeriodDays?: number;
+    availableFrom?: string;
+    baseLocation?: string;
+    travelRadiusMiles?: number;
+    workingDays?: import('./marketplaceApi').AvailabilityWorkingDay[];
+    minimumNoticeDays?: number;
+    overnightWork?: boolean;
+    weekendWork?: import('./marketplaceApi').WeekendWorkPreference;
+    emergencyCallout?: boolean;
+    availabilityConfirmedAt?: string;
     // How far the engineer is willing to travel from `location`, in miles.
     // Distinct from a search radius - this is the engineer's own stated limit.
     workingRadiusMiles?: number;
@@ -328,6 +337,8 @@ export interface Job {
     // created (see components/CreateContractModal.tsx).
     supervisionArrangement?: string;
     supervisionDisclaimerAccepted?: boolean;
+    deliveryContext?: 'assisted' | 'independent' | 'lead';
+    projectScale?: 'small' | 'medium' | 'large' | 'programme';
     // Optional day-rate ceiling the customer has set for this role. When
     // present, used to flag (not filter out) staffing options that exceed
     // it - see utils/teamComposition.ts.
@@ -426,6 +437,14 @@ export interface Contract {
 export enum TransactionType {
     SUBSCRIPTION = 'subscription',
 }
+
+export type JobPostInput = Omit<Job, 'id' | 'companyId' | 'postedDate' | 'status'> & {
+    companyId?: string;
+};
+
+export type JobPostDraft = Omit<JobPostInput, 'companyId' | 'startDate' | 'skillRequirements'> & {
+    startDate: string;
+};
 
 export interface Transaction {
     id: string;

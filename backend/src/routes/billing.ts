@@ -26,6 +26,7 @@ const paidTierSchema = z.enum(["Silver", "Gold", "Platinum"]);
 function publicBillingState(userId: string) {
   const state = getBillingState(userId);
   return {
+    schemaVersion: 1 as const,
     tier: state.tier,
     status: state.status,
     currentPeriodEnd: state.currentPeriodEnd,
@@ -93,7 +94,7 @@ billingRouter.post("/portal", async (req: AuthedRequest, res) => {
 export const adminBillingRouter = Router();
 adminBillingRouter.use(requireAuth, requireRole("Admin"));
 adminBillingRouter.get("/summary", (_req, res) => {
-  return res.json({ summary: getBillingSummary() });
+  return res.json({ schemaVersion: 1, summary: getBillingSummary() });
 });
 adminBillingRouter.get("/accounts", (_req, res) => {
   const accounts = listAdminBillingAccounts().map((account) => ({
@@ -108,14 +109,27 @@ adminBillingRouter.get("/accounts", (_req, res) => {
     lastPaymentFailedAt: account.lastPaymentFailedAt,
     updatedAt: account.updatedAt,
   }));
-  return res.json({ accounts });
+  return res.json({ schemaVersion: 1, accounts });
 });
 
 type StripeEvent = {
-  id?: string;
-  type?: string;
-  data?: { object?: any };
+  id: string;
+  type: string;
+  data: { object: Record<string, unknown> };
 };
+
+const stripeRecord = (value: unknown): Record<string, unknown> | null => typeof value === "object" && value !== null && !Array.isArray(value)
+  ? value as Record<string, unknown>
+  : null;
+
+function parseStripeEvent(value: unknown): StripeEvent | null {
+  const event = stripeRecord(value);
+  const data = stripeRecord(event?.data);
+  const object = stripeRecord(data?.object);
+  return event && typeof event.id === "string" && event.id && typeof event.type === "string" && event.type && object
+    ? { id: event.id, type: event.type, data: { object } }
+    : null;
+}
 
 function stripeId(value: unknown): string | null {
   if (typeof value === "string") return value;
@@ -125,14 +139,15 @@ function stripeId(value: unknown): string | null {
   return null;
 }
 
-function userIdForStripeObject(object: any): string | null {
-  if (typeof object?.metadata?.user_id === "string" && object.metadata.user_id) return object.metadata.user_id;
-  const subscriptionId = stripeId(object?.subscription) || (typeof object?.id === "string" && object?.object === "subscription" ? object.id : null);
+function userIdForStripeObject(object: Record<string, unknown>): string | null {
+  const metadata = stripeRecord(object.metadata);
+  if (typeof metadata?.user_id === "string" && metadata.user_id) return metadata.user_id;
+  const subscriptionId = stripeId(object.subscription) || (typeof object.id === "string" && object.object === "subscription" ? object.id : null);
   if (subscriptionId) {
     const state = findBillingBySubscriptionId(subscriptionId);
     if (state) return state.userId;
   }
-  const customerId = stripeId(object?.customer);
+  const customerId = stripeId(object.customer);
   if (customerId) {
     const state = findBillingByCustomerId(customerId);
     if (state) return state.userId;
@@ -173,15 +188,14 @@ stripeBillingWebhookRouter.post("/", raw({ type: "application/json", limit: "1mb
     return res.status(401).send("Invalid Stripe webhook signature");
   }
 
-  let event: StripeEvent;
+  let decoded: unknown;
   try {
-    event = JSON.parse(req.body.toString("utf8")) as StripeEvent;
+    decoded = JSON.parse(req.body.toString("utf8"));
   } catch {
     return res.status(400).send("Invalid Stripe webhook JSON");
   }
-  if (!event.id || !event.type || !event.data?.object) {
-    return res.status(400).send("Invalid Stripe webhook event");
-  }
+  const event = parseStripeEvent(decoded);
+  if (!event) return res.status(400).send("Invalid Stripe webhook event");
   if (!recordBillingWebhookEvent(event.id, event.type)) {
     return res.status(200).json({ received: true, duplicate: true });
   }
@@ -189,9 +203,10 @@ stripeBillingWebhookRouter.post("/", raw({ type: "application/json", limit: "1mb
   const object = event.data.object;
 
   if (event.type === "checkout.session.completed" && object.mode === "subscription") {
+    const metadata = stripeRecord(object.metadata);
     const userId = typeof object.client_reference_id === "string"
       ? object.client_reference_id
-      : typeof object.metadata?.user_id === "string" ? object.metadata.user_id : null;
+      : typeof metadata?.user_id === "string" ? metadata.user_id : null;
     const customerId = stripeId(object.customer);
     const subscriptionId = stripeId(object.subscription);
     if (userId && customerId && subscriptionId) {
@@ -212,9 +227,14 @@ stripeBillingWebhookRouter.post("/", raw({ type: "application/json", limit: "1mb
     const existing = subscriptionId
       ? findBillingBySubscriptionId(subscriptionId)
       : customerId ? findBillingByCustomerId(customerId) : undefined;
-    const priceId = stripeId(object.items?.data?.[0]?.price) || existing?.priceId || null;
+    const items = stripeRecord(object.items);
+    const itemData = Array.isArray(items?.data) ? items.data : [];
+    const firstItem = stripeRecord(itemData[0]);
+    const priceId = stripeId(firstItem?.price) || existing?.priceId || null;
     const tier = (priceId ? paidTierForStripePrice(priceId) : null) || existing?.tier || null;
-    const status = String(object.status || (event.type.endsWith("deleted") ? "canceled" : "incomplete")) as BillingStatus;
+    const allowedStatuses: BillingStatus[] = ["free", "incomplete", "incomplete_expired", "trialing", "active", "past_due", "unpaid", "canceled", "paused"];
+    const fallbackStatus: BillingStatus = event.type.endsWith("deleted") ? "canceled" : "incomplete";
+    const status = allowedStatuses.includes(object.status as BillingStatus) ? object.status as BillingStatus : fallbackStatus;
     if (userId && customerId && subscriptionId && priceId && tier) {
       const state = reconcileSubscription({
         userId,

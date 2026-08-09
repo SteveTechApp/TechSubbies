@@ -4,7 +4,7 @@ import { useData } from '../context/DataContext';
 import { useAppContext } from '../context/InteractionContext';
 import { DashboardShell } from '../components/DashboardShell';
 import { DashboardHelpCenter } from '../components/DashboardHelpCenter';
-import { CompanyProfile, Job, Role, EngineerProfile } from '../types';
+import { CompanyProfile, Job, JobPostInput, Role, EngineerProfile } from '../types';
 import { DashboardView } from './CompanyDashboard/DashboardView';
 import { MyJobsView } from './CompanyDashboard/MyJobsView';
 import { FindTalentView } from './CompanyDashboard/FindTalentView';
@@ -39,7 +39,7 @@ export const CompanyDashboard = () => {
         return jobs.filter(j => j.companyId === companyProfile.id);
     }, [jobs, companyProfile.id]);
 
-    const handlePostJob = async (jobData: Omit<Job, 'id' | 'companyId' | 'postedDate' | 'status'>) => {
+    const handlePostJob = async (jobData: Omit<JobPostInput, 'companyId'>) => {
         const fullJobData = { ...jobData, companyId: companyProfile.id };
         const newJob = await postJob(fullJobData);
         setJustPostedJob(newJob);

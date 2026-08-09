@@ -742,7 +742,7 @@ export interface PartnershipRequestRow {
   id: string;
   requesterId: string;
   partnerId: string;
-  status: string;
+  status: "pending" | "accepted" | "declined";
   createdAt: string;
   updatedAt: string;
 }
@@ -781,7 +781,7 @@ export function findPendingPartnershipRequestBetween(
     .get(userAId, userBId, userBId, userAId) as unknown as PartnershipRequestRow | undefined;
 }
 
-export function updatePartnershipRequestStatus(id: string, status: string): PartnershipRequestRow | undefined {
+export function updatePartnershipRequestStatus(id: string, status: PartnershipRequestRow["status"]): PartnershipRequestRow | undefined {
   const now = new Date().toISOString();
   db.prepare("UPDATE partnership_requests SET status = ?, updatedAt = ? WHERE id = ?").run(status, now, id);
   return findPartnershipRequestById(id);
@@ -793,7 +793,7 @@ export interface CompanyAttachmentRequestRow {
   id: string;
   engineerId: string;
   resourcingCompanyId: string;
-  status: string;
+  status: "pending" | "accepted" | "declined";
   createdAt: string;
   updatedAt: string;
 }
@@ -845,7 +845,7 @@ export function findPendingCompanyAttachmentRequest(
 
 export function updateCompanyAttachmentRequestStatus(
   id: string,
-  status: string
+  status: CompanyAttachmentRequestRow["status"]
 ): CompanyAttachmentRequestRow | undefined {
   const now = new Date().toISOString();
   db.prepare("UPDATE company_attachment_requests SET status = ?, updatedAt = ? WHERE id = ?").run(status, now, id);

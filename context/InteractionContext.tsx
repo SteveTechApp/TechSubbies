@@ -11,8 +11,15 @@ import {
     User, Role, EngineerProfile, CompanyProfile, Job, Application, Review, Conversation, Message,
     Contract, Transaction, Project, ForumPost, ForumComment, Notification, CollaborationPost, ResourcingCompanyProfile,
     // FIX: Added missing TimesheetStatus and Product-related imports.
-    ApplicationStatus, ContractStatus, MilestoneStatus, Timesheet, TimesheetStatus, Product, ProductFeatures, ProfileTier,
+    ApplicationStatus, ContractStatus, MilestoneStatus, Timesheet, TimesheetStatus, Product, ProductFeatures, ProfileTier, JobPostInput, StoryboardPanelData,
 } from '../types';
+import type { CompanyRegistrationInput, EngineerRegistrationInput } from '../types/marketplaceApi';
+import { errorMessage } from '../utils/errorMessage';
+
+type ApplicantDeepDive = {
+    analysis: { summary: string; strengths: string[]; areas_to_probe: string[]; interview_questions: string[] };
+    error?: never;
+} | { error: string; analysis?: never };
 
 interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<typeof useSettings> {
     user: User | null;
@@ -24,17 +31,17 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     cancelMembershipChange: () => Promise<void>;
     updateCompanyProfile: (profileData: Partial<CompanyProfile>) => Promise<void>;
     boostProfile: () => void;
-    addSkillsToProfile: (skills: any[]) => void;
+    addSkillsToProfile: (skills: unknown[]) => void;
     reactivateProfile: () => void;
     // --- Job & Application Management ---
-    postJob: (jobData: any) => Promise<Job>;
+    postJob: (jobData: JobPostInput) => Promise<Job>;
     applyForJob: (jobId: string, engineerId: string) => void;
     markApplicationsViewed: (jobId: string) => void;
     sendOffer: (jobId: string, engineerId: string) => Promise<void>;
     rejectApplication: (jobId: string, engineerId: string) => Promise<void>;
     inviteEngineerToJob: (jobId: string, engineerId: string) => void;
     // --- Direct-party contract and work tracking ---
-    createContract: (contract: any) => Promise<void>;
+    createContract: (contract: Contract) => Promise<void>;
     signContract: (contractId: string, signatureName: string) => void;
     startMilestone: (contractId: string, milestoneId: string) => void;
     submitMilestoneForApproval: (contractId: string, milestoneId: string) => void;
@@ -49,14 +56,14 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     // since there's no push/WebSocket connection (see apiService.ts).
     refreshConversationMessages: (conversationId: string) => void;
     // --- AI & Gemini ---
-    getApplicantDeepDive: (job: Job, engineer: EngineerProfile) => Promise<any>;
+    getApplicantDeepDive: (job: Job, engineer: EngineerProfile) => Promise<ApplicantDeepDive>;
     // FIX: Add missing method definition
     analyzeProductForFeatures: (product: Product) => Promise<ProductFeatures | { error: string }>;
     // --- Admin ---
     toggleUserStatus: (profileId: string) => void;
     toggleJobStatus: (jobId: string) => void;
     // --- Resourcing ---
-    createManagedEngineer: (resourcingCompanyId: string, engineerData: any) => void;
+    createManagedEngineer: (resourcingCompanyId: string, engineerData: Record<string, unknown>) => void;
     // --- Project Planner ---
     createProject: (projectData: Omit<Project, 'id'>) => void;
     assignEngineerToProjectRole: (roleId: string, engineerId: string) => void;
@@ -68,17 +75,17 @@ interface InteractionContextType extends ReturnType<typeof useData>, ReturnType<
     // --- Notifications ---
     markNotificationsAsRead: (userId: string) => void;
     // --- Collaboration ---
-    postCollaboration: (postData: any) => void;
+    postCollaboration: (postData: Omit<CollaborationPost, 'id' | 'postedByEngineerId' | 'postedDate' | 'status'>) => void;
     proposeCollaboration: (targetEngineerId: string, navigateCallback: () => void) => void;
     // --- Misc ---
     redeemLoyaltyPoints: (points: number) => void;
-    saveStoryboardAsCaseStudy: (title: string, panels: any[]) => void;
+    saveStoryboardAsCaseStudy: (title: string, panels: StoryboardPanelData[]) => void;
     applicantForDeepDive: { job: Job, engineer: EngineerProfile } | null;
     setApplicantForDeepDive: React.Dispatch<React.SetStateAction<{ job: Job, engineer: EngineerProfile } | null>>;
     // FIX: Added missing user creation methods from AuthContext.
-    createAndLoginCompany: (data: any) => Promise<void>;
-    createAndLoginResourcingCompany: (data: any) => Promise<void>;
-    createAndLoginEngineer: (data: any) => Promise<void>;
+    createAndLoginCompany: (data: CompanyRegistrationInput) => Promise<void>;
+    createAndLoginResourcingCompany: (data: CompanyRegistrationInput) => Promise<void>;
+    createAndLoginEngineer: (data: EngineerRegistrationInput) => Promise<void>;
 }
 
 const InteractionContext = createContext<InteractionContextType | undefined>(undefined);
@@ -173,11 +180,11 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const boostProfile = () => updateEngineerProfile({ isBoosted: true });
-    const addSkillsToProfile = (skills: any[]) => alert(`${skills.length} skills added!`);
+    const addSkillsToProfile = (skills: unknown[]) => alert(`${skills.length} skills added!`);
     const reactivateProfile = () => updateEngineerProfile({ status: 'active' });
 
     // --- Job Management ---
-    const postJob = async (jobData: any): Promise<Job> => {
+    const postJob = async (jobData: JobPostInput): Promise<Job> => {
         const newJob = await apiService.postJob(jobData);
         setAppData(prev => ({ ...prev, jobs: [newJob, ...prev.jobs] }));
         return newJob;
@@ -201,9 +208,9 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
                 }));
                 alert('Application submitted!');
             })
-            .catch((error: any) => {
+            .catch((error: unknown) => {
                 setAppData(prev => ({ ...prev, applications: prev.applications.filter(a => a !== newApp) }));
-                alert(error?.message || 'Could not submit application.');
+                alert(errorMessage(error, 'Could not submit application.'));
             });
     };
     
@@ -319,9 +326,9 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
             .then(updated => {
                 if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
             })
-            .catch((error: any) => {
+            .catch((error: unknown) => {
                 setAppData(prev => ({ ...prev, contracts: previousContracts }));
-                alert(error?.message || 'Could not save your signature.');
+                alert(errorMessage(error, 'Could not save your signature.'));
             });
     };
     const startMilestone = (contractId: string, milestoneId: string) => {
@@ -331,9 +338,9 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
             .then(updated => {
                 if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
             })
-            .catch((error: any) => {
+            .catch((error: unknown) => {
                 setAppData(prev => ({ ...prev, contracts: previousContracts }));
-                alert(error?.message || 'Could not start milestone.');
+                alert(errorMessage(error, 'Could not start milestone.'));
             });
     };
     const submitMilestoneForApproval = (contractId: string, milestoneId: string) => {
@@ -343,9 +350,9 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
             .then(updated => {
                 if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
             })
-            .catch((error: any) => {
+            .catch((error: unknown) => {
                 setAppData(prev => ({ ...prev, contracts: previousContracts }));
-                alert(error?.message || 'Could not submit milestone for approval.');
+                alert(errorMessage(error, 'Could not submit milestone for approval.'));
             });
     };
     const approveMilestone = (contractId: string, milestoneId: string) => {
@@ -355,9 +362,9 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
             .then(updated => {
                 if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
             })
-            .catch((error: any) => {
+            .catch((error: unknown) => {
                 setAppData(prev => ({ ...prev, contracts: previousContracts }));
-                alert(error?.message || 'Could not approve milestone.');
+                alert(errorMessage(error, 'Could not approve milestone.'));
             });
     };
 
@@ -369,9 +376,9 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
             .then(updated => {
                 if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
             })
-            .catch((error: any) => {
+            .catch((error: unknown) => {
                 setAppData(prev => ({ ...prev, contracts: previousContracts }));
-                alert(error?.message || 'Could not submit timesheet.');
+                alert(errorMessage(error, 'Could not submit timesheet.'));
             });
     };
 
@@ -382,9 +389,9 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
             .then(updated => {
                 if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
             })
-            .catch((error: any) => {
+            .catch((error: unknown) => {
                 setAppData(prev => ({ ...prev, contracts: previousContracts }));
-                alert(error?.message || 'Could not approve timesheet.');
+                alert(errorMessage(error, 'Could not approve timesheet.'));
             });
     };
 
@@ -417,9 +424,9 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
             .then(saved => {
                 if (saved) setAppData(prev => ({ ...prev, conversations: prev.conversations.map(c => c.id === optimisticConversation.id ? saved : c) }));
             })
-            .catch((error: any) => {
+            .catch((error: unknown) => {
                 setAppData(prev => ({ ...prev, conversations: prev.conversations.filter(c => c.id !== optimisticConversation.id) }));
-                alert(error?.message || 'Could not start conversation.');
+                alert(errorMessage(error, 'Could not start conversation.'));
             });
         navigateCallback();
     };
@@ -438,9 +445,9 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
             if (saved) {
                 setAppData(prev => ({ ...prev, messages: prev.messages.map(m => m.id === newMessage.id ? saved : m) }));
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             setAppData(prev => ({ ...prev, messages: prev.messages.filter(m => m.id !== newMessage.id) }));
-            alert(error?.message || 'Could not send message.');
+            alert(errorMessage(error, 'Could not send message.'));
         }
     };
 
@@ -468,7 +475,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
     
     const toggleUserStatus = (profileId: string) => alert(`Toggling status for ${profileId}`);
     const toggleJobStatus = (jobId: string) => alert(`Toggling status for ${jobId}`);
-    const createManagedEngineer = (resourcingCompanyId: string, engineerData: any) => alert(`Creating engineer for ${resourcingCompanyId}`);
+    const createManagedEngineer = (resourcingCompanyId: string, _engineerData: Record<string, unknown>) => alert(`Creating engineer for ${resourcingCompanyId}`);
     
     const createProject = (projectData: Omit<Project, 'id'>) => {
         const newProject = { ...projectData, id: `proj-${Date.now()}` } as Project;
@@ -478,13 +485,13 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         setAppData(prev => ({...prev, projects: prev.projects.map(p => ({...p, roles: p.roles.map(r => r.id === roleId ? {...r, assignedEngineerId: engineerId} : r)}))}));
     };
     
-    const createForumPost = async (postData: any) => {
+    const createForumPost = async (_postData: { title: string; content: string; tags: string[] }) => {
         alert('Post submitted for moderation.');
     };
     const voteOnPost = (postId: string, voteType: 'up' | 'down') => {
         setAppData(prev => ({...prev, forumPosts: prev.forumPosts.map(p => p.id === postId ? {...p, upvotes: p.upvotes + (voteType === 'up' ? 1 : 0), downvotes: p.downvotes + (voteType === 'down' ? 1 : 0)}: p)}));
     };
-    const addForumComment = (commentData: any) => {
+    const addForumComment = (commentData: { postId: string; parentId: string | null; content: string }) => {
          const newComment = { ...commentData, id: `comment-${Date.now()}`, authorId: user!.profile.id, timestamp: new Date(), upvotes: 0, downvotes: 0 };
          setAppData(prev => ({...prev, forumComments: [...prev.forumComments, newComment]}));
     };
@@ -496,7 +503,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         setAppData(prev => ({...prev, notifications: prev.notifications.map(n => n.userId === userId ? {...n, isRead: true} : n)}));
     };
     
-    const postCollaboration = (postData: any) => alert('Collaboration posted');
+    const postCollaboration = (_postData: Omit<CollaborationPost, 'id' | 'postedByEngineerId' | 'postedDate' | 'status'>) => alert('Collaboration posted');
     const proposeCollaboration = (targetEngineerId: string, cb: () => void) => {
         alert(`Collaboration proposed to ${targetEngineerId}`);
         cb();
@@ -511,7 +518,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         }
     };
     
-    const saveStoryboardAsCaseStudy = (title: string, panels: any[]) => {
+    const saveStoryboardAsCaseStudy = (title: string, panels: StoryboardPanelData[]) => {
          if(!user || user.role !== Role.ENGINEER) return;
         const newCaseStudy = { id: `cs-${Date.now()}`, name: title, url: `wingman://storyboard/${Date.now()}`, panels };
         const currentProfile = user.profile as EngineerProfile;

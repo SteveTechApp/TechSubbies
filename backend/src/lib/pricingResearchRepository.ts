@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
+import { z } from "zod";
 import { db } from "./db.js";
+import { AppError } from "./errors.js";
 
 export type PricingResearchRole = "Engineer" | "Company" | "Resourcing Company";
 export type BillingPreference = "monthly" | "annual" | "either";
@@ -95,11 +97,63 @@ export function checkPricingResearchRepository(): boolean {
   return row?.name === "pricing_research_responses";
 }
 
-function rowToResponse(row: any): PricingResearchResponse {
-  return {
-    ...row,
-    valueDrivers: JSON.parse(row.valueDrivers || "[]"),
-  } as PricingResearchResponse;
+const pricingRoles = ["Engineer", "Company", "Resourcing Company"] as const;
+const billingPreferences = ["monthly", "annual", "either"] as const;
+const pricingBlockers = [
+  "price", "need-proof-of-value", "not-enough-demand", "not-enough-supply",
+  "missing-features", "billing-commitment", "none",
+] as const;
+const pricingValueDrivers = [
+  "verified-talent", "better-matching", "faster-hiring", "profile-visibility",
+  "evidence-verification", "contract-workflow", "messaging", "analytics",
+  "resourcing-roster", "priority-support",
+] as const;
+
+const pricingResearchRowSchema = z.object({
+  id: z.string().min(1),
+  userId: z.string().min(1),
+  accountRole: z.enum(pricingRoles),
+  valueScore: z.number().int().min(1).max(5),
+  likelihoodToPay: z.number().int().min(1).max(5),
+  priceTooCheap: z.number().int().nonnegative(),
+  priceGoodValue: z.number().int().nonnegative(),
+  priceExpensive: z.number().int().nonnegative(),
+  priceTooExpensive: z.number().int().nonnegative(),
+  preferredBilling: z.enum(billingPreferences),
+  valueDrivers: z.string(),
+  primaryBlocker: z.enum(pricingBlockers),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+function corruptPricingResearchRow(id: string | undefined): never {
+  throw new AppError(
+    "PERSISTED_DATA_CORRUPT",
+    "Stored pricing research response is corrupt.",
+    500,
+    { entity: "pricing research response", id: id || "unknown" },
+  );
+}
+
+function rowToResponse(row: unknown): PricingResearchResponse {
+  const parsed = pricingResearchRowSchema.safeParse(row);
+  if (!parsed.success) {
+    const id = typeof row === "object" && row !== null && "id" in row && typeof row.id === "string"
+      ? row.id
+      : undefined;
+    corruptPricingResearchRow(id);
+  }
+
+  let valueDrivers: unknown;
+  try {
+    valueDrivers = JSON.parse(parsed.data.valueDrivers);
+  } catch {
+    corruptPricingResearchRow(parsed.data.id);
+  }
+  const parsedDrivers = z.array(z.enum(pricingValueDrivers)).safeParse(valueDrivers);
+  if (!parsedDrivers.success) corruptPricingResearchRow(parsed.data.id);
+
+  return { ...parsed.data, valueDrivers: parsedDrivers.data };
 }
 
 export function findPricingResearchResponse(userId: string): PricingResearchResponse | undefined {
@@ -174,7 +228,7 @@ function ratio(numerator: number, denominator: number): number | null {
 export function getPricingResearchSummary(): PricingResearchSummary {
   const rows = db.prepare("SELECT * FROM pricing_research_responses ORDER BY updatedAt DESC").all()
     .map(rowToResponse);
-  const roles: PricingResearchRole[] = ["Engineer", "Company", "Resourcing Company"];
+  const roles: PricingResearchRole[] = [...pricingRoles];
   const segments = roles.map((role): PricingResearchSegment => {
     const responses = rows.filter((row) => row.accountRole === role);
     const likelyToPayResponses = responses.filter((row) => row.likelihoodToPay >= 4).length;

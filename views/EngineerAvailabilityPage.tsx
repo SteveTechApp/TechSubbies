@@ -2,20 +2,23 @@ import React, { useState } from "react";
 import apiService from "../services/apiService";
 import { useAppContext } from "../context/InteractionContext";
 import { calculateAvailabilityConfidence } from "../services/trustEngine";
+import type { EngineerProfile } from "../types";
+import type { AvailabilityWorkingDay, EngineerAvailabilityInputDTO, WeekendWorkPreference } from "../types/marketplaceApi";
+import { errorMessage } from "../utils/errorMessage";
 
 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] as const;
 const input = "mt-2 w-full rounded-xl border border-white/15 bg-slate-950 px-4 py-3 text-white";
 
 export default function EngineerAvailabilityPage() {
   const { user } = useAppContext();
-  const profile: any = user?.profile || {};
-  const [form, setForm] = useState({ availableFrom: profile.availableFrom || new Date().toISOString().slice(0,10), baseLocation: profile.baseLocation || profile.location || "", travelRadiusMiles: profile.travelRadiusMiles ?? 50, workingDays: profile.workingDays || ["Monday","Tuesday","Wednesday","Thursday","Friday"], minimumNoticeDays: profile.minimumNoticeDays ?? 2, overnightWork: profile.overnightWork ?? false, weekendWork: profile.weekendWork || "no", emergencyCallout: profile.emergencyCallout ?? false });
-  const [confirmedAt, setConfirmedAt] = useState<string | undefined>(profile.availabilityConfirmedAt);
+  const profile = user?.role === 'Engineer' ? user.profile as EngineerProfile : undefined;
+  const [form, setForm] = useState<EngineerAvailabilityInputDTO>({ availableFrom: profile?.availableFrom || new Date().toISOString().slice(0,10), baseLocation: profile?.baseLocation || profile?.location || "", travelRadiusMiles: profile?.travelRadiusMiles ?? 50, workingDays: profile?.workingDays || ["Monday","Tuesday","Wednesday","Thursday","Friday"], minimumNoticeDays: profile?.minimumNoticeDays ?? 2, overnightWork: profile?.overnightWork ?? false, weekendWork: profile?.weekendWork || "no", emergencyCallout: profile?.emergencyCallout ?? false });
+  const [confirmedAt, setConfirmedAt] = useState<string | undefined>(profile?.availabilityConfirmedAt);
   const [status, setStatus] = useState("");
   const confidence = calculateAvailabilityConfidence(confirmedAt);
 
-  async function save(event: React.FormEvent) { event.preventDefault(); setStatus("Saving…"); try { const saved=await apiService.confirmAvailability(form); const timestamp=saved.profile?.availabilityConfirmedAt || saved.availabilityConfirmedAt || new Date().toISOString(); setConfirmedAt(timestamp); setStatus("Availability confirmed and visible to matching clients."); } catch(error:any) { setStatus(error.message); } }
-  function toggleDay(day:string) { setForm((current:any)=>({...current,workingDays:current.workingDays.includes(day)?current.workingDays.filter((item:string)=>item!==day):[...current.workingDays,day]})); }
+  async function save(event: React.FormEvent) { event.preventDefault(); setStatus("Saving…"); try { const saved=await apiService.confirmAvailability(form); const savedProfile=saved.profile as EngineerProfile; setConfirmedAt(savedProfile.availabilityConfirmedAt); setStatus("Availability confirmed and visible to matching clients."); } catch(error:unknown) { setStatus(errorMessage(error,"Availability could not be confirmed.")); } }
+  function toggleDay(day:AvailabilityWorkingDay) { setForm((current)=>({...current,workingDays:current.workingDays.includes(day)?current.workingDays.filter((item)=>item!==day):[...current.workingDays,day]})); }
 
   return <main className="min-h-screen bg-slate-950 px-5 py-8 text-white"><form onSubmit={save} className="mx-auto max-w-4xl">
     <a href="/engineer/profile" className="font-bold text-cyan-300">Back to Engineer Profile Hub</a>
@@ -25,7 +28,7 @@ export default function EngineerAvailabilityPage() {
       <label>Base location<input required value={form.baseLocation} onChange={e=>setForm({...form,baseLocation:e.target.value})} className={input} placeholder="Town, city or postcode area"/></label>
       <label>Normal travel radius (miles)<input type="number" min="0" max="1000" value={form.travelRadiusMiles} onChange={e=>setForm({...form,travelRadiusMiles:Number(e.target.value)})} className={input}/></label>
       <label>Minimum notice (days)<input type="number" min="0" max="365" value={form.minimumNoticeDays} onChange={e=>setForm({...form,minimumNoticeDays:Number(e.target.value)})} className={input}/></label>
-      <label>Weekend work<select value={form.weekendWork} onChange={e=>setForm({...form,weekendWork:e.target.value})} className={input}><option value="no">No</option><option value="yes">Yes</option><option value="premium-only">Premium rate only</option></select></label>
+      <label>Weekend work<select value={form.weekendWork} onChange={e=>setForm({...form,weekendWork:e.target.value as WeekendWorkPreference})} className={input}><option value="no">No</option><option value="yes">Yes</option><option value="premium-only">Premium rate only</option></select></label>
       <div className="space-y-3 pt-2"><label className="flex gap-3"><input type="checkbox" checked={form.overnightWork} onChange={e=>setForm({...form,overnightWork:e.target.checked})}/>Available for overnight work</label><label className="flex gap-3"><input type="checkbox" checked={form.emergencyCallout} onChange={e=>setForm({...form,emergencyCallout:e.target.checked})}/>Available for emergency callouts</label></div>
       <fieldset className="md:col-span-2"><legend className="font-bold">Normal working days</legend><div className="mt-3 flex flex-wrap gap-2">{days.map(day=><button type="button" key={day} onClick={()=>toggleDay(day)} className={`rounded-full px-4 py-2 text-sm font-bold ${form.workingDays.includes(day)?"bg-cyan-300 text-slate-950":"border border-white/15 text-slate-300"}`}>{day.slice(0,3)}</button>)}</div></fieldset>
     </section>

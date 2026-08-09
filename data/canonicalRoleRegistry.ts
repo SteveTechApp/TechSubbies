@@ -1,6 +1,10 @@
 import { avSkillProfiles } from './avSkillProfiles';
 import { itSkillProfiles } from './itSkillProfiles';
 import type { RoleSkillDefinition, RoleMarket, RoleFamily } from '../types/roleSkills';
+import type { AvSkillProfile } from '../types/skillProfiles';
+import type { ItSkillProfile } from '../types/itSkillProfiles';
+
+type SourceSkillProfile = AvSkillProfile | ItSkillProfile;
 
 function slug(value: string): string {
   return value
@@ -13,9 +17,9 @@ function titleFromId(value: string): string {
   return value.split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
 }
 
-function convertProfile(profile: any, market: RoleMarket): RoleSkillDefinition {
-  const skills = profile.skillGroups.flatMap((group: any, groupIndex: number) =>
-    group.skills.map((skill: any, skillIndex: number) => ({
+function convertProfile(profile: SourceSkillProfile, market: RoleMarket): RoleSkillDefinition {
+  const skills = profile.skillGroups.flatMap((group, groupIndex) =>
+    group.skills.map((skill, skillIndex) => ({
       id: `${profile.id}:${slug(skill.name) || `${groupIndex}-${skillIndex}`}`,
       label: skill.name,
       description: `${group.description || group.title} Expected level: ${titleFromId(skill.level)}.`,
@@ -37,12 +41,12 @@ function convertProfile(profile: any, market: RoleMarket): RoleSkillDefinition {
     typicalProjects: profile.suitableFor,
     recommendedTags: profile.productKnowledgeTags || [],
     evidenceTypes: profile.typicalEvidence || [],
-    skillGroups: profile.skillGroups.map((group: any, groupIndex: number) => ({
+    skillGroups: profile.skillGroups.map((group, groupIndex) => ({
       id: `${profile.id}:group-${groupIndex + 1}`,
       title: group.title,
       description: group.description,
-      skills: skills.filter((skill: any) =>
-        group.skills.some((source: any) => skill.id === `${profile.id}:${slug(source.name)}`)
+      skills: skills.filter((skill) =>
+        group.skills.some((source) => skill.id === `${profile.id}:${slug(source.name)}`)
       ),
     })),
   };

@@ -40,9 +40,9 @@ export const TrainingRecommendations = ({ profile }: TrainingRecommendationsProp
         
         const result = await geminiService.getTrainingRecommendations(profile);
         
-        if (result.error) {
+        if ('error' in result) {
             setError(result.error);
-        } else if (result && result.recommendations) {
+        } else if (result.recommendations) {
             setRecommendations(result.recommendations);
         } else {
             setError('Could not get training recommendations. An unexpected error occurred.');

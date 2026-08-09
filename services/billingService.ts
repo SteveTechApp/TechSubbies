@@ -1,17 +1,9 @@
 import { API_BASE_URL } from './apiConfig';
 import { secureFetch } from './httpClient';
 import { ProfileTier } from '../types';
+import { MARKETPLACE_API_SCHEMA_VERSION, MembershipBillingStateDTO, MembershipBillingStatusDTO } from '../types/marketplaceApi';
 
-export type MembershipBillingStatus =
-    | 'free'
-    | 'incomplete'
-    | 'incomplete_expired'
-    | 'trialing'
-    | 'active'
-    | 'past_due'
-    | 'unpaid'
-    | 'canceled'
-    | 'paused';
+export type MembershipBillingStatus = MembershipBillingStatusDTO;
 
 export type MembershipBillingState = {
     tier: ProfileTier;
@@ -23,6 +15,14 @@ export type MembershipBillingState = {
     paymentIssue: boolean;
     lastPaymentFailedAt: string | null;
 };
+
+function parseBillingState(value: unknown): MembershipBillingState {
+    const data = value as Partial<MembershipBillingStateDTO>;
+    if (data.schemaVersion !== MARKETPLACE_API_SCHEMA_VERSION || typeof data.tier !== 'string' || typeof data.status !== 'string') {
+        throw new Error('Unsupported membership billing response.');
+    }
+    return data as MembershipBillingStateDTO;
+}
 
 export type AdminSubscriptionBillingSummary = {
     paidAccounts: number;
@@ -54,7 +54,7 @@ async function jsonResponse<T>(response: Response, fallback: string): Promise<T>
 
 export async function getMembershipBillingState(): Promise<MembershipBillingState> {
     const response = await secureFetch(`${API_BASE_URL}/billing/me`);
-    return jsonResponse(response, 'Could not load membership billing status.');
+    return parseBillingState(await jsonResponse<unknown>(response, 'Could not load membership billing status.'));
 }
 
 export async function createMembershipCheckout(tier: ProfileTier): Promise<string> {

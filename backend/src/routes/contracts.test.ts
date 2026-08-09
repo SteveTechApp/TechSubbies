@@ -101,6 +101,7 @@ describe("contracts: creation", () => {
       .send(await offeredContractBody(company, engineer));
 
     expect(res.status).toBe(201);
+    expect(res.body.schemaVersion).toBe(1);
     expect(res.body.status).toBe("Pending Signature");
     expect(res.body.companyId).toBe(company.id);
     expect(res.body.engineerId).toBe(engineer.id);

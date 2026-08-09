@@ -42,4 +42,18 @@ describe("versioned marketplace schema adapters", () => {
   it("rejects a job without a canonical role instead of persisting an ambiguous payload", () => {
     expect(() => canonicaliseJob({ title: "Mystery role", roleId: "made-up-role" })).toThrow("Choose a canonical AV or IT job role.");
   });
+
+  it("filters malformed legacy evidence and capability entries deterministically", () => {
+    const profile = canonicaliseEngineerProfile({
+      roleSkillProfiles: [{ roleId: "network-engineer", capabilities: [null, { skill: "VLAN", rating: 4 }, { skill: "vlan", rating: 2 }], evidence: [null, "claim", { type: "project", note: "Observed" }] }],
+    });
+    expect(profile.capabilityProfiles[0].capabilities).toHaveLength(1);
+    expect(profile.capabilityProfiles[0].evidence).toEqual([{ type: "project", note: "Observed" }]);
+  });
+
+  it("ignores malformed multi-role requirement children without widening the schema", () => {
+    const job = canonicaliseJob({ title: "Network delivery", engineerNeeds: [{ roleId: "network-engineer", skills: [null, { name: "Routing" }], prerequisites: [null, "Cisco access"] }] });
+    expect(job.roleRequirements[0].skills).toEqual([{ skillId: "Routing", required: true }]);
+    expect(job.roleRequirements[0].prerequisites).toHaveLength(1);
+  });
 });

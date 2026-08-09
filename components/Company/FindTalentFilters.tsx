@@ -102,7 +102,7 @@ export const FindTalentFilters = ({ engineers, myJobs, onFilterChange, onBudgetC
         }).sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
         try {
             const result = await geminiService.findBestMatchesForJob(job, eligibleEngineers, evidenceContext);
-            const matches = Array.isArray(result?.matches) ? result.matches : [];
+            const matches = 'matches' in result && Array.isArray(result.matches) ? result.matches : [];
             onFilterChange(rankEngineers(matches));
             if (matches.length === 0) setMatchNotice('Showing deterministic evidence-adjusted results.');
         } catch (error) {

@@ -97,6 +97,7 @@ describe("subscription billing reconciliation", () => {
       .get("/api/billing/me")
       .set("Authorization", `Bearer ${engineerToken}`);
     expect(billingPastDue.body).toMatchObject({
+      schemaVersion: 1,
       tier: "Gold",
       status: "past_due",
       paymentIssue: true,
@@ -159,5 +160,23 @@ describe("subscription billing reconciliation", () => {
       .set("Stripe-Signature", `t=${Math.floor(Date.now() / 1000)},v1=${"0".repeat(64)}`)
       .send(JSON.stringify({ id: "evt_forged", type: "invoice.paid", data: { object: {} } }));
     expect(response.status).toBe(401);
+  });
+
+  it("rejects signed webhook envelopes with primitive or missing provider objects", async () => {
+    const primitive = await signedWebhook({ id: "evt_primitive", type: "invoice.paid", data: { object: "invoice" } });
+    expect(primitive.status).toBe(400);
+    const missing = await signedWebhook({ id: "evt_missing", type: "invoice.paid", data: {} });
+    expect(missing.status).toBe(400);
+  });
+
+  it("falls back safely when Stripe sends an unknown subscription status", async () => {
+    const response = await signedWebhook({
+      id: "evt_unknown_status",
+      type: "customer.subscription.updated",
+      data: { object: { object: "subscription", id: "sub_unknown", customer: "cus_unknown", status: "future_status", metadata: { user_id: engineerId }, items: { data: [{ price: { id: "price_silver" } }] } } },
+    });
+    expect(response.status).toBe(200);
+    const billing = await request(app).get("/api/billing/me").set("Authorization", `Bearer ${engineerToken}`);
+    expect(billing.body.status).toBe("incomplete");
   });
 });

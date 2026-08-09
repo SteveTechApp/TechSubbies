@@ -3,6 +3,7 @@ import { useAppContext } from '../context/InteractionContext';
 import { Logo } from '../components/Logo';
 import { ArrowLeft } from '../components/Icons';
 import { Country } from '../types';
+import { errorMessage } from '../utils/errorMessage';
 
 interface ResourcingCompanySignUpWizardProps {
     onCancel: () => void;
@@ -46,8 +47,8 @@ export const ResourcingCompanySignUpWizard = ({ onCancel }: ResourcingCompanySig
 
         try {
             await createAndLoginResourcingCompany(formData);
-        } catch (err: any) {
-            setError(err.message || 'Could not create the account. Please try again.');
+        } catch (err: unknown) {
+            setError(errorMessage(err, 'Could not create the account. Please try again.'));
         }
     };
 

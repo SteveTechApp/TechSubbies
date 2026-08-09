@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { Currency, JobType, ExperienceLevel, JobSkillRequirement, Job } from '../types';
+import { Currency, JobType, ExperienceLevel, JobSkillRequirement, JobPostDraft, JobPostInput } from '../types';
 import { X } from './Icons';
 import { JobPostStep1 } from './JobPost/JobPostStep1';
 import { JobPostStep2 } from './JobPost/JobPostStep2';
@@ -9,10 +9,10 @@ import { JobPostStep2 } from './JobPost/JobPostStep2';
 interface JobPostModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onPostJob: (jobData: Omit<Job, 'id' | 'companyId' | 'postedDate' | 'status'>) => void;
+    onPostJob: (jobData: Omit<JobPostInput, 'companyId'>) => void;
 }
 
-const initialJobDetails = {
+const initialJobDetails: JobPostDraft = {
     title: '',
     description: '',
     location: 'London, UK',

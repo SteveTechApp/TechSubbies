@@ -1,9 +1,11 @@
 import { MOCK_ENGINEERS, MOCK_COMPANIES, MOCK_JOBS, MOCK_APPLICATIONS, MOCK_REVIEWS, MOCK_CONVERSATIONS, MOCK_MESSAGES, MOCK_CONTRACTS, MOCK_TRANSACTIONS, MOCK_PROJECTS, ALL_MOCK_USERS, MOCK_FORUM_POSTS, MOCK_FORUM_COMMENTS, MOCK_NOTIFICATIONS, MOCK_COLLABORATION_POSTS } from '../data/mockData';
 import { MOCK_RESOURCING_COMPANY_1, MOCK_ADMIN_PROFILE, MOCK_FREE_ENGINEER, MOCK_ENGINEER_STEVE } from '../data/modules/mockStaticProfiles';
-import { Application, ApplicationStatus, EngineerProfile, ProfileTier, Role, User, Contract, ContractStatus, MilestoneStatus, Timesheet, TimesheetStatus, Conversation, Message, ForumPost, Notification, CollaborationPost, CompanyProfile, ResourcingCompanyProfile, Job, Discipline, Currency, Country, ExperienceLevel } from '../types';
+import { Application, ApplicationStatus, EngineerProfile, ProfileTier, Role, User, Contract, ContractStatus, MilestoneStatus, Timesheet, TimesheetStatus, Conversation, Message, ForumPost, Notification, CollaborationPost, CompanyProfile, ResourcingCompanyProfile, Job, JobPostInput, Discipline, Currency, Country, ExperienceLevel } from '../types';
 import { secureFetch } from './httpClient';
 import { API_BASE_URL } from './apiConfig';
 import { canonicalRoleIdForLegacy } from '../data/canonicalRoleIds';
+import { CompanyAttachmentMutationResponseDTO, CompanyAttachmentRequestDTO, CompanyAuditEventDTO, CompanyRegistrationInput, ContractContactDTO, ContractResponseDTO, EngineerAvailabilityInputDTO, EngineerRegistrationInput, MARKETPLACE_API_SCHEMA_VERSION, PartnershipMutationResponseDTO, PartnershipStatusResponseDTO, PendingCompanyAttachmentRequestDTO, ProjectTeamDTO, ProjectTeamInputDTO, RegistrationRequestDTO, WorkforceInsightsDTO } from '../types/marketplaceApi';
+import type { CompletionValidation, CompletionValidationInput, TalentPoolEntry, TalentPoolEntryInput, TechnicalWorkPack, TechnicalWorkPackInput } from '../types/trust';
 
 // --- API Service ---
 // Account creation, login and profile updates now call the real backend
@@ -14,6 +16,231 @@ import { canonicalRoleIdForLegacy } from '../data/canonicalRoleIds';
 
 const simulateDelay = (ms: number = 500) => new Promise(res => setTimeout(res, ms));
 export const DEMO_DATA_ENABLED = import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_DATA !== 'false';
+
+function parseUser(value: unknown): User {
+  if (typeof value !== 'object' || value === null) throw new Error('Invalid user response.');
+  const candidate = value as Record<string, unknown>;
+  if (typeof candidate.id !== 'string' || !Object.values(Role).includes(candidate.role as Role) || typeof candidate.profile !== 'object' || candidate.profile === null) {
+    throw new Error('Invalid user response.');
+  }
+  return candidate as unknown as User;
+}
+
+function parseUserList(value: unknown): User[] {
+  if (!Array.isArray(value)) throw new Error('Invalid user list response.');
+  return value.map(parseUser);
+}
+
+function responseObject(value: unknown, message: string): Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new Error(message);
+  return value as Record<string, unknown>;
+}
+
+function responseNumber(value: unknown, message: string): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) throw new Error(message);
+  return value;
+}
+
+function responseString(value: unknown, message: string): string {
+  if (typeof value !== 'string') throw new Error(message);
+  return value;
+}
+
+export function parseWorkforceInsights(value: unknown): WorkforceInsightsDTO {
+  const message = 'Invalid workforce insights response.';
+  const root = responseObject(value, message);
+  const totals = responseObject(root.totals, message);
+  const conversion = responseObject(root.conversion, message);
+  const availability = responseObject(root.availability, message);
+  if (!Array.isArray(root.roleDemand)) throw new Error(message);
+  return {
+    totals: {
+      jobs: responseNumber(totals.jobs, message),
+      applications: responseNumber(totals.applications, message),
+      contracts: responseNumber(totals.contracts, message),
+      completedContracts: responseNumber(totals.completedContracts, message),
+      validations: responseNumber(totals.validations, message),
+      positiveValidations: responseNumber(totals.positiveValidations, message),
+    },
+    conversion: {
+      applicationsPerJob: responseNumber(conversion.applicationsPerJob, message),
+      applicationToContractPercent: responseNumber(conversion.applicationToContractPercent, message),
+      contractCompletionPercent: responseNumber(conversion.contractCompletionPercent, message),
+    },
+    availability: { freshnessPercent: responseNumber(availability.freshnessPercent, message) },
+    roleDemand: root.roleDemand.map((entry) => {
+      const item = responseObject(entry, message);
+      return { roleId: responseString(item.roleId, message), count: responseNumber(item.count, message) };
+    }),
+    privacyNotice: responseString(root.privacyNotice, message),
+  };
+}
+
+export function parseCompanyAudit(value: unknown): CompanyAuditEventDTO[] {
+  const message = 'Invalid company audit response.';
+  if (!Array.isArray(value)) throw new Error(message);
+  return value.map((entry) => {
+    const item = responseObject(entry, message);
+    return {
+      id: responseString(item.id, message),
+      companyId: responseString(item.companyId, message),
+      actorId: responseString(item.actorId, message),
+      action: responseString(item.action, message),
+      entityType: responseString(item.entityType, message),
+      entityId: responseString(item.entityId, message),
+      createdAt: responseString(item.createdAt, message),
+    };
+  });
+}
+
+export function parseProjectTeam(value: unknown): ProjectTeamDTO {
+  const message = 'Invalid project team response.';
+  const item = responseObject(value, message);
+  if (!Array.isArray(item.requiredRoleIds) || !Array.isArray(item.members)) throw new Error(message);
+  return {
+    id: responseString(item.id, message),
+    companyId: responseString(item.companyId, message),
+    name: responseString(item.name, message),
+    requiredRoleIds: item.requiredRoleIds.map((roleId) => responseString(roleId, message)),
+    members: item.members.map((entry) => {
+      const member = responseObject(entry, message);
+      if (!Array.isArray(member.roleIds)) throw new Error(message);
+      return { engineerId: responseString(member.engineerId, message), roleIds: member.roleIds.map((roleId) => responseString(roleId, message)) };
+    }),
+    createdAt: responseString(item.createdAt, message),
+    updatedAt: typeof item.updatedAt === 'string' ? item.updatedAt : undefined,
+  };
+}
+
+export function parseContractContact(value: unknown, expectedContractId: string): ContractContactDTO {
+  const message = 'Invalid contract contact response.';
+  const item = responseObject(value, message);
+  const contact = responseObject(item.contact, message);
+  const contractId = responseString(item.contractId, message);
+  if (contractId !== expectedContractId) throw new Error(message);
+  const optionalContact = (field: unknown): string | undefined => field === undefined || field === null || field === ''
+    ? undefined
+    : responseString(field, message);
+  const website = optionalContact(contact.website);
+  const linkedin = optionalContact(contact.linkedin);
+  if (website && !/^https?:\/\//i.test(website)) throw new Error(message);
+  if (linkedin && !/^https?:\/\//i.test(linkedin)) throw new Error(message);
+  return {
+    contractId,
+    partyId: responseString(item.partyId, message),
+    name: responseString(item.name, message),
+    role: responseString(item.role, message),
+    contact: {
+      email: optionalContact(contact.email),
+      phone: optionalContact(contact.phone),
+      linkedin,
+      website,
+    },
+  };
+}
+
+const talentPoolLists: TalentPoolEntry['list'][] = ['preferred', 'approved', 'backup', 'restricted'];
+
+export function parseTalentPoolEntry(value: unknown): TalentPoolEntry {
+  const message = 'Invalid talent-pool response.';
+  const item = responseObject(value, message);
+  if (!talentPoolLists.includes(item.list as TalentPoolEntry['list']) || !Array.isArray(item.approvedRoleIds)) throw new Error(message);
+  return {
+    id: responseString(item.id, message),
+    ownerCompanyId: responseString(item.ownerCompanyId, message),
+    engineerId: responseString(item.engineerId, message),
+    engineerName: typeof item.engineerName === 'string' ? item.engineerName : undefined,
+    list: item.list as TalentPoolEntry['list'],
+    approvedRoleIds: item.approvedRoleIds.map((roleId) => responseString(roleId, message)),
+    approvedClientOrSite: typeof item.approvedClientOrSite === 'string' ? item.approvedClientOrSite : undefined,
+    privateNotes: typeof item.privateNotes === 'string' ? item.privateNotes : undefined,
+    createdAt: responseString(item.createdAt, message),
+    updatedAt: responseString(item.updatedAt, message),
+  };
+}
+
+export function parseTalentPool(value: unknown): TalentPoolEntry[] {
+  if (!Array.isArray(value)) throw new Error('Invalid talent-pool response.');
+  return value.map(parseTalentPoolEntry);
+}
+
+export function parseCompletionValidation(value: unknown, expected?: { contractId?: string; engineerId?: string }): CompletionValidation {
+  const message = 'Invalid completion validation response.';
+  const item = responseObject(value, message);
+  if (!Array.isArray(item.capabilitiesObserved)) throw new Error(message);
+  const contractId = responseString(item.contractId, message);
+  const engineerId = responseString(item.engineerId, message);
+  if ((expected?.contractId && contractId !== expected.contractId) || (expected?.engineerId && engineerId !== expected.engineerId)) throw new Error(message);
+  const boolean = (field: unknown): boolean => {
+    if (typeof field !== 'boolean') throw new Error(message);
+    return field;
+  };
+  return {
+    id: responseString(item.id, message),
+    contractId,
+    engineerId,
+    validatorId: responseString(item.validatorId, message),
+    roleId: responseString(item.roleId, message),
+    responsibilityMet: boolean(item.responsibilityMet),
+    capabilitiesObserved: item.capabilitiesObserved.map((capability) => responseString(capability, message)),
+    unexpectedSupervisionRequired: boolean(item.unexpectedSupervisionRequired),
+    wouldUseAgainForRole: boolean(item.wouldUseAgainForRole),
+    comments: typeof item.comments === 'string' ? item.comments : undefined,
+    createdAt: responseString(item.createdAt, message),
+  };
+}
+
+export function parseCompletionValidations(value: unknown, engineerId: string): CompletionValidation[] {
+  if (!Array.isArray(value)) throw new Error('Invalid completion validation response.');
+  return value.map((item) => parseCompletionValidation(item, { engineerId }));
+}
+
+export function parseTechnicalWorkPack(value: unknown, expectedContractId: string): TechnicalWorkPack {
+  const message = 'Invalid technical work-pack response.';
+  const item = responseObject(value, message);
+  const contractId = responseString(item.contractId, message);
+  if (contractId !== expectedContractId) throw new Error(message);
+  const stringList = (value: unknown): string[] => {
+    if (!Array.isArray(value)) throw new Error(message);
+    return value.map((entry) => responseString(entry, message));
+  };
+  const version = responseNumber(item.version, message);
+  if (!Number.isInteger(version) || version < 1) throw new Error(message);
+  return {
+    id: responseString(item.id, message),
+    contractId,
+    companyId: responseString(item.companyId, message),
+    version,
+    roleId: responseString(item.roleId, message),
+    responsibility: responseString(item.responsibility, message),
+    scope: responseString(item.scope, message),
+    exclusions: stringList(item.exclusions),
+    prerequisites: stringList(item.prerequisites),
+    siteContact: responseString(item.siteContact, message),
+    escalationContact: responseString(item.escalationContact, message),
+    completionEvidence: stringList(item.completionEvidence),
+    paymentNotice: responseString(item.paymentNotice, message),
+    createdAt: responseString(item.createdAt, message),
+    updatedAt: responseString(item.updatedAt, message),
+  };
+}
+
+function parseAuthUser(value: unknown, fallback: string): User {
+  if (typeof value !== 'object' || value === null || !('user' in value)) throw new Error(fallback);
+  return parseUser(value.user);
+}
+
+function parseContractResponse(value: unknown): Contract {
+  const dto = value as Partial<ContractResponseDTO>;
+  if (dto.schemaVersion !== MARKETPLACE_API_SCHEMA_VERSION || typeof dto.id !== 'string' || !Array.isArray(dto.milestones)) {
+    throw new Error('Unsupported contract response.');
+  }
+  return {
+    ...dto,
+    engineerSignature: dto.engineerSignature ? { ...dto.engineerSignature, date: new Date(dto.engineerSignature.date) } : null,
+    companySignature: dto.companySignature ? { ...dto.companySignature, date: new Date(dto.companySignature.date) } : null,
+  } as Contract;
+}
 
 export type AdminDeletionRequest = {
   id: string;
@@ -158,22 +385,23 @@ export function clearAuthToken() {
 // True when the backend genuinely couldn't be reached (it's not running,
 // wrong URL, offline, etc) - as opposed to the backend responding with a
 // real validation error (bad password, duplicate email, ...).
-function isNetworkError(error: any): boolean {
+function isNetworkError(error: unknown): boolean {
   return error instanceof TypeError;
 }
 
-async function backendRegister(payload: { email: string; password: string; role: string; name: string; profileData: any }) {
+async function backendRegister(payload: RegistrationRequestDTO): Promise<User> {
   const response = await fetch(`${API_BASE_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
-  const data = await response.json();
+  const data: unknown = await response.json();
   if (!response.ok) {
-    throw new Error(data?.error || 'Registration failed.');
+    throw new Error(typeof data === 'object' && data !== null && 'error' in data && typeof data.error === 'string' ? data.error : 'Registration failed.');
   }
+  const user = parseAuthUser(data, 'Invalid registration response.');
   saveAuthToken();
-  return data.user as User;
+  return user;
 }
 
 async function backendLogin(email: string, password: string) {
@@ -182,12 +410,13 @@ async function backendLogin(email: string, password: string) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   });
-  const data = await response.json();
+  const data: unknown = await response.json();
   if (!response.ok) {
-    throw new Error(data?.error || 'Invalid credentials.');
+    throw new Error(typeof data === 'object' && data !== null && 'error' in data && typeof data.error === 'string' ? data.error : 'Invalid credentials.');
   }
+  const user = parseAuthUser(data, 'Invalid login response.');
   saveAuthToken();
-  return data.user as User;
+  return user;
 }
 
 const apiService = {
@@ -309,10 +538,11 @@ const apiService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data?.error || 'Demo login failed.');
+    const data: unknown = await response.json();
+    if (!response.ok) throw new Error(typeof data === 'object' && data !== null && 'error' in data && typeof data.error === 'string' ? data.error : 'Demo login failed.');
+    const user = parseAuthUser(data, 'Invalid demo login response.');
     saveAuthToken();
-    return data.user as User;
+    return user;
   },
 
   logoutSession: async (): Promise<void> => {
@@ -582,7 +812,7 @@ const apiService = {
   getUserById: async (id: string): Promise<User | null> => {
     const response = await fetch(`${API_BASE_URL}/users/${id}`);
     if (!response.ok) return null;
-    return (await response.json()) as User;
+    return parseUser(await response.json());
   },
 
   // Lists resourcing companies registered on the real backend, so an
@@ -591,7 +821,7 @@ const apiService = {
     try {
       const response = await fetch(`${API_BASE_URL}/users`);
       if (!response.ok) return [];
-      const all = (await response.json()) as User[];
+      const all = parseUserList(await response.json());
       return all.filter((u) => u.role === Role.RESOURCING_COMPANY);
     } catch {
       return [];
@@ -611,7 +841,7 @@ const apiService = {
         return null;
       }
       saveAuthToken();
-      return (await response.json()) as User;
+      return parseUser(await response.json());
     } catch {
       return null;
     }
@@ -623,7 +853,7 @@ const apiService = {
   // (a network error, not a validation error), it falls back to the old
   // in-memory mock so the app still works for quick local demos without
   // the backend started.
-  createEngineer: async (data: any): Promise<User> => {
+  createEngineer: async (data: EngineerRegistrationInput): Promise<User> => {
     try {
       return await backendRegister({
         email: data.email,
@@ -633,7 +863,7 @@ const apiService = {
         profileData: {
           discipline: data.discipline || Discipline.AV,
           location: data.location || data.baseLocation || 'London, UK',
-          country: data.country || Country.UK,
+          country: Object.values(Country).includes(data.country as Country) ? data.country as Country : Country.UK,
           description: 'Newly registered engineer.',
           experience: data.experience || 0,
           experienceLevel: data.experienceLevel || ExperienceLevel.JUNIOR,
@@ -652,7 +882,7 @@ const apiService = {
           documentNotes: data.documentNotes || '',
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (!DEMO_DATA_ENABLED || !isNetworkError(error)) throw error;
 
       await simulateDelay();
@@ -664,7 +894,7 @@ const apiService = {
           role: Role.ENGINEER,
           discipline: data.discipline || Discipline.AV,
           location: data.location || 'London, UK',
-          country: data.country || Country.UK,
+          country: Object.values(Country).includes(data.country as Country) ? data.country as Country : Country.UK,
           description: 'Newly registered engineer.',
           experience: data.experience || 0,
           experienceLevel: data.experienceLevel || ExperienceLevel.JUNIOR,
@@ -672,7 +902,7 @@ const apiService = {
           minDayRate: data.minDayRate || 150,
           maxDayRate: data.maxDayRate || 195,
           currency: data.currency || Currency.GBP,
-          availability: new Date(data.availability) || new Date(),
+          availability: data.availability ? new Date(data.availability) : new Date(),
           compliance: data.compliance || {},
           identity: data.identity || {},
           profileViews: 0, searchAppearances: 0, jobInvites: 0, reputation: 50, complianceScore: 50,
@@ -688,7 +918,7 @@ const apiService = {
     }
   },
 
-  createCompany: async (data: any): Promise<User> => {
+  createCompany: async (data: CompanyRegistrationInput): Promise<User> => {
     try {
       return await backendRegister({
         email: data.email,
@@ -701,7 +931,7 @@ const apiService = {
           contact: { name: data.contactName, email: data.email },
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (!DEMO_DATA_ENABLED || !isNetworkError(error)) throw error;
 
       await simulateDelay();
@@ -723,7 +953,7 @@ const apiService = {
     }
   },
   
-  createResourcingCompany: async (data: any): Promise<User> => {
+  createResourcingCompany: async (data: CompanyRegistrationInput): Promise<User> => {
     try {
       return await backendRegister({
         email: data.email,
@@ -737,7 +967,7 @@ const apiService = {
           managedEngineerIds: [],
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (!DEMO_DATA_ENABLED || !isNetworkError(error)) throw error;
 
       await simulateDelay();
@@ -777,7 +1007,7 @@ const apiService = {
     if (!response.ok) {
       throw new Error(data?.error || 'Could not update profile.');
     }
-    return data as User;
+    return parseUser(data);
   },
 
   requestMembershipChange: async (tier: ProfileTier): Promise<{
@@ -822,7 +1052,7 @@ const apiService = {
   // Requires the signed-in user to have a real backend account (a token
   // saved from registration/login). Mirrors backend/src/routes/partnerships.ts.
 
-  requestPartnership: async (partnerEmail: string): Promise<any> => {
+  requestPartnership: async (partnerEmail: string): Promise<PartnershipMutationResponseDTO> => {
     const token = getAuthToken();
     if (!token) throw new Error('You need to be signed in to do this.');
     const response = await fetch(`${API_BASE_URL}/partnerships/request`, {
@@ -832,10 +1062,10 @@ const apiService = {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not send partner request.');
-    return data;
+    return data as PartnershipMutationResponseDTO;
   },
 
-  respondToPartnershipRequest: async (requestId: string, accept: boolean): Promise<any> => {
+  respondToPartnershipRequest: async (requestId: string, accept: boolean): Promise<PartnershipMutationResponseDTO> => {
     const token = getAuthToken();
     if (!token) throw new Error('You need to be signed in to do this.');
     const response = await fetch(`${API_BASE_URL}/partnerships/${requestId}/${accept ? 'accept' : 'decline'}`, {
@@ -844,10 +1074,10 @@ const apiService = {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not respond to the partner request.');
-    return data;
+    return data as PartnershipMutationResponseDTO;
   },
 
-  removePartnership: async (): Promise<any> => {
+  removePartnership: async (): Promise<PartnershipMutationResponseDTO> => {
     const token = getAuthToken();
     if (!token) throw new Error('You need to be signed in to do this.');
     const response = await fetch(`${API_BASE_URL}/partnerships/remove`, {
@@ -856,23 +1086,23 @@ const apiService = {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not remove your partner.');
-    return data;
+    return data as PartnershipMutationResponseDTO;
   },
 
-  getMyPartnershipStatus: async (): Promise<{ incoming: any[]; outgoing: any[]; partner: User | null }> => {
+  getMyPartnershipStatus: async (): Promise<PartnershipStatusResponseDTO> => {
     const token = getAuthToken();
     if (!token) return { incoming: [], outgoing: [], partner: null };
     const response = await fetch(`${API_BASE_URL}/partnerships/me`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!response.ok) return { incoming: [], outgoing: [], partner: null };
-    return await response.json();
+    return await response.json() as PartnershipStatusResponseDTO;
   },
 
   // --- RESOURCING COMPANY ATTACHMENT ---
   // Mirrors backend/src/routes/companyAttachments.ts.
 
-  requestCompanyAttachment: async (resourcingCompanyId: string): Promise<any> => {
+  requestCompanyAttachment: async (resourcingCompanyId: string): Promise<CompanyAttachmentMutationResponseDTO> => {
     const token = getAuthToken();
     if (!token) throw new Error('You need to be signed in to do this.');
     const response = await fetch(`${API_BASE_URL}/company-attachments/request`, {
@@ -882,10 +1112,10 @@ const apiService = {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not send the request to join this company.');
-    return data;
+    return data as CompanyAttachmentMutationResponseDTO;
   },
 
-  respondToCompanyAttachmentRequest: async (requestId: string, approve: boolean): Promise<any> => {
+  respondToCompanyAttachmentRequest: async (requestId: string, approve: boolean): Promise<CompanyAttachmentMutationResponseDTO> => {
     const token = getAuthToken();
     if (!token) throw new Error('You need to be signed in to do this.');
     const response = await fetch(`${API_BASE_URL}/company-attachments/${requestId}/${approve ? 'approve' : 'reject'}`, {
@@ -894,10 +1124,10 @@ const apiService = {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data?.error || 'Could not respond to the request.');
-    return data;
+    return data as CompanyAttachmentMutationResponseDTO;
   },
 
-  getMyCompanyAttachmentRequests: async (): Promise<any[]> => {
+  getMyCompanyAttachmentRequests: async (): Promise<CompanyAttachmentRequestDTO[]> => {
     const token = getAuthToken();
     if (!token) return [];
     const response = await fetch(`${API_BASE_URL}/company-attachments/me`, {
@@ -908,7 +1138,7 @@ const apiService = {
     return data.requests || [];
   },
 
-  getPendingCompanyAttachmentRequests: async (): Promise<any[]> => {
+  getPendingCompanyAttachmentRequests: async (): Promise<PendingCompanyAttachmentRequestDTO[]> => {
     const token = getAuthToken();
     if (!token) return [];
     const response = await fetch(`${API_BASE_URL}/company-attachments/pending`, {
@@ -967,7 +1197,7 @@ const apiService = {
   // Falls back to the old in-memory mock if there's no signed-in backend
   // session, or the backend simply can't be reached - same pattern as
   // createEngineer/createCompany above.
-  postJob: async (jobData: any): Promise<Job> => {
+  postJob: async (jobData: JobPostInput): Promise<Job> => {
     const canonicalRoleId = canonicalRoleIdForLegacy(jobData.canonicalRoleId || jobData.jobRole);
     const normalizedJobData = { ...jobData, canonicalRoleId };
     const token = getAuthToken();
@@ -983,7 +1213,7 @@ const apiService = {
           throw new Error(data?.error || 'Could not post job.');
         }
         return data as Job;
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (!DEMO_DATA_ENABLED || !isNetworkError(error)) throw error;
         // Backend unreachable - fall through to the mock below.
       }
@@ -993,6 +1223,7 @@ const apiService = {
     await simulateDelay();
     const newJob: Job = {
       ...normalizedJobData,
+      companyId: normalizedJobData.companyId || 'current-company',
       id: `job-${Date.now()}`,
       postedDate: new Date(),
       status: 'active',
@@ -1022,7 +1253,7 @@ const apiService = {
           throw new Error(data?.error || 'Could not submit application.');
         }
         return data;
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (!isNetworkError(error)) throw error;
         // Backend unreachable - fall through to the mock below.
       }
@@ -1090,7 +1321,7 @@ const apiService = {
     try {
       const response = await fetch(`${API_BASE_URL}/users?limit=100`);
       if (!response.ok) return [];
-      return (await response.json()) as User[];
+      return parseUserList(await response.json());
     } catch {
       return [];
     }
@@ -1155,8 +1386,8 @@ const apiService = {
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Could not create contract.');
-        return data as Contract;
-      } catch (error: any) {
+        return parseContractResponse(data);
+      } catch (error: unknown) {
         if (!isNetworkError(error)) throw error;
         // Backend unreachable - fall through to the locally-built contract below.
       }
@@ -1177,8 +1408,8 @@ const apiService = {
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Could not save your signature.');
-        return data as Contract;
-      } catch (error: any) {
+        return parseContractResponse(data);
+      } catch (error: unknown) {
         if (!isNetworkError(error)) throw error;
       }
     }
@@ -1196,8 +1427,8 @@ const apiService = {
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Could not start milestone.');
-        return data as Contract;
-      } catch (error: any) {
+        return parseContractResponse(data);
+      } catch (error: unknown) {
         if (!isNetworkError(error)) throw error;
       }
     }
@@ -1215,8 +1446,8 @@ const apiService = {
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Could not submit milestone for approval.');
-        return data as Contract;
-      } catch (error: any) {
+        return parseContractResponse(data);
+      } catch (error: unknown) {
         if (!isNetworkError(error)) throw error;
       }
     }
@@ -1234,8 +1465,8 @@ const apiService = {
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Could not approve milestone.');
-        return data as Contract;
-      } catch (error: any) {
+        return parseContractResponse(data);
+      } catch (error: unknown) {
         if (!isNetworkError(error)) throw error;
       }
     }
@@ -1257,8 +1488,8 @@ const apiService = {
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Could not submit timesheet.');
-        return data as Contract;
-      } catch (error: any) {
+        return parseContractResponse(data);
+      } catch (error: unknown) {
         if (!isNetworkError(error)) throw error;
       }
     }
@@ -1276,8 +1507,8 @@ const apiService = {
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Could not approve timesheet.');
-        return data as Contract;
-      } catch (error: any) {
+        return parseContractResponse(data);
+      } catch (error: unknown) {
         if (!isNetworkError(error)) throw error;
       }
     }
@@ -1292,7 +1523,9 @@ const apiService = {
     try {
       const response = await fetch(`${API_BASE_URL}/contracts/me`, { headers: { Authorization: `Bearer ${token}` } });
       if (!response.ok) return [];
-      return (await response.json()) as Contract[];
+      const data: unknown = await response.json();
+      if (!Array.isArray(data)) throw new Error('Invalid contract list response.');
+      return data.map(parseContractResponse);
     } catch {
       return [];
     }
@@ -1323,7 +1556,7 @@ const apiService = {
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Could not start conversation.');
         return data as Conversation;
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (!isNetworkError(error)) throw error;
       }
     }
@@ -1343,7 +1576,7 @@ const apiService = {
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Could not send message.');
         return data as Message;
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (!isNetworkError(error)) throw error;
       }
     }
@@ -1388,19 +1621,22 @@ const apiService = {
   resetPassword: (token:string,password:string)=>requestJson('/auth/password/reset',{method:'POST',body:JSON.stringify({token,password})}),
   confirmEmail: (token:string)=>requestJson('/auth/verification/confirm',{method:'POST',body:JSON.stringify({token})}),
   uploadDocument: async (file:File,documentType:string)=>{const token=getAuthToken();const response=await fetch(`${API_BASE_URL}/documents`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':file.type,'X-Document-Type':documentType,'X-File-Name':file.name},body:file});const data=await response.json();if(!response.ok)throw new Error(data?.error||'Document upload failed.');return data;},
-  listEngineers: async ():Promise<User[]>=>{const response=await fetch(`${API_BASE_URL}/users`);return response.ok?(await response.json() as User[]).filter(user=>user.role===Role.ENGINEER):[];},
-  getEngineerValidations: (engineerId:string)=>requestJson(`/trust/engineers/${engineerId}/validations`),
-  validateCompletedAssignment: (contractId:string,body:Record<string,unknown>)=>requestJson(`/trust/contracts/${contractId}/validation`,{method:'POST',body:JSON.stringify(body)}),
-  getTalentPool: ()=>requestJson('/trust/talent-pool'),
-  saveTalentPoolEntry: (engineerId:string,body:Record<string,unknown>)=>requestJson(`/trust/talent-pool/${engineerId}`,{method:'PUT',body:JSON.stringify(body)}),
-  removeTalentPoolEntry: (engineerId:string)=>requestJson(`/trust/talent-pool/${engineerId}`,{method:'DELETE'}),
-  confirmAvailability: (body:Record<string,unknown>)=>requestJson('/users/me/availability',{method:'PUT',body:JSON.stringify(body)}),
-  getTechnicalWorkPack: (contractId:string)=>requestJson(`/trust/contracts/${contractId}/work-pack`),
-  saveTechnicalWorkPack: (contractId:string,body:Record<string,unknown>)=>requestJson(`/trust/contracts/${contractId}/work-pack`,{method:'PUT',body:JSON.stringify(body)}),
-  createProjectTeam: (body:Record<string,unknown>)=>requestJson('/trust/teams',{method:'POST',body:JSON.stringify(body)}),
-  getWorkforceInsights: ()=>requestJson('/trust/insights'),
-  getCompanyAudit: ()=>requestJson('/trust/audit'),
-  getContractContact: (contractId:string)=>requestJson(`/contracts/${contractId}/contacts`),
+  listEngineers: async (): Promise<User[]> => {
+    const response = await fetch(`${API_BASE_URL}/users`);
+    return response.ok ? parseUserList(await response.json()).filter(user => user.role === Role.ENGINEER) : [];
+  },
+  getEngineerValidations: async (engineerId:string): Promise<CompletionValidation[]> => parseCompletionValidations(await requestJson(`/trust/engineers/${engineerId}/validations`), engineerId),
+  validateCompletedAssignment: async (contractId:string,body:CompletionValidationInput): Promise<CompletionValidation> => parseCompletionValidation(await requestJson(`/trust/contracts/${contractId}/validation`,{method:'POST',body:JSON.stringify(body)}), { contractId }),
+  getTalentPool: async (): Promise<TalentPoolEntry[]> => parseTalentPool(await requestJson('/trust/talent-pool')),
+  saveTalentPoolEntry: async (engineerId:string,body:TalentPoolEntryInput): Promise<TalentPoolEntry> => parseTalentPoolEntry(await requestJson(`/trust/talent-pool/${engineerId}`,{method:'PUT',body:JSON.stringify(body)})),
+  removeTalentPoolEntry: async (engineerId:string): Promise<void> => { await requestJson(`/trust/talent-pool/${engineerId}`,{method:'DELETE'}); },
+  confirmAvailability: async (body: EngineerAvailabilityInputDTO): Promise<User> => parseUser(await requestJson('/users/me/availability',{method:'PUT',body:JSON.stringify(body)})),
+  getTechnicalWorkPack: async (contractId:string): Promise<TechnicalWorkPack> => parseTechnicalWorkPack(await requestJson(`/trust/contracts/${contractId}/work-pack`), contractId),
+  saveTechnicalWorkPack: async (contractId:string,body:TechnicalWorkPackInput): Promise<TechnicalWorkPack> => parseTechnicalWorkPack(await requestJson(`/trust/contracts/${contractId}/work-pack`,{method:'PUT',body:JSON.stringify(body)}), contractId),
+  createProjectTeam: async (body: ProjectTeamInputDTO): Promise<ProjectTeamDTO> => parseProjectTeam(await requestJson('/trust/teams',{method:'POST',body:JSON.stringify(body)})),
+  getWorkforceInsights: async (): Promise<WorkforceInsightsDTO> => parseWorkforceInsights(await requestJson('/trust/insights')),
+  getCompanyAudit: async (): Promise<CompanyAuditEventDTO[]> => parseCompanyAudit(await requestJson('/trust/audit')),
+  getContractContact: async (contractId:string): Promise<ContractContactDTO> => parseContractContact(await requestJson(`/contracts/${contractId}/contacts`), contractId),
 };
 
 export default apiService;

@@ -211,6 +211,21 @@ describe("PATCH /api/users/me", () => {
   });
 });
 
+describe("PUT /api/users/me/availability", () => {
+  it("validates and timestamps engineer availability on the server", async () => {
+    const payload = { availableFrom: "2026-08-20", baseLocation: "London", travelRadiusMiles: 75, workingDays: ["Monday", "Tuesday"], minimumNoticeDays: 3, overnightWork: false, weekendWork: "premium-only", emergencyCallout: true };
+    const res = await request(app).put("/api/users/me/availability").set("Authorization", `Bearer ${token}`).send(payload);
+    expect(res.status).toBe(200);
+    expect(res.body.profile).toMatchObject(payload);
+    expect(res.body.profile.availabilityConfirmedAt).toEqual(expect.any(String));
+  });
+
+  it("rejects incomplete or out-of-range availability", async () => {
+    const res = await request(app).put("/api/users/me/availability").set("Authorization", `Bearer ${token}`).send({ availableFrom: "not-a-date", workingDays: [] });
+    expect(res.status).toBe(400);
+  });
+});
+
 describe("POST /api/users/me/membership-selection", () => {
   it("records a requested tier without activating paid entitlements", async () => {
     const res = await request(app)

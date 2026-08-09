@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { taxonomyService, type TaxonomyVersion } from '../../services/taxonomyService';
+import { errorMessage } from '../../utils/errorMessage';
 
 export const TaxonomyReviewView = () => {
   const [versions, setVersions] = useState<TaxonomyVersion[]>([]);
@@ -11,8 +12,8 @@ export const TaxonomyReviewView = () => {
     setError('');
     try {
       setVersions(await taxonomyService.listPendingReviews());
-    } catch (loadError: any) {
-      setError(loadError?.message || 'Could not load taxonomy reviews.');
+    } catch (loadError: unknown) {
+      setError(errorMessage(loadError, 'Could not load taxonomy reviews.'));
     }
   };
 
@@ -29,8 +30,8 @@ export const TaxonomyReviewView = () => {
     try {
       await taxonomyService.review(version.id, decision, note);
       setVersions(previous => previous.filter(item => item.id !== version.id));
-    } catch (reviewError: any) {
-      setError(reviewError?.message || 'Could not submit this review.');
+    } catch (reviewError: unknown) {
+      setError(errorMessage(reviewError, 'Could not submit this review.'));
     } finally {
       setBusyId('');
     }

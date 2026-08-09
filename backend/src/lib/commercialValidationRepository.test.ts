@@ -13,6 +13,7 @@ const { reconcileSubscription } = await import('./billingRepository.js');
 await import('./marketplaceAnalyticsRepository.js');
 const {
   createCommercialDecision,
+  listCommercialDecisions,
   getCommercialValidationSummary,
   updateCommercialDecisionStatus,
 } = await import('./commercialValidationRepository.js');
@@ -49,6 +50,16 @@ describe('commercialValidationRepository', () => {
     db.prepare('DELETE FROM applications').run();
     db.prepare('DELETE FROM jobs').run();
     db.prepare('DELETE FROM users').run();
+  });
+
+  it('rejects corrupt or unsupported persisted decision JSON deterministically', () => {
+    const creator = createTestUser('Admin', 'decision-parser');
+    const now = new Date().toISOString();
+    db.prepare(`INSERT INTO commercial_validation_decisions (id, accountRole, packageName, candidateMonthlyPrice, candidateAnnualPrice, valueDrivers, status, evidenceSnapshot, decisionNote, createdBy, decidedBy, createdAt, updatedAt, decidedAt) VALUES (?, 'Engineer', 'Test', 10, NULL, ?, 'draft', NULL, NULL, ?, NULL, ?, ?, NULL)`)
+      .run('corrupt-decision', '{', creator.id, now, now);
+    expect(() => listCommercialDecisions()).toThrow('Stored commercial validation value drivers is corrupt.');
+    db.prepare('UPDATE commercial_validation_decisions SET valueDrivers = ? WHERE id = ?').run('["unknown-driver"]', 'corrupt-decision');
+    expect(() => listCommercialDecisions()).toThrow('Stored commercial validation value drivers are invalid.');
   });
 
   it('marks an engineer cohort as observed-evidence-ready only after all evidence gates are met', () => {

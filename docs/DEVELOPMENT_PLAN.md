@@ -43,9 +43,41 @@ Priority: immediate
 Status: in progress
 
 - [x] Introduce versioned DTOs for engineer profiles, jobs, and shortlists, with a typed shortlist client boundary.
-- [ ] Extend versioned DTOs to contracts and billing responses, then extract the frontend/backend mirrors into a shared package when the container build context is consolidated.
+- [x] Extend versioned DTOs and frontend boundary validation to contract and membership-billing responses.
+- [ ] Extract frontend/backend DTO mirrors into a shared package when the container build context is consolidated.
 - [x] Remove untyped function boundaries from marketplace canonicalisation and shortlist calculation.
-- [ ] Remove remaining internal `any` compatibility reads and untyped job-posting inputs.
+- [x] Replace untyped job-posting inputs with a typed draft/API boundary and explicit opportunity-intake adapter.
+- [ ] Remove remaining internal `any` compatibility reads.
+  - [x] Type registration transport payloads and responses.
+  - [x] Type partnership and resourcing-company attachment request lifecycles end to end.
+  - [x] Type account-creation inputs and safely narrow thrown registration errors.
+  - [x] Validate user/profile responses and remove `any` from contract-operation error paths.
+  - [x] Remove loose context state, contract, forum, collaboration, storyboard, and authentication method types.
+  - [x] Validate realtime conversation, message, and notification payloads before state reconciliation.
+  - [x] Type AI response contracts and canonical capability compatibility adapters.
+  - [x] Narrow canonical role-registry sources and legacy trust-profile evidence without unchecked casts.
+  - [x] Type AI job-draft suggestions and persist rate guidance through the submitted day-rate field.
+  - [x] Safely narrow account-access and recovery failures, including non-Error rejections.
+  - [x] Validate company workforce-insight and audit responses before rendering operational evidence.
+  - [x] Persist validated engineer availability with a server-owned confirmation timestamp and typed client state.
+  - [x] Type project-team assembly and validate canonical role coverage and persisted team responses.
+  - [x] Validate authorised contract-contact responses and reject cross-contract or unsafe link data.
+  - [x] Type and validate private talent-pool records across list, save, and delete workflows.
+  - [x] Type completion-validation submissions and validate returned capability evidence ownership and fields.
+  - [x] Type technical work-pack submissions and validate contract ownership, versions, scope, contacts, and evidence.
+  - [x] Remove unchecked legacy reads from backend engineer-profile and multi-role job canonicalisation.
+  - [x] Remove unchecked legacy reads from shortlist role, prerequisite, capability, evidence, and availability decisions.
+  - [x] Narrow backend AI schemas, structured JSON responses, and provider failures without unchecked errors.
+  - [x] Narrow Stripe webhook envelopes, nested provider objects, identifiers, and subscription statuses.
+  - [x] Narrow membership invoice persistence and checkout identifiers before creating Stripe sessions.
+  - [x] Narrow commercial-validation query parameters and persisted decision rows, JSON, statuses, and value drivers.
+  - [x] Narrow Dropbox Sign callback JSON and remove unchecked terminal contract-status comparisons.
+  - [x] Narrow registration profile records and keep account identity, role, status, and contact email server-owned.
+  - [x] Safely narrow opportunity publishing, partnership, company attachment, and roster mutation failures.
+  - [x] Validate persisted pricing-research rows, enums, and value-driver JSON before commercial aggregation.
+  - [x] Type company job-management contract submissions and safely narrow offer, rejection, and contract failures.
+  - [x] Safely narrow resourcing settings, document upload, and forum-post mutation failures.
+  - [x] Safely narrow taxonomy load, parse, review, and publication failures and constrain role-family edits.
 - [x] Add migration tests for legacy engineer profiles and single-role jobs into schema v2.
 - [x] Validate core marketplace and profile JSON when reading it, with explicit codes for corrupt, invalid-version, and unsupported-version records.
 - [x] Extend safe decoding to trust/audit auxiliary payload tables and add an operational read-only integrity report.
@@ -116,4 +148,4 @@ For each increment:
 
 ## Next implementation slice
 
-Phase 1 should begin with shared marketplace DTOs and typed canonicalisation. It has the highest leverage because shortlisting, contracts, trust, and UI hydration all depend on those shapes.
+Continue Phase 1 by removing the remaining internal `any` compatibility reads in profile editing, signup steps, dashboard analytics, and project planning. Shared package extraction follows when the container build context is consolidated.

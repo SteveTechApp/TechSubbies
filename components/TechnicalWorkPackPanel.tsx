@@ -1,14 +1,16 @@
 import React,{useEffect,useState} from "react";
 import apiService from "../services/apiService";
+import type { TechnicalWorkPack, TechnicalWorkPackInput } from "../types/trust";
+import { errorMessage } from "../utils/errorMessage";
 
 const field="mt-1 w-full rounded border border-slate-300 bg-white p-2 text-slate-900";
 const lines=(value:string)=>value.split("\n").map(item=>item.trim()).filter(Boolean);
 
 export function TechnicalWorkPackPanel({contractId,roleId,canEdit}:{contractId:string;roleId:string;canEdit:boolean}){
- const [pack,setPack]=useState<any>(null),[loading,setLoading]=useState(true),[status,setStatus]=useState("");
+ const [pack,setPack]=useState<TechnicalWorkPack|null>(null),[loading,setLoading]=useState(true),[status,setStatus]=useState("");
  const [form,setForm]=useState({roleId,responsibility:"Deliver the agreed technical responsibility safely and professionally.",scope:"",exclusions:"",prerequisites:"",siteContact:"",escalationContact:"",completionEvidence:"Test results\nClient or site sign-off"});
- useEffect(()=>{apiService.getTechnicalWorkPack(contractId).then((saved)=>{if(saved){setPack(saved);setForm({roleId:saved.roleId,responsibility:saved.responsibility,scope:saved.scope,exclusions:(saved.exclusions||[]).join("\n"),prerequisites:(saved.prerequisites||[]).join("\n"),siteContact:saved.siteContact,escalationContact:saved.escalationContact,completionEvidence:(saved.completionEvidence||[]).join("\n")});}}).catch((error)=>setStatus(error.message)).finally(()=>setLoading(false));},[contractId]);
- async function save(){setStatus("Saving…");try{const saved=await apiService.saveTechnicalWorkPack(contractId,{...form,exclusions:lines(form.exclusions),prerequisites:lines(form.prerequisites),completionEvidence:lines(form.completionEvidence)});setPack(saved);setStatus(`Work pack version ${saved.version} saved.`);}catch(error:any){setStatus(error.message);}}
+ useEffect(()=>{apiService.getTechnicalWorkPack(contractId).then((saved)=>{setPack(saved);setForm({roleId:saved.roleId,responsibility:saved.responsibility,scope:saved.scope,exclusions:saved.exclusions.join("\n"),prerequisites:saved.prerequisites.join("\n"),siteContact:saved.siteContact,escalationContact:saved.escalationContact,completionEvidence:saved.completionEvidence.join("\n")});}).catch((error:unknown)=>setStatus(errorMessage(error,"Technical work pack could not be loaded."))).finally(()=>setLoading(false));},[contractId]);
+ async function save(){setStatus("Saving…");const input:TechnicalWorkPackInput={...form,exclusions:lines(form.exclusions),prerequisites:lines(form.prerequisites),completionEvidence:lines(form.completionEvidence)};try{const saved=await apiService.saveTechnicalWorkPack(contractId,input);setPack(saved);setStatus(`Work pack version ${saved.version} saved.`);}catch(error:unknown){setStatus(errorMessage(error,"Technical work pack could not be saved."));}}
  if(loading)return <section className="mt-6 rounded-lg border p-5 text-sm text-slate-500">Loading technical work pack…</section>;
  if(!canEdit&&!pack)return <section className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">The hiring company has not issued the technical work pack yet.</section>;
  return <section className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-5"><div className="flex justify-between gap-3"><div><h3 className="font-bold text-slate-900">Technical work pack</h3><p className="mt-1 text-sm text-slate-600">Shared delivery expectations for both contract parties.</p></div>{pack&&<span className="text-sm font-bold text-cyan-700">Version {pack.version}</span>}</div>

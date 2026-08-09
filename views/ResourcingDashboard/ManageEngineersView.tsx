@@ -5,19 +5,11 @@ import { MapPin, Calendar, DollarSign, PlusCircle, Search, MessageCircle } from 
 import { useAppContext } from '../../context/InteractionContext';
 import { formatDisplayDate } from '../../utils/dateFormatter';
 import apiService from '../../services/apiService';
-
-interface PendingAttachmentRequest {
-    id: string;
-    status: string;
-    createdAt: string;
-    engineer: {
-        id: string;
-        profile: { name?: string; contact?: { email?: string } };
-    } | null;
-}
+import type { PendingCompanyAttachmentRequestDTO } from '../../types/marketplaceApi';
+import { errorMessage } from '../../utils/errorMessage';
 
 const PendingJoinRequests = () => {
-    const [requests, setRequests] = useState<PendingAttachmentRequest[]>([]);
+    const [requests, setRequests] = useState<PendingCompanyAttachmentRequestDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [busyId, setBusyId] = useState<string | null>(null);
     const [error, setError] = useState('');
@@ -47,8 +39,8 @@ const PendingJoinRequests = () => {
             await apiService.respondToCompanyAttachmentRequest(requestId, approve);
             setResolvedNote(approve ? 'Engineer approved and added to your roster.' : 'Request declined.');
             await loadRequests();
-        } catch (err: any) {
-            setError(err.message || 'Could not process this request.');
+        } catch (err: unknown) {
+            setError(errorMessage(err, 'Could not process this request.'));
         } finally {
             setBusyId(null);
         }

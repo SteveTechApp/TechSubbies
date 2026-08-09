@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { canonicalRoleRegistry } from '../../data/canonicalRoleRegistry';
 import type { RoleSkillDefinition } from '../../types/roleSkills';
 import { taxonomyService, type TaxonomyVersion } from '../../services/taxonomyService';
+import { errorMessage } from '../../utils/errorMessage';
 
 const OPEN_STATUSES = new Set(['draft', 'in_review', 'approved']);
 
@@ -16,6 +17,7 @@ const statusClass = (status: string) => {
 
 const splitLines = (value: string) => value.split('\n').map(item => item.trim()).filter(Boolean);
 const splitTags = (value: string) => value.split(',').map(item => item.trim()).filter(Boolean);
+const roleFamilies = [...new Set(canonicalRoleRegistry.map(role => role.family))].sort();
 
 export const TaxonomyEditorView = () => {
   const [selectedRoleId, setSelectedRoleId] = useState(canonicalRoleRegistry[0]?.id || '');
@@ -51,8 +53,8 @@ export const TaxonomyEditorView = () => {
     setError('');
     try {
       setVersions(await taxonomyService.listVersions(roleId));
-    } catch (loadError: any) {
-      setError(loadError?.message || 'Could not load taxonomy versions.');
+    } catch (loadError: unknown) {
+      setError(errorMessage(loadError, 'Could not load taxonomy versions.'));
       setVersions([]);
     }
   };
@@ -76,8 +78,8 @@ export const TaxonomyEditorView = () => {
         throw new Error('At least one skill group is required.');
       }
       return { ...editor, skillGroups } as RoleSkillDefinition;
-    } catch (parseError: any) {
-      setError(parseError?.message || 'Skill groups must be valid JSON.');
+    } catch (parseError: unknown) {
+      setError(errorMessage(parseError, 'Skill groups must be valid JSON.'));
       return null;
     }
   };
@@ -90,8 +92,8 @@ export const TaxonomyEditorView = () => {
       await action();
       await loadVersions(selectedRoleId);
       setNotice(success);
-    } catch (actionError: any) {
-      setError(actionError?.message || 'Taxonomy update failed.');
+    } catch (actionError: unknown) {
+      setError(errorMessage(actionError, 'Taxonomy update failed.'));
     } finally {
       setBusy(false);
     }
@@ -127,8 +129,8 @@ export const TaxonomyEditorView = () => {
       await taxonomyService.submitForReview(openVersion.id);
       await loadVersions(selectedRoleId);
       setNotice('Submitted for practitioner review. The draft is now locked.');
-    } catch (actionError: any) {
-      setError(actionError?.message || 'Could not submit this version.');
+    } catch (actionError: unknown) {
+      setError(errorMessage(actionError, 'Could not submit this version.'));
     } finally {
       setBusy(false);
     }
@@ -204,7 +206,9 @@ export const TaxonomyEditorView = () => {
               <input disabled={!canEdit && Boolean(openVersion)} value={editor.shortTitle} onChange={e => setEditor({ ...editor, shortTitle: e.target.value })} className="mt-1 w-full rounded-lg border px-3 py-2 disabled:bg-gray-50" />
             </label>
             <label className="text-sm font-medium text-gray-700">Family
-              <input disabled={!canEdit && Boolean(openVersion)} value={editor.family} onChange={e => setEditor({ ...editor, family: e.target.value as any })} className="mt-1 w-full rounded-lg border px-3 py-2 disabled:bg-gray-50" />
+              <select disabled={!canEdit && Boolean(openVersion)} value={editor.family} onChange={e => setEditor({ ...editor, family: e.target.value as RoleSkillDefinition['family'] })} className="mt-1 w-full rounded-lg border px-3 py-2 disabled:bg-gray-50">
+                {roleFamilies.map(family => <option key={family} value={family}>{family}</option>)}
+              </select>
             </label>
             <label className="text-sm font-medium text-gray-700">Level
               <select disabled={!canEdit && Boolean(openVersion)} value={editor.level} onChange={e => setEditor({ ...editor, level: e.target.value as RoleSkillDefinition['level'] })} className="mt-1 w-full rounded-lg border px-3 py-2 disabled:bg-gray-50">

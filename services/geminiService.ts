@@ -24,20 +24,34 @@ const Type = {
     BOOLEAN: 'BOOLEAN',
 } as const;
 
-async function postJSON(path: string, body: unknown): Promise<any> {
+type AiError = { error: string };
+type AiResult<T extends object> = (T & { error?: never }) | AiError;
+type AiSchema = { type: string; properties?: Record<string, AiSchema>; items?: AiSchema; enum?: string[]; required?: string[]; description?: string };
+export type EngineerCostAnalysis = { skill_match_assessment: string; rate_justification: string; overall_recommendation: string; confidence_score: number };
+export type TrainingRecommendationsResult = { recommendations: Array<{ courseName: string; reason: string; keywords: string[]; providerName: string }> };
+export type JobDescriptionAnalysis = { improved_description: string; suggested_job_role: string; suggested_experience_level: string; suggested_day_rate: { min_rate: number; max_rate: number }; suggested_titles: string[] };
+export type MatchResult = { matches: Array<{ id: string; match_score: number }> };
+
+function responseRecord<T extends object>(value: unknown): T {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new Error('Invalid AI response.');
+    return value as T;
+}
+
+async function postJSON<T extends object>(path: string, body: unknown): Promise<AiResult<T>> {
     try {
         const response = await fetch(`${API_BASE_URL}${path}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
         });
-        const data = await response.json();
+        const data: unknown = await response.json();
         if (!response.ok) {
-            return { error: data?.error || `Request failed with status ${response.status}.` };
+            const error = typeof data === 'object' && data !== null && 'error' in data && typeof data.error === 'string' ? data.error : `Request failed with status ${response.status}.`;
+            return { error };
         }
-        return data;
-    } catch (error: any) {
-        return { error: error.message || "Could not reach the AI service." };
+        return responseRecord<T>(data);
+    } catch (error: unknown) {
+        return { error: error instanceof Error ? error.message : "Could not reach the AI service." };
     }
 }
 
@@ -54,8 +68,8 @@ export class BackendChatSession {
     private history: ChatTurn[] = [];
 
     async sendMessage({ message }: { message: string }): Promise<{ text: string }> {
-        const result = await postJSON('/ai/chat', { history: this.history, message });
-        if (result.error) {
+        const result = await postJSON<{ text: string }>('/ai/chat', { history: this.history, message });
+        if ('error' in result) {
             throw new Error(result.error);
         }
         this.history.push({ role: 'user', text: message });
@@ -67,13 +81,13 @@ export class BackendChatSession {
 class GeminiService {
     public chat: BackendChatSession = new BackendChatSession();
 
-    private async generateWithSchema(prompt: string, schema: any): Promise<any> {
-        const result = await postJSON('/ai/generate', { prompt, schema });
-        if (result.error) {
+    private async generateWithSchema<T extends object>(prompt: string, schema: AiSchema): Promise<AiResult<T>> {
+        const result = await postJSON<{ result: T }>('/ai/generate', { prompt, schema });
+        if ('error' in result) {
             console.error("Error generating content with schema:", result.error);
             return { error: result.error };
         }
-        return result.result;
+        return responseRecord<T>(result.result);
     }
 
     private getEngineerSkillsString(engineer: EngineerProfile, includeRating: boolean = true): string {
@@ -101,11 +115,11 @@ class GeminiService {
                 }
             }
         };
-        return this.generateWithSchema(prompt, schema);
+        return this.generateWithSchema<{ skills: Skill[] }>(prompt, schema);
     }
     
     // Method used in AIEngineerCostAnalysis.tsx
-    async analyzeEngineerCost(jobDescription: string, engineer: EngineerProfile): Promise<any> {
+    async analyzeEngineerCost(jobDescription: string, engineer: EngineerProfile): Promise<AiResult<EngineerCostAnalysis>> {
         const engineerSkills = this.getEngineerSkillsString(engineer);
         const prompt = `Analyze the cost-effectiveness of an engineer for a specific job.
         Job Description: "${jobDescription}"
@@ -122,11 +136,11 @@ class GeminiService {
                 confidence_score: { type: Type.INTEGER },
             }
         };
-        return this.generateWithSchema(prompt, schema);
+        return this.generateWithSchema<EngineerCostAnalysis>(prompt, schema);
     }
 
     // Method used in TrainingRecommendations.tsx
-    async getTrainingRecommendations(profile: EngineerProfile): Promise<any> {
+    async getTrainingRecommendations(profile: EngineerProfile): Promise<AiResult<TrainingRecommendationsResult>> {
         const existingCerts = profile.certifications?.map(c => c.name).join(', ') || 'None';
         const engineerSkills = this.getEngineerSkillsString(profile, false);
         const prompt = `Analyze this AV/IT engineer's profile and suggest 2-3 specific, valuable training courses or certifications that would likely increase their day rate or job opportunities. For each, provide a brief reason.
@@ -149,7 +163,7 @@ class GeminiService {
                 }
             }
         };
-        return this.generateWithSchema(prompt, schema);
+        return this.generateWithSchema<TrainingRecommendationsResult>(prompt, schema);
     }
     
     // Method used in AICoachView.tsx
@@ -190,11 +204,11 @@ class GeminiService {
             }
         };
 
-        return this.generateWithSchema(prompt, schema);
+        return this.generateWithSchema<{ insights: Insight[] }>(prompt, schema);
     }
 
     // Method used in AIJobHelper.tsx
-    async analyzeJobDescription(title: string, description: string): Promise<any> {
+    async analyzeJobDescription(title: string, description: string): Promise<AiResult<JobDescriptionAnalysis>> {
         const prompt = `Analyze and improve the following job description for a freelance tech role.
         Original Title: "${title}"
         Original Description: "${description}"
@@ -219,7 +233,7 @@ class GeminiService {
                 suggested_titles: { type: Type.ARRAY, items: { type: Type.STRING } }
             }
         };
-        return this.generateWithSchema(prompt, schema);
+        return this.generateWithSchema<JobDescriptionAnalysis>(prompt, schema);
     }
     
      // Method used in JobPostStep2.tsx
@@ -249,7 +263,7 @@ class GeminiService {
     // required level (see services/skillMatching.ts), and only that
     // shortlist is handed to the AI for final ranking/explanation - so the
     // sliders actually gate who's considered, not just wording in a prompt.
-    async findBestMatchesForJob(job: Job, engineers: EngineerProfile[], evidenceContext?: EvidenceContext): Promise<any> {
+    async findBestMatchesForJob(job: Job, engineers: EngineerProfile[], evidenceContext?: EvidenceContext): Promise<AiResult<MatchResult>> {
         const shortlisted = shortlistByRequirementScore(engineers, job, 15, evidenceContext);
 
         const engineerProfiles = shortlisted.map(e => {
@@ -283,12 +297,12 @@ class GeminiService {
             }
         };
 
-        const result = await this.generateWithSchema(prompt, schema);
+        const result = await this.generateWithSchema<MatchResult>(prompt, schema);
 
         // Blend the AI's contextual score with the deterministic requirement
         // score so a fluky AI number can't override a candidate who
         // genuinely doesn't meet the required levels, or bury one who does.
-        if (result && Array.isArray(result.matches)) {
+        if ('matches' in result && Array.isArray(result.matches)) {
             result.matches = result.matches.map((match: { id: string; match_score: number }) => {
                 const candidate = shortlisted.find(e => e.id === match.id);
                 if (!candidate) return match;
@@ -316,8 +330,8 @@ class GeminiService {
                 reason: { type: Type.STRING, description: "If not safe, provide a brief reason for rejection." }
             }
         };
-        const result = await this.generateWithSchema(prompt, schema);
-        if (result.error) {
+        const result = await this.generateWithSchema<{ is_safe: boolean; reason: string }>(prompt, schema);
+        if ('error' in result) {
             // Default to safe if AI fails, to avoid blocking legitimate posts.
             return { is_safe: true, reason: 'AI moderation failed.' };
         }
@@ -326,13 +340,13 @@ class GeminiService {
     
     // Method for CV Querying
     async queryCV(cvContent: string, query: string): Promise<{ answer?: string, error?: string }> {
-        return postJSON('/ai/query-cv', { cvContent, query });
+        return postJSON<{ answer: string }>('/ai/query-cv', { cvContent, query });
     }
 
     // Method for tutorial video generation (script + video)
     async generateTutorialVideo(topic: string): Promise<{ title: string; script: string; videoUrl: string; error?: string }> {
-        const result = await postJSON('/ai/tutorial-video', { topic });
-        if (result.error && !result.title) {
+        const result = await postJSON<{ title: string; script: string; videoUrl: string }>('/ai/tutorial-video', { topic });
+        if ('error' in result) {
             return { title: '', script: '', videoUrl: '', error: result.error };
         }
         return result;
@@ -370,7 +384,7 @@ class GeminiService {
             }
         };
 
-        return this.generateWithSchema(prompt, schema);
+        return this.generateWithSchema<ProductFeatures>(prompt, schema);
     }
 
     // Used by ChatWindow.tsx to translate an incoming message into the
@@ -379,7 +393,7 @@ class GeminiService {
     // ("Show original (French)") without asking the user what language
     // they wrote in.
     async translateText(text: string, targetLanguage: string): Promise<{ translatedText?: string; detectedSourceLanguage?: string; error?: string }> {
-        return postJSON('/ai/translate', { text, targetLanguage });
+        return postJSON<{ translatedText: string; detectedSourceLanguage: string }>('/ai/translate', { text, targetLanguage });
     }
 
     // Simple mock for AI auto-reply

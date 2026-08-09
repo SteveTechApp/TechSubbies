@@ -37,6 +37,33 @@ export interface TalentPoolEntry {
   updatedAt: string;
 }
 
+export type CompletionValidationInput = Pick<CompletionValidation,
+  "roleId" | "responsibilityMet" | "capabilitiesObserved" | "unexpectedSupervisionRequired" | "wouldUseAgainForRole" | "comments"
+>;
+
+export type TalentPoolEntryInput = Pick<TalentPoolEntry, "list" | "approvedRoleIds" | "approvedClientOrSite" | "privateNotes">;
+
+export interface TechnicalWorkPackInput {
+  roleId: string;
+  responsibility: string;
+  scope: string;
+  exclusions: string[];
+  prerequisites: string[];
+  siteContact: string;
+  escalationContact: string;
+  completionEvidence: string[];
+}
+
+export interface TechnicalWorkPack extends TechnicalWorkPackInput {
+  id: string;
+  contractId: string;
+  companyId: string;
+  version: number;
+  paymentNotice: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CapabilityPassport {
   engineerId: string;
   sectorProfiles: unknown[];

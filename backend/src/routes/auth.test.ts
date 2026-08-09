@@ -44,6 +44,26 @@ describe("POST /api/auth/register", () => {
     expect(response.body.user.profile.requestedProfileTier).toBeUndefined();
   });
 
+  it("rejects malformed nested profile containers", async () => {
+    const contact = await request(app).post("/api/auth/register").send({ email: "bad-contact@example.com", password: "correcthorsebattery", role: "Engineer", name: "Bad Contact", profileData: { contact: "private@example.com" } });
+    expect(contact.status).toBe(400);
+    expect(contact.body.error).toContain("Profile contact must be an object.");
+    const roles = await request(app).post("/api/auth/register").send({ email: "bad-roles@example.com", password: "correcthorsebattery", role: "Engineer", name: "Bad Roles", profileData: { roleProfiles: { roleId: "network-engineer" } } });
+    expect(roles.status).toBe(400);
+    expect(roles.body.error).toContain("Role profiles must be an array.");
+  });
+
+  it("keeps account identity and contact email server-owned", async () => {
+    const response = await request(app).post("/api/auth/register").send({
+      email: "identity-owner@example.com", password: "correcthorsebattery", role: "Engineer", name: "Real Name",
+      profileData: { id: "forged-id", role: "Admin", status: "suspended", contact: { email: "forged@example.com", phone: "07000000000" } },
+    });
+    expect(response.status).toBe(201);
+    expect(response.body.user).toMatchObject({ role: "Engineer", profile: { name: "Real Name", contact: { email: "identity-owner@example.com", phone: "07000000000" } } });
+    expect(response.body.user.profile.id).not.toBe("forged-id");
+    expect(response.body.user.profile.role).toBeUndefined();
+  });
+
   it("creates a new account and returns a token", async () => {
     const res = await request(app).post("/api/auth/register").send({
       email: "alice@example.com",

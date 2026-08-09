@@ -4,6 +4,52 @@ import { normaliseRoleIdentity } from "./roleIdentity";
 
 const confidenceRank = { "self-declared": 1, supported: 2, reviewed: 3, "client-validated": 4, proven: 5 } as const;
 
+interface CompatibleRoleProfile {
+  roleId: string;
+  overallCapability?: string;
+  evidence: Array<{ note?: string }>;
+}
+
+function record(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : undefined;
+}
+
+function compatibleRoleProfiles(engineer: EngineerProfile): CompatibleRoleProfile[] {
+  const rawProfiles = record(engineer)?.roleSkillProfiles;
+  if (!Array.isArray(rawProfiles)) return [];
+
+  return rawProfiles.flatMap((value) => {
+    const profile = record(value);
+    if (!profile) return [];
+    const identity = typeof profile.roleId === "string"
+      ? profile.roleId
+      : typeof profile.expectationId === "string" ? profile.expectationId : "";
+    const roleId = normaliseRoleIdentity(identity);
+    if (!roleId) return [];
+    const evidence = Array.isArray(profile.evidence)
+      ? profile.evidence.flatMap((item) => {
+          if (typeof item === "string") return [{ note: item }];
+          const evidenceRecord = record(item);
+          return evidenceRecord && typeof evidenceRecord.note === "string"
+            ? [{ note: evidenceRecord.note }]
+            : [];
+        })
+      : [];
+    return [{
+      roleId,
+      overallCapability: typeof profile.overallCapability === "string" ? profile.overallCapability : undefined,
+      evidence,
+    }];
+  });
+}
+
+function availabilityConfirmedAt(engineer: EngineerProfile): string | undefined {
+  const value = record(engineer)?.availabilityConfirmedAt;
+  return typeof value === "string" ? value : undefined;
+}
+
 export function calculateAvailabilityConfidence(lastConfirmedAt?: string): CapabilityPassport["availabilityConfidence"] {
   if (!lastConfirmedAt) return { score: 20, label: "unconfirmed" };
   const ageDays = Math.max(0, (Date.now() - new Date(lastConfirmedAt).getTime()) / 86_400_000);
@@ -13,15 +59,15 @@ export function calculateAvailabilityConfidence(lastConfirmedAt?: string): Capab
 }
 
 export function buildCapabilityPassport(engineer: EngineerProfile, validations: CompletionValidation[] = []): CapabilityPassport {
-  const profiles: any[] = (engineer as any).roleSkillProfiles || [];
+  const profiles = compatibleRoleProfiles(engineer);
   return {
     engineerId: engineer.id,
     sectorProfiles: engineer.sectorProfiles || [],
     roleProfiles: profiles.map((profile) => {
-      const roleId=normaliseRoleIdentity(profile.roleId||profile.expectationId);
+      const roleId = profile.roleId;
       const roleValidations = validations.filter((item) => item.roleId === roleId && item.responsibilityMet);
       const supportingEvidence: CapabilityEvidence[] = [
-        ...((profile.evidence || []).map((item: any) => ({ roleId, confidence: "supported" as const, source: "evidence" as const, summary: item.note || String(item) }))),
+        ...profile.evidence.map((item) => ({ roleId, confidence: "supported" as const, source: "evidence" as const, summary: item.note || "Profile evidence" })),
         ...roleValidations.map((item) => ({ roleId, confidence: "client-validated" as const, source: "completion-validation" as const, summary: `Validated after contract ${item.contractId}`, observedAt: item.createdAt })),
       ];
       const repeatPositive = roleValidations.filter((item) => item.wouldUseAgainForRole && !item.unexpectedSupervisionRequired).length;
@@ -30,7 +76,7 @@ export function buildCapabilityPassport(engineer: EngineerProfile, validations: 
     }),
     certifications: engineer.certifications || [],
     readiness: { complianceScore: engineer.complianceScore, identity: engineer.identity, compliance: engineer.compliance },
-    availabilityConfidence: calculateAvailabilityConfidence((engineer as any).availabilityConfirmedAt),
+    availabilityConfidence: calculateAvailabilityConfidence(availabilityConfirmedAt(engineer)),
   };
 }
 

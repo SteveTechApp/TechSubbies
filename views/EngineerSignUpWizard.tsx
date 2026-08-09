@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { errorMessage } from "../utils/errorMessage";
 import {
   cloneSkillRequirements,
   getRoleExpectation,
@@ -461,8 +462,8 @@ export function EngineerSignUpWizard({ onCancel }: EngineerSignUpWizardProps) {
         documentNotes,
       });
       setPublished(true);
-    } catch (error: any) {
-      setPublishError(error.message || "Could not create the account. Please try again.");
+    } catch (error: unknown) {
+      setPublishError(errorMessage(error, "Could not create the account. Please try again."));
     } finally {
       setIsPublishing(false);
     }
