@@ -25,6 +25,8 @@ export type ProductRequirement = {
   label: string;
   minimumLevel: ProductExperienceLevel;
   priority: "must-have" | "nice-to-have";
+  /** A missing prerequisite excludes the candidate rather than merely reducing score. */
+  isPrerequisite?: boolean;
 };
 
 export type OpportunityRequirement = {
@@ -36,6 +38,8 @@ export type OpportunityRequirement = {
   locationMode: "onsite" | "remote" | "hybrid";
   skillRequirements: SkillRequirement[];
   productRequirements: ProductRequirement[];
+  generalSectorOpportunity?: boolean;
+  responsibilityLevel?: "basic-support" | "skilled" | "specialist" | "lead";
   notes?: string[];
 };
 
@@ -47,6 +51,8 @@ export type CandidateSkillProfile = {
   roleTitles: string[];
   skills: string[];
   productExperience: Record<string, ProductExperienceLevel>;
+  generalSectors?: Array<"AV" | "IT">;
+  acceptsLowResponsibilityWork?: boolean;
   evidence?: string[];
   availabilitySummary?: string;
 };

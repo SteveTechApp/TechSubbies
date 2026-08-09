@@ -22,7 +22,11 @@ export type RoleFamily =
   | "cloud"
   | "data"
   | "devops"
-  | "consultancy";
+  | "consultancy"
+  | "project-delivery"
+  | "cloud-platform"
+  | "quality-assurance"
+  | "architecture";
 
 export type SkillRating = 0 | 1 | 2 | 3 | 4 | 5;
 
@@ -55,13 +59,22 @@ export interface RoleSkillDefinition {
   title: string;
   shortTitle: string;
   level: "entry" | "skilled" | "specialist" | "lead";
+  profileKind?: "free-sector" | "job-role";
   summary: string;
   suitableFor: string[];
   typicalProjects: string[];
   skillGroups: RoleSkillGroup[];
   recommendedTags: string[];
   evidenceTypes: string[];
+  aliases?: string[];
+  coreResponsibilities?: string[];
+  workContexts?: string[];
+  knowledgeRequirements?: RoleKnowledgeRequirement[];
+  roleBoundaries?: string[];
+  distinguishedFrom?: Array<{ roleId: string; distinction: string }>;
 }
+
+export interface RoleKnowledgeRequirement { topic: string; expectation: string; suggestedTags: string[]; prerequisiteEligible: boolean; }
 
 export interface EngineerSkillRating {
   skillId: string;

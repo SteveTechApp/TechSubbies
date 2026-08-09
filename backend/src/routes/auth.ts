@@ -51,6 +51,12 @@ authRouter.post("/register", async (req, res) => {
     name,
     profile: JSON.stringify({ ...safeProfileData, name, contact: { email, ...(safeProfileData.contact || {}) } }),
   });
+  // The isolated browser suite cannot consume the in-memory development
+  // email outbox. Keep the bypass explicit and unavailable by default.
+  if (process.env.E2E_AUTO_VERIFY_EMAIL === "true") {
+    markEmailVerified(user.id);
+    user.emailVerified = 1;
+  }
   if (role === "Engineer") {
     syncEngineerRoleProfiles(user.id, safeProfileData.roleProfiles);
   }

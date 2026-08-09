@@ -13,7 +13,10 @@
     "db:postgres-readiness": "tsx src/scripts/postgresReadiness.ts",
     "db:postgres-readiness:strict": "tsx src/scripts/postgresReadiness.ts --strict",
     "db:postgres-export": "tsx src/scripts/exportPostgresMigrationBundle.ts",
-    "db:postgres-verify": "tsx src/scripts/verifyPostgresMigrationBundle.ts"
+    "db:postgres-verify": "tsx src/scripts/verifyPostgresMigrationBundle.ts",
+    "db:quarantine:list": "node scripts/list-quarantine.mjs",
+    "db:quarantine": "node scripts/quarantine-record.mjs",
+    "db:quarantine:restore": "node scripts/restore-quarantined-record.mjs"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

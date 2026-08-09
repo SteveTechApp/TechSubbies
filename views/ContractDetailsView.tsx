@@ -99,8 +99,8 @@ export const ContractDetailsView = ({ contract }: ContractDetailsViewProps) => {
         setIsSignModalOpen(false);
     };
 
-    const handleTimesheetSubmit = (timesheetData: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => {
-        submitTimesheet(contract.id, timesheetData);
+    const handleTimesheetSubmit = async (timesheetData: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>) => {
+        await submitTimesheet(contract.id, timesheetData);
         setIsTimesheetModalOpen(false);
     };
 

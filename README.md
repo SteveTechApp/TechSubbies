@@ -1,87 +1,46 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# TechSubbies
 
-# Run and deploy your AI Studio app
+TechSubbies is a two-sided technical marketplace for companies, resourcing businesses, and engineers. The current product foundation covers canonical role/capability profiles, persisted opportunities and applications, explainable shortlisting, contracts, timesheets, membership billing, documents, and completion validation.
 
-This contains everything you need to run your app locally.
+## Repository layout
 
-View your app in AI Studio: https://ai.studio/apps/drive/1YybwIyYTK7ZoYAEVujEk_tBvqixA1CCF
+- `views/`, `components/`, `context/`, `services/`, `types/`: React/Vite application.
+- `backend/src/`: Express API, SQLite persistence, domain policy, and membership billing.
+- `cypress/e2e/`: persisted browser journeys.
+- `docs/ARCHITECTURE.md`: dependency boundaries and structural conventions.
+- `docs/DEVELOPMENT_PLAN.md`: phased delivery plan and exit criteria.
 
-## Run Locally
+## Local setup
 
-**Prerequisites:**  Node.js
+Requirements: Node.js 22.5 or newer.
 
+```powershell
+npm ci
+npm ci --prefix backend
+Copy-Item .env.local.example .env.local
+Copy-Item backend/.env.example backend/.env
+```
 
-1. Install dependencies:
-   `npm install`
-2. Copy `.env.local.example` to `.env.local` and set `VITE_API_BASE_URL`
-3. Copy `backend/.env.example` to `backend/.env`; keep secrets such as `GEMINI_API_KEY` on the backend only
-4. Run the backend from `backend/` with `npm start`
-5. Run the frontend:
-   `npm run dev`
+Start the API and frontend in separate terminals:
 
-Production frontend builds must set `VITE_API_BASE_URL` to an HTTPS backend URL
-or a same-origin path such as `/api`. The build fails rather than silently
-connecting customers to `localhost`.
+```powershell
+npm run dev --prefix backend
+npm run dev
+```
 
-Deployment probes:
+The frontend defaults to `http://localhost:5173`; the API defaults to `http://localhost:4000/api`.
 
-- `GET /api/health/live` confirms the backend process is running.
-- `GET /api/health/ready` confirms the backend can query its database.
-- `GET /api/health` remains a backwards-compatible readiness alias.
+## Validation
 
-Every backend response includes `X-Request-Id`. Production request logs contain
-only correlation metadata (method, path, status and duration), never request
-bodies or authorization headers. Unexpected errors return the request ID so
-support can locate the matching server event without exposing stack traces.
+```powershell
+npm run check
+npm run e2e
+```
 
-## Database deployment
+`check` runs frontend typechecking, unit tests and build, followed by backend tests and build. The E2E command creates an isolated SQLite database and runs the marketplace golden path through Cypress.
 
-The backend enables SQLite WAL mode, normal synchronous durability, foreign-key
-checks and a five-second busy timeout. The database file and its `-wal`/`-shm`
-companions must live on persistent local storage and be backed up together.
+## Deployment
 
-Run only one backend instance against a SQLite database file. Horizontal scaling
-or multi-region deployment requires migrating the repository layer to a managed
-database such as PostgreSQL rather than sharing SQLite over a network filesystem.
+Dockerfiles are provided for the frontend and backend, with local orchestration in `docker-compose.yml`. Configure secrets outside source control. Use `/api/health` for liveness and `/api/ready` for database readiness.
 
-Schema changes are tracked in `schema_migrations` and applied in ordered,
-transactional steps during backend startup. Failed migrations roll back without
-recording a version, and readiness remains unavailable unless the database is at
-the application’s latest schema version.
-
-Account registration, login outcomes, email verification and password changes
-are recorded in an immutable security audit table using request IDs. Failed-login
-identifiers are stored only as keyed hashes, not as raw email addresses.
-
-Create an online, integrity-checked backup without stopping the backend:
-
-`cd backend && npm run db:backup`
-
-Set `DB_BACKUP_DIR` to persistent storage outside the application release
-directory. Schedule this command and copy backups to a separate failure domain;
-the command never overwrites an existing backup.
-
-Regularly run a restore drill against a selected backup without touching the
-live database:
-
-`cd backend && $env:BACKUP_FILE="D:\backups\techsubbies-example.sqlite"; npm run db:verify-backup`
-
-The command opens the file read-only, runs SQLite integrity checks and confirms
-that the core marketplace tables are present. A non-zero exit code means the
-backup must not be treated as recoverable.
-
-## Compliance and certification model
-
-TechSubbies includes a role-specific compliance taxonomy for safety, AV industry credentials, IT/networking certifications, manufacturer training, project management credentials, insurance, company standards and background checks.
-
-The compliance model is defined in:
-
-- `types/compliance.ts`
-- `data/compliance.ts`
-- `services/complianceEngine.ts`
-- `views/ComplianceStandardsPage.tsx`
-- `docs/TECHSUBBIES_COMPLIANCE_CERTIFICATION_MODEL.md`
-
-Basic access stays open. Certificates increase trust and match confidence. Certificates become mandatory only when the project, site, customer, country or role genuinely requires them.
+Before any production launch, complete the production-data-store, billing reconciliation, audit, backup/restore, and observability exit criteria in the development plan.

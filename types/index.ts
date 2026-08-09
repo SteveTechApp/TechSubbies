@@ -243,6 +243,7 @@ export interface EngineerProfile extends UserProfile {
     partnerStatus?: 'pending' | 'accepted';
     caseStudies?: CaseStudy[];
     matchScore?: number;
+    sectorProfiles?: unknown[];
 }
 
 export interface CompanyProfile extends UserProfile {
@@ -394,7 +395,9 @@ export interface Timesheet {
     contractId: string;
     engineerId: string;
     period: string;
-    days: number;
+    days?: number;
+    hours?: number;
+    workSummary?: string;
     status: TimesheetStatus;
 }
 

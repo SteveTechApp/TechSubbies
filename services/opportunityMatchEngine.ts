@@ -163,6 +163,12 @@ function scoreProductResults(results: ProductRequirementResult[]): number {
 }
 
 function calculateRoleFit(candidate: CandidateSkillProfile, opportunity: OpportunityRequirement): number {
+  if (opportunity.generalSectorOpportunity) {
+    const requiredSectors = opportunity.market === "AV+IT" ? ["AV", "IT"] : [opportunity.market];
+    const covered = requiredSectors.some((sector) => candidate.generalSectors?.includes(sector as "AV" | "IT"));
+    const lowLevelAllowed = opportunity.responsibilityLevel !== "basic-support" || candidate.acceptsLowResponsibilityWork !== false;
+    return covered && lowLevelAllowed ? 70 : 0;
+  }
   if (!opportunity.roleIds.length) {
     return 100;
   }
@@ -173,6 +179,8 @@ function calculateRoleFit(candidate: CandidateSkillProfile, opportunity: Opportu
     return 100;
   }
 
+  // A free sector profile is coverage for genuinely general support work. It
+  // must never be treated as evidence for a named specialist job role.
   const opportunityRoleText = opportunity.roleIds.join(" ");
   const candidateRoleText = candidate.roleTitles.join(" ");
 
@@ -183,7 +191,9 @@ function calculateRoleFit(candidate: CandidateSkillProfile, opportunity: Opportu
   return 35;
 }
 
-function classify(score: number, missingMustHave: number, missingProducts: number): MatchOutcome {
+function classify(score: number, missingMustHave: number, missingProducts: number, missingPrerequisites: number, namedRoleMissing: boolean): MatchOutcome {
+  if (namedRoleMissing) return "NO MATCH";
+  if (missingPrerequisites > 0) return "NO MATCH";
   if (missingMustHave >= 2) {
     return "NO MATCH";
   }
@@ -230,6 +240,9 @@ export function scoreOpportunityCandidate(
   const missingNiceToHave = skillResults.filter((result) => result.priority === "nice-to-have" && result.status === "missing").length;
   const matchedProducts = productResults.filter((result) => result.status === "matched").length;
   const missingProducts = productResults.filter((result) => result.priority === "must-have" && result.status === "missing").length;
+  const prerequisiteIds = new Set(opportunity.productRequirements.filter((item) => item.isPrerequisite).map((item) => item.tagId));
+  const missingPrerequisites = productResults.filter((result) => prerequisiteIds.has(result.tagId) && result.status !== "matched").length;
+  const namedRoleMissing = opportunity.roleIds.length > 0 && !opportunity.roleIds.some((roleId) => candidate.roleIds.includes(roleId));
 
   const score = Math.round(
     roleFitScore * 0.2 +
@@ -238,7 +251,7 @@ export function scoreOpportunityCandidate(
     productScore * 0.25
   );
 
-  const outcome = classify(score, missingMustHave, missingProducts);
+  const outcome = classify(score, missingMustHave, missingProducts, missingPrerequisites, namedRoleMissing);
 
   const reasons: string[] = [];
   const risks: string[] = [];
@@ -269,6 +282,11 @@ export function scoreOpportunityCandidate(
       risks.push("Check product/platform experience: " + result.label + ".");
       nextQuestions.push("What level of hands-on experience does the candidate have with " + result.label + "?");
     });
+
+  if (missingPrerequisites > 0) {
+    risks.unshift("Candidate is excluded because a declared software/manufacturer prerequisite is not met at the required practical level.");
+  }
+  if (namedRoleMissing) risks.unshift("Candidate does not hold the specific job-role profile requested; a general sector profile or related skill is not a substitute.");
 
   if (!risks.length) {
     risks.push("No major must-have gaps found from the supplied profile data.");

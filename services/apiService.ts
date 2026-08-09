@@ -133,6 +133,8 @@ export function getAuthToken(): string | null {
   }
 }
 
+async function requestJson(path:string,init:RequestInit={}){const token=getAuthToken();const response=await fetch(`${API_BASE_URL}${path}`,{...init,headers:{...(init.body?{'Content-Type':'application/json'}:{}),...(token?{Authorization:`Bearer ${token}`}:{}) ,...(init.headers||{})}});if(response.status===204)return null;const data=await response.json();if(!response.ok)throw new Error(data?.error||'Request failed.');return data;}
+
 function saveAuthToken(_token?: string) {
   cookieSessionAvailable = true;
   try {
@@ -1243,7 +1245,7 @@ const apiService = {
 
   submitTimesheet: async (
     contractId: string,
-    timesheetData: { period: string; days: number }
+    timesheetData: Omit<Timesheet, 'id' | 'contractId' | 'engineerId' | 'status'>
   ): Promise<Contract | null> => {
     const token = getAuthToken();
     if (token) {
@@ -1251,7 +1253,7 @@ const apiService = {
         const response = await fetch(`${API_BASE_URL}/contracts/${contractId}/timesheets`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify(timesheetData),
+          body: JSON.stringify({...timesheetData,days:timesheetData.days??Math.max(1,Math.round((timesheetData.hours||8)/8)),hours:timesheetData.hours??(timesheetData.days||1)*8}),
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data?.error || 'Could not submit timesheet.');
@@ -1383,6 +1385,22 @@ const apiService = {
       return null;
     }
   },
+  resetPassword: (token:string,password:string)=>requestJson('/auth/password/reset',{method:'POST',body:JSON.stringify({token,password})}),
+  confirmEmail: (token:string)=>requestJson('/auth/verification/confirm',{method:'POST',body:JSON.stringify({token})}),
+  uploadDocument: async (file:File,documentType:string)=>{const token=getAuthToken();const response=await fetch(`${API_BASE_URL}/documents`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':file.type,'X-Document-Type':documentType,'X-File-Name':file.name},body:file});const data=await response.json();if(!response.ok)throw new Error(data?.error||'Document upload failed.');return data;},
+  listEngineers: async ():Promise<User[]>=>{const response=await fetch(`${API_BASE_URL}/users`);return response.ok?(await response.json() as User[]).filter(user=>user.role===Role.ENGINEER):[];},
+  getEngineerValidations: (engineerId:string)=>requestJson(`/trust/engineers/${engineerId}/validations`),
+  validateCompletedAssignment: (contractId:string,body:Record<string,unknown>)=>requestJson(`/trust/contracts/${contractId}/validation`,{method:'POST',body:JSON.stringify(body)}),
+  getTalentPool: ()=>requestJson('/trust/talent-pool'),
+  saveTalentPoolEntry: (engineerId:string,body:Record<string,unknown>)=>requestJson(`/trust/talent-pool/${engineerId}`,{method:'PUT',body:JSON.stringify(body)}),
+  removeTalentPoolEntry: (engineerId:string)=>requestJson(`/trust/talent-pool/${engineerId}`,{method:'DELETE'}),
+  confirmAvailability: (body:Record<string,unknown>)=>requestJson('/users/me/availability',{method:'PUT',body:JSON.stringify(body)}),
+  getTechnicalWorkPack: (contractId:string)=>requestJson(`/trust/contracts/${contractId}/work-pack`),
+  saveTechnicalWorkPack: (contractId:string,body:Record<string,unknown>)=>requestJson(`/trust/contracts/${contractId}/work-pack`,{method:'PUT',body:JSON.stringify(body)}),
+  createProjectTeam: (body:Record<string,unknown>)=>requestJson('/trust/teams',{method:'POST',body:JSON.stringify(body)}),
+  getWorkforceInsights: ()=>requestJson('/trust/insights'),
+  getCompanyAudit: ()=>requestJson('/trust/audit'),
+  getContractContact: (contractId:string)=>requestJson(`/contracts/${contractId}/contacts`),
 };
 
 export default apiService;

@@ -1,4 +1,4 @@
-import { canonicalRoleRegistry } from "../data/canonicalRoleRegistry";
+import { defaultRoleSkillRoleId, roleSkillTaxonomy } from "../data/roleSkillTaxonomy";
 import type {
   EngineerRoleSkillProfile,
   EngineerSkillRating,
@@ -15,27 +15,27 @@ function normalise(value: string): string {
 }
 
 export function getRoleSkillDefinitions(): RoleSkillDefinition[] {
-  return canonicalRoleRegistry;
+  return roleSkillTaxonomy;
 }
 
 export function getDefaultRoleSkillDefinition(): RoleSkillDefinition {
-  return canonicalRoleRegistry[0];
+  return getRoleSkillDefinition(defaultRoleSkillRoleId);
 }
 
 export function getRoleSkillDefinition(roleId: string): RoleSkillDefinition {
-  const found = canonicalRoleRegistry.find((role) => role.id === roleId);
+  const found = roleSkillTaxonomy.find((role) => role.id === roleId);
 
   if (found) {
     return found;
   }
 
-  return canonicalRoleRegistry[0];
+  return roleSkillTaxonomy[0];
 }
 
 export function filterRoleSkillDefinitions(filter: RoleSkillFilter): RoleSkillDefinition[] {
   const search = normalise(filter.searchText);
 
-  return canonicalRoleRegistry.filter((role) => {
+  return roleSkillTaxonomy.filter((role) => {
     if (filter.market !== "all" && role.market !== filter.market) {
       return false;
     }
@@ -58,6 +58,9 @@ export function filterRoleSkillDefinitions(filter: RoleSkillFilter): RoleSkillDe
       role.suitableFor.join(" "),
       role.typicalProjects.join(" "),
       role.recommendedTags.join(" "),
+      (role.aliases || []).join(" "),
+      (role.coreResponsibilities || []).join(" "),
+      (role.workContexts || []).join(" "),
       role.skillGroups.map((group) => group.title + " " + group.skills.map((skill) => skill.label).join(" ")).join(" "),
     ].join(" "));
 
@@ -70,7 +73,26 @@ export function getRoleMarkets(): Array<RoleMarket | "all"> {
 }
 
 export function getRoleFamilies(): Array<RoleFamily | "all"> {
-  return ["all", ...Array.from(new Set(canonicalRoleRegistry.map(role => role.family)))];
+  return [
+    "all",
+    "installation",
+    "commissioning",
+    "support",
+    "networking",
+    "programming",
+    "audio",
+    "uc",
+    "security",
+    "infrastructure",
+    "design",
+    "project-delivery",
+    "field-service",
+    "live-events",
+    "cloud-platform",
+    "data",
+    "quality-assurance",
+    "architecture",
+  ];
 }
 
 export function createEmptyRoleSkillProfile(role: RoleSkillDefinition): EngineerRoleSkillProfile {
@@ -267,3 +289,4 @@ export function getMissingRequiredSkillLabels(
     })
     .map((skill) => skill.label);
 }
+

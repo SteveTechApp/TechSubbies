@@ -365,7 +365,7 @@ export const InteractionProvider = ({ children }: { children: ReactNode }) => {
         const previousContracts = data.contracts;
         const newTimesheet: Timesheet = { ...timesheetData, id: `ts-${Date.now()}`, contractId, engineerId: user!.profile.id, status: TimesheetStatus.SUBMITTED };
         setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? { ...c, timesheets: [...(c.timesheets || []), newTimesheet] } : c) }));
-        apiService.submitTimesheet(contractId, timesheetData)
+        return apiService.submitTimesheet(contractId, timesheetData)
             .then(updated => {
                 if (updated) setAppData(prev => ({ ...prev, contracts: prev.contracts.map(c => c.id === contractId ? updated : c) }));
             })

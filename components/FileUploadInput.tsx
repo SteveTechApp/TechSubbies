@@ -1,24 +1,24 @@
 import React, { useState, useRef } from 'react';
 import { Upload, CheckCircle, Clock } from './Icons';
+import apiService from '../services/apiService';
 
 interface FileUploadInputProps {
     label: string;
     fileUrl?: string;
     isVerified?: boolean;
     onFileChange: (fileUrl: string) => void;
+    documentType?: 'cv'|'certification'|'insurance'|'identity'|'capability-evidence';
 }
 
-export const FileUploadInput = ({ label, fileUrl, isVerified, onFileChange }: FileUploadInputProps) => {
+export const FileUploadInput = ({ label, fileUrl, isVerified, onFileChange, documentType='capability-evidence' }: FileUploadInputProps) => {
     const [fileName, setFileName] = useState<string | null>(fileUrl ? 'document.pdf' : null);
+    const [error,setError]=useState('');const[uploading,setUploading]=useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            setFileName(file.name);
-            // In a real app, you'd upload the file and get a URL back.
-            // Here, we'll just simulate it.
-            onFileChange(`simulated-path/${file.name}`);
+            setError('');setUploading(true);try{const saved=await apiService.uploadDocument(file,documentType);setFileName(saved.originalName);onFileChange(saved.fileUrl);}catch(value:any){setError(value.message||'Document upload failed.');}finally{setUploading(false);}
         }
     };
 
@@ -36,7 +36,7 @@ export const FileUploadInput = ({ label, fileUrl, isVerified, onFileChange }: Fi
                     className="w-full flex items-center justify-center px-4 py-2 border-2 border-dashed border-gray-300 text-gray-500 rounded-md hover:border-blue-500 hover:text-blue-600 transition-colors"
                 >
                     <Upload size={16} className="mr-2" />
-                    Select file to upload
+                    {uploading?'Uploading…':'Select file to upload'}
                 </button>
             ) : (
                 <div className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 bg-gray-50 rounded-md">
@@ -55,7 +55,10 @@ export const FileUploadInput = ({ label, fileUrl, isVerified, onFileChange }: Fi
                 type="file"
                 className="sr-only"
                 onChange={handleFileSelect}
+                accept="application/pdf,image/jpeg,image/png"
+                disabled={uploading}
             />
+            {error&&<p className="mt-2 text-xs font-semibold text-red-600">{error}</p>}
         </div>
     );
 };

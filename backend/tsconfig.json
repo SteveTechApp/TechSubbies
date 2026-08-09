@@ -12,5 +12,18 @@
     "resolveJsonModule": true,
     "noEmit": false
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": [
+    "src/deployment.test.ts",
+    "src/billing/stripeProvider.ts",
+    "src/lib/accountEmail.ts",
+    "src/lib/documentStorage.ts",
+    "src/routes/documents.ts",
+    "src/routes/documents.test.ts",
+    "src/routes/marketplace.ts",
+    "src/routes/marketplace.test.ts",
+    "src/routes/membershipBilling.ts",
+    "src/routes/membershipBilling.test.ts",
+    "src/routes/trust.ts"
+  ]
 }

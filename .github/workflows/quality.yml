@@ -1,0 +1,23 @@
+name: quality
+on:
+  push:
+  pull_request:
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm ci --prefix backend
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm test --prefix backend
+      - run: npm run build --prefix backend
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm audit --prefix backend --omit=dev --audit-level=high
+      - run: npm run e2e
