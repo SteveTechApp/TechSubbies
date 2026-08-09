@@ -108,6 +108,11 @@ Word planning documents are retained as historical snapshots.
   privacy-minimal deduplicated events; applications and bookings come from the
   durable marketplace tables; Admin reports search-to-view, invitation,
   application-to-booking, repeat company/engineer bookings and 30-day retention.
+- [x] Implement the controlled-cohort commercial decision gate. Admin sees
+  role-specific research, 90-day marketplace engagement and paid-membership
+  evidence, can record package hypotheses, and can approve a cohort test only
+  after the evidence threshold is met. Approval stores an immutable evidence
+  snapshot and never changes live Stripe pricing or entitlements.
 - [ ] Run the controlled commercial cohort and use observed retention, paid
   conversion and pricing-research response volume to validate or revise plan
   packaging/prices before making a production pricing change.
