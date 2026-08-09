@@ -12,6 +12,9 @@
     "db:integrity": "node scripts/check-db.mjs",
     "db:migrate": "node scripts/migrate-db.mjs",
     "db:restore": "node scripts/restore-db.mjs",
+    "db:quarantine:list": "node scripts/list-quarantine.mjs",
+    "db:quarantine": "node scripts/quarantine-record.mjs",
+    "db:quarantine:restore": "node scripts/restore-quarantined-record.mjs",
     "smoke": "node scripts/smoke-deployment.mjs"
   },
   "dependencies": {

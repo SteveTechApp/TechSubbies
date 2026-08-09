@@ -123,6 +123,11 @@ db.exec(`
     action TEXT NOT NULL, entityType TEXT NOT NULL, entityId TEXT NOT NULL,
     metadata TEXT NOT NULL, createdAt TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS payload_quarantine (
+    id TEXT PRIMARY KEY, sourceTable TEXT NOT NULL, sourceId TEXT NOT NULL,
+    snapshot TEXT NOT NULL, reason TEXT NOT NULL, createdAt TEXT NOT NULL, restoredAt TEXT
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_payload_quarantine_active ON payload_quarantine(sourceTable,sourceId) WHERE restoredAt IS NULL;
 `);
 
 db.exec(`

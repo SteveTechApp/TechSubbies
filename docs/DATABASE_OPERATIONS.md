@@ -40,3 +40,23 @@ Set `REQUIRE_EXTERNAL_SERVICES=true` in production to make startup fail when mem
 `npm run db:integrity --prefix backend` is read-only. In addition to SQLite quick-check and foreign-key validation, it verifies that every persisted profile, marketplace, trust, work-pack, team, and audit payload is a JSON object and reports records using unsupported schema versions.
 
 Set `DB_FILE` to the database being inspected. Missing schema tables are reported as integrity failures rather than causing an opaque SQL error. The command does not repair or delete records; use its table and record identifiers to investigate and restore from a verified backup.
+
+## Quarantine and restore
+
+Create a verified backup before changing damaged data. Quarantine is explicit and recoverable: it snapshots the complete database row into `payload_quarantine` and removes that exact row from its active table in one transaction. It never accepts arbitrary table names and requires an exact confirmation token.
+
+```powershell
+$env:DB_FILE='C:\absolute\path\techsubbies.db'
+npm run db:backup
+npm run db:quarantine -- --table=jobs --id=<record-id> --reason="Confirmed corrupt payload after integrity review" --confirm=jobs:<record-id>
+npm run db:quarantine:list
+```
+
+Restore only after checking that no active record has reused the source ID:
+
+```powershell
+npm run db:quarantine:restore -- --quarantine-id=<quarantine-id> --confirm=restore:<quarantine-id>
+npm run db:integrity
+```
+
+Both operations are transactional. Restore refuses to overwrite an active record, ignores snapshot columns no longer present in the current schema, and records the restoration timestamp.

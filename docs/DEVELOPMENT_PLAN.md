@@ -49,7 +49,7 @@ Status: in progress
 - [x] Add migration tests for legacy engineer profiles and single-role jobs into schema v2.
 - [x] Validate core marketplace and profile JSON when reading it, with explicit codes for corrupt, invalid-version, and unsupported-version records.
 - [x] Extend safe decoding to trust/audit auxiliary payload tables and add an operational read-only integrity report.
-- [ ] Add an explicit quarantine/repair workflow; integrity checks must never mutate records automatically.
+- [x] Add an explicit, transactional quarantine/restore workflow with exact confirmation and full-row recovery snapshots; integrity checks remain read-only.
 - [x] Define stable error codes for persisted-data and unhandled API failures in addition to human-readable messages.
 - [x] Define stable default codes for validation, authentication, authorization, conflict, rate-limit, and not-found responses while preserving more specific domain codes.
 
