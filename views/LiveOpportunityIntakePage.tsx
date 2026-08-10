@@ -59,12 +59,21 @@ function makeId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.round(Math.random() * 100000)}`;
 }
 
-function inclusiveDurationDays(startDate: string, finishDate: string) {
+function scheduledDurationDays(startDate: string, finishDate: string, workingHours: string) {
   if (!startDate || !finishDate) return 1;
   const start = Date.parse(`${startDate}T00:00:00Z`);
   const finish = Date.parse(`${finishDate}T00:00:00Z`);
   if (!Number.isFinite(start) || !Number.isFinite(finish) || finish < start) return 1;
-  return Math.floor((finish - start) / 86400000) + 1;
+
+  const includesWeekends = workingHours === "Weekend work" || workingHours === "Normal + weekend work" || workingHours === "Mixed hours";
+  let days = 0;
+
+  for (let timestamp = start; timestamp <= finish; timestamp += 86400000) {
+    const day = new Date(timestamp).getUTCDay();
+    if (includesWeekends || (day !== 0 && day !== 6)) days += 1;
+  }
+
+  return Math.max(1, days);
 }
 
 function makeNeed(project: ProjectDetails, expectationId = roleExpectations[0].id): EngineerNeed {
@@ -75,7 +84,7 @@ function makeNeed(project: ProjectDetails, expectationId = roleExpectations[0].i
     expectationId,
     quantity: 1,
     dayRate: 350,
-    durationDays: inclusiveDurationDays(project.startDate, project.finishDate),
+    durationDays: scheduledDurationDays(project.startDate, project.finishDate, project.workingHours),
     startDate: project.startDate,
     finishDate: project.finishDate,
     siteLocation: project.siteLocation,
@@ -269,7 +278,7 @@ export default function LiveOpportunityIntakePage() {
     setNeedDraft((current) => {
       if (!current) return current;
       const dates = { startDate: current.startDate, finishDate: current.finishDate, [field]: value };
-      return { ...current, ...dates, durationDays: inclusiveDurationDays(dates.startDate, dates.finishDate) };
+      return { ...current, ...dates, durationDays: scheduledDurationDays(dates.startDate, dates.finishDate, current.workingHours) };
     });
   }
 
@@ -460,7 +469,7 @@ export default function LiveOpportunityIntakePage() {
                   <option>Normal working hours</option>
                   <option>Evening work</option>
                   <option>Night work</option>
-                  <option>Weekend work</option>
+                  <option>Normal + weekend work</option>
                   <option>Mixed hours</option>
                 </select>
               </Field>
@@ -591,8 +600,8 @@ export default function LiveOpportunityIntakePage() {
                     <Field label="Finish date"><input type="date" min={needDraft.startDate || undefined} className={inputClass()} value={needDraft.finishDate} onChange={(event) => updateNeedDraftDate("finishDate", event.target.value)} /></Field>
                     <Field label="Work location"><input className={inputClass()} value={needDraft.siteLocation} onChange={(event) => updateNeedDraft({ siteLocation: event.target.value })} /></Field>
                     <Field label="Working hours">
-                      <select className={selectClass()} value={needDraft.workingHours} onChange={(event) => updateNeedDraft({ workingHours: event.target.value })}>
-                        <option>Normal working hours</option><option>Evening work</option><option>Night work</option><option>Weekend work</option><option>Mixed hours</option>
+                      <select className={selectClass()} value={needDraft.workingHours} onChange={(event) => updateNeedDraft({ workingHours: event.target.value, durationDays: scheduledDurationDays(needDraft.startDate, needDraft.finishDate, event.target.value) })}>
+                        <option>Normal working hours</option><option>Evening work</option><option>Night work</option><option>Normal + weekend work</option><option>Mixed hours</option>
                       </select>
                     </Field>
                     <Field label="Working arrangement">

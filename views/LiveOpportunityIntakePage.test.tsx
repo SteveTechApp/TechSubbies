@@ -61,6 +61,16 @@ describe("labour workspace", () => {
 
     fireEvent.change(screen.getByLabelText("Work location"), { target: { value: "Liverpool Arena" } });
     expect(screen.getByLabelText("Work location")).toHaveValue("Liverpool Arena");
+
+    fireEvent.change(screen.getByLabelText("Start date"), { target: { value: "2026-09-10" } });
+    fireEvent.change(screen.getByLabelText("Finish date"), { target: { value: "2026-10-10" } });
+    expect(screen.getByLabelText("Duration in days")).toHaveValue(22);
+
+    fireEvent.change(screen.getByLabelText("Working hours"), { target: { value: "Normal + weekend work" } });
+    expect(screen.getByLabelText("Duration in days")).toHaveValue(31);
+
+    fireEvent.change(screen.getByLabelText("Working hours"), { target: { value: "Normal working hours" } });
+    expect(screen.getByLabelText("Duration in days")).toHaveValue(22);
   });
 
   it("allows a restricted role to continue only with named external supervision", () => {
