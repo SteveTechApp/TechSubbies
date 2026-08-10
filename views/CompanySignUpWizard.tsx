@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { useAppContext } from '../context/InteractionContext';
 import { BrandLogo } from '../components/BrandLogo';
 import { ArrowLeft } from '../components/Icons';
@@ -11,6 +12,7 @@ interface CompanySignUpWizardProps {
 
 export const CompanySignUpWizard = ({ onCancel }: CompanySignUpWizardProps) => {
     const { createAndLoginCompany } = useAppContext();
+    const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
         contactName: '',
@@ -39,9 +41,8 @@ export const CompanySignUpWizard = ({ onCancel }: CompanySignUpWizardProps) => {
     };
 
     const handleCancel = () => {
-        if (window.confirm('Are you sure? This will return you to the start of the signup process.')) {
-            onCancel();
-        }
+        onCancel();
+        navigate('/login');
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
