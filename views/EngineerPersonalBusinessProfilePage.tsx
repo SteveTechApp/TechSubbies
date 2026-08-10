@@ -378,6 +378,24 @@ function inferProfileFromImport(importDraft: ImportDraft): InferredProfilePatch 
 
   return patch;
 }
+
+function normalizeExternalUrl(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
+function isLinkedInProfileUrl(value: string) {
+  if (!value) return true;
+
+  try {
+    const url = new URL(normalizeExternalUrl(value));
+    return /(^|\.)linkedin\.com$/i.test(url.hostname) && url.pathname.startsWith("/in/");
+  } catch {
+    return false;
+  }
+}
+
 function readinessLabel(score: number) {
   if (score >= 90) {
     return "Ready to present";
@@ -399,6 +417,7 @@ export default function EngineerPersonalBusinessProfilePage() {
   const [savedMessage, setSavedMessage] = useState("");
   const [importDraft, setImportDraft] = useState<ImportDraft>(defaultImportDraft);
   const [inferredPatch, setInferredPatch] = useState<InferredProfilePatch | null>(null);
+  const [importFeedback, setImportFeedback] = useState("");
   const completion = useMemo(() => scoreProfile(profile), [profile]);
   const gaps = useMemo(() => missingItems(profile), [profile]);
 
@@ -411,9 +430,34 @@ export default function EngineerPersonalBusinessProfilePage() {
   }
 
   function analyseImportDraft() {
-    const patch = inferProfileFromImport(importDraft);
+    const normalizedLinkedInUrl = normalizeExternalUrl(importDraft.linkedinUrl);
+    const normalizedWebsiteUrl = normalizeExternalUrl(importDraft.websiteUrl);
+
+    if (!isLinkedInProfileUrl(normalizedLinkedInUrl)) {
+      setImportFeedback("Enter a valid LinkedIn profile URL, for example https://www.linkedin.com/in/your-name.");
+      return;
+    }
+
+    const websiteUrl = normalizedWebsiteUrl === normalizedLinkedInUrl ? "" : normalizedWebsiteUrl;
+    const normalizedDraft = {
+      ...importDraft,
+      linkedinUrl: normalizedLinkedInUrl,
+      websiteUrl,
+    };
+    setImportDraft(normalizedDraft);
+
+    const patch = inferProfileFromImport(normalizedDraft);
     setInferredPatch(patch);
-    setSavedMessage("Draft suggestions created. Review them before applying.");
+    setSavedMessage("");
+
+    if (!normalizedDraft.sourceText.trim()) {
+      setImportFeedback(
+        "LinkedIn does not provide profile content from a public URL alone. The link is ready to apply, but paste your LinkedIn profile text below to generate headline, summary and skill suggestions."
+      );
+      return;
+    }
+
+    setImportFeedback("Draft suggestions created from the pasted profile text. Review them before applying.");
   }
 
   function applyInferredPatch() {
@@ -560,7 +604,7 @@ export default function EngineerPersonalBusinessProfilePage() {
         <main className="grid gap-6 xl:grid-cols-[1fr_380px]">
           <div className="space-y-6">
             <section className="rounded-3xl border border-cyan-300/20 bg-slate-900 p-6">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-300">
                     Profile Import Assistant
@@ -573,17 +617,20 @@ export default function EngineerPersonalBusinessProfilePage() {
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-amber-300/20 bg-amber-300/10 p-4 text-sm leading-6 text-amber-50">
-                  Do not scrape logged-in LinkedIn pages. Use user-provided text, official consent flows, or a compliant backend importer later.
-                </div>
               </div>
 
               <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <Field label="LinkedIn profile URL">
+                <Field
+                  label="LinkedIn profile URL (link only)"
+                  hint="The URL can be saved to your profile, but LinkedIn content cannot be imported from the URL alone."
+                >
                   <input
                     className={inputClass()}
                     value={importDraft.linkedinUrl}
-                    onChange={(event) => setImportDraft({ ...importDraft, linkedinUrl: event.target.value })}
+                    onChange={(event) => {
+                      setImportDraft({ ...importDraft, linkedinUrl: event.target.value });
+                      setImportFeedback("");
+                    }}
                     placeholder="https://www.linkedin.com/in/..."
                   />
                 </Field>
@@ -592,7 +639,10 @@ export default function EngineerPersonalBusinessProfilePage() {
                   <input
                     className={inputClass()}
                     value={importDraft.websiteUrl}
-                    onChange={(event) => setImportDraft({ ...importDraft, websiteUrl: event.target.value })}
+                    onChange={(event) => {
+                      setImportDraft({ ...importDraft, websiteUrl: event.target.value });
+                      setImportFeedback("");
+                    }}
                     placeholder="https://..."
                   />
                 </Field>
@@ -606,7 +656,10 @@ export default function EngineerPersonalBusinessProfilePage() {
                   <textarea
                     className="min-h-40 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-white outline-none placeholder:text-slate-600 focus:border-cyan-300"
                     value={importDraft.sourceText}
-                    onChange={(event) => setImportDraft({ ...importDraft, sourceText: event.target.value })}
+                    onChange={(event) => {
+                      setImportDraft({ ...importDraft, sourceText: event.target.value });
+                      setImportFeedback("");
+                    }}
                     placeholder="Paste profile text here..."
                   />
                 </Field>
@@ -629,6 +682,15 @@ export default function EngineerPersonalBusinessProfilePage() {
                   Apply reviewed suggestions
                 </button>
               </div>
+
+              {importFeedback && (
+                <div
+                  role="status"
+                  className="mt-4 rounded-xl border border-cyan-300/25 bg-cyan-300/10 px-4 py-3 text-sm leading-6 text-cyan-50"
+                >
+                  {importFeedback}
+                </div>
+              )}
 
               {inferredPatch && (
                 <div className="mt-5 grid gap-4 lg:grid-cols-2">
@@ -672,9 +734,9 @@ export default function EngineerPersonalBusinessProfilePage() {
                     </div>
 
                     {inferredPatch.inferenceNotes && inferredPatch.inferenceNotes.length > 0 && (
-                      <ul className="mt-4 space-y-1 text-sm leading-6 text-slate-400">
+                      <ul className="mt-4 list-disc space-y-1 pl-5 text-sm leading-6 text-slate-400">
                         {inferredPatch.inferenceNotes.map((note) => (
-                          <li key={note}>€¢ {note}</li>
+                          <li key={note}>{note}</li>
                         ))}
                       </ul>
                     )}
@@ -940,9 +1002,9 @@ export default function EngineerPersonalBusinessProfilePage() {
                 {gaps.length > 0 && (
                   <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/10 p-4">
                     <div className="text-sm font-bold text-amber-100">Open gaps</div>
-                    <ul className="mt-2 space-y-1 text-sm leading-6 text-amber-50">
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-amber-50">
                       {gaps.slice(0, 8).map((gap) => (
-                        <li key={gap}>€¢ {gap}</li>
+                        <li key={gap}>{gap}</li>
                       ))}
                     </ul>
                   </div>
@@ -951,12 +1013,12 @@ export default function EngineerPersonalBusinessProfilePage() {
 
               <div className="mt-5 rounded-2xl border border-white/10 bg-slate-950 p-5">
                 <h3 className="font-bold text-white">Profile rules</h3>
-                <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-400">
-                  <li>€¢ Companies should see only relevant public details.</li>
-                  <li>€¢ Sensitive documents should be verified securely later.</li>
-                  <li>€¢ Rates are indicators, not final contract terms.</li>
-                  <li>€¢ Site-readiness must be checked per project.</li>
-                  <li>€¢ This page currently saves locally for development testing.</li>
+                <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-400">
+                  <li>Companies should see only relevant public details.</li>
+                  <li>Sensitive documents should be verified securely later.</li>
+                  <li>Rates are indicators, not final contract terms.</li>
+                  <li>Site-readiness must be checked per project.</li>
+                  <li>This page currently saves locally for development testing.</li>
                 </ul>
               </div>
             </section>
