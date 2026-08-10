@@ -77,7 +77,6 @@ type EngineerBusinessProfile = {
 };
 
 const storageKey = "techsubbies_engineer_personal_business_profile";
-const onboardingDraftKey = "techsubbies_engineer_onboarding_draft";
 
 const defaultProfile: EngineerBusinessProfile = {
   fullName: "",
@@ -438,51 +437,6 @@ export default function EngineerPersonalBusinessProfilePage() {
     setSavedMessage("Local profile cleared.");
   }
 
-  function importOnboardingDraft() {
-    const raw = window.localStorage.getItem(onboardingDraftKey);
-
-    if (!raw) {
-      setSavedMessage("No onboarding draft found.");
-      return;
-    }
-
-    try {
-      const draft = JSON.parse(raw) as {
-        account?: Partial<EngineerBusinessProfile>;
-        readiness?: Partial<Record<string, boolean>>;
-        documentNotes?: string;
-      };
-
-      update({
-        fullName: draft.account?.fullName || profile.fullName,
-        email: draft.account?.email || profile.email,
-        phone: draft.account?.phone || profile.phone,
-        businessName: draft.account?.businessName || profile.businessName,
-        tradingStatus: (draft.account?.tradingStatus as TradingStatus) || profile.tradingStatus,
-        country: draft.account?.country || profile.country,
-        baseLocation: draft.account?.baseLocation || profile.baseLocation,
-        postcode: draft.account?.postcode || profile.postcode,
-        travelRadiusMiles: draft.account?.travelRadiusMiles || profile.travelRadiusMiles,
-        hasRightToWork: Boolean(draft.readiness?.hasRightToWork || profile.hasRightToWork),
-        hasPublicLiability: Boolean(draft.readiness?.hasPublicLiability || profile.hasPublicLiability),
-        hasProfessionalIndemnity: Boolean(draft.readiness?.hasProfessionalIndemnity || profile.hasProfessionalIndemnity),
-        hasOwnTransport: Boolean(draft.readiness?.hasOwnTransport || profile.hasOwnTransport),
-        hasOwnTools: Boolean(draft.readiness?.hasOwnTools || profile.hasOwnTools),
-        hasLaptop: Boolean(draft.readiness?.hasLaptop || profile.hasLaptop),
-        hasPpe: Boolean(draft.readiness?.hasPpe || profile.hasPpe),
-        acceptsSiteRules: Boolean(draft.readiness?.acceptsSiteRules || profile.acceptsSiteRules),
-        willingToWorkNights: Boolean(draft.readiness?.willingToWorkNights || profile.willingToWorkNights),
-        willingToWorkWeekends: Boolean(draft.readiness?.willingToWorkWeekends || profile.willingToWorkWeekends),
-        willingToTravel: Boolean(draft.readiness?.willingToTravel || profile.willingToTravel),
-        documentNotes: draft.documentNotes || profile.documentNotes,
-      });
-
-      setSavedMessage("Onboarding draft imported.");
-    } catch {
-      setSavedMessage("Could not import onboarding draft.");
-    }
-  }
-
   return (
         <div className="min-h-screen ">
             <div className="min-h-screen bg-slate-950 text-white">
@@ -524,14 +478,6 @@ export default function EngineerPersonalBusinessProfilePage() {
               className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200"
             >
               Save profile
-            </button>
-
-            <button
-              type="button"
-              onClick={importOnboardingDraft}
-              className="rounded-xl border border-cyan-300/40 px-5 py-3 text-sm font-bold text-cyan-100 hover:bg-cyan-300/10"
-            >
-              Import onboarding draft
             </button>
 
             <button

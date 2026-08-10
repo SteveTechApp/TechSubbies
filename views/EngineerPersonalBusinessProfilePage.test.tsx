@@ -11,6 +11,7 @@ describe("engineer personal and business profile copy", () => {
 
     expect(screen.queryByText(/Profile Import Assistant/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Analyse and suggest fields/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Import onboarding draft/i })).not.toBeInTheDocument();
     expect(screen.getByText("Upload and parse a formal CV")).toBeInTheDocument();
     expect(screen.getByLabelText(/Choose CV/i)).toHaveAttribute("accept", expect.stringContaining(".pdf"));
     expect(screen.queryByText("5. Tools, certifications and notes")).not.toBeInTheDocument();
