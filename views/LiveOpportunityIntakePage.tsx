@@ -14,6 +14,8 @@ type ProjectDetails = {
   projectName: string;
   clientName: string;
   siteLocation: string;
+  startDate: string;
+  finishDate: string;
   projectType: string;
   environment: string;
   workingHours: string;
@@ -31,6 +33,8 @@ type EngineerNeed = {
   durationDays: number;
   startDate: string;
   finishDate: string;
+  siteLocation: string;
+  workingHours: string;
   workingArrangement: "supervised" | "independent" | "lead";
   skills: SkillRequirement[];
   tags: string;
@@ -40,6 +44,8 @@ const emptyProject: ProjectDetails = {
   projectName: "",
   clientName: "",
   siteLocation: "",
+  startDate: "",
+  finishDate: "",
   projectType: "Corporate AV",
   environment: "Occupied site",
   workingHours: "Normal working hours",
@@ -53,7 +59,15 @@ function makeId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.round(Math.random() * 100000)}`;
 }
 
-function makeNeed(expectationId = roleExpectations[0].id): EngineerNeed {
+function inclusiveDurationDays(startDate: string, finishDate: string) {
+  if (!startDate || !finishDate) return 1;
+  const start = Date.parse(`${startDate}T00:00:00Z`);
+  const finish = Date.parse(`${finishDate}T00:00:00Z`);
+  if (!Number.isFinite(start) || !Number.isFinite(finish) || finish < start) return 1;
+  return Math.floor((finish - start) / 86400000) + 1;
+}
+
+function makeNeed(project: ProjectDetails, expectationId = roleExpectations[0].id): EngineerNeed {
   const expectation = getRoleExpectation(expectationId);
 
   return {
@@ -61,9 +75,11 @@ function makeNeed(expectationId = roleExpectations[0].id): EngineerNeed {
     expectationId,
     quantity: 1,
     dayRate: 350,
-    durationDays: 1,
-    startDate: "",
-    finishDate: "",
+    durationDays: inclusiveDurationDays(project.startDate, project.finishDate),
+    startDate: project.startDate,
+    finishDate: project.finishDate,
+    siteLocation: project.siteLocation,
+    workingHours: project.workingHours,
     workingArrangement: expectation.canLeadOthers ? "lead" : expectation.canWorkAlone ? "independent" : "supervised",
     skills: cloneSkillRequirements(expectation.requiredSkills),
     tags: "",
@@ -185,6 +201,8 @@ export default function LiveOpportunityIntakePage() {
       project.projectName,
       project.clientName,
       project.siteLocation,
+      project.startDate,
+      project.finishDate,
       project.projectType,
       project.environment,
       project.workingHours,
@@ -217,7 +235,7 @@ export default function LiveOpportunityIntakePage() {
   }
 
   function addNeed() {
-    setNeedDraft(makeNeed());
+    setNeedDraft(makeNeed(project));
   }
 
   function editNeed(need: EngineerNeed) {
@@ -226,6 +244,14 @@ export default function LiveOpportunityIntakePage() {
 
   function updateNeedDraft(patch: Partial<EngineerNeed>) {
     setNeedDraft((current) => current ? { ...current, ...patch } : current);
+  }
+
+  function updateNeedDraftDate(field: "startDate" | "finishDate", value: string) {
+    setNeedDraft((current) => {
+      if (!current) return current;
+      const dates = { startDate: current.startDate, finishDate: current.finishDate, [field]: value };
+      return { ...current, ...dates, durationDays: inclusiveDurationDays(dates.startDate, dates.finishDate) };
+    });
   }
 
   function changeDraftExpectation(expectationId: string) {
@@ -378,6 +404,14 @@ export default function LiveOpportunityIntakePage() {
                 <input className={inputClass()} value={project.siteLocation} onChange={(event) => setProject({ ...project, siteLocation: event.target.value })} />
               </Field>
 
+              <Field label="Project start date">
+                <input type="date" className={inputClass()} value={project.startDate} onChange={(event) => setProject({ ...project, startDate: event.target.value })} />
+              </Field>
+
+              <Field label="Project finish date">
+                <input type="date" min={project.startDate || undefined} className={inputClass()} value={project.finishDate} onChange={(event) => setProject({ ...project, finishDate: event.target.value })} />
+              </Field>
+
               <Field label="Project type">
                 <select className={selectClass()} value={project.projectType} onChange={(event) => setProject({ ...project, projectType: event.target.value })}>
                   <option>Corporate AV</option>
@@ -496,6 +530,7 @@ export default function LiveOpportunityIntakePage() {
                         <h3 className="mt-4 font-bold text-white">{expectation.roleTitle}</h3>
                         <p className="mt-1 text-sm text-cyan-200">{need.quantity} engineer{need.quantity === 1 ? "" : "s"} · {need.durationDays} day{need.durationDays === 1 ? "" : "s"}</p>
                         <p className="mt-3 text-xs leading-5 text-slate-500">£{need.dayRate}/day · {responsibilityBandLabels[expectation.responsibilityBand]}</p>
+                        {(need.startDate || need.siteLocation) && <p className="mt-2 text-xs leading-5 text-slate-500">{need.startDate || "Date not set"}{need.finishDate ? ` to ${need.finishDate}` : ""}{need.siteLocation ? ` · ${need.siteLocation}` : ""}</p>}
                       </button>
                     );
                   })}
@@ -533,8 +568,14 @@ export default function LiveOpportunityIntakePage() {
                     <Field label="Engineers needed"><input type="number" min={1} className={inputClass()} value={needDraft.quantity} onChange={(event) => updateNeedDraft({ quantity: Number(event.target.value) })} /></Field>
                     <Field label="Day rate"><input type="number" min={0} className={inputClass()} value={needDraft.dayRate} onChange={(event) => updateNeedDraft({ dayRate: Number(event.target.value) })} /></Field>
                     <Field label="Duration in days"><input type="number" min={1} className={inputClass()} value={needDraft.durationDays} onChange={(event) => updateNeedDraft({ durationDays: Number(event.target.value) })} /></Field>
-                    <Field label="Start date"><input type="date" className={inputClass()} value={needDraft.startDate} onChange={(event) => updateNeedDraft({ startDate: event.target.value })} /></Field>
-                    <Field label="Finish date"><input type="date" className={inputClass()} value={needDraft.finishDate} onChange={(event) => updateNeedDraft({ finishDate: event.target.value })} /></Field>
+                    <Field label="Start date"><input type="date" className={inputClass()} value={needDraft.startDate} onChange={(event) => updateNeedDraftDate("startDate", event.target.value)} /></Field>
+                    <Field label="Finish date"><input type="date" min={needDraft.startDate || undefined} className={inputClass()} value={needDraft.finishDate} onChange={(event) => updateNeedDraftDate("finishDate", event.target.value)} /></Field>
+                    <Field label="Work location"><input className={inputClass()} value={needDraft.siteLocation} onChange={(event) => updateNeedDraft({ siteLocation: event.target.value })} /></Field>
+                    <Field label="Working hours">
+                      <select className={selectClass()} value={needDraft.workingHours} onChange={(event) => updateNeedDraft({ workingHours: event.target.value })}>
+                        <option>Normal working hours</option><option>Evening work</option><option>Night work</option><option>Weekend work</option><option>Mixed hours</option>
+                      </select>
+                    </Field>
                     <Field label="Working arrangement">
                       <select className={selectClass()} value={needDraft.workingArrangement} onChange={(event) => updateNeedDraft({ workingArrangement: event.target.value as EngineerNeed["workingArrangement"] })}>
                         <option value="supervised">Supervised / under lead</option><option value="independent">Independent standard work</option><option value="lead">Lead / responsible engineer</option>
@@ -669,6 +710,7 @@ export default function LiveOpportunityIntakePage() {
               <div className="mt-3 grid gap-3 text-sm text-slate-300 md:grid-cols-2">
                 <div>Client: {project.clientName || "Not set"}</div>
                 <div>Location: {project.siteLocation || "Not set"}</div>
+                <div>Dates: {project.startDate || "Not set"}{project.finishDate ? ` to ${project.finishDate}` : ""}</div>
                 <div>Type: {project.projectType}</div>
                 <div>Environment: {project.environment}</div>
                 <div>Hours: {project.workingHours}</div>
@@ -697,11 +739,13 @@ export default function LiveOpportunityIntakePage() {
 
                     <p className="mt-4 text-sm leading-6 text-slate-300">{expectation.responsibilityStatement}</p>
 
-                    <div className="mt-4 grid gap-3 text-sm text-slate-300 md:grid-cols-4">
+                    <div className="mt-4 grid gap-3 text-sm text-slate-300 md:grid-cols-3">
                       <div>Rate: £{need.dayRate}/day</div>
                       <div>Duration: {need.durationDays} day(s)</div>
                       <div>Start: {need.startDate || "Not set"}</div>
                       <div>Finish: {need.finishDate || "Not set"}</div>
+                      <div>Location: {need.siteLocation || project.siteLocation || "Not set"}</div>
+                      <div>Hours: {need.workingHours || project.workingHours}</div>
                     </div>
 
                     <div className="mt-4 flex flex-wrap gap-2">

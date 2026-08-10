@@ -25,4 +25,25 @@ describe("labour workspace", () => {
     expect(screen.getByText("Edit engineer type")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save changes" })).toBeInTheDocument();
   });
+
+  it("prefills new engineer allocations from known project details", () => {
+    render(<LiveOpportunityIntakePage />);
+
+    fireEvent.change(screen.getByLabelText("Site location"), { target: { value: "Manchester Central" } });
+    fireEvent.change(screen.getByLabelText("Project start date"), { target: { value: "2026-09-14" } });
+    fireEvent.change(screen.getByLabelText("Project finish date"), { target: { value: "2026-09-16" } });
+    fireEvent.change(screen.getByLabelText("Working hours"), { target: { value: "Night work" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /Step 2 Labour workspace/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Add Engineer" }));
+
+    expect(screen.getByLabelText("Start date")).toHaveValue("2026-09-14");
+    expect(screen.getByLabelText("Finish date")).toHaveValue("2026-09-16");
+    expect(screen.getByLabelText("Duration in days")).toHaveValue(3);
+    expect(screen.getByLabelText("Work location")).toHaveValue("Manchester Central");
+    expect(screen.getByLabelText("Working hours")).toHaveValue("Night work");
+
+    fireEvent.change(screen.getByLabelText("Work location"), { target: { value: "Liverpool Arena" } });
+    expect(screen.getByLabelText("Work location")).toHaveValue("Liverpool Arena");
+  });
 });
