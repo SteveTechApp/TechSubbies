@@ -38,7 +38,6 @@ type EngineerNeed = {
   workingArrangement: "supervised" | "independent" | "lead";
   skills: SkillRequirement[];
   tags: string;
-  expectationsAccepted: boolean;
 };
 
 const emptyProject: ProjectDetails = {
@@ -93,7 +92,6 @@ function makeNeed(project: ProjectDetails, expectationId = roleExpectations[0].i
     workingArrangement: expectation.canLeadOthers ? "lead" : expectation.canWorkAlone ? "independent" : "supervised",
     skills: cloneSkillRequirements(expectation.requiredSkills),
     tags: "",
-    expectationsAccepted: false,
   };
 }
 
@@ -225,11 +223,6 @@ export default function LiveOpportunityIntakePage() {
   const uncoveredSupervisedNeeds = useMemo(() => supervisionGaps(needs), [needs]);
   const hasConfirmedExternalSupervisor = usesExternalSupervision && Boolean(externalSupervisorName.trim());
   const labourTeamReady = needs.length > 0 && (uncoveredSupervisedNeeds.length === 0 || hasConfirmedExternalSupervisor);
-  const basicExpectationsAccepted = needs.every((need) => {
-    const expectation = getRoleExpectation(need.expectationId);
-    return expectation.responsibilityBand !== "labour" || need.expectationsAccepted;
-  });
-  const reviewReady = labourTeamReady && basicExpectationsAccepted;
 
   const projectReadiness = useMemo(() => {
     const values = [
@@ -295,7 +288,6 @@ export default function LiveOpportunityIntakePage() {
       expectationId,
       workingArrangement: expectation.canLeadOthers ? "lead" : expectation.canWorkAlone ? "independent" : "supervised",
       skills: cloneSkillRequirements(expectation.requiredSkills),
-      expectationsAccepted: false,
     });
   }
 
@@ -417,7 +409,7 @@ export default function LiveOpportunityIntakePage() {
           <StepButton number={1} label="Project basics" active={step === 1} onClick={() => setStep(1)} />
           <StepButton number={2} label="Labour workspace" active={step === 2} onClick={() => setStep(2)} />
           <StepButton number={3} label="Skill levels" active={step === 3} disabled={!labourTeamReady} onClick={() => { setSelectedNeedId(selectedNeedId || needs[0]?.id || ""); setStep(3); }} />
-          <StepButton number={4} label="Review exchange" active={step === 4} disabled={!reviewReady} onClick={() => setStep(4)} />
+          <StepButton number={4} label="Review exchange" active={step === 4} disabled={!labourTeamReady} onClick={() => setStep(4)} />
         </nav>
 
         {step === 1 && (
@@ -705,7 +697,7 @@ export default function LiveOpportunityIntakePage() {
                       <div className="font-bold">{expectation.roleTitle}</div>
                       <div className="mt-1 text-xs opacity-70">
                         {expectation.responsibilityBand === "labour"
-                          ? (need.expectationsAccepted ? "Expectations accepted" : "Acceptance required")
+                          ? "General expectations"
                           : `${need.skills.length} required skills`}
                       </div>
                     </button>
@@ -734,26 +726,14 @@ export default function LiveOpportunityIntakePage() {
                       </ul>
                     </div>
                     <div className="rounded-2xl border border-amber-300/20 bg-amber-300/10 p-4">
-                      <h3 className="text-sm font-bold text-amber-100">Responsibility boundaries</h3>
+                      <h3 className="text-sm font-bold text-amber-100">Not Expected</h3>
                       <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-amber-50">
                         {selectedExpectation.notIncludedUnlessSelected.map((item) => <li key={item}>{item}</li>)}
                       </ul>
                     </div>
                   </div>
 
-                  <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/10 bg-slate-950 p-5">
-                    <input
-                      type="checkbox"
-                      className="mt-1 h-5 w-5 accent-cyan-300"
-                      checked={selectedNeed.expectationsAccepted}
-                      onChange={(event) => updateNeed(selectedNeed.id, { expectationsAccepted: event.target.checked })}
-                    />
-                    <span className="text-sm leading-6 text-slate-300">
-                      <strong className="block text-white">Accept general competency and role expectations</strong>
-                      I confirm the engineer is generally competent to perform these basic support duties, will follow site rules and instructions, and will remain within the stated supervision and responsibility boundaries.
-                    </span>
-                  </label>
-                  <p className="text-xs leading-5 text-slate-500">This acceptance records the agreed expectations; it is not a request for certificates, documentary evidence or formal competency scoring.</p>
+                  <p className="text-xs leading-5 text-slate-500">These customer-set expectations will be included in the role exchange. They do not request certificates, documentary evidence or formal competency scoring.</p>
                 </div>
               ) : (<>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
@@ -815,7 +795,7 @@ export default function LiveOpportunityIntakePage() {
               </>)}
 
               <div className="mt-6 flex justify-end">
-                <button type="button" disabled={!reviewReady} onClick={() => setStep(4)} className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-40">
+                <button type="button" onClick={() => setStep(4)} className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200">
                   Review exchange
                 </button>
               </div>
@@ -883,7 +863,7 @@ export default function LiveOpportunityIntakePage() {
 
                     {expectation.responsibilityBand === "labour" ? (
                       <div className="mt-4 rounded-2xl border border-cyan-300/25 bg-cyan-300/10 p-4 text-sm text-cyan-100">
-                        <strong>General competency and expectations accepted.</strong> No documentary competency evidence has been requested for this basic support role.
+                        <strong>Customer-set general competency and expectations.</strong> No documentary competency evidence has been requested for this basic support role.
                       </div>
                     ) : <div className="mt-4 flex flex-wrap gap-2">
                       {need.skills.map((skill) => (

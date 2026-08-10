@@ -86,21 +86,21 @@ describe("labour workspace", () => {
 
     fireEvent.change(screen.getByLabelText(/Named senior supervisor/), { target: { value: "Client Site Lead - Jane Smith" } });
     expect(continueButton).toBeEnabled();
-    expect(screen.getByRole("button", { name: /Step 4 Review exchange/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Step 4 Review exchange/i })).toBeEnabled();
 
     fireEvent.click(continueButton);
     expect(screen.getByText("General competency and expectations")).toBeInTheDocument();
     expect(screen.queryByPlaceholderText("Add another required skill...")).not.toBeInTheDocument();
     expect(screen.queryByText("Minimum competency")).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByText("Accept general competency and role expectations"));
+    expect(screen.getByText("Not Expected")).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: /Accept general competency/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Step 4 Review exchange/i })).toBeEnabled();
 
     fireEvent.click(screen.getByRole("button", { name: /Step 4 Review exchange/i }));
     expect(screen.getByText("Client-provided senior supervision")).toBeInTheDocument();
     expect(screen.getByText(/Client Site Lead - Jane Smith/)).toBeInTheDocument();
     expect(screen.getByText(/must not be treated as authorised to work alone/i)).toBeInTheDocument();
-    expect(screen.getByText(/General competency and expectations accepted/i)).toBeInTheDocument();
+    expect(screen.getByText(/Customer-set general competency and expectations/i)).toBeInTheDocument();
     expect(screen.getByText(/No documentary competency evidence has been requested/i)).toBeInTheDocument();
   });
 });
