@@ -12,13 +12,22 @@ describe("labour workspace", () => {
     expect(screen.getByText("Start building your project team")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Step 3 Skill levels/i })).toBeDisabled();
 
-    fireEvent.click(screen.getByRole("button", { name: "Add Engineer" }));
+    fireEvent.click(screen.getByRole("button", { name: /Add Engineer/ }));
     expect(screen.getByText("New engineer type")).toBeInTheDocument();
     expect(screen.queryByText("Start building your project team")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Add to workspace" }));
     expect(screen.getByRole("button", { name: /AV Labour \/ Site Support/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Continue to skill levels/i })).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("Senior supervision required");
+    expect(screen.getByRole("button", { name: /Continue to skill levels/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Step 3 Skill levels/i })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: /Add Engineer/ }));
+    fireEvent.change(screen.getByLabelText("Engineer type"), { target: { value: "senior-av-installer" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add to workspace" }));
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Continue to skill levels/i })).toBeEnabled();
     expect(screen.getByRole("button", { name: /Step 3 Skill levels/i })).toBeEnabled();
 
     fireEvent.click(screen.getByRole("button", { name: /AV Labour \/ Site Support/i }));
@@ -45,5 +54,26 @@ describe("labour workspace", () => {
 
     fireEvent.change(screen.getByLabelText("Work location"), { target: { value: "Liverpool Arena" } });
     expect(screen.getByLabelText("Work location")).toHaveValue("Liverpool Arena");
+  });
+
+  it("allows a restricted role to continue only with named external supervision", () => {
+    render(<LiveOpportunityIntakePage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Step 2 Labour workspace/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Add Engineer/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to workspace" }));
+
+    const continueButton = screen.getByRole("button", { name: /Continue to skill levels/i });
+    fireEvent.click(screen.getByLabelText(/Use client-provided supervision/i));
+    expect(continueButton).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText(/Named senior supervisor/), { target: { value: "Client Site Lead - Jane Smith" } });
+    expect(continueButton).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Step 4 Review exchange/i })).toBeEnabled();
+
+    fireEvent.click(screen.getByRole("button", { name: /Step 4 Review exchange/i }));
+    expect(screen.getByText("Client-provided senior supervision")).toBeInTheDocument();
+    expect(screen.getByText(/Client Site Lead - Jane Smith/)).toBeInTheDocument();
+    expect(screen.getByText(/must not be treated as authorised to work alone/i)).toBeInTheDocument();
   });
 });

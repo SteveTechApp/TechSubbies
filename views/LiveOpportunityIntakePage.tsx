@@ -177,12 +177,28 @@ function expectationWarnings(need: EngineerNeed, expectation: RoleExpectation, p
   return [...warnings, ...expectation.mismatchWarnings];
 }
 
+function supervisionGaps(needs: EngineerNeed[]) {
+  return needs.filter((need) => {
+    const expectation = getRoleExpectation(need.expectationId);
+    if (expectation.canWorkAlone && !expectation.requiresNamedSupervisor) return false;
+
+    return !needs.some((candidate) => {
+      if (candidate.id === need.id) return false;
+      const supervisor = getRoleExpectation(candidate.expectationId);
+      const compatibleFamily = supervisor.roleFamily === expectation.roleFamily || supervisor.roleFamily === "Hybrid";
+      return compatibleFamily && supervisor.canLeadOthers && ["senior", "lead"].includes(supervisor.responsibilityBand);
+    });
+  });
+}
+
 export default function LiveOpportunityIntakePage() {
   const [step, setStep] = useState<Step>(1);
   const [project, setProject] = useState<ProjectDetails>(emptyProject);
   const [needs, setNeeds] = useState<EngineerNeed[]>([]);
   const [selectedNeedId, setSelectedNeedId] = useState<string>("");
   const [needDraft, setNeedDraft] = useState<EngineerNeed | null>(null);
+  const [usesExternalSupervision, setUsesExternalSupervision] = useState(false);
+  const [externalSupervisorName, setExternalSupervisorName] = useState("");
   const [newSkillName, setNewSkillName] = useState("");
 
   const selectedNeed = needs.find((need) => need.id === selectedNeedId);
@@ -195,6 +211,9 @@ export default function LiveOpportunityIntakePage() {
   const labourBudget = useMemo(() => {
     return needs.reduce((sum, need) => sum + need.quantity * need.durationDays * need.dayRate, 0);
   }, [needs]);
+  const uncoveredSupervisedNeeds = useMemo(() => supervisionGaps(needs), [needs]);
+  const hasConfirmedExternalSupervisor = usesExternalSupervision && Boolean(externalSupervisorName.trim());
+  const labourTeamReady = needs.length > 0 && (uncoveredSupervisedNeeds.length === 0 || hasConfirmedExternalSupervisor);
 
   const projectReadiness = useMemo(() => {
     const values = [
@@ -380,8 +399,8 @@ export default function LiveOpportunityIntakePage() {
         <nav className="mb-6 grid gap-3 md:grid-cols-4">
           <StepButton number={1} label="Project basics" active={step === 1} onClick={() => setStep(1)} />
           <StepButton number={2} label="Labour workspace" active={step === 2} onClick={() => setStep(2)} />
-          <StepButton number={3} label="Skill levels" active={step === 3} disabled={needs.length === 0} onClick={() => { setSelectedNeedId(selectedNeedId || needs[0]?.id || ""); setStep(3); }} />
-          <StepButton number={4} label="Review exchange" active={step === 4} disabled={needs.length === 0} onClick={() => setStep(4)} />
+          <StepButton number={3} label="Skill levels" active={step === 3} disabled={!labourTeamReady} onClick={() => { setSelectedNeedId(selectedNeedId || needs[0]?.id || ""); setStep(3); }} />
+          <StepButton number={4} label="Review exchange" active={step === 4} disabled={!labourTeamReady} onClick={() => setStep(4)} />
         </nav>
 
         {step === 1 && (
@@ -594,11 +613,55 @@ export default function LiveOpportunityIntakePage() {
               );
             })()}
 
-            {needs.length > 0 && !needDraft && <div className="mt-6 flex justify-end">
-              <button type="button" onClick={() => { setSelectedNeedId(needs[0].id); setStep(3); }} className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200">
-                Continue to skill levels
-              </button>
-            </div>}
+            {needs.length > 0 && !needDraft && (
+              <div className="mt-6 flex flex-col gap-4">
+                {uncoveredSupervisedNeeds.length > 0 && (
+                  <div role="alert" className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-6 text-amber-50">
+                    <div className="font-bold text-amber-100">Senior supervision required</div>
+                    <p className="mt-1">Add a compatible senior or lead engineer before continuing. The following allocation cannot work alone:</p>
+                    <ul className="mt-2 list-disc pl-5">
+                      {uncoveredSupervisedNeeds.map((need) => <li key={need.id}>{getRoleExpectation(need.expectationId).roleTitle}</li>)}
+                    </ul>
+                    <div className="mt-4 border-t border-amber-200/20 pt-4">
+                      <label className="flex cursor-pointer items-start gap-3">
+                        <input
+                          type="checkbox"
+                          className="mt-1 h-4 w-4 accent-cyan-300"
+                          checked={usesExternalSupervision}
+                          onChange={(event) => {
+                            setUsesExternalSupervision(event.target.checked);
+                            if (!event.target.checked) setExternalSupervisorName("");
+                          }}
+                        />
+                        <span><strong>Use client-provided supervision.</strong> I confirm a senior/lead engineer outside this allocation will supervise the restricted role.</span>
+                      </label>
+                      {usesExternalSupervision && (
+                        <label className="mt-4 block">
+                          <span className="font-semibold text-amber-100">Named senior supervisor</span>
+                          <input
+                            className={`${inputClass()} mt-2 border-amber-200/30`}
+                            value={externalSupervisorName}
+                            onChange={(event) => setExternalSupervisorName(event.target.value)}
+                            placeholder="Enter the responsible supervisor's name or role"
+                          />
+                          <span className="mt-2 block text-xs text-amber-100/70">This confirmation will be included in the final expectation exchange.</span>
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                )}
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    disabled={!labourTeamReady}
+                    onClick={() => { setSelectedNeedId(needs[0].id); setStep(3); }}
+                    className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Continue to skill levels
+                  </button>
+                </div>
+              </div>
+            )}
           </main>
         )}
 
@@ -716,6 +779,14 @@ export default function LiveOpportunityIntakePage() {
                 <div>Hours: {project.workingHours}</div>
               </div>
             </section>
+
+            {hasConfirmedExternalSupervisor && uncoveredSupervisedNeeds.length > 0 && (
+              <section className="mt-5 rounded-2xl border border-amber-300/30 bg-amber-300/10 p-5">
+                <h3 className="font-bold text-amber-100">Client-provided senior supervision</h3>
+                <p className="mt-2 text-sm leading-6 text-amber-50">Named supervisor: <strong>{externalSupervisorName.trim()}</strong></p>
+                <p className="mt-1 text-sm leading-6 text-amber-50">The junior/labour allocation remains supervised and must not be treated as authorised to work alone.</p>
+              </section>
+            )}
 
             <div className="mt-5 space-y-4">
               {needs.map((need) => {
