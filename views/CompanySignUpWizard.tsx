@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAppContext } from '../context/InteractionContext';
-import { BrandLogo } from '../components/BrandLogo';
 import { ArrowLeft } from '../components/Icons';
 import { Country } from '../types';
 import { LocationAutocomplete } from '../components/LocationAutocomplete';
@@ -73,9 +72,8 @@ export const CompanySignUpWizard = ({ onCancel }: CompanySignUpWizardProps) => {
     };
 
     return (
-        <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.14),transparent_52%)]" />
-            <main className="relative mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center px-5 py-10 sm:py-14">
+        <div className="min-h-screen bg-slate-950 text-white">
+            <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center px-5 py-10 sm:py-14">
                 <div className="w-full">
                     <button
                         type="button"
@@ -88,7 +86,11 @@ export const CompanySignUpWizard = ({ onCancel }: CompanySignUpWizardProps) => {
 
                     <div className="overflow-hidden rounded-3xl border border-cyan-300/20 bg-slate-900 shadow-2xl shadow-cyan-950/30">
                         <header className="border-b border-white/10 bg-slate-900/80 px-6 py-7 sm:px-9">
-                            <BrandLogo />
+                            <img
+                                src="/brand/techsubbies-logo-lockup-transparent.png"
+                                alt="TechSubbies - Technical Skills Exchange"
+                                className="block h-auto w-full max-w-[360px] object-contain sm:max-w-[430px]"
+                            />
                             <p className="mt-7 text-xs font-bold uppercase tracking-[0.28em] text-cyan-300">Company account</p>
                             <h1 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
                                 Client company signup
