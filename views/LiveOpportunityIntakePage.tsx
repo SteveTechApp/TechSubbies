@@ -2,7 +2,6 @@
 import {
   cloneSkillRequirements,
   getRoleExpectation,
-  responsibilityBandDescriptions,
   responsibilityBandLabels,
   roleExpectations,
   type RoleExpectation,
@@ -105,19 +104,22 @@ function StepButton({
   number,
   label,
   active,
+  disabled = false,
   onClick,
 }: {
   number: Step;
   label: string;
   active: boolean;
+  disabled?: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={onClick}
       className={[
-        "rounded-2xl border px-4 py-3 text-left transition",
+        "rounded-2xl border px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-40",
         active
           ? "border-cyan-300 bg-cyan-300 text-slate-950"
           : "border-white/10 bg-slate-900 text-slate-300 hover:border-cyan-300/60",
@@ -162,12 +164,13 @@ function expectationWarnings(need: EngineerNeed, expectation: RoleExpectation, p
 export default function LiveOpportunityIntakePage() {
   const [step, setStep] = useState<Step>(1);
   const [project, setProject] = useState<ProjectDetails>(emptyProject);
-  const [needs, setNeeds] = useState<EngineerNeed[]>([makeNeed()]);
+  const [needs, setNeeds] = useState<EngineerNeed[]>([]);
   const [selectedNeedId, setSelectedNeedId] = useState<string>("");
+  const [needDraft, setNeedDraft] = useState<EngineerNeed | null>(null);
   const [newSkillName, setNewSkillName] = useState("");
 
-  const selectedNeed = needs.find((need) => need.id === selectedNeedId) || needs[0];
-  const selectedExpectation = selectedNeed ? getRoleExpectation(selectedNeed.expectationId) : roleExpectations[0];
+  const selectedNeed = needs.find((need) => need.id === selectedNeedId);
+  const selectedExpectation = selectedNeed ? getRoleExpectation(selectedNeed.expectationId) : null;
 
   const totalEngineerDays = useMemo(() => {
     return needs.reduce((sum, need) => sum + need.quantity * need.durationDays, 0);
@@ -213,34 +216,46 @@ export default function LiveOpportunityIntakePage() {
     );
   }
 
-  function changeExpectation(needId: string, expectationId: string) {
-    const expectation = getRoleExpectation(expectationId);
+  function addNeed() {
+    setNeedDraft(makeNeed());
+  }
 
-    updateNeed(needId, {
+  function editNeed(need: EngineerNeed) {
+    setNeedDraft({ ...need, skills: cloneSkillRequirements(need.skills) });
+  }
+
+  function updateNeedDraft(patch: Partial<EngineerNeed>) {
+    setNeedDraft((current) => current ? { ...current, ...patch } : current);
+  }
+
+  function changeDraftExpectation(expectationId: string) {
+    const expectation = getRoleExpectation(expectationId);
+    updateNeedDraft({
       expectationId,
       workingArrangement: expectation.canLeadOthers ? "lead" : expectation.canWorkAlone ? "independent" : "supervised",
       skills: cloneSkillRequirements(expectation.requiredSkills),
     });
   }
 
-  function addNeed() {
-    const next = makeNeed();
-    setNeeds((current) => [...current, next]);
-    setSelectedNeedId(next.id);
+  function saveNeedDraft() {
+    if (!needDraft) return;
+
+    setNeeds((current) => {
+      const exists = current.some((need) => need.id === needDraft.id);
+      return exists
+        ? current.map((need) => need.id === needDraft.id ? needDraft : need)
+        : [...current, needDraft];
+    });
+    setSelectedNeedId(needDraft.id);
+    setNeedDraft(null);
   }
 
   function removeNeed(id: string) {
     const remaining = needs.filter((need) => need.id !== id);
 
-    if (remaining.length === 0) {
-      const replacement = makeNeed();
-      setNeeds([replacement]);
-      setSelectedNeedId(replacement.id);
-      return;
-    }
-
     setNeeds(remaining);
-    setSelectedNeedId(remaining[0].id);
+    setSelectedNeedId((current) => current === id ? (remaining[0]?.id || "") : current);
+    setNeedDraft((current) => current?.id === id ? null : current);
   }
 
   function updateSkill(skillName: string, patch: Partial<SkillRequirement>) {
@@ -338,9 +353,9 @@ export default function LiveOpportunityIntakePage() {
 
         <nav className="mb-6 grid gap-3 md:grid-cols-4">
           <StepButton number={1} label="Project basics" active={step === 1} onClick={() => setStep(1)} />
-          <StepButton number={2} label="Role expectations" active={step === 2} onClick={() => setStep(2)} />
-          <StepButton number={3} label="Skill levels" active={step === 3} onClick={() => setStep(3)} />
-          <StepButton number={4} label="Review exchange" active={step === 4} onClick={() => setStep(4)} />
+          <StepButton number={2} label="Labour workspace" active={step === 2} onClick={() => setStep(2)} />
+          <StepButton number={3} label="Skill levels" active={step === 3} disabled={needs.length === 0} onClick={() => { setSelectedNeedId(selectedNeedId || needs[0]?.id || ""); setStep(3); }} />
+          <StepButton number={4} label="Review exchange" active={step === 4} disabled={needs.length === 0} onClick={() => setStep(4)} />
         </nav>
 
         {step === 1 && (
@@ -449,121 +464,104 @@ export default function LiveOpportunityIntakePage() {
 
         {step === 2 && (
           <main className="rounded-3xl border border-white/10 bg-slate-900 p-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-cyan-300">2. Role expectations</h2>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-                  Choose the correct role and responsibility level. This decides what the engineer must know, what they should own and what must not be assumed.
-                </p>
-              </div>
-
-              <button type="button" onClick={addNeed} className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200">
-                Add role
-              </button>
+            <div>
+              <h2 className="text-xl font-bold text-cyan-300">2. Labour workspace</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+                Build the project team one engineer type at a time. Each saved allocation becomes a card that you can reopen and edit.
+              </p>
             </div>
 
-            <div className="mt-6 space-y-4">
-              {needs.map((need) => {
-                const expectation = getRoleExpectation(need.expectationId);
-                const warnings = expectationWarnings(need, expectation, project);
+            {needs.length === 0 && !needDraft && (
+              <section className="mt-6 flex min-h-80 flex-col items-center justify-center rounded-3xl border border-dashed border-cyan-300/30 bg-slate-950/60 px-6 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-300/30 bg-cyan-300/10 text-3xl font-black text-cyan-200">+</div>
+                <h3 className="mt-5 text-xl font-bold text-white">Start building your project team</h3>
+                <p className="mt-2 max-w-lg text-sm leading-6 text-slate-400">Add the first engineer type, set the quantity, dates and responsibility level, then save it to this workspace.</p>
+                <button type="button" onClick={addNeed} className="mt-6 rounded-xl bg-cyan-300 px-6 py-3 font-bold text-slate-950 hover:bg-cyan-200">
+                  Add Engineer
+                </button>
+              </section>
+            )}
 
-                return (
-                  <section key={need.id} className="rounded-2xl border border-white/10 bg-slate-950 p-5">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                      <button type="button" className="text-left" onClick={() => setSelectedNeedId(need.id)}>
-                        <div className="text-lg font-bold text-white">{expectation.roleTitle}</div>
-                        <div className="mt-1 text-sm text-cyan-200">
-                          {responsibilityBandLabels[expectation.responsibilityBand]} · {expectation.roleFamily}
+            {needs.length > 0 && (
+              <section className="mt-6">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {needs.map((need) => {
+                    const expectation = getRoleExpectation(need.expectationId);
+                    return (
+                      <button key={need.id} type="button" onClick={() => editNeed(need)} className="group rounded-2xl border border-white/10 bg-slate-950 p-5 text-left transition hover:border-cyan-300/60 hover:bg-cyan-300/5">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-300 text-sm font-black text-slate-950">{expectation.roleFamily}</div>
+                          <span className="rounded-full border border-white/10 px-2.5 py-1 text-xs text-slate-400 group-hover:text-cyan-200">Edit</span>
                         </div>
-                        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-                          {responsibilityBandDescriptions[expectation.responsibilityBand]}
-                        </p>
+                        <h3 className="mt-4 font-bold text-white">{expectation.roleTitle}</h3>
+                        <p className="mt-1 text-sm text-cyan-200">{need.quantity} engineer{need.quantity === 1 ? "" : "s"} · {need.durationDays} day{need.durationDays === 1 ? "" : "s"}</p>
+                        <p className="mt-3 text-xs leading-5 text-slate-500">£{need.dayRate}/day · {responsibilityBandLabels[expectation.responsibilityBand]}</p>
                       </button>
+                    );
+                  })}
 
-                      <button type="button" onClick={() => removeNeed(need.id)} className="self-start rounded-xl border border-red-300/40 px-3 py-2 text-xs font-bold text-red-200 hover:bg-red-300/10">
-                        Remove
-                      </button>
+                  <button type="button" onClick={addNeed} className="flex min-h-48 flex-col items-center justify-center rounded-2xl border border-dashed border-cyan-300/30 bg-slate-950/40 p-5 text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-300/10">
+                    <span className="text-3xl font-light">+</span>
+                    <span className="mt-2 font-bold">Add Engineer</span>
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {needDraft && (() => {
+              const expectation = getRoleExpectation(needDraft.expectationId);
+              const existing = needs.some((need) => need.id === needDraft.id);
+              const warnings = expectationWarnings(needDraft, expectation, project);
+              return (
+                <section className="mt-6 rounded-2xl border border-cyan-300/25 bg-slate-950 p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">{existing ? "Edit engineer type" : "New engineer type"}</p>
+                      <h3 className="mt-2 text-lg font-bold text-white">{expectation.roleTitle}</h3>
                     </div>
+                    {existing && <button type="button" onClick={() => removeNeed(needDraft.id)} className="rounded-xl border border-red-300/40 px-3 py-2 text-xs font-bold text-red-200 hover:bg-red-300/10">Remove</button>}
+                  </div>
 
-                    <div className="mt-5 grid gap-4 md:grid-cols-3">
-                      <Field label="Role expectation">
-                        <select className={selectClass()} value={need.expectationId} onChange={(event) => changeExpectation(need.id, event.target.value)}>
-                          <optgroup label="AV roles">
-                            {groupedExpectations.AV.map((item) => (
-                              <option key={item.id} value={item.id}>{item.roleTitle}</option>
-                            ))}
-                          </optgroup>
-                          <optgroup label="IT roles">
-                            {groupedExpectations.IT.map((item) => (
-                              <option key={item.id} value={item.id}>{item.roleTitle}</option>
-                            ))}
-                          </optgroup>
-                          <optgroup label="Hybrid roles">
-                            {groupedExpectations.Hybrid.map((item) => (
-                              <option key={item.id} value={item.id}>{item.roleTitle}</option>
-                            ))}
-                          </optgroup>
-                        </select>
-                      </Field>
+                  <div className="mt-5 grid gap-4 md:grid-cols-3">
+                    <Field label="Engineer type">
+                      <select className={selectClass()} value={needDraft.expectationId} onChange={(event) => changeDraftExpectation(event.target.value)}>
+                        <optgroup label="AV roles">{groupedExpectations.AV.map((item) => <option key={item.id} value={item.id}>{item.roleTitle}</option>)}</optgroup>
+                        <optgroup label="IT roles">{groupedExpectations.IT.map((item) => <option key={item.id} value={item.id}>{item.roleTitle}</option>)}</optgroup>
+                        <optgroup label="Hybrid roles">{groupedExpectations.Hybrid.map((item) => <option key={item.id} value={item.id}>{item.roleTitle}</option>)}</optgroup>
+                      </select>
+                    </Field>
+                    <Field label="Engineers needed"><input type="number" min={1} className={inputClass()} value={needDraft.quantity} onChange={(event) => updateNeedDraft({ quantity: Number(event.target.value) })} /></Field>
+                    <Field label="Day rate"><input type="number" min={0} className={inputClass()} value={needDraft.dayRate} onChange={(event) => updateNeedDraft({ dayRate: Number(event.target.value) })} /></Field>
+                    <Field label="Duration in days"><input type="number" min={1} className={inputClass()} value={needDraft.durationDays} onChange={(event) => updateNeedDraft({ durationDays: Number(event.target.value) })} /></Field>
+                    <Field label="Start date"><input type="date" className={inputClass()} value={needDraft.startDate} onChange={(event) => updateNeedDraft({ startDate: event.target.value })} /></Field>
+                    <Field label="Finish date"><input type="date" className={inputClass()} value={needDraft.finishDate} onChange={(event) => updateNeedDraft({ finishDate: event.target.value })} /></Field>
+                    <Field label="Working arrangement">
+                      <select className={selectClass()} value={needDraft.workingArrangement} onChange={(event) => updateNeedDraft({ workingArrangement: event.target.value as EngineerNeed["workingArrangement"] })}>
+                        <option value="supervised">Supervised / under lead</option><option value="independent">Independent standard work</option><option value="lead">Lead / responsible engineer</option>
+                      </select>
+                    </Field>
+                  </div>
 
-                      <Field label="Engineers needed">
-                        <input type="number" min={1} className={inputClass()} value={need.quantity} onChange={(event) => updateNeed(need.id, { quantity: Number(event.target.value) })} />
-                      </Field>
+                  <div className="mt-5 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4"><div className="text-sm font-bold text-cyan-200">Expectation passed to both sides</div><p className="mt-2 text-sm leading-6 text-slate-300">{expectation.responsibilityStatement}</p></div>
+                  {warnings.length > 0 && <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/10 p-4"><div className="text-sm font-bold text-amber-100">Warnings / boundaries</div><ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-amber-50">{warnings.slice(0, 5).map((warning) => <li key={warning}>{warning}</li>)}</ul></div>}
 
-                      <Field label="Day rate">
-                        <input type="number" min={0} className={inputClass()} value={need.dayRate} onChange={(event) => updateNeed(need.id, { dayRate: Number(event.target.value) })} />
-                      </Field>
+                  <div className="mt-5 flex flex-wrap justify-end gap-3">
+                    <button type="button" onClick={() => setNeedDraft(null)} className="rounded-xl border border-white/10 px-5 py-3 text-sm font-bold text-slate-300 hover:border-cyan-300/60">Cancel</button>
+                    <button type="button" onClick={saveNeedDraft} className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200">{existing ? "Save changes" : "Add to workspace"}</button>
+                  </div>
+                </section>
+              );
+            })()}
 
-                      <Field label="Duration in days">
-                        <input type="number" min={1} className={inputClass()} value={need.durationDays} onChange={(event) => updateNeed(need.id, { durationDays: Number(event.target.value) })} />
-                      </Field>
-
-                      <Field label="Start date">
-                        <input type="date" className={inputClass()} value={need.startDate} onChange={(event) => updateNeed(need.id, { startDate: event.target.value })} />
-                      </Field>
-
-                      <Field label="Finish date">
-                        <input type="date" className={inputClass()} value={need.finishDate} onChange={(event) => updateNeed(need.id, { finishDate: event.target.value })} />
-                      </Field>
-
-                      <Field label="Working arrangement">
-                        <select className={selectClass()} value={need.workingArrangement} onChange={(event) => updateNeed(need.id, { workingArrangement: event.target.value as EngineerNeed["workingArrangement"] })}>
-                          <option value="supervised">Supervised / under lead</option>
-                          <option value="independent">Independent standard work</option>
-                          <option value="lead">Lead / responsible engineer</option>
-                        </select>
-                      </Field>
-                    </div>
-
-                    <div className="mt-5 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4">
-                      <div className="text-sm font-bold text-cyan-200">Expectation passed to both sides</div>
-                      <p className="mt-2 text-sm leading-6 text-slate-300">{expectation.responsibilityStatement}</p>
-                    </div>
-
-                    {warnings.length > 0 && (
-                      <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-300/10 p-4">
-                        <div className="text-sm font-bold text-amber-100">Warnings / boundaries</div>
-                        <ul className="mt-2 space-y-1 text-sm leading-6 text-amber-50">
-                          {warnings.slice(0, 5).map((warning) => (
-                            <li key={warning}>€¢ {warning}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </section>
-                );
-              })}
-            </div>
-
-            <div className="mt-6 flex justify-end">
-              <button type="button" onClick={() => setStep(3)} className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200">
+            {needs.length > 0 && !needDraft && <div className="mt-6 flex justify-end">
+              <button type="button" onClick={() => { setSelectedNeedId(needs[0].id); setStep(3); }} className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200">
                 Continue to skill levels
               </button>
-            </div>
+            </div>}
           </main>
         )}
 
-        {step === 3 && selectedNeed && (
+        {step === 3 && selectedNeed && selectedExpectation && (
           <main className="grid gap-5 lg:grid-cols-[320px_1fr]">
             <aside className="rounded-3xl border border-white/10 bg-slate-900 p-5">
               <h2 className="text-lg font-bold text-cyan-300">3. Select role</h2>
@@ -717,18 +715,18 @@ export default function LiveOpportunityIntakePage() {
                     <div className="mt-4 grid gap-3 md:grid-cols-2">
                       <div className="rounded-2xl border border-white/10 bg-slate-900 p-4">
                         <div className="text-sm font-bold text-cyan-200">Not included unless separately selected</div>
-                        <ul className="mt-2 space-y-1 text-sm leading-6 text-slate-400">
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-slate-400">
                           {expectation.notIncludedUnlessSelected.map((item) => (
-                            <li key={item}>€¢ {item}</li>
+                            <li key={item}>{item}</li>
                           ))}
                         </ul>
                       </div>
 
                       <div className="rounded-2xl border border-amber-300/20 bg-amber-300/10 p-4">
                         <div className="text-sm font-bold text-amber-100">Warnings</div>
-                        <ul className="mt-2 space-y-1 text-sm leading-6 text-amber-50">
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-amber-50">
                           {warnings.slice(0, 6).map((warning) => (
-                            <li key={warning}>€¢ {warning}</li>
+                            <li key={warning}>{warning}</li>
                           ))}
                         </ul>
                       </div>
