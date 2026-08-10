@@ -1,9 +1,18 @@
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import apiService from "../services/apiService";
 import LiveOpportunityIntakePage from "./LiveOpportunityIntakePage";
 
+vi.mock("../services/apiService", () => ({
+  default: { postJob: vi.fn() },
+}));
+
 describe("labour workspace", () => {
+  beforeEach(() => {
+    vi.mocked(apiService.postJob).mockReset();
+    vi.mocked(apiService.postJob).mockResolvedValue({ id: "posted-job" } as never);
+  });
   it("starts empty and turns saved engineer types into editable cards", () => {
     render(<LiveOpportunityIntakePage />);
 
@@ -102,5 +111,29 @@ describe("labour workspace", () => {
     expect(screen.getByText(/must not be treated as authorised to work alone/i)).toBeInTheDocument();
     expect(screen.getByText(/Customer-set general competency and expectations/i)).toBeInTheDocument();
     expect(screen.getByText(/No documentary competency evidence has been requested/i)).toBeInTheDocument();
+  });
+
+  it("posts the completed opportunity and offers matching actions", async () => {
+    render(<LiveOpportunityIntakePage />);
+
+    fireEvent.change(screen.getByLabelText("Project name"), { target: { value: "Conference upgrade" } });
+    fireEvent.change(screen.getByLabelText("Site location"), { target: { value: "Birmingham" } });
+    fireEvent.click(screen.getByRole("button", { name: /Step 2 Labour workspace/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Add Engineer" }));
+    fireEvent.change(screen.getByLabelText("Engineer type"), { target: { value: "senior-av-installer" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add to workspace" }));
+    fireEvent.click(screen.getByRole("button", { name: /Step 4 Review exchange/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Post opportunity" }));
+
+    await waitFor(() => expect(apiService.postJob).toHaveBeenCalledTimes(1));
+    expect(apiService.postJob).toHaveBeenCalledWith(expect.objectContaining({
+      title: "Conference upgrade — Senior AV Installation Engineer",
+      location: "Birmingham",
+      canonicalRoleId: "senior-av-installer",
+    }));
+    expect(await screen.findByText("Opportunity posted")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Search matching engineers" })).toHaveAttribute("href", "/company/dashboard?view=find-talent");
+    expect(screen.getByRole("link", { name: "View posted opportunities" })).toHaveAttribute("href", "/company/dashboard?view=my-jobs");
   });
 });

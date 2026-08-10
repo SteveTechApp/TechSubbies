@@ -25,7 +25,12 @@ export const CompanyDashboard = () => {
     const { user } = useAuth();
     const { jobs, engineers, applications } = useData();
     const { postJob, updateCompanyProfile, applicantForDeepDive, setApplicantForDeepDive } = useAppContext();
-    const [activeView, setActiveView] = useState('Dashboard');
+    const [activeView, setActiveView] = useState(() => {
+        const requestedView = new URLSearchParams(window.location.search).get('view');
+        if (requestedView === 'find-talent') return 'Find Talent';
+        if (requestedView === 'my-jobs') return 'My Jobs';
+        return 'Dashboard';
+    });
     const [isJobModalOpen, setIsJobModalOpen] = useState(false);
     const [selectedEngineer, setSelectedEngineer] = useState<EngineerProfile | null>(null);
     const [justPostedJob, setJustPostedJob] = useState<Job | null>(null);

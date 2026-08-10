@@ -7,6 +7,8 @@ import {
   type RoleExpectation,
   type SkillRequirement,
 } from "../data/roleExpectations";
+import apiService from "../services/apiService";
+import { Currency, ExperienceLevel, JobType, SkillImportance } from "../types";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -209,6 +211,9 @@ export default function LiveOpportunityIntakePage() {
   const [usesExternalSupervision, setUsesExternalSupervision] = useState(false);
   const [externalSupervisorName, setExternalSupervisorName] = useState("");
   const [newSkillName, setNewSkillName] = useState("");
+  const [isPosting, setIsPosting] = useState(false);
+  const [postError, setPostError] = useState("");
+  const [postedListingCount, setPostedListingCount] = useState(0);
 
   const selectedNeed = needs.find((need) => need.id === selectedNeedId);
   const selectedExpectation = selectedNeed ? getRoleExpectation(selectedNeed.expectationId) : null;
@@ -310,6 +315,64 @@ export default function LiveOpportunityIntakePage() {
     setNeeds(remaining);
     setSelectedNeedId((current) => current === id ? (remaining[0]?.id || "") : current);
     setNeedDraft((current) => current?.id === id ? null : current);
+  }
+
+  async function postOpportunity() {
+    if (!labourTeamReady || isPosting || postedListingCount > 0) return;
+    setIsPosting(true);
+    setPostError("");
+
+    try {
+      await Promise.all(needs.map((need) => {
+        const expectation = getRoleExpectation(need.expectationId);
+        const experienceLevel = expectation.responsibilityBand === "labour" || expectation.responsibilityBand === "junior"
+          ? ExperienceLevel.JUNIOR
+          : expectation.responsibilityBand === "senior"
+            ? ExperienceLevel.SENIOR
+            : expectation.responsibilityBand === "lead" || expectation.responsibilityBand === "specialist"
+              ? ExperienceLevel.EXPERT
+              : ExperienceLevel.MID_LEVEL;
+        const supervisionArrangement = !expectation.canWorkAlone
+          ? (hasConfirmedExternalSupervisor
+            ? `Client-provided senior supervision: ${externalSupervisorName.trim()}`
+            : "Supervised by a senior or lead engineer included in this opportunity")
+          : "";
+
+        return apiService.postJob({
+          title: `${project.projectName || "Technical project"} — ${expectation.roleTitle}`,
+          description: [
+            project.notes || `${project.projectType} project for ${project.clientName || "the client"}.`,
+            expectation.responsibilityStatement,
+            `Engineers required: ${need.quantity}. Working hours: ${need.workingHours}.`,
+            `Not expected: ${expectation.notIncludedUnlessSelected.join("; ")}`,
+          ].join("\n\n"),
+          location: need.siteLocation || project.siteLocation || "Location to be confirmed",
+          dayRate: String(need.dayRate),
+          duration: `${need.durationDays} working day${need.durationDays === 1 ? "" : "s"}`,
+          currency: Currency.GBP,
+          startDate: need.startDate || project.startDate || null,
+          jobType: JobType.CONTRACT,
+          experienceLevel,
+          jobRole: expectation.id,
+          canonicalRoleId: expectation.id,
+          skillRequirements: expectation.responsibilityBand === "labour" ? [] : need.skills.map((skill) => ({
+            name: skill.skill,
+            importance: skill.importance >= 4 ? SkillImportance.ESSENTIAL : SkillImportance.DESIRABLE,
+            requiredLevel: skill.minimumLevel * 20,
+          })),
+          deliveryContext: need.workingArrangement === "lead" ? "lead" : need.workingArrangement === "independent" ? "independent" : "assisted",
+          projectScale: needs.length >= 4 ? "large" : needs.length >= 2 ? "medium" : "small",
+          supervisionArrangement,
+          supervisionDisclaimerAccepted: Boolean(supervisionArrangement),
+          budgetCeiling: need.dayRate,
+        });
+      }));
+      setPostedListingCount(needs.length);
+    } catch (reason) {
+      setPostError(reason instanceof Error ? reason.message : "The opportunity could not be posted. Please try again.");
+    } finally {
+      setIsPosting(false);
+    }
   }
 
   function updateSkill(skillName: string, patch: Partial<SkillRequirement>) {
@@ -898,6 +961,30 @@ export default function LiveOpportunityIntakePage() {
                 );
               })}
             </div>
+            <section className="mt-6 rounded-2xl border border-cyan-300/25 bg-slate-950 p-5">
+              {postedListingCount > 0 ? (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-300">Opportunity posted</p>
+                  <h3 className="mt-2 text-xl font-bold text-white">{postedListingCount} role listing{postedListingCount === 1 ? " is" : "s are"} now live</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">You can now search the marketplace for suitable engineers or manage the published listings from your dashboard.</p>
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <a href="/company/dashboard?view=find-talent" className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200">Search matching engineers</a>
+                    <a href="/company/dashboard?view=my-jobs" className="rounded-xl border border-cyan-300/30 px-5 py-3 text-sm font-bold text-cyan-100 hover:bg-cyan-300/10">View posted opportunities</a>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h3 className="font-bold text-white">Ready to find engineers?</h3>
+                    <p className="mt-1 text-sm leading-6 text-slate-400">Posting creates one searchable marketplace listing for each engineer type in this opportunity.</p>
+                    {postError && <p role="alert" className="mt-2 text-sm font-semibold text-red-300">{postError}</p>}
+                  </div>
+                  <button type="button" disabled={isPosting || !labourTeamReady} onClick={postOpportunity} className="shrink-0 rounded-xl bg-cyan-300 px-6 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-50">
+                    {isPosting ? "Posting opportunity..." : "Post opportunity"}
+                  </button>
+                </div>
+              )}
+            </section>
           </main>
         )}
       </div>
