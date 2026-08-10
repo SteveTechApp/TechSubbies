@@ -12,16 +12,10 @@ type AvailabilityStatus =
   | "Booked"
   | "Not currently available";
 
-type ImportDraft = {
-  linkedinUrl: string;
-  websiteUrl: string;
-  sourceText: string;
+type ParsedCvPatch = Partial<EngineerBusinessProfile> & {
+  fileName: string;
 };
 
-type InferredProfilePatch = Partial<EngineerBusinessProfile> & {
-  inferredRoleTags?: string[];
-  inferenceNotes?: string[];
-};
 type EngineerBusinessProfile = {
   fullName: string;
   publicName: string;
@@ -85,11 +79,6 @@ type EngineerBusinessProfile = {
 const storageKey = "techsubbies_engineer_personal_business_profile";
 const onboardingDraftKey = "techsubbies_engineer_onboarding_draft";
 
-const defaultImportDraft: ImportDraft = {
-  linkedinUrl: "",
-  websiteUrl: "",
-  sourceText: "",
-};
 const defaultProfile: EngineerBusinessProfile = {
   fullName: "",
   publicName: "",
@@ -299,101 +288,74 @@ function missingItems(profile: EngineerBusinessProfile) {
   return items;
 }
 
-function inferProfileFromImport(importDraft: ImportDraft): InferredProfilePatch {
-  const source = importDraft.sourceText.trim();
-  const lower = source.toLowerCase();
+async function extractCvText(file: File) {
+  const extension = file.name.split(".").pop()?.toLowerCase();
+
+  if (extension === "txt") {
+    return file.text();
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+
+  if (extension === "docx") {
+    const mammoth = await import("mammoth");
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    return result.value;
+  }
+
+  if (extension === "pdf") {
+    const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+    const worker = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
+    pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+    const document = await pdfjs.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+    const pages: string[] = [];
+
+    for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+      const page = await document.getPage(pageNumber);
+      const content = await page.getTextContent();
+      pages.push(
+        content.items
+          .map((item) => ("str" in item ? item.str : ""))
+          .filter(Boolean)
+          .join(" ")
+      );
+    }
+
+    return pages.join("\n");
+  }
+
+  throw new Error("Choose a PDF, DOCX or TXT file.");
+}
+
+function parseCvText(source: string, fileName: string): ParsedCvPatch {
   const lines = source
     .split(/\r?\n/)
-    .map((line) => line.trim())
+    .map((line) => line.replace(/\s+/g, " ").trim())
     .filter(Boolean);
+  const email = source.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] || "";
+  const phone = source.match(/(?:\+44\s?\d{4}|0\d{4})[\s-]?\d{3}[\s-]?\d{3}/)?.[0] || "";
+  const likelyName = lines.find(
+    (line) => line.length <= 60 && /^[A-Za-z][A-Za-z' -]+$/.test(line) && !/curriculum|vitae|profile|summary|contact/i.test(line)
+  ) || "";
+  const headline = lines.find(
+    (line) => line !== likelyName && line.length >= 8 && line.length <= 100 && /engineer|technician|consultant|specialist|manager|developer|architect|support/i.test(line)
+  ) || "";
+  const descriptiveLines = lines.filter(
+    (line) => line.length >= 45 && !line.includes("@") && !/^https?:/i.test(line)
+  );
+  const matchingLines = (pattern: RegExp, limit: number) => lines.filter((line) => pattern.test(line)).slice(0, limit).join("\n");
 
-  const inferredRoleTags: string[] = [];
-  const inferenceNotes: string[] = [];
-
-  function includesAny(words: string[]) {
-    return words.some((word) => lower.includes(word.toLowerCase()));
-  }
-
-  if (includesAny(["av", "audio visual", "audiovisual", "av installation", "commissioning"])) {
-    inferredRoleTags.push("AV");
-  }
-
-  if (includesAny(["it support", "desktop", "laptop", "microsoft 365", "intune", "active directory", "network"])) {
-    inferredRoleTags.push("IT");
-  }
-
-  if (includesAny(["teams rooms", "zoom rooms", "uc", "video conferencing", "byod", "byom"])) {
-    inferredRoleTags.push("UC / VC");
-  }
-
-  if (includesAny(["dante", "dsp", "q-sys", "audio processor", "aec"])) {
-    inferredRoleTags.push("Audio / DSP");
-  }
-
-  if (includesAny(["vlan", "switch", "routing", "firewall", "wi-fi", "wireless", "multicast", "igmp"])) {
-    inferredRoleTags.push("Networking");
-  }
-
-  if (includesAny(["crestron", "extron", "q-sys", "biamp", "dante", "wyrestorm", "kramer", "control4"])) {
-    inferredRoleTags.push("Vendor/product experience");
-  }
-
-  if (importDraft.linkedinUrl) {
-    inferenceNotes.push("LinkedIn URL captured. Do not treat this as verified evidence until checked.");
-  }
-
-  if (importDraft.websiteUrl) {
-    inferenceNotes.push("Website URL captured. Public website claims should still be reviewed.");
-  }
-
-  if (source) {
-    inferenceNotes.push("Profile text was parsed locally and used to suggest draft fields.");
-  }
-
-  const firstUsefulLine = lines.find((line) => line.length > 12 && line.length < 120) || "";
-  const longerLines = lines.filter((line) => line.length > 40);
-  const summary = longerLines.slice(0, 4).join(" ");
-
-  const patch: InferredProfilePatch = {
-    linkedIn: importDraft.linkedinUrl,
-    website: importDraft.websiteUrl,
-    headline: firstUsefulLine || undefined,
-    profileSummary: summary || source.slice(0, 700),
-    certificationSummary: lines
-      .filter((line) =>
-        /cert|cts|dante|ipaf|pasma|cscs|ecs|microsoft|azure|aws|comptia|ccna|q-sys|biamp/i.test(line)
-      )
-      .slice(0, 10)
-      .join("\n"),
-    toolsSummary: lines
-      .filter((line) =>
-        /tools|tester|laptop|label|crimp|fluke|meter|termination|commissioning/i.test(line)
-      )
-      .slice(0, 8)
-      .join("\n"),
-    documentNotes: inferenceNotes.join("\n"),
-    inferredRoleTags: Array.from(new Set(inferredRoleTags)),
-    inferenceNotes,
+  return {
+    fileName,
+    fullName: likelyName,
+    publicName: likelyName,
+    email,
+    phone,
+    headline,
+    profileSummary: descriptiveLines.slice(0, 4).join(" ").slice(0, 1000),
+    certificationSummary: matchingLines(/cert|cts|dante|ipaf|pasma|cscs|ecs|microsoft|azure|aws|comptia|ccna|q-sys|biamp/i, 10),
+    toolsSummary: matchingLines(/tools|tester|laptop|label|crimp|fluke|meter|termination|commissioning/i, 8),
   };
-
-  return patch;
-}
-
-function normalizeExternalUrl(value: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return "";
-  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-}
-
-function isLinkedInProfileUrl(value: string) {
-  if (!value) return true;
-
-  try {
-    const url = new URL(normalizeExternalUrl(value));
-    return /(^|\.)linkedin\.com$/i.test(url.hostname) && url.pathname.startsWith("/in/");
-  } catch {
-    return false;
-  }
 }
 
 function readinessLabel(score: number) {
@@ -415,9 +377,9 @@ function readinessLabel(score: number) {
 export default function EngineerPersonalBusinessProfilePage() {
   const [profile, setProfile] = useState<EngineerBusinessProfile>(() => readSavedProfile());
   const [savedMessage, setSavedMessage] = useState("");
-  const [importDraft, setImportDraft] = useState<ImportDraft>(defaultImportDraft);
-  const [inferredPatch, setInferredPatch] = useState<InferredProfilePatch | null>(null);
-  const [importFeedback, setImportFeedback] = useState("");
+  const [parsedCv, setParsedCv] = useState<ParsedCvPatch | null>(null);
+  const [cvMessage, setCvMessage] = useState("");
+  const [isParsingCv, setIsParsingCv] = useState(false);
   const completion = useMemo(() => scoreProfile(profile), [profile]);
   const gaps = useMemo(() => missingItems(profile), [profile]);
 
@@ -429,55 +391,42 @@ export default function EngineerPersonalBusinessProfilePage() {
     setSavedMessage("");
   }
 
-  function analyseImportDraft() {
-    const normalizedLinkedInUrl = normalizeExternalUrl(importDraft.linkedinUrl);
-    const normalizedWebsiteUrl = normalizeExternalUrl(importDraft.websiteUrl);
+  async function handleCvUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-    if (!isLinkedInProfileUrl(normalizedLinkedInUrl)) {
-      setImportFeedback("Enter a valid LinkedIn profile URL, for example https://www.linkedin.com/in/your-name.");
-      return;
+    setIsParsingCv(true);
+    setParsedCv(null);
+    setCvMessage(`Parsing ${file.name}...`);
+
+    try {
+      const text = await extractCvText(file);
+      if (!text.trim()) throw new Error("No readable text was found in this CV.");
+      setParsedCv(parseCvText(text, file.name));
+      setCvMessage("CV parsed locally. Review the suggested fields before applying them.");
+    } catch (error) {
+      setCvMessage(error instanceof Error ? error.message : "The CV could not be parsed.");
+    } finally {
+      setIsParsingCv(false);
     }
-
-    const websiteUrl = normalizedWebsiteUrl === normalizedLinkedInUrl ? "" : normalizedWebsiteUrl;
-    const normalizedDraft = {
-      ...importDraft,
-      linkedinUrl: normalizedLinkedInUrl,
-      websiteUrl,
-    };
-    setImportDraft(normalizedDraft);
-
-    const patch = inferProfileFromImport(normalizedDraft);
-    setInferredPatch(patch);
-    setSavedMessage("");
-
-    if (!normalizedDraft.sourceText.trim()) {
-      setImportFeedback(
-        "LinkedIn does not provide profile content from a public URL alone. The link is ready to apply, but paste your LinkedIn profile text below to generate headline, summary and skill suggestions."
-      );
-      return;
-    }
-
-    setImportFeedback("Draft suggestions created from the pasted profile text. Review them before applying.");
   }
 
-  function applyInferredPatch() {
-    if (!inferredPatch) {
-      setSavedMessage("No suggestions to apply yet.");
-      return;
-    }
+  function applyParsedCv() {
+    if (!parsedCv) return;
 
     update({
-      linkedIn: inferredPatch.linkedIn || profile.linkedIn,
-      website: inferredPatch.website || profile.website,
-      headline: inferredPatch.headline || profile.headline,
-      profileSummary: inferredPatch.profileSummary || profile.profileSummary,
-      certificationSummary: inferredPatch.certificationSummary || profile.certificationSummary,
-      toolsSummary: inferredPatch.toolsSummary || profile.toolsSummary,
-      documentNotes: [profile.documentNotes, inferredPatch.documentNotes].filter(Boolean).join("\n\n"),
+      fullName: parsedCv.fullName || profile.fullName,
+      publicName: parsedCv.publicName || profile.publicName,
+      email: parsedCv.email || profile.email,
+      phone: parsedCv.phone || profile.phone,
+      headline: parsedCv.headline || profile.headline,
+      profileSummary: parsedCv.profileSummary || profile.profileSummary,
+      certificationSummary: parsedCv.certificationSummary || profile.certificationSummary,
+      toolsSummary: parsedCv.toolsSummary || profile.toolsSummary,
     });
-
-    setSavedMessage("Reviewed import suggestions applied to the profile.");
+    setSavedMessage("Reviewed CV suggestions applied. Save the profile to keep them.");
   }
+
   function saveProfile() {
     window.localStorage.setItem(storageKey, JSON.stringify(profile, null, 2));
     setSavedMessage("Profile saved locally. Backend save can be connected next.");
@@ -604,143 +553,46 @@ export default function EngineerPersonalBusinessProfilePage() {
         <main className="grid gap-6 xl:grid-cols-[1fr_380px]">
           <div className="space-y-6">
             <section className="rounded-3xl border border-cyan-300/20 bg-slate-900 p-6">
-              <div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-300">
-                    Profile Import Assistant
-                  </p>
-                  <h2 className="mt-3 text-xl font-bold text-white">
-                    Speed up onboarding from LinkedIn or a website
-                  </h2>
-                  <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-                    Paste profile text, a LinkedIn URL or website URL. TechSubbies will infer draft fields for review. Nothing is verified or saved until you apply it.
-                  </p>
-                </div>
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-300">CV import</p>
+              <h2 className="mt-3 text-xl font-bold text-white">Upload and parse a formal CV</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+                Upload a PDF, DOCX or TXT CV. It is parsed locally and suggested fields are not applied until you review them.
+              </p>
 
-              </div>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <Field
-                  label="LinkedIn profile URL (link only)"
-                  hint="The URL can be saved to your profile, but LinkedIn content cannot be imported from the URL alone."
-                >
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <label className="cursor-pointer rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200">
+                  {isParsingCv ? "Parsing CV..." : "Choose CV"}
                   <input
-                    className={inputClass()}
-                    value={importDraft.linkedinUrl}
-                    onChange={(event) => {
-                      setImportDraft({ ...importDraft, linkedinUrl: event.target.value });
-                      setImportFeedback("");
-                    }}
-                    placeholder="https://www.linkedin.com/in/..."
+                    className="sr-only"
+                    type="file"
+                    accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+                    disabled={isParsingCv}
+                    onChange={handleCvUpload}
                   />
-                </Field>
-
-                <Field label="Personal / company website">
-                  <input
-                    className={inputClass()}
-                    value={importDraft.websiteUrl}
-                    onChange={(event) => {
-                      setImportDraft({ ...importDraft, websiteUrl: event.target.value });
-                      setImportFeedback("");
-                    }}
-                    placeholder="https://..."
-                  />
-                </Field>
+                </label>
+                {parsedCv && (
+                  <button
+                    type="button"
+                    onClick={applyParsedCv}
+                    className="rounded-xl border border-cyan-300/40 px-5 py-3 text-sm font-bold text-cyan-100 hover:bg-cyan-300/10"
+                  >
+                    Apply reviewed CV fields
+                  </button>
+                )}
               </div>
 
-              <div className="mt-4">
-                <Field
-                  label="Paste profile text"
-                  hint="Paste LinkedIn About, experience, skills, website text or a CV summary. The app will infer draft profile fields for review."
-                >
-                  <textarea
-                    className="min-h-40 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-white outline-none placeholder:text-slate-600 focus:border-cyan-300"
-                    value={importDraft.sourceText}
-                    onChange={(event) => {
-                      setImportDraft({ ...importDraft, sourceText: event.target.value });
-                      setImportFeedback("");
-                    }}
-                    placeholder="Paste profile text here..."
-                  />
-                </Field>
-              </div>
+              {cvMessage && <p role="status" className="mt-4 text-sm leading-6 text-cyan-100">{cvMessage}</p>}
 
-              <div className="mt-5 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={analyseImportDraft}
-                  className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200"
-                >
-                  Analyse and suggest fields
-                </button>
-
-                <button
-                  type="button"
-                  onClick={applyInferredPatch}
-                  className="rounded-xl border border-cyan-300/40 px-5 py-3 text-sm font-bold text-cyan-100 hover:bg-cyan-300/10"
-                >
-                  Apply reviewed suggestions
-                </button>
-              </div>
-
-              {importFeedback && (
-                <div
-                  role="status"
-                  className="mt-4 rounded-xl border border-cyan-300/25 bg-cyan-300/10 px-4 py-3 text-sm leading-6 text-cyan-50"
-                >
-                  {importFeedback}
-                </div>
-              )}
-
-              {inferredPatch && (
-                <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                  <section className="rounded-2xl border border-white/10 bg-slate-950 p-5">
-                    <h3 className="font-bold text-cyan-200">Suggested profile fields</h3>
-                    <div className="mt-3 space-y-3 text-sm leading-6 text-slate-300">
-                      <div>
-                        <span className="font-bold text-white">Headline:</span>{" "}
-                        {inferredPatch.headline || "No suggestion"}
-                      </div>
-                      <div>
-                        <span className="font-bold text-white">Summary:</span>{" "}
-                        {inferredPatch.profileSummary || "No suggestion"}
-                      </div>
-                      <div>
-                        <span className="font-bold text-white">LinkedIn:</span>{" "}
-                        {inferredPatch.linkedIn || "No URL provided"}
-                      </div>
-                      <div>
-                        <span className="font-bold text-white">Website:</span>{" "}
-                        {inferredPatch.website || "No URL provided"}
-                      </div>
-                    </div>
-                  </section>
-
-                  <section className="rounded-2xl border border-white/10 bg-slate-950 p-5">
-                    <h3 className="font-bold text-cyan-200">Inferred role signals</h3>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {(inferredPatch.inferredRoleTags || []).length > 0 ? (
-                        inferredPatch.inferredRoleTags?.map((tag) => (
-                          <span
-                            key={tag}
-                            className="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-2 text-xs font-semibold text-cyan-100"
-                          >
-                            {tag}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-sm text-slate-500">No strong role signals found.</span>
-                      )}
-                    </div>
-
-                    {inferredPatch.inferenceNotes && inferredPatch.inferenceNotes.length > 0 && (
-                      <ul className="mt-4 list-disc space-y-1 pl-5 text-sm leading-6 text-slate-400">
-                        {inferredPatch.inferenceNotes.map((note) => (
-                          <li key={note}>{note}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </section>
+              {parsedCv && (
+                <div className="mt-5 rounded-2xl border border-white/10 bg-slate-950 p-5 text-sm leading-6 text-slate-300">
+                  <h3 className="font-bold text-cyan-200">Suggestions from {parsedCv.fileName}</h3>
+                  <dl className="mt-3 grid gap-x-6 gap-y-2 md:grid-cols-2">
+                    <div><dt className="font-bold text-white">Name</dt><dd>{parsedCv.fullName || "Not found"}</dd></div>
+                    <div><dt className="font-bold text-white">Email</dt><dd>{parsedCv.email || "Not found"}</dd></div>
+                    <div><dt className="font-bold text-white">Phone</dt><dd>{parsedCv.phone || "Not found"}</dd></div>
+                    <div><dt className="font-bold text-white">Headline</dt><dd>{parsedCv.headline || "Not found"}</dd></div>
+                  </dl>
+                  <div className="mt-3"><span className="font-bold text-white">Summary:</span> {parsedCv.profileSummary || "Not found"}</div>
                 </div>
               )}
             </section>
