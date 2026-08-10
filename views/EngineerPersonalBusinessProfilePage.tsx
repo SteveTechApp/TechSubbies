@@ -788,33 +788,6 @@ export default function EngineerPersonalBusinessProfilePage() {
               </div>
             </section>
 
-            <section className="rounded-3xl border border-white/10 bg-slate-900 p-6">
-              <h2 className="text-xl font-bold text-cyan-300">5. Tools, certifications and notes</h2>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <Field label="Tools summary">
-                  <textarea className={textareaClass()} value={profile.toolsSummary} onChange={(event) => update({ toolsSummary: event.target.value })} />
-                </Field>
-
-                <Field label="Certifications summary">
-                  <textarea className={textareaClass()} value={profile.certificationSummary} onChange={(event) => update({ certificationSummary: event.target.value })} />
-                </Field>
-
-                <Field label="Insurance notes">
-                  <textarea className={textareaClass()} value={profile.insuranceNotes} onChange={(event) => update({ insuranceNotes: event.target.value })} />
-                </Field>
-
-                <Field label="Document notes">
-                  <textarea className={textareaClass()} value={profile.documentNotes} onChange={(event) => update({ documentNotes: event.target.value })} />
-                </Field>
-              </div>
-
-              <div className="mt-4">
-                <Field label="Private admin notes" hint="For the engineer only. Do not show this in the public profile.">
-                  <textarea className={textareaClass()} value={profile.privateAdminNotes} onChange={(event) => update({ privateAdminNotes: event.target.value })} />
-                </Field>
-              </div>
-            </section>
           </div>
 
           <aside className="space-y-6">
