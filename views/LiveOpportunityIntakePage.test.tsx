@@ -38,6 +38,13 @@ describe("labour workspace", () => {
   it("prefills new engineer allocations from known project details", () => {
     render(<LiveOpportunityIntakePage />);
 
+    const startDateField = screen.getByLabelText("Project start date").closest("label");
+    const finishDateField = screen.getByLabelText("Project finish date").closest("label");
+    const projectGridChildren = Array.from(startDateField?.parentElement?.children || []);
+    const startDateIndex = projectGridChildren.indexOf(startDateField as Element);
+    expect(projectGridChildren.indexOf(finishDateField as Element)).toBe(startDateIndex + 1);
+    expect(startDateIndex % 2).toBe(0);
+
     fireEvent.change(screen.getByLabelText("Site location"), { target: { value: "Manchester Central" } });
     fireEvent.change(screen.getByLabelText("Project start date"), { target: { value: "2026-09-14" } });
     fireEvent.change(screen.getByLabelText("Project finish date"), { target: { value: "2026-09-16" } });

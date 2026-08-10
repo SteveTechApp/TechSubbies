@@ -423,14 +423,6 @@ export default function LiveOpportunityIntakePage() {
                 <input className={inputClass()} value={project.siteLocation} onChange={(event) => setProject({ ...project, siteLocation: event.target.value })} />
               </Field>
 
-              <Field label="Project start date">
-                <input type="date" className={inputClass()} value={project.startDate} onChange={(event) => setProject({ ...project, startDate: event.target.value })} />
-              </Field>
-
-              <Field label="Project finish date">
-                <input type="date" min={project.startDate || undefined} className={inputClass()} value={project.finishDate} onChange={(event) => setProject({ ...project, finishDate: event.target.value })} />
-              </Field>
-
               <Field label="Project type">
                 <select className={selectClass()} value={project.projectType} onChange={(event) => setProject({ ...project, projectType: event.target.value })}>
                   <option>Corporate AV</option>
@@ -442,6 +434,14 @@ export default function LiveOpportunityIntakePage() {
                   <option>Network refresh</option>
                   <option>Mixed AV and IT project</option>
                 </select>
+              </Field>
+
+              <Field label="Project start date">
+                <input type="date" className={inputClass()} value={project.startDate} onChange={(event) => setProject({ ...project, startDate: event.target.value })} />
+              </Field>
+
+              <Field label="Project finish date">
+                <input type="date" min={project.startDate || undefined} className={inputClass()} value={project.finishDate} onChange={(event) => setProject({ ...project, finishDate: event.target.value })} />
               </Field>
 
               <Field label="Site environment">
@@ -509,7 +509,7 @@ export default function LiveOpportunityIntakePage() {
 
             <div className="mt-6 flex justify-end">
               <button type="button" onClick={() => setStep(2)} className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200">
-                Continue to role expectations
+                Continue to labour workspace
               </button>
             </div>
           </main>
